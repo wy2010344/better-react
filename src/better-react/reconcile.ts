@@ -2,6 +2,7 @@ import { addDirty, commitRoot } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
 import { Fiber } from "./Fiber"
 import { reconcileChildren } from "./reconcileChildren"
+import { reconcileRepeat } from "./reconcileRepeat"
 import { createDom } from "./updateDom"
 
 
@@ -61,7 +62,11 @@ function performUnitOfWork(fiber: Fiber) {
     const isFunctionComponent = fiber.type instanceof Function
     if (isFunctionComponent) {
       updateFunctionComponent(fiber)
+    } else if (fiber.array) {
+      //列表生成元素
+      reconcileRepeat(fiber)
     } else {
+      //普通元素，包括根元素
       updateHostComponent(fiber)
     }
   }

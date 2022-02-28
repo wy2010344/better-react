@@ -15,7 +15,11 @@ export type Fiber = {
   //一计算，所有子节点，非2之一
   effectTag?: "UPDATE" | "PLACEMENT" | "DELETION" | "DIRTY"
   /**只有列表有这个属性 */
-  array?: any[]
+  array?: {
+    elements: any[]
+    /**元素池*/
+    pool: Map<string, Fiber>
+  }
   /**只有dom的节点有这两个属性 */
   dom?: Node
   /**只有hooks有Fiber有这两个属性 */

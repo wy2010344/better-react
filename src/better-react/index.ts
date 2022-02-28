@@ -36,7 +36,6 @@ function createElement(type: any, props: Props, ...children: any[]) {
   };
 }
 function createFragment(props: Props) {
-  console.log(props, "dd")
   return {
     type: createElement,
     props

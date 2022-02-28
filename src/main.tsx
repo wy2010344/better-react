@@ -1,5 +1,5 @@
 import Better from './better-react'
-import { useEffect } from './better-react/fc';
+import { useEffect, useState } from './better-react/fc';
 import { useStoreTriggerRender, ValueCenter } from './better-react/ValueCenter';
 import './style.css'
 
@@ -32,32 +32,50 @@ function Counter() {
   );
 }
 
-let uid = 0
+let uid = 5
 function ListApp() {
-  const [state, setState] = Better.useState<number[]>([])
+  const [state, setState] = Better.useState<number[]>([1, 2, 3])
   return <div>
     {state.map(v => {
-      return <div key={v}>{v}</div>
+      return <div key={v}>
+        {v}
+        <input />
+        <button onClick={() => setState(state.filter(k => k != v))}>删除</button>
+      </div>
     })}
-    <button onClick={() => setState([uid + 1, ...state])}>add</button>
+    <button onClick={() => setState([uid++, ...state])}>add</button>
+    <button onClick={() => {
+      const newState = state.reverse()
+      console.log("重排后", newState)
+      setState([...newState])
+    }}>重排</button>
   </div>
 }
 function App() {
   console.log("render app")
+  const [show, setShow] = useState(true)
   return <div>
     <>
-      <button>
+      <button onClick={() => setShow(!show)}>
         这是文字
       </button>
+      {show ? <button style="transition:all ease 1s;" exit={function (it) {
+        it.style.transform = 'translateX(100%)'
+        return sleep(1000)
+      }}>show</button> : <span>hidden</span>}
       <Counter />
-
     </>
     <Counter />
     <span />
     <Counter />
     <hr />
-    {/* <ListApp /> */}
+    <ListApp />
   </div>
 }
 
+function sleep(n: number) {
+  return new Promise<void>(function (resolve) {
+    setTimeout(resolve, n);
+  })
+}
 Better.render(<App />, document.getElementById("app")!);
