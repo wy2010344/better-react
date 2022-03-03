@@ -1,4 +1,4 @@
-import { Fiber, StoreValue } from "./Fiber"
+import { Context, ContextProvider, Fiber, StoreValue } from "./Fiber"
 import Better from "./index"
 import { reconcile } from "./reconcile"
 import { reconcileChildren } from "./reconcileChildren"
@@ -16,20 +16,21 @@ const hookIndex = {
  * @param fiber 
  */
 export function updateFunctionComponent(fiber: Fiber) {
+  wipFiber = fiber
+  hookIndex.value = 0
+  hookIndex.effect = 0
+  hookIndex.ref = 0
+  wipFiber.hooks = {
+    value: [],
+    effect: [],
+    ref: [],
+    contexts: fiber.props?.contexts
+  }
+
   if (fiber.type == Better.createFragment) {
     reconcileChildren(fiber, fiber.props?.children)
   } else {
-    wipFiber = fiber
-    hookIndex.value = 0
-    hookIndex.effect = 0
-    hookIndex.ref = 0
-    wipFiber.hooks = {
-      value: [],
-      effect: [],
-      ref: []
-    }
-    const children = [fiber.type(fiber.props)]
-    reconcileChildren(fiber, children)
+    reconcileChildren(fiber, [fiber.type(fiber.props)])
   }
 }
 
@@ -110,4 +111,22 @@ export function useEffect(effects: () => (void | (() => void)), deps: any[]) {
     })
   }
 }
+export function useContext<T>(contextParent: ContextProvider<T>) {
+  let currentFiber = wipFiber
+  while (currentFiber) {
+    const contexts = currentFiber?.hooks?.contexts
+    if (contexts) {
+      for (let i = 0; i < contexts.length; i++) {
+        const context = contexts[i]
+        if (context.parent.id == contextParent.id) {
+          return context.value
+        }
+      }
+    }
+    currentFiber = currentFiber?.parent
+  }
+  return contextParent.out
+}
+
+
 

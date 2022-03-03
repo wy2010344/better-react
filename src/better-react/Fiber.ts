@@ -33,6 +33,7 @@ export type Fiber = {
       destroy?(): void
     }>[]
     ref: StoreValue<any>[]
+    contexts?: Context<any>[]
   }
 }
 
@@ -46,4 +47,25 @@ export type FunctionNode<T> = {
 export type BetterNode = FunctionNode<any> | {
   type: string
   props: Props
+}
+
+let contextUid = 0
+export class ContextProvider<T>{
+  id = contextUid++
+  constructor(
+    public readonly out: T
+  ) { }
+  provide(value: T): Context<T> {
+    return new Context(value, this)
+  }
+}
+
+export class Context<T>{
+  constructor(
+    public value: T,
+    public parent: ContextProvider<T>
+  ) { }
+}
+export function createContext<T>(init: T) {
+  return new ContextProvider(init)
 }
