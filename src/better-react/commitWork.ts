@@ -49,6 +49,7 @@ export function commitRoot() {
     fiber.effectTag = undefined
   })
   updates.length = 0
+  //贴到DOM上
   addes.forEach(function (fiber) {
     if (fiber.dom) {
       const domParent = getDomParent(fiber)
@@ -59,12 +60,24 @@ export function commitRoot() {
     }
     fiber.effectTag = undefined
   })
+  //移动
   addes.forEach(function (fiber) {
     if (fiber.dom) {
       const domParent = fiber.dom.parentElement
       const nextDom = getNextElement(fiber.sibling)
       domParent?.insertBefore(fiber.dom, nextDom)
     }
+  })
+  //初始化
+  addes.forEach(function (fiber) {
+    fiber.hooks?.effect.forEach(effect => {
+      effect({
+        deps: effect().deps,
+        destroy: effect().effect() as undefined,
+        count: effect().count + 1,
+        effect: effect().effect
+      })
+    })
   })
   addes.length = 0
   sorts.forEach(function (sort) {

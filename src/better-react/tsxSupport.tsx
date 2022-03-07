@@ -1,12 +1,18 @@
+import { BetterNode } from "./Fiber"
+
 export namespace JSX {
-  /**禁止所有内建小写元素 */
+
   export interface IntrinsicElements {
-    [key: string]: any
+    [key: string]: {
+      [key: string]: any
+    }
   }
+
+  type FC<T> = (arg: T & {}) => BetterNode
   /**与mve-core核心类型的兼容性 */
-  export type Element = {
-    type: any
-    props: any
+  export type Element<T> = {
+    type: FC<T>
+    props: T
   }
   /**
    * TSX内容元素类型，需要先声明

@@ -4,9 +4,6 @@ import { Fiber } from "./Fiber"
 import { reconcileChildren } from "./reconcileChildren"
 import { reconcileRepeat } from "./reconcileRepeat"
 import { createDom } from "./updateDom"
-
-
-
 let nextUnitOfWork: Fiber | undefined = undefined
 /**
  * 循环更新界面
@@ -23,23 +20,23 @@ function workLoop(deadline: IdleDeadline) {
   } else {
     commitRoot()
     //rootFiber.dirty = false
-    if (afterRender) {
-      afterRender()
-    }
+    afterRenderSet.forEach(afterRender => afterRender())
   }
 }
 let rootFiber: Fiber
-let afterRender: (() => void) | undefined = undefined
+/**每次render后调用，可以用于Layout动画之类的，在useEffect里监听与移除*/
+export const afterRenderSet = new Set<() => void>()
 export function setRootFiber(fiber: Fiber) {
   rootFiber = fiber
-  afterRender = function () {
+  const afterRender = function () {
     rootFiber = {
       ...rootFiber,
       effectTag: undefined,
       alternate: rootFiber
     }
-    afterRender = undefined
+    afterRenderSet.delete(afterRender)
   }
+  afterRenderSet.add(afterRender)
 }
 /**
  * 被通知去找到最新的根节点，并计算
