@@ -30,7 +30,9 @@ export function updateFunctionComponent(fiber: Fiber) {
   if (fiber.type == Better.createFragment) {
     reconcileChildren(fiber, fiber.props?.children)
   } else {
-    reconcileChildren(fiber, [fiber.type(fiber.props)])
+    const cs = fiber.type(fiber.props)
+    console.log("cccss", cs)
+    reconcileChildren(fiber, [cs])
   }
 }
 
@@ -91,13 +93,12 @@ export function useRef<T>(init: T) {
   return useRefValue(() => init)
 }
 
+const DEFAULT_EFFECT = () => { }
 export function useEffect(effects: () => (void | (() => void)), deps: any[]) {
   const hook = wipFiber?.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks.effect[hookIndex.effect] || storeRef({
-    count: 0,
-    effect() { },
+    effect: DEFAULT_EFFECT,
     deps: []
   }) as StoreValue<{
-    count: number
     deps: any[]
     effect: any
     destroy?(): void
@@ -107,18 +108,16 @@ export function useEffect(effects: () => (void | (() => void)), deps: any[]) {
   const last = hook()
   if (last.deps.length == deps.length && deps.every((v, i) => v == last.deps[i])) {
     //完全相同，不处理
-    if (last.count == 0) {
+    if (last.effect == DEFAULT_EFFECT) {
       //延迟到DOM元素数据化后初始化
       hook({
         deps,
         effect: effects,
-        count: last.count + 1
       })
     }
   } else {
     last.destroy?.()
     hook({
-      count: last.count + 1,
       deps,
       effect: effects,
       destroy: effects() as undefined

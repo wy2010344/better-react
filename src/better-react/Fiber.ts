@@ -29,7 +29,6 @@ export type Fiber = {
       render: StoreValue<any>
     }[]
     effect: StoreValue<{
-      count: number
       deps: any[]
       effect(): void | (() => void)
       destroy?(): void

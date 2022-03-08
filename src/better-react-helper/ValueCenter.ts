@@ -1,11 +1,16 @@
-import { useEffect, useState } from "./fc"
+import { useEffect, useRefValue, useState } from "../better-react/fc"
 
 export type NotifyHandler<T> = (v: T) => void
+
 export class ValueCenter<T>{
   private pool: Set<NotifyHandler<T>> = new Set()
-  constructor(
+  private constructor(
     private value: T
   ) { }
+
+  static of<T>(value: T) {
+    return new ValueCenter(value)
+  }
   get() {
     return this.value
   }
@@ -38,4 +43,12 @@ export function useStoreTriggerRender<T>(store: ValueCenter<T>) {
     }
   }, [store])
   return state
+}
+
+
+export function useRefValueCenterFrom<T>(fun: () => T) {
+  return useRefValue(() => ValueCenter.of(fun()))()
+}
+export function useRefValueCenter<T>(v: T) {
+  return useRefValueCenterFrom(() => v)
 }

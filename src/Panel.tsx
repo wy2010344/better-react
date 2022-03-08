@@ -2,7 +2,9 @@ import { BetterNode } from "./better-react/Fiber"
 import Better from '../src/better-react'
 import { useEffect, useRef, useRefValue, useState } from "./better-react/fc"
 import { dragMoveHelper, dragMoveUtil } from "./drag"
-import { ValueCenter } from "./better-react/ValueCenter"
+import { useRefValueCenter, ValueCenter } from "./better-react-helper/ValueCenter"
+import { useRefVueValue } from "./better-react-helper/VueAdapter"
+import { newLifeModel } from "./better-react-helper/Vue"
 
 export default function Panel({
   children
@@ -16,22 +18,18 @@ export default function Panel({
   const container = useRef<HTMLElement | undefined>(undefined)
   const movePoint = useRef<MouseEvent | undefined>(undefined)
 
-  const moveLeft = useRefValue(function () {
-    return new ValueCenter(100)
-  })
-  const moveTop = useRefValue(function () {
-    return new ValueCenter(100)
-  })
+  const moveLeft = useRefVueValue(100)
+  const moveTop = useRefVueValue(100)
   const moveRef = useRefValue(function () {
     return dragMoveHelper({
       diffX(x) {
-        moveLeft().set(moveLeft().get() + x)
+        moveLeft(moveLeft() + x)
       },
       diffY(y) {
-        moveTop().set(moveTop().get() + y)
+        moveTop(moveTop() + y)
       }
     })
-  })
+  })()
 
 
   useEffect(function () {
@@ -43,24 +41,31 @@ export default function Panel({
     const goTop = (x: number) => {
       ref.style.top = x + "px"
     }
-    moveLeft().add(goLeft)
-    moveTop().add(goTop)
+    const { me, destroy } = newLifeModel()
+    me.Watch(function () {
+      goLeft(moveLeft())
+    })
+    me.Watch(function () {
+      goTop(moveTop())
+    })
     return function () {
-      moveLeft().remove(goLeft)
-      moveTop().remove(goTop)
+      console.log("销毁")
+      destroy()
     }
   }, [])
+  console.log(children, "children")
   return (
     <div ref={container} style={`
       position:absolute;
       border:1px solid gray;width:${width}px;height:${height}px;
-    `}>
+    `}
+    >
       <div
-        onMouseDown={moveRef()}
+        onMouseDown={moveRef}
         style={`
-      height:32px;cursor:move;
-      `}></div>
-      {children}
+height:32px;cursor:move;
+`}>ggggg</div>
+      <div>ddd</div>
     </div>
   )
 }

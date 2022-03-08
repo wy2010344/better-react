@@ -58,6 +58,7 @@ function performUnitOfWork(fiber: Fiber) {
   if (fiber.effectTag) {
     const isFunctionComponent = fiber.type instanceof Function
     if (isFunctionComponent) {
+      console.log(fiber, "fiber")
       updateFunctionComponent(fiber)
     } else if (fiber.array) {
       //列表生成元素

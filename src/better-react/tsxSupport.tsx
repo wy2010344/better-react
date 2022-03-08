@@ -8,11 +8,13 @@ export namespace JSX {
     }
   }
 
-  type FC<T> = (arg: T & {}) => BetterNode
+  type FC<T> = (arg: T & { key?: any }) => BetterNode
   /**与mve-core核心类型的兼容性 */
   export type Element<T> = {
     type: FC<T>
-    props: T
+    props: T & {
+      key?: any
+    }
   }
   /**
    * TSX内容元素类型，需要先声明

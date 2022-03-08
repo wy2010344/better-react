@@ -1,7 +1,7 @@
 import Better from './better-react'
 import { useEffect, useState } from './better-react/fc';
-import { useStoreTriggerRender, ValueCenter } from './better-react/ValueCenter';
-const store = new ValueCenter(1)
+import { useStoreTriggerRender, ValueCenter } from './better-react-helper/ValueCenter';
+const store = ValueCenter.of(1)
 function Counter() {
   const [state, setState] = Better.useState(1);
   const [show, setShow] = Better.useState(false)

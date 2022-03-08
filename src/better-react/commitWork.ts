@@ -74,7 +74,6 @@ export function commitRoot() {
       effect({
         deps: effect().deps,
         destroy: effect().effect() as undefined,
-        count: effect().count + 1,
         effect: effect().effect
       })
     })

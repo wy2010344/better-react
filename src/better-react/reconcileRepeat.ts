@@ -6,6 +6,7 @@ export function reconcileRepeat(fiber: Fiber) {
   if (array) {
     if (fiber.effectTag == "PLACEMENT") {
       let prevSibling: Fiber | undefined
+      console.log(array, "array")
       array.elements.forEach((element, i) => {
         const key = element.props.key
         if (array.pool.has(key)) {
