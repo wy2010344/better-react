@@ -2,7 +2,7 @@ import Better from './better-react'
 import { useEffect, useState } from './better-react/fc';
 import { useStoreTriggerRender, ValueCenter } from './better-react-helper/ValueCenter';
 const store = ValueCenter.of(1)
-function Counter() {
+function Counter({ group }: { group: string }) {
   const [state, setState] = Better.useState(1);
   const [show, setShow] = Better.useState(false)
   const value = useStoreTriggerRender(store)
@@ -15,12 +15,12 @@ function Counter() {
   }, [state])
   return (
     <>
-      <div >
-        Count: {state}
+      <div style='border:1px solid gray;margin:10px;' >
+        group {group} Count: {state}
         <button onClick={() => setState(state + 1)}>add</button>
         <button onClick={() => setState(state - 1)}>sub</button>
         <button onClick={() => setShow(!show)}>展示</button>
-        {show && <Counter />}
+        {show && <Counter group={group + "--1"} />}
       </div>
       <div >
         共享{value}
@@ -34,9 +34,9 @@ let uid = 5
 function ListApp() {
   const [state, setState] = Better.useState<number[]>([1, 2, 3])
   return <div>
-    {state.map(v => {
+    {state.map((v, i) => {
       return <div key={v}>
-        {v}
+        {v} {i}
         <input />
         <button onClick={() => setState(state.filter(k => k != v))}>删除</button>
       </div>
@@ -49,7 +49,7 @@ function ListApp() {
     }}>重排</button>
   </div>
 }
-function App() {
+export function Demo() {
   console.log("render app")
   const [show, setShow] = useState(true)
   return <div>
@@ -61,11 +61,14 @@ function App() {
         it.style.transform = 'translateX(100%)'
         return sleep(1000)
       }}>show</button> : <span>hidden</span>}
-      <Counter />
+      <Counter group='1' />
+      ceveef
     </>
-    <Counter />
+    <Counter group='2' />
     <span />
-    <Counter />
+    vds
+    <Counter group='3' />
+    vvvv
     <hr />
     <ListApp />
   </div>

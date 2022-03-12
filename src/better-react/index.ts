@@ -1,4 +1,4 @@
-import { BetterNode, Props } from "./Fiber"
+import { BetterNode, Fiber, Props } from "./Fiber"
 import { reconcile, setRootFiber } from "./reconcile"
 
 import { useState, useStateFrom, useValue } from './fc'
@@ -25,13 +25,18 @@ function createTextElement(text: string) {
   }
 }
 function createElement(type: any, props: Props, ...children: any[]) {
+  const pChildren = props?.children
   return {
     type,
     props: {
       ...props,
-      children: children.map(child =>
-        typeof child === "object" ? child : createTextElement(child)
-      )
+      children: (pChildren ? (Array.isArray(pChildren) ? pChildren : [pChildren]) : children).map(child => {
+        if (typeof (child) == 'object') {
+          return child
+        } else {
+          return createTextElement(child)
+        }
+      })
     }
   };
 }
@@ -51,5 +56,5 @@ export default {
 }
 
 declare namespace JSX {
-  export type Element = BetterNode
+  export type Element = Fiber
 }

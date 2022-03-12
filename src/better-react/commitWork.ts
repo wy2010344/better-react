@@ -10,29 +10,19 @@ const updates: Fiber[] = []
 export function addUpdate(fiber: Fiber) {
   updates.push(fiber)
 }
-
-const addes: Fiber[] = []
-export function addAdd(fiber: Fiber) {
-  addes.push(fiber)
-}
 const dirtys: Fiber[] = []
 export function addDirty(fiber: Fiber) {
   dirtys.push(fiber)
 }
-const sorts: Fiber[] = []
-export function addSort(fiber: Fiber) {
-  sorts.push(fiber)
+const addes: Fiber[] = []
+export function addAdd(fiber: Fiber) {
+  addes.push(fiber)
 }
 /**
  * 提交变更应该从根dirty节点开始。
  * 找到最顶层dirty节点->计算出新的节点替换当前->对比标记新节点->更新
  */
 export function commitRoot() {
-  dirtys.forEach(function (fiber) {
-    fiber.effectTag = undefined
-  })
-  dirtys.length = 0
-
   deletions.forEach(function (fiber) {
     const domParent = getDomParent(fiber)
     notifyDel(fiber)
@@ -49,26 +39,22 @@ export function commitRoot() {
     fiber.effectTag = undefined
   })
   updates.length = 0
-  //贴到DOM上
+
+  dirtys.forEach(function (fiber) {
+    fiber.effectTag = undefined
+    deepUpdateDirty(fiber)
+  })
+  dirtys.length = 0
+  //初始化
   addes.forEach(function (fiber) {
+    fiber.effectTag = undefined
     if (fiber.dom) {
-      const domParent = getDomParent(fiber)
-      domParent.appendChild(fiber.dom)
       if (fiber.props?.ref) {
         fiber.props.ref(fiber.dom)
       }
     }
-    fiber.effectTag = undefined
   })
-  //移动
-  addes.forEach(function (fiber) {
-    if (fiber.dom) {
-      const domParent = fiber.dom.parentElement
-      const nextDom = getNextElement(fiber.sibling)
-      domParent?.insertBefore(fiber.dom, nextDom)
-    }
-  })
-  //初始化
+  //避免初始化时，dom元素还未生成
   addes.forEach(function (fiber) {
     fiber.hooks?.effect.forEach(effect => {
       effect({
@@ -79,46 +65,87 @@ export function commitRoot() {
     })
   })
   addes.length = 0
-  sorts.forEach(function (sort) {
-    const nextDom = getNextElement(sort.sibling)
-    let child = sort.child
-    const parentDom = getDomParent(sort)
-    moveBefore(parentDom, nextDom, child)
-  })
-  sorts.length = 0
 }
 
-function moveBefore(parent: Node, dom: Node | null, fiber?: Fiber) {
-  if (fiber) {
-    if (fiber.dom) {
-      parent.insertBefore(fiber.dom, dom)
-    } else {
-      moveBefore(parent, dom, fiber.child)
+function deepUpdateDirty(fiber: Fiber) {
+  let child = fiber.child
+  let prevChild: Fiber | undefined
+  while (child) {
+    child.prev = prevChild
+    if (child.dom) {
+      const parentBefore = child.prev
+        ? getCurrentBefore(child.prev)
+        : findParentBefore(child)
+      if (parentBefore) {
+        const [parent, before] = parentBefore
+        const next = before?.nextSibling
+        if (next != child.dom) {
+          //不处理
+          parent.insertBefore(child.dom, next!)
+        }
+      } else {
+        console.error("未找到", child.dom)
+      }
     }
-    moveBefore(parent, dom, fiber.sibling)
+    deepUpdateDirty(child)
+    const nextChild = child.sibling
+    if (!nextChild) {
+      fiber.lastChild = child
+    }
+    prevChild = child
+    child = nextChild
   }
 }
 
-function getNextElement(fiber?: Fiber): Node | null {
-  if (fiber) {
-    if (fiber.dom) {
-      return fiber.dom
-    }
-    const dom = getNextElement(fiber.child)
+function getCurrentBefore(fiber: Fiber): [Node, Node | null] | null {
+  if (fiber.dom) {
+    return [fiber.dom.parentElement!, fiber.dom]
+  }
+  if (fiber.lastChild) {
+    //在子节点中寻找
+    const dom = getCurrentBefore(fiber.lastChild)
     if (dom) {
       return dom
     }
-    return getNextElement(fiber.sibling)
+  }
+  if (fiber.prev) {
+    //在兄节点中找
+    const dom = getCurrentBefore(fiber.prev)
+    if (dom) {
+      return dom
+    }
+  }
+  return findParentBefore(fiber)
+}
+
+function findParentBefore(fiber: Fiber): [Node, Node | null] | null {
+  const parent = fiber.parent
+  if (parent) {
+    if (parent.dom) {
+      //找到父节点，且父节点是有dom的
+      return [parent.dom, null]
+    }
+    if (parent.prev) {
+      //在父的兄节点中寻找
+      const dom = getCurrentBefore(parent.prev)
+      if (dom) {
+        return dom
+      }
+    }
+    return findParentBefore(parent)
   }
   return null
 }
 
-function getDomParent(fiber: Fiber) {
+function getParentDomFilber(fiber: Fiber) {
   let domParentFiber = fiber.parent
   while (!domParentFiber?.dom) {
     domParentFiber = domParentFiber?.parent
   }
-  return domParentFiber.dom
+  return domParentFiber
+}
+function getDomParent(fiber: Fiber) {
+  return getParentDomFilber(fiber).dom!
 }
 /**
  * 需要一直找到具有dom节点的子项

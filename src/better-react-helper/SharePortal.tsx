@@ -1,58 +1,52 @@
-
+import BetterReact from "../better-react"
 import { useEffect } from "../better-react/fc"
+import { useOnlyId } from "./useOnlyId"
 import { ValueCenter, useStoreTriggerRender } from "./ValueCenter"
-import Better from '../better-react'
 
 
 
 export function createSharePortal() {
   const portals = ValueCenter.of<JSX.Element[]>([])
-  let uid = 0
+
+  function buildDestroy(id: string, p: JSX.Element) {
+    useEffect(() => {
+      const ps = portals.get()
+      const idx = ps.findIndex(v => v.key == id)
+      if (idx < 0) {
+        portals.set(ps.concat(p))
+      } else {
+        ps.splice(idx, 1, p)
+        const vs = ps.slice()
+        portals.set(vs)
+      }
+    }, [p])
+    useEffect(function () {
+      return () => {
+        portals.set(portals.get().filter(v => v.key != id))
+      }
+    }, [])
+  }
   return {
-    uid,
+    portals,
     usePortals() {
       return useStoreTriggerRender(portals)
     },
-    PortalCall({ children }: { children(i: number): JSX.Element }) {
-      useStoreTriggerRender(portals)
-      useEffect(() => {
-        const id = uid++
-        portals.set(portals.get().concat(children(id)))
-        return () => {
-          portals.set(portals.get().filter(v => v.key != id))
-        }
-      }, [])
-      return <></>
+    PortalCall({ children }: { children(i: string): JSX.Element }) {
+      const { id } = useOnlyId()
+      buildDestroy(id, children(id))
+      return null
     },
     Portal({ children }: { children: JSX.Element }) {
-      useStoreTriggerRender(portals)
-      useEffect(() => {
-        const ids: number[] = []
-        children.forEach(function (child: any) {
-          const id = uid++
-          ids.push(id)
-          const portal = { ...child, props: { ...child.props, key: id } }
-          console.log("portal", portal.props.children)
-          portals.set(portals.get().concat(portal))
-        })
-        return () => {
-          portals.set(portals.get().filter(v => !ids.includes(v.key)))
-        }
-      }, [])
-      return <></>
+      const { id } = useOnlyId()
+      buildDestroy(id, { ...children, key: id })
+      return null
     },
     PortalFragmet({ children }: { children: JSX.Element }) {
-      useStoreTriggerRender(portals)
-      useEffect(() => {
-        const id = uid++
-        portals.set(portals.get().concat(<Better.createFragment key={id}>
-          {children}
-        </Better.createFragment>))
-        return () => {
-          portals.set(portals.get().filter(v => v.key != id))
-        }
-      }, [])
-      return <></>
+      const { id } = useOnlyId()
+      buildDestroy(id, <BetterReact.createFragment key={id}>
+        {children}
+      </BetterReact.createFragment>)
+      return null
     }
   }
 }

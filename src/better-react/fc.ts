@@ -29,9 +29,16 @@ export function updateFunctionComponent(fiber: Fiber) {
 
   if (fiber.type == Better.createFragment) {
     reconcileChildren(fiber, fiber.props?.children)
+  } else if (fiber.type == reconcileChildren) {
+    //是数组
+    reconcileChildren(fiber, fiber.props?.children)
   } else {
-    const cs = fiber.type(fiber.props)
-    console.log("cccss", cs)
+    const cs = fiber.type({
+      ...fiber.props,
+      children: fiber.props?.children.length == 1
+        ? fiber.props?.children[0]
+        : fiber.props?.children
+    })
     reconcileChildren(fiber, [cs])
   }
 }

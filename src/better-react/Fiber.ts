@@ -1,6 +1,5 @@
 export type Fiber = {
   type?: any
-  /**节点属性 */
   props?: Props
   /**第一个子节点 */
   child?: Fiber
@@ -8,18 +7,22 @@ export type Fiber = {
   parent?: Fiber
   /**弟节点 */
   sibling?: Fiber
+
+  /*-最后遍历时生成-*/
+  /**最后一个节点 */
+  lastChild?: Fiber
+  /**前一个节点 */
+  prev?: Fiber
+
   //旧的成员
   alternate?: Fiber
   //更新方式，是在和旧hook对比得出的结论。
   //树里只有UPDATE/PLACEMENT，是需要计算子节点的
   //一计算，所有子节点，非2之一
   effectTag?: "UPDATE" | "PLACEMENT" | "DELETION" | "DIRTY"
-  /**只有列表有这个属性 */
-  array?: {
-    elements: any[]
-    /**元素池*/
-    pool: Map<string, Fiber>
-  }
+  /**元素池*/
+  pool?: Map<any, Fiber>
+
   /**只有dom的节点有这两个属性 */
   dom?: Node
   /**只有hooks有Fiber有这两个属性 */
@@ -35,6 +38,19 @@ export type Fiber = {
     }>[]
     ref: StoreValue<any>[]
     contexts?: Context<any>[]
+  }
+}
+
+export function getPool(fiber: Fiber) {
+  if (!fiber.pool) {
+    fiber.pool = new Map()
+  }
+  return fiber.pool!
+}
+
+export function getFiberKey(fiber: Fiber | undefined, key: any) {
+  if (fiber) {
+    return fiber.pool?.get(key)
   }
 }
 

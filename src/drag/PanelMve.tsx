@@ -1,12 +1,11 @@
-import { BetterNode } from "./better-react/Fiber"
-import Better from '../src/better-react'
-import { useEffect, useRef, useRefValue, useState } from "./better-react/fc"
+import { BetterNode } from "../better-react/Fiber"
+import Better from '../better-react'
+import { useEffect, useRef, useRefValue, useState } from "../better-react/fc"
 import { dragMoveHelper, dragMoveUtil } from "./drag"
-import { useRefValueCenter, ValueCenter } from "./better-react-helper/ValueCenter"
-import { useRefVueValue } from "./better-react-helper/VueAdapter"
-import { newLifeModel } from "./better-react-helper/Vue"
+import { useRefVueValue } from "../better-react-helper/VueAdapter"
+import { newLifeModel } from "../better-react-helper/Vue"
 
-export default function Panel({
+export default function PanelMve({
   children
 }: {
   children: BetterNode[]
@@ -34,6 +33,7 @@ export default function Panel({
 
   useEffect(function () {
     const ref = container()
+    console.log("useEffect", ref)
     if (!ref) return
     const goLeft = (v: number) => {
       ref.style.left = v + "px"
@@ -53,10 +53,10 @@ export default function Panel({
       destroy()
     }
   }, [])
-  console.log(children, "children")
+  console.log(children, "mve-children", container())
   return (
     <div ref={container} style={`
-      position:absolute;
+      position:absolute;background:white;
       border:1px solid gray;width:${width}px;height:${height}px;
     `}
     >
@@ -65,7 +65,7 @@ export default function Panel({
         style={`
 height:32px;cursor:move;
 `}>ggggg</div>
-      <div>ddd</div>
+      {children}
     </div>
   )
 }

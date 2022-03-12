@@ -2,7 +2,6 @@ import { addDirty, commitRoot } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
 import { Fiber } from "./Fiber"
 import { reconcileChildren } from "./reconcileChildren"
-import { reconcileRepeat } from "./reconcileRepeat"
 import { createDom } from "./updateDom"
 let nextUnitOfWork: Fiber | undefined = undefined
 /**
@@ -19,15 +18,26 @@ function workLoop(deadline: IdleDeadline) {
     requestIdleCallback(workLoop)
   } else {
     commitRoot()
-    //rootFiber.dirty = false
     afterRenderSet.forEach(afterRender => afterRender())
+
+    doWork = false
+    if (nextJob) {
+      nextJob = false
+      reconcile()
+    }
   }
 }
+//是否正在工作中
+let doWork = false
+//是否有下一次任务
+let nextJob = false
+
 let rootFiber: Fiber
 /**每次render后调用，可以用于Layout动画之类的，在useEffect里监听与移除*/
 export const afterRenderSet = new Set<() => void>()
 export function setRootFiber(fiber: Fiber) {
   rootFiber = fiber
+  addDirty(fiber)
   const afterRender = function () {
     rootFiber = {
       ...rootFiber,
@@ -42,11 +52,14 @@ export function setRootFiber(fiber: Fiber) {
  * 被通知去找到最新的根节点，并计算
  */
 export function reconcile() {
-  nextUnitOfWork = rootFiber
-  requestIdleCallback(workLoop);
+  if (doWork) {
+    nextJob = true
+  } else {
+    doWork = true
+    nextUnitOfWork = rootFiber
+    requestIdleCallback(workLoop);
+  }
 }
-
-
 /**
  * 当前工作结点，返回下一个工作结点
  * 先子，再弟，再父(父的弟)
@@ -58,11 +71,7 @@ function performUnitOfWork(fiber: Fiber) {
   if (fiber.effectTag) {
     const isFunctionComponent = fiber.type instanceof Function
     if (isFunctionComponent) {
-      console.log(fiber, "fiber")
       updateFunctionComponent(fiber)
-    } else if (fiber.array) {
-      //列表生成元素
-      reconcileRepeat(fiber)
     } else {
       //普通元素，包括根元素
       updateHostComponent(fiber)
