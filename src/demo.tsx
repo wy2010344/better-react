@@ -57,7 +57,7 @@ export function Demo() {
       <button onClick={() => setShow(!show)}>
         这是文字
       </button>
-      {show ? <button style="transition:all ease 1s;" exit={function (it: any) {
+      {show ? <button style="transition:all ease 1s;" exit={function (it) {
         it.style.transform = 'translateX(100%)'
         return sleep(1000)
       }}>show</button> : <span>hidden</span>}

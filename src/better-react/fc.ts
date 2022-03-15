@@ -1,4 +1,4 @@
-import { Context, ContextProvider, Fiber, StoreValue } from "./Fiber"
+import { ContextProvider, Fiber, StoreValue } from "./Fiber"
 import Better from "./index"
 import { reconcile } from "./reconcile"
 import { reconcileChildren } from "./reconcileChildren"

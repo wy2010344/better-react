@@ -1,5 +1,5 @@
-import { Fiber } from "./Fiber"
-import { updateDom } from "./updateDom"
+import { Fiber, findFiberCreateStyle } from "./Fiber"
+import { appendAfter, FiberNode, removeFiberDom, removeFromParent, StyleNode, updateDom } from "./updateDom"
 
 //等待删除的fiber
 const deletions: Fiber[] = []
@@ -33,7 +33,12 @@ export function commitRoot() {
 
   updates.forEach(function (fiber) {
     if (fiber.dom) {
-      updateDom(fiber.dom!, fiber.alternate?.props, fiber.props)
+      updateDom(
+        fiber.dom!,
+        fiber.alternate?.props,
+        fiber.props,
+        findFiberCreateStyle(fiber)
+      )
     }
     fiber.alternate = undefined
     fiber.effectTag = undefined
@@ -50,7 +55,7 @@ export function commitRoot() {
     fiber.effectTag = undefined
     if (fiber.dom) {
       if (fiber.props?.ref) {
-        fiber.props.ref(fiber.dom)
+        fiber.props.ref(fiber.dom.node)
       }
     }
   })
@@ -77,12 +82,7 @@ function deepUpdateDirty(fiber: Fiber) {
         ? getCurrentBefore(child.prev)
         : findParentBefore(child)
       if (parentBefore) {
-        const [parent, before] = parentBefore
-        const next = before?.nextSibling
-        if (next != child.dom) {
-          //不处理
-          parent.insertBefore(child.dom, next!)
-        }
+        appendAfter(child.dom, parentBefore)
       } else {
         console.error("未找到", child.dom)
       }
@@ -97,9 +97,10 @@ function deepUpdateDirty(fiber: Fiber) {
   }
 }
 
-function getCurrentBefore(fiber: Fiber): [Node, Node | null] | null {
+type FindParentAndBefore = [FiberNode, FiberNode | null] | [FiberNode | null, FiberNode] | null
+function getCurrentBefore(fiber: Fiber): FindParentAndBefore {
   if (fiber.dom) {
-    return [fiber.dom.parentElement!, fiber.dom]
+    return [getParentDomFilber(fiber).dom!, fiber.dom]
   }
   if (fiber.lastChild) {
     //在子节点中寻找
@@ -118,7 +119,7 @@ function getCurrentBefore(fiber: Fiber): [Node, Node | null] | null {
   return findParentBefore(fiber)
 }
 
-function findParentBefore(fiber: Fiber): [Node, Node | null] | null {
+function findParentBefore(fiber: Fiber): FindParentAndBefore {
   const parent = fiber.parent
   if (parent) {
     if (parent.dom) {
@@ -152,14 +153,14 @@ function getDomParent(fiber: Fiber) {
  * @param fiber 
  * @param domParent 
  */
-function commitDeletion(fiber: Fiber, domParent: Node) {
+function commitDeletion(fiber: Fiber, domParent: FiberNode) {
   if (fiber.dom) {
     removeFromDom(fiber, domParent)
   } else {
     circleCommitDelection(fiber.child, domParent)
   }
 }
-function circleCommitDelection(fiber: Fiber | undefined, domParent: Node) {
+function circleCommitDelection(fiber: Fiber | undefined, domParent: FiberNode) {
   if (fiber) {
     if (fiber.dom) {
       removeFromDom(fiber, domParent)
@@ -169,13 +170,13 @@ function circleCommitDelection(fiber: Fiber | undefined, domParent: Node) {
     circleCommitDelection(fiber.sibling, domParent)
   }
 }
-function removeFromDom(fiber: Fiber, domParent: Node) {
+function removeFromDom(fiber: Fiber, domParent: FiberNode) {
   if (fiber.props?.exit) {
     fiber.props.exit(fiber.dom).then(function () {
-      domParent.removeChild(fiber.dom!)
+      removeFromParent(domParent, fiber.dom!)
     })
   } else {
-    domParent.removeChild(fiber.dom!)
+    removeFromParent(domParent, fiber.dom!)
   }
   if (fiber.props?.ref) {
     fiber.props.ref(null)
@@ -198,5 +199,8 @@ function destroyFiber(fiber: Fiber) {
   const effect = fiber.hooks?.effect
   if (effect) {
     effect.forEach(ef => ef().destroy?.())
+  }
+  if (fiber.dom) {
+    removeFiberDom(fiber.dom)
   }
 }

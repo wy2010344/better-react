@@ -1,24 +1,24 @@
 import { BetterNode } from "../better-react/Fiber"
 import Better from '../better-react'
 import { useEffect, useRef, useRefValue, useState } from "../better-react/fc"
-import { dragMoveHelper, dragMoveUtil } from "./drag"
+import { dragMoveHelper, dragMoveUtil, dragResizeHelper } from "./drag"
 import { useRefVueValue } from "../better-react-helper/VueAdapter"
 import { newLifeModel } from "../better-react-helper/Vue"
+import { moveFirst, removePanel } from "./panel"
+import ReSize from "./ReSize"
 
 export default function PanelMve({
+  index,
   children
 }: {
+  index: string
   children: BetterNode[]
 }) {
-  const [top, valueTop] = useState(100)
-  const [left, valueLeft] = useState(100)
-  const [width, valueWidth] = useState(400)
-  const [height, valueHeight] = useState(600)
   const container = useRef<HTMLElement | undefined>(undefined)
-  const movePoint = useRef<MouseEvent | undefined>(undefined)
-
   const moveLeft = useRefVueValue(100)
   const moveTop = useRefVueValue(100)
+  const width = useRefVueValue(400)
+  const height = useRefVueValue(600)
   const moveRef = useRefValue(function () {
     return dragMoveHelper({
       diffX(x) {
@@ -31,41 +31,69 @@ export default function PanelMve({
   })()
 
 
+  const dragResize = useRefValue(() => {
+    return dragResizeHelper({
+      addHeight(x) {
+        height(height() + x)
+      },
+      addLeft(x) {
+        moveLeft(moveLeft() + x)
+      },
+      addTop(x) {
+        moveTop(moveTop() + x)
+      },
+      addWidth(x) {
+        width(width() + x)
+      }
+    })
+  })()
+
   useEffect(function () {
     const ref = container()
     console.log("useEffect", ref)
     if (!ref) return
-    const goLeft = (v: number) => {
-      ref.style.left = v + "px"
-    }
-    const goTop = (x: number) => {
-      ref.style.top = x + "px"
-    }
     const { me, destroy } = newLifeModel()
+    ref.style.position = 'absolute'
+    ref.style.background = 'white'
+    ref.style.border = '1px solid gray'
+    ref.style.boxShadow = '0px 0px 20px 10px'
     me.Watch(function () {
-      goLeft(moveLeft())
+      ref.style.left = moveLeft() + 'px'
     })
     me.Watch(function () {
-      goTop(moveTop())
+      ref.style.top = moveTop() + "px"
+    })
+    me.Watch(function () {
+      ref.style.width = width() + 'px'
+    })
+    me.Watch(function () {
+      ref.style.height = height() + 'px'
     })
     return function () {
       console.log("销毁")
       destroy()
     }
   }, [])
-  console.log(children, "mve-children", container())
+  //console.log(children, "mve-children", container())
   return (
-    <div ref={container} style={`
-      position:absolute;background:white;
-      border:1px solid gray;width:${width}px;height:${height}px;
-    `}
+    <div ref={container}
+      onClick={() => moveFirst(index)}
     >
+      <ReSize resize={dragResize as any} />
       <div
-        onMouseDown={moveRef}
-        style={`
-height:32px;cursor:move;
-`}>ggggg</div>
+        onMouseDown={moveRef as any}
+        style={{
+          height: "32px",
+          cursor: "move"
+        }}>
+        <button>o</button>
+        <button onClick={(e) => {
+          e.stopPropagation()
+          removePanel(index)
+        }}>X</button>
+      </div>
       {children}
+
     </div>
   )
 }

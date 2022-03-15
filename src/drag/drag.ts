@@ -167,14 +167,12 @@ type TEvent = {
  */
 export function dragResizeHelper(p: {
   border?: Node;
-  allow?(): boolean;
   addLeft(x: number): void
   addTop(x: number): void,
   addWidth(x: number): void,
   addHeight(x: number): void
 }) {
   let event: TEvent = null
-  const allow = p.allow || function () { return true };
   const m = {
     cancel(e) {
       event = null;
@@ -182,29 +180,27 @@ export function dragResizeHelper(p: {
       destroy()
     },
     move(e) {
-      if (allow()) {
-        const old_e = event.event as MouseEvent;
-        e = e || window.event;
-        event.event = e;
-        const x = diff(true, e, old_e);
-        const y = diff(false, e, old_e);
-        if (x != 0) {
-          if (event.dir.l) {
-            p.addLeft(x)
-            p.addWidth(-x)
-          }
-          if (event.dir.r) {
-            p.addWidth(x)
-          }
+      const old_e = event.event as MouseEvent;
+      e = e || window.event;
+      event.event = e;
+      const x = diff(true, e, old_e);
+      const y = diff(false, e, old_e);
+      if (x != 0) {
+        if (event.dir.l) {
+          p.addLeft(x)
+          p.addWidth(-x)
         }
-        if (y != 0) {
-          if (event.dir.t) {
-            p.addTop(y)
-            p.addHeight(-y)
-          }
-          if (event.dir.b) {
-            p.addHeight(y)
-          }
+        if (event.dir.r) {
+          p.addWidth(x)
+        }
+      }
+      if (y != 0) {
+        if (event.dir.t) {
+          p.addTop(y)
+          p.addHeight(-y)
+        }
+        if (event.dir.b) {
+          p.addHeight(y)
         }
       }
     }

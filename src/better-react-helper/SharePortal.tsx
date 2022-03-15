@@ -1,4 +1,4 @@
-import BetterReact from "../better-react"
+import { Fragment } from "../better-react"
 import { useEffect } from "../better-react/fc"
 import { useOnlyId } from "./useOnlyId"
 import { ValueCenter, useStoreTriggerRender } from "./ValueCenter"
@@ -12,6 +12,7 @@ export function createSharePortal() {
     useEffect(() => {
       const ps = portals.get()
       const idx = ps.findIndex(v => v.key == id)
+      console.log("更新portals", ps, id, p)
       if (idx < 0) {
         portals.set(ps.concat(p))
       } else {
@@ -43,9 +44,9 @@ export function createSharePortal() {
     },
     PortalFragmet({ children }: { children: JSX.Element }) {
       const { id } = useOnlyId()
-      buildDestroy(id, <BetterReact.createFragment key={id}>
+      buildDestroy(id, <Fragment key={id}>
         {children}
-      </BetterReact.createFragment>)
+      </Fragment>)
       return null
     }
   }

@@ -1,3 +1,5 @@
+import { FiberNode, StyleNode } from "./updateDom"
+
 export type Fiber = {
   type?: any
   props?: Props
@@ -24,7 +26,7 @@ export type Fiber = {
   pool?: Map<any, Fiber>
 
   /**只有dom的节点有这两个属性 */
-  dom?: Node
+  dom?: FiberNode
   /**只有hooks有Fiber有这两个属性 */
   hooks?: {
     value: {
@@ -41,6 +43,15 @@ export type Fiber = {
   }
 }
 
+export function findFiberCreateStyle(fiber: Fiber | undefined) {
+  while (fiber) {
+    if (fiber?.props?.styleCreater) {
+      return fiber?.props?.styleCreater
+    }
+    fiber = fiber.parent
+  }
+}
+
 export function getPool(fiber: Fiber) {
   if (!fiber.pool) {
     fiber.pool = new Map()
@@ -48,7 +59,7 @@ export function getPool(fiber: Fiber) {
   return fiber.pool!
 }
 
-export function getFiberKey(fiber: Fiber | undefined, key: any) {
+export function getFiberKey(fiber: Fiber | undefined, key: any): Fiber | void {
   if (fiber) {
     return fiber.pool?.get(key)
   }
@@ -64,6 +75,7 @@ export type FunctionNode<T> = {
 export type BetterNode = FunctionNode<any> | {
   type: string
   props: Props
+  key: any
 }
 
 let contextUid = 0

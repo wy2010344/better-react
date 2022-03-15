@@ -1,6 +1,6 @@
 import { addDirty, commitRoot } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
-import { Fiber } from "./Fiber"
+import { Fiber, findFiberCreateStyle } from "./Fiber"
 import { reconcileChildren } from "./reconcileChildren"
 import { createDom } from "./updateDom"
 let nextUnitOfWork: Fiber | undefined = undefined
@@ -110,7 +110,7 @@ function performUnitOfWork(fiber: Fiber) {
  */
 function updateHostComponent(fiber: Fiber) {
   if (!fiber.dom) {
-    fiber.dom = createDom(fiber)
+    fiber.dom = createDom(fiber.type, fiber.props, findFiberCreateStyle(fiber))
   }
   reconcileChildren(fiber, fiber.props?.children)
 }

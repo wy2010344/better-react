@@ -1,4 +1,5 @@
 import Better from './better-react'
+import { nestCss } from './better-react-helper/NestCss';
 import { createSharePortal } from './better-react-helper/SharePortal';
 import { useState } from './better-react/fc';
 import { Demo } from './demo';
@@ -13,4 +14,4 @@ function App() {
   //return <Demo />
 }
 
-Better.render(<App />, document.getElementById("app")!);
+Better.render(<App styleCreater={nestCss} />, document.getElementById("app")!);

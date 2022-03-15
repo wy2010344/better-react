@@ -5,7 +5,9 @@ import { useState, useStateFrom, useValue } from './fc'
 
 function render(element: BetterNode, container: Node) {
   const rootFiber = {
-    dom: container,
+    dom: {
+      node: container
+    },
     props: {
       children: [element]
     },
@@ -28,10 +30,12 @@ function createElement(type: any, props: Props, ...children: any[]) {
   const pChildren = props?.children
   return {
     type,
+    key: props?.key,
     props: {
       ...props,
       children: (pChildren ? (Array.isArray(pChildren) ? pChildren : [pChildren]) : children).map(child => {
-        if (typeof (child) == 'object') {
+        const tp = typeof (child)
+        if (tp == 'object' || tp == 'function') {
           return child
         } else {
           return createTextElement(child)
@@ -43,9 +47,12 @@ function createElement(type: any, props: Props, ...children: any[]) {
 function createFragment(props: Props) {
   return {
     type: createElement,
-    props
+    props,
+    key: props?.key
   }
 }
+
+export const Fragment = createFragment
 export default {
   createElement,
   useState,
