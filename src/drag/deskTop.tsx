@@ -2,7 +2,7 @@ import { useState } from '../better-react/fc'
 import PanelMve from './PanelMve'
 import Better from '../better-react'
 import PanelReact from './PanelReact'
-import { PortalCall, usePortals } from './panel'
+import { moveFirst, PortalCall, removePanel, usePortals } from './panel'
 export default function DeskTop() {
 
 
@@ -30,8 +30,14 @@ export default function DeskTop() {
         </PortalCall>
       } else {
         return <PortalCall key={i}>
-          {index => <PanelReact key={index} index={index}>{({ }) => <>
-            <div css={`
+          {index => <PanelReact key={index}
+            moveFirst={() => {
+              moveFirst(index)
+            }}
+            close={() => {
+              removePanel(index)
+            }}>{({ }) => <>
+              <div css={`
             background:red;
             :hover{
               background:white;
@@ -39,8 +45,8 @@ export default function DeskTop() {
             color:green;
             margin-left:${count * 10}px;
             `}>我是文字 react</div>
-            <button onClick={() => setCount(count + 1)}>增加</button>
-          </>}
+              <button onClick={() => setCount(count + 1)}>增加</button>
+            </>}
           </PanelReact>}
         </PortalCall>
       }

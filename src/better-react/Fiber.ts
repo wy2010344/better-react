@@ -76,7 +76,7 @@ export type BetterNode = FunctionNode<any> | {
   type: string
   props: Props
   key: any
-}
+} | string | boolean | number | undefined
 
 let contextUid = 0
 export class ContextProvider<T>{

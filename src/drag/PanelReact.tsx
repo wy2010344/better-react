@@ -2,17 +2,20 @@ import { BetterNode } from "../better-react/Fiber"
 import Better from '../better-react'
 import { useRef, useRefValue, useState } from "../better-react/fc"
 import { dragMoveHelper, dragResizeHelper } from "./drag"
-import { moveFirst, removePanel } from "./panel"
 import ReSize from "./ReSize"
+
+export type RenderChildren = (x: { width: number, height: number }) => BetterNode
 
 export default function PanelReact({
   title,
   children,
-  index
+  close,
+  moveFirst
 }: {
   title?: BetterNode
-  index: string
-  children(x: { width: number, height: number }): BetterNode
+  children: RenderChildren
+  close(): void
+  moveFirst(): void
 }) {
   const [top, valueTop] = useState(100)
   const [left, valueLeft] = useState(100)
@@ -58,7 +61,7 @@ export default function PanelReact({
       left:${left}px;top:${top}px;
       box-shadow:0px 0px 20px 10px;
     `}
-      onClick={() => moveFirst(index)}
+      onClick={moveFirst}
     >
       <ReSize resize={dragResize as any} />
       <div
@@ -70,7 +73,7 @@ height:32px;cursor:move;
         <button>o</button>
         <button onClick={(e) => {
           e.stopPropagation()
-          removePanel(index)
+          close()
         }}>X</button>
       </div>
       {children({ width, height })}

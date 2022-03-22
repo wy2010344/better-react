@@ -5,12 +5,14 @@ import { useState } from './better-react/fc';
 import { Demo } from './demo';
 import DeskTop from './drag/deskTop';
 import PanelMve from './drag/PanelMve';
+import Index from './Index';
 import './style.css'
 
 
 
 function App() {
-  return <DeskTop />
+  return <Index />
+  //return <DeskTop />
   //return <Demo />
 }
 

@@ -1,3 +1,4 @@
+import { createPortal } from "."
 import { Fiber, findFiberCreateStyle } from "./Fiber"
 import { appendAfter, FiberNode, removeFiberDom, removeFromParent, StyleNode, updateDom } from "./updateDom"
 
@@ -17,6 +18,12 @@ export function addDirty(fiber: Fiber) {
 const addes: Fiber[] = []
 export function addAdd(fiber: Fiber) {
   addes.push(fiber)
+}
+
+export type UpdateEffect = () => void
+const updateEffects: UpdateEffect[] = []
+export function updateEffect(set: UpdateEffect) {
+  updateEffects.push(set)
 }
 /**
  * 提交变更应该从根dirty节点开始。
@@ -50,7 +57,7 @@ export function commitRoot() {
     deepUpdateDirty(fiber)
   })
   dirtys.length = 0
-  //初始化
+  //初始化ref
   addes.forEach(function (fiber) {
     fiber.effectTag = undefined
     if (fiber.dom) {
@@ -59,17 +66,12 @@ export function commitRoot() {
       }
     }
   })
-  //避免初始化时，dom元素还未生成
-  addes.forEach(function (fiber) {
-    fiber.hooks?.effect.forEach(effect => {
-      effect({
-        deps: effect().deps,
-        destroy: effect().effect() as undefined,
-        effect: effect().effect
-      })
-    })
-  })
   addes.length = 0
+  //执行所有的effect
+  updateEffects.forEach(update => {
+    update()
+  })
+  updateEffects.length = 0
 }
 
 function deepUpdateDirty(fiber: Fiber) {
@@ -77,7 +79,8 @@ function deepUpdateDirty(fiber: Fiber) {
   let prevChild: Fiber | undefined
   while (child) {
     child.prev = prevChild
-    if (child.dom) {
+    if (child.dom && child.type != createPortal) {
+      //portal不能作为子节点
       const parentBefore = child.prev
         ? getCurrentBefore(child.prev)
         : findParentBefore(child)
@@ -98,8 +101,23 @@ function deepUpdateDirty(fiber: Fiber) {
 }
 
 type FindParentAndBefore = [FiberNode, FiberNode | null] | [FiberNode | null, FiberNode] | null
+/**
+ * portal内的节点不会找到portal外，portal外的节点不会找到portal内。
+ * 即向前遍历，如果该节点是portal，跳过再向前
+ * 向上遍历，如果该节点是portal，不再向上---本来不会再向上。
+ * @param fiber 
+ * @returns 
+ */
 function getCurrentBefore(fiber: Fiber): FindParentAndBefore {
+  if (fiber.type == createPortal) {
+    if (fiber.prev) {
+      return getCurrentBefore(fiber.prev)
+    } else {
+      return findParentBefore(fiber)
+    }
+  }
   if (fiber.dom) {
+    //portal节点不能作为邻节点
     return [getParentDomFilber(fiber).dom!, fiber.dom]
   }
   if (fiber.lastChild) {
@@ -170,7 +188,12 @@ function circleCommitDelection(fiber: Fiber | undefined, domParent: FiberNode) {
     circleCommitDelection(fiber.sibling, domParent)
   }
 }
+
 function removeFromDom(fiber: Fiber, domParent: FiberNode) {
+  if (fiber.type == createPortal) {
+    //portal节点不能移除
+    return
+  }
   if (fiber.props?.exit) {
     fiber.props.exit(fiber.dom).then(function () {
       removeFromParent(domParent, fiber.dom!)

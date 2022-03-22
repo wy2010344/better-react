@@ -1,7 +1,9 @@
+import { updateEffect } from "./commitWork"
 import { ContextProvider, Fiber, StoreValue } from "./Fiber"
-import Better from "./index"
+import Better, { createPortal } from "./index"
 import { reconcile } from "./reconcile"
 import { reconcileChildren } from "./reconcileChildren"
+import { getPortalDom } from "./updateDom"
 
 /**当前计算的hook节点 */
 let wipFiber: Fiber | undefined = undefined
@@ -32,6 +34,9 @@ export function updateFunctionComponent(fiber: Fiber) {
   } else if (fiber.type == reconcileChildren) {
     //是数组
     reconcileChildren(fiber, fiber.props?.children)
+  } else if (fiber.type == createPortal) {
+    fiber.dom = getPortalDom(fiber.props!.node)
+    reconcileChildren(fiber, [fiber.props!.content])
   } else {
     const cs = fiber.type({
       ...fiber.props,
@@ -113,25 +118,36 @@ export function useEffect(effects: () => (void | (() => void)), deps: any[]) {
   wipFiber!.hooks!.effect.push(hook)
   hookIndex.effect!++
   const last = hook()
+
+  //hook都需要结束的时候才计算！！。
   if (last.deps.length == deps.length && deps.every((v, i) => v == last.deps[i])) {
     //完全相同，不处理
     if (last.effect == DEFAULT_EFFECT) {
       //延迟到DOM元素数据化后初始化
-      hook({
+      const nextHook = {
         deps,
-        effect: effects,
+        effects,
+        destroy: undefined
+      }
+      hook(nextHook as any)
+      updateEffect(() => {
+        nextHook.destroy = effects() as undefined
       })
     }
   } else {
-    last.destroy?.()
-    hook({
+    const nextHook = {
       deps,
-      effect: effects,
-      destroy: effects() as undefined
+      effects,
+      destroy: undefined
+    }
+    hook(nextHook as any)
+    updateEffect(() => {
+      last.destroy?.()
+      nextHook.destroy = effects() as undefined
     })
   }
 }
-export function useContext<T>(contextParent: ContextProvider<T>) {
+export function useContext<T>(contextParent: ContextProvider<T>): T {
   let currentFiber = wipFiber
   while (currentFiber) {
     const contexts = currentFiber?.hooks?.contexts

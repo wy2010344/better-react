@@ -53,12 +53,33 @@ function createFragment(props: Props) {
 }
 
 export const Fragment = createFragment
+
+
+/**
+ * 类似fragment
+ * 但不会添加到父节点
+ * 子节点会添加到其上
+ * 自己被删除时是子节点删除，或者说，销毁事件里有清空子节点——都不太科学。。。像正常的销毁，不会移除
+ * @param content
+ * @param node 
+ * @returns 
+ */
+export function createPortal(content: BetterNode, node: Node,): BetterNode {
+  return {
+    type: createPortal as any,
+    props: {
+      node,
+      content
+    }
+  }
+}
 export default {
   createElement,
   useState,
   useStateFrom,
   useValue,
   createFragment,
+  createPortal,
   render
 }
 
