@@ -1,11 +1,14 @@
-import { BetterNode } from "../better-react/Fiber"
-import Better from '../better-react'
-import { useEffect, useRef, useRefValue, useState } from "../better-react/fc"
+
+
+import { BetterNode, createElement } from '../better-react-dom'
+import { Fragment } from 'better-react'
+import { useEffect, useRefValue } from "better-react"
 import { dragMoveHelper, dragMoveUtil, dragResizeHelper } from "./drag"
 import { useRefVueValue } from "../better-react-helper/VueAdapter"
 import { newLifeModel } from "../better-react-helper/Vue"
 import { moveFirst, removePanel } from "./panel"
 import ReSize from "./ReSize"
+import { useRef } from '../better-react-helper/useRef'
 
 export default function PanelMve({
   index,

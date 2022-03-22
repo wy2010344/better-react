@@ -1,5 +1,4 @@
-import { useEffect, useRefValue } from "../better-react/fc"
-import { useRefAtomVueValue } from "./VueAdapter"
+import { useEffect, useRefValue } from "better-react"
 
 
 

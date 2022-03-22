@@ -1,9 +1,8 @@
 import { updateEffect } from "./commitWork"
 import { ContextProvider, Fiber, StoreValue } from "./Fiber"
-import Better, { createPortal } from "./index"
+import { createPortal, Fragment } from "./index"
 import { reconcile } from "./reconcile"
 import { reconcileChildren } from "./reconcileChildren"
-import { getPortalDom } from "./updateDom"
 
 /**当前计算的hook节点 */
 let wipFiber: Fiber | undefined = undefined
@@ -11,40 +10,37 @@ let wipFiber: Fiber | undefined = undefined
 const hookIndex = {
   value: 0,
   effect: 0,
-  ref: 0
+  ref: 0,
+  memo: 0
 }
 /**
  * 更新函数式组件
  * @param fiber 
  */
 export function updateFunctionComponent(fiber: Fiber) {
-  wipFiber = fiber
-  hookIndex.value = 0
-  hookIndex.effect = 0
-  hookIndex.ref = 0
-  wipFiber.hooks = {
-    value: [],
-    effect: [],
-    ref: [],
-    contexts: fiber.props?.contexts
-  }
-
-  if (fiber.type == Better.createFragment) {
+  if (fiber.type == Fragment) {
+    //是fragment
     reconcileChildren(fiber, fiber.props?.children)
   } else if (fiber.type == reconcileChildren) {
     //是数组
     reconcileChildren(fiber, fiber.props?.children)
   } else if (fiber.type == createPortal) {
-    fiber.dom = getPortalDom(fiber.props!.node)
+    //是portal
+    fiber.dom = fiber.props?.node
     reconcileChildren(fiber, [fiber.props!.content])
   } else {
-    const cs = fiber.type({
-      ...fiber.props,
-      children: fiber.props?.children.length == 1
-        ? fiber.props?.children[0]
-        : fiber.props?.children
-    })
-    reconcileChildren(fiber, [cs])
+    wipFiber = fiber
+    hookIndex.value = 0
+    hookIndex.effect = 0
+    hookIndex.ref = 0
+    hookIndex.memo = 0
+    wipFiber.hooks = {
+      value: [],
+      effect: [],
+      ref: [],
+      memo: []
+    }
+    reconcileChildren(fiber, fiber.render(fiber))
   }
 }
 
@@ -54,13 +50,6 @@ export function useValue<T>(init: () => T) {
   wipFiber!.hooks!.value.push(hook)
   hookIndex.value!++
   return hook.render as StoreValue<T>
-}
-export function useStateFrom<T>(init: () => T) {
-  const hook = useValue(init)
-  return [hook(), hook] as const
-}
-export function useState<T>(initial: T) {
-  return useStateFrom(() => initial)
 }
 
 function storeValue<T>(value: T) {
@@ -101,26 +90,25 @@ export function useRefValue<T>(init: () => T) {
   return hook as StoreValue<T>
 }
 
-export function useRef<T>(init: T) {
-  return useRefValue(() => init)
-}
-
 const DEFAULT_EFFECT = () => { }
-export function useEffect(effects: () => (void | (() => void)), deps: any[]) {
+export function useEffect(effects: () => (void | (() => void)), deps?: readonly any[]) {
   const hook = wipFiber?.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks.effect[hookIndex.effect] || storeRef({
     effect: DEFAULT_EFFECT,
     deps: []
   }) as StoreValue<{
-    deps: any[]
+    deps?: any[]
     effect: any
     destroy?(): void
   }>
   wipFiber!.hooks!.effect.push(hook)
-  hookIndex.effect!++
+  hookIndex.effect++
   const last = hook()
 
   //hook都需要结束的时候才计算！！。
-  if (last.deps.length == deps.length && deps.every((v, i) => v == last.deps[i])) {
+  if (Array.isArray(last.deps)
+    && Array.isArray(deps)
+    && last.deps.length == deps.length
+    && deps.every((v, i) => v == last.deps![i])) {
     //完全相同，不处理
     if (last.effect == DEFAULT_EFFECT) {
       //延迟到DOM元素数据化后初始化
@@ -147,10 +135,49 @@ export function useEffect(effects: () => (void | (() => void)), deps: any[]) {
     })
   }
 }
+
+export function useMemo<T>(effect: () => T, deps: readonly any[]) {
+  const hook = wipFiber?.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks.memo[hookIndex.memo] || storeRef({
+    effect: DEFAULT_EFFECT,
+    value: null,
+    deps: []
+  }) as StoreValue<{
+    deps: readonly any[]
+    value: any
+    effect: any
+  }>
+  wipFiber!.hooks!.memo.push(hook)
+  hookIndex.memo++
+  const last = hook()
+  if (last.deps.length == deps.length && deps.every((v, i) => v == last.deps![i])) {
+    //完全相同，不处理
+    if (last.effect == DEFAULT_EFFECT) {
+      //第一次，要处理
+      const value = effect()
+      hook({
+        deps,
+        effect,
+        value
+      })
+      return value
+    } else {
+      //返回上一次结果
+      return hook().value
+    }
+  } else {
+    const value = effect()
+    hook({
+      deps,
+      effect,
+      value
+    })
+    return value
+  }
+}
 export function useContext<T>(contextParent: ContextProvider<T>): T {
   let currentFiber = wipFiber
   while (currentFiber) {
-    const contexts = currentFiber?.hooks?.contexts
+    const contexts = currentFiber?.props?.contexts
     if (contexts) {
       for (let i = 0; i < contexts.length; i++) {
         const context = contexts[i]

@@ -33,6 +33,7 @@ export function reconcileChildren(fiber: Fiber, elements?: any[], mustKey?: bool
           //如果找到了，就更新
           newFiber = {
             type: oldKeyFiber.type,
+            render: element.render,
             props: element.props,
             dom: oldKeyFiber.dom,
             parent: fiber,
@@ -44,6 +45,7 @@ export function reconcileChildren(fiber: Fiber, elements?: any[], mustKey?: bool
           //没找到，就新建
           newFiber = {
             type: element.type,
+            render: element.render,
             props: element.props,
             parent: fiber,
             effectTag: "PLACEMENT"
@@ -73,6 +75,7 @@ export function reconcileChildren(fiber: Fiber, elements?: any[], mustKey?: bool
               newFiber = {
                 type: oldFiber.type,
                 props: element.props,
+                render: element.render,
                 dom: oldFiber.dom,
                 parent: fiber,
                 alternate: oldFiber,
@@ -83,6 +86,7 @@ export function reconcileChildren(fiber: Fiber, elements?: any[], mustKey?: bool
               //没匹配上，新增旧删
               newFiber = {
                 type: element.type,
+                render: element.render,
                 props: element.props,
                 parent: fiber,
                 effectTag: "PLACEMENT"
@@ -97,6 +101,7 @@ export function reconcileChildren(fiber: Fiber, elements?: any[], mustKey?: bool
           //没有匹配位置的旧元素，新加
           newFiber = {
             type: element.type,
+            render: element.render,
             props: element.props,
             parent: fiber,
             effectTag: "PLACEMENT"

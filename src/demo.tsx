@@ -1,10 +1,12 @@
-import Better from './better-react'
-import { useEffect, useState } from './better-react/fc';
+import { Fragment } from 'better-react';
+import { createElement } from './better-react-dom';
+import { useEffect } from 'better-react';
 import { useStoreTriggerRender, ValueCenter } from './better-react-helper/ValueCenter';
+import { useState } from './better-react-helper/useState';
 const store = ValueCenter.of(1)
 function Counter({ group }: { group: string }) {
-  const [state, setState] = Better.useState(1);
-  const [show, setShow] = Better.useState(false)
+  const [state, setState] = useState(1);
+  const [show, setShow] = useState(false)
   const value = useStoreTriggerRender(store)
   console.log("render", state)
   useEffect(function () {
@@ -32,7 +34,7 @@ function Counter({ group }: { group: string }) {
 
 let uid = 5
 function ListApp() {
-  const [state, setState] = Better.useState<number[]>([1, 2, 3])
+  const [state, setState] = useState<number[]>([1, 2, 3])
   return <div>
     {state.map((v, i) => {
       return <div key={v}>
@@ -72,6 +74,13 @@ export function Demo() {
     <hr />
     <ListApp />
   </div>
+}
+
+export function Demo2() {
+  const [show, setShow] = useState(true)
+  return <button onClick={() => setShow(!show)}>
+    这是文字
+  </button>
 }
 
 function sleep(n: number) {

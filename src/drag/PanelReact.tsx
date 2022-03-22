@@ -1,8 +1,9 @@
-import { BetterNode } from "../better-react/Fiber"
-import Better from '../better-react'
-import { useRef, useRefValue, useState } from "../better-react/fc"
+import { BetterNode, createElement } from '../better-react-dom'
+import { useRefValue } from "better-react"
 import { dragMoveHelper, dragResizeHelper } from "./drag"
 import ReSize from "./ReSize"
+import { useState } from '../better-react-helper/useState'
+import { useRef } from '../better-react-helper/useRef'
 
 export type RenderChildren = (x: { width: number, height: number }) => BetterNode
 

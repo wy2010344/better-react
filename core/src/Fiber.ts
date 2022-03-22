@@ -1,7 +1,21 @@
-import { FiberNode, StyleNode } from "./updateDom"
+import { FindParentAndBefore } from "./commitWork"
+
+export type VirtaulDomNode = {
+  node: any
+  update(fiber: Fiber): void
+  appendAfter(value: FindParentAndBefore): void
+  removeFromParent(): void
+  destroy(): void
+}
 
 export type Fiber = {
   type?: any
+  /**
+   * @param fiber 自身，可能在函数中附加DOM节点
+   * @param props 
+   * @returns 返回供使用的DOM节点
+   */
+  render(fiber: Fiber): any[]
   props?: Props
   /**第一个子节点 */
   child?: Fiber
@@ -26,7 +40,7 @@ export type Fiber = {
   pool?: Map<any, Fiber>
 
   /**只有dom的节点有这两个属性 */
-  dom?: FiberNode
+  dom?: VirtaulDomNode
   /**只有hooks有Fiber有这两个属性 */
   hooks?: {
     value: {
@@ -34,22 +48,18 @@ export type Fiber = {
       render: StoreValue<any>
     }[]
     effect: StoreValue<{
-      deps: any[]
+      deps?: readonly any[]
       effect(): void | (() => void)
       destroy?(): void
     }>[]
+    memo: StoreValue<{
+      deps: readonly any[]
+      value: any
+      effect(): any
+    }>[]
     ref: StoreValue<any>[]
-    contexts?: Context<any>[]
-  }
-}
-
-export function findFiberCreateStyle(fiber: Fiber | undefined) {
-  while (fiber) {
-    if (fiber?.props?.styleCreater) {
-      return fiber?.props?.styleCreater
-    }
-    fiber = fiber.parent
-  }
+  },
+  contexts?: Context<any>[]
 }
 
 export function getPool(fiber: Fiber) {
@@ -69,14 +79,9 @@ export type StoreValue<T> = ((v: T) => void) & (() => T)
 export type Props = { [key: string]: any }
 
 export type FunctionNode<T> = {
-  type(v: T): BetterNode
+  type(v: T): any
   props: T
 }
-export type BetterNode = FunctionNode<any> | {
-  type: string
-  props: Props
-  key: any
-} | string | boolean | number | undefined
 
 let contextUid = 0
 export class ContextProvider<T>{

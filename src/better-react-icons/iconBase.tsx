@@ -1,8 +1,9 @@
-import { BetterNode } from '../better-react/Fiber';
-import { React } from '../better-react/tsxSupport';
-import { IconContext, DefaultContext } from './iconContext';
-import Better from '../better-react'
-import { useContext } from '../better-react/fc';
+
+import { React } from '../better-react-dom/tsxSupport';
+import { IconContext } from './iconContext';
+import { createElement, BetterNode } from '../better-react-dom'
+import { useContext } from 'better-react'
+
 
 export interface IconTree {
   tag: string;
@@ -11,8 +12,8 @@ export interface IconTree {
 }
 
 
-function Tree2Element(tree: IconTree[]): BetterNode[] {
-  return tree && tree.map((node, i) => Better.createElement(node.tag, { key: i, ...node.attr }, Tree2Element(node.child)));
+function Tree2Element(tree: IconTree[]): JSX.Element[] {
+  return tree && tree.map((node, i) => createElement(node.tag, { key: i, ...node.attr }, Tree2Element(node.child)));
 }
 export function GenIcon(data: IconTree) {
   return (props: IconBaseProps) => (

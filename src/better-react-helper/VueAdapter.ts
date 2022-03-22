@@ -1,4 +1,4 @@
-import { useRefValue } from "../better-react/fc";
+import { useRefValue } from "better-react";
 import { notEqualChange, ShouldChange, valueOf } from "./Vue";
 
 

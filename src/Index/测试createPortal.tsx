@@ -1,7 +1,10 @@
-import Better, { createPortal } from '../better-react'
+
+import { createElement } from '../better-react-dom'
+import { createPortal, Fragment, useEffect, useMemo } from 'better-react'
 import { RouteFun } from '.'
 import PanelReact from '../drag/PanelReact'
-import { useEffect, useState } from '../better-react/fc'
+import { FiberNode } from '../better-react-dom/updateDom'
+import { useState } from '../better-react-helper/useState'
 
 const 测试createPortal: RouteFun<void> = ({ close, moveToFirst }) => {
 
@@ -25,13 +28,18 @@ function Page() {
     }
   }, [])
 
+  const aa = useMemo(() => {
+    console.log("计算memo", state)
+    return state
+  }, [state])
   return <>
-    <button onClick={() => stateValue(state - 1)}>文字--</button>
+    <button onClick={() => stateValue(state - 1)}>文字--{aa}</button>
+    <button onClick={() => setShowPortal(!showPortal)}>切换portal</button>
     {createPortal(showPortal && state < 3 ? <div>
       我是追加 {state}
       <TestView />
       <button onClick={() => stateValue(state + 1)}>文字++</button>
-    </div> : undefined, document.body)}
+    </div> : undefined, FiberNode.create(document.body))}
 
     <div>{Array(state).fill("").map((_, i) => {
       return <div>测试{i}</div>

@@ -1,5 +1,5 @@
-import { Fragment } from "../better-react"
-import { useEffect } from "../better-react/fc"
+import { Fragment } from "better-react"
+import { useEffect } from "better-react"
 import { useOnlyId } from "./useOnlyId"
 import { ValueCenter, useStoreTriggerRender } from "./ValueCenter"
 
@@ -34,6 +34,7 @@ export function createSharePortal() {
     },
     PortalCall({ children }: { children(i: string): JSX.Element }) {
       const { id } = useOnlyId()
+      console.log(children)
       buildDestroy(id, children(id))
       return null
     },

@@ -1,6 +1,6 @@
 import { RouteFun, usePanel } from ".";
-import Better, { createPortal } from "../better-react";
-import { useState } from "../better-react/fc";
+import { createElement } from '../better-react-dom'
+import { Fragment } from 'better-react'
 import PanelReact from "../drag/PanelReact";
 
 const 首页: RouteFun<void> = ({

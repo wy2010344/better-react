@@ -1,21 +1,19 @@
 import { addDirty, commitRoot } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
-import { Fiber, findFiberCreateStyle } from "./Fiber"
-import { reconcileChildren } from "./reconcileChildren"
-import { createDom } from "./updateDom"
+import { Fiber } from "./Fiber"
 let nextUnitOfWork: Fiber | undefined = undefined
 /**
  * 循环更新界面
  * @param deadline 
  */
-function workLoop(deadline: IdleDeadline) {
+function workLoop(shouldContinue: () => boolean) {
   let willContinue = true
   while (willContinue && nextUnitOfWork) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
-    willContinue = deadline.timeRemaining() > 1
+    willContinue = shouldContinue()
   }
   if (nextUnitOfWork) {
-    requestIdleCallback(workLoop)
+    askNextTimeWork(workLoop)
   } else {
     commitRoot()
     afterRenderSet.forEach(afterRender => afterRender())
@@ -33,9 +31,12 @@ let doWork = false
 let nextJob = false
 
 let rootFiber: Fiber
+export type AskNextTimeWork = (v: (v: () => boolean) => void) => void
+let askNextTimeWork: AskNextTimeWork = () => { }
 /**每次render后调用，可以用于Layout动画之类的，在useEffect里监听与移除*/
 export const afterRenderSet = new Set<() => void>()
-export function setRootFiber(fiber: Fiber) {
+export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
+  askNextTimeWork = ask
   rootFiber = fiber
   addDirty(fiber)
   const afterRender = function () {
@@ -48,7 +49,7 @@ export function setRootFiber(fiber: Fiber) {
   }
   afterRenderSet.add(afterRender)
 }
-/**
+/**deadline.timeRemaining() > 1
  * 被通知去找到最新的根节点，并计算
  */
 export function reconcile() {
@@ -57,7 +58,7 @@ export function reconcile() {
   } else {
     doWork = true
     nextUnitOfWork = rootFiber
-    requestIdleCallback(workLoop);
+    askNextTimeWork(workLoop)
   }
 }
 /**
@@ -69,13 +70,7 @@ export function reconcile() {
 function performUnitOfWork(fiber: Fiber) {
   //当前fiber脏了，需要重新render
   if (fiber.effectTag) {
-    const isFunctionComponent = fiber.type instanceof Function
-    if (isFunctionComponent) {
-      updateFunctionComponent(fiber)
-    } else {
-      //普通元素，包括根元素
-      updateHostComponent(fiber)
-    }
+    updateFunctionComponent(fiber)
   }
   if (fiber.child) {
     if (fiber.child.effectTag == "DIRTY") {
@@ -103,14 +98,4 @@ function performUnitOfWork(fiber: Fiber) {
     nextFiber = nextFiber.parent
   }
   return undefined
-}
-/**
- * 更新原始dom节点
- * @param fiber 
- */
-function updateHostComponent(fiber: Fiber) {
-  if (!fiber.dom) {
-    fiber.dom = createDom(fiber.type, fiber.props, findFiberCreateStyle(fiber))
-  }
-  reconcileChildren(fiber, fiber.props?.children)
 }

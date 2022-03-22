@@ -1,10 +1,40 @@
-import { BetterNode, Fiber, Props } from "./Fiber"
+import { FindParentAndBefore } from "better-react"
+import { Fiber, Props, VirtaulDomNode } from "better-react"
 
 
-
-
-export type FiberNode = {
-  node: Node
+export function findFiberCreateStyle(fiber: Fiber | undefined) {
+  while (fiber) {
+    if (fiber?.props?.styleCreater) {
+      return fiber?.props?.styleCreater
+    }
+    fiber = fiber.parent
+  }
+}
+export class FiberNode implements VirtaulDomNode {
+  private constructor(
+    public node: Node
+  ) { }
+  static create(node: Node) {
+    return new FiberNode(node)
+  }
+  appendAfter(value: FindParentAndBefore): void {
+    appendAfter(this, value as any)
+  }
+  destroy(): void {
+    if (this.style) {
+      this.style.destroy()
+    }
+  }
+  update(fiber: Fiber) {
+    updateDom(this,
+      fiber.alternate?.props,
+      fiber.props,
+      findFiberCreateStyle(fiber)
+    )
+  }
+  removeFromParent() {
+    this.node.parentElement?.removeChild(this.node)
+  }
   style?: StyleNode
 }
 export type StyleNode = {
@@ -158,9 +188,7 @@ export function createDom(
       : document.createElement(type)
 
 
-  const node: FiberNode = {
-    node: dom
-  }
+  const node = FiberNode.create(dom)
   updateDom(node, {}, props, createStyle)
   return node
 }
@@ -173,12 +201,12 @@ export function createDom(
  */
 export function appendAfter(dom: FiberNode, parentAndBefore: [FiberNode, FiberNode | null] | [FiberNode | null, FiberNode]) {
   const [parent, before] = parentAndBefore
+
   const parentDom = parent ? parent.node : before?.node.parentNode
   if (parentDom) {
     const next = before?.node.nextSibling
     if (next) {
       if (next != dom.node) {
-        //不处理
         parentDom.insertBefore(dom.node, next!)
       }
     } else if (parentDom.lastChild != dom.node) {
@@ -192,12 +220,6 @@ export function appendAfter(dom: FiberNode, parentAndBefore: [FiberNode, FiberNo
 export function removeFromParent(domParent: FiberNode, dom: FiberNode) {
   domParent.node.removeChild(dom.node)
 
-}
-
-export function removeFiberDom(dom: FiberNode) {
-  if (dom.style) {
-    dom.style.destroy()
-  }
 }
 
 

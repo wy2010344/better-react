@@ -1,4 +1,7 @@
-import { useRefValue } from "../better-react/fc"
+import { useRefValue } from "better-react"
+
+
+
 let id = 0
 export function useOnlyId(prefix?: string) {
   const ref = useRefValue(() => id++)

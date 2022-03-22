@@ -20,6 +20,11 @@ anymatch@~3.1.2:
     normalize-path "^3.0.0"
     picomatch "^2.0.4"
 
+better-react@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/better-react/-/better-react-0.0.1.tgz#95c7427362531d9c55d7fcc83cddc5bc8eb6296a"
+  integrity sha512-CLhgDQYbkomlqnmwqsGT6+XjPvECy9yt2tFLYTHEFO3wml0b6ArjdFIrGxFqtMknbW1V7J6OnmjoZqP9G7cBNA==
+
 binary-extensions@^2.0.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-2.2.0.tgz#75f502eeaf9ffde42fc98829645be4ea76bd9e2d"

@@ -1,6 +1,5 @@
 import { createPortal } from "."
-import { Fiber, findFiberCreateStyle } from "./Fiber"
-import { appendAfter, FiberNode, removeFiberDom, removeFromParent, StyleNode, updateDom } from "./updateDom"
+import { Fiber, VirtaulDomNode } from "./Fiber"
 
 //等待删除的fiber
 const deletions: Fiber[] = []
@@ -31,21 +30,15 @@ export function updateEffect(set: UpdateEffect) {
  */
 export function commitRoot() {
   deletions.forEach(function (fiber) {
-    const domParent = getDomParent(fiber)
     notifyDel(fiber)
-    commitDeletion(fiber, domParent)
+    commitDeletion(fiber)
     fiber.effectTag = undefined
   })
   deletions.length = 0
 
   updates.forEach(function (fiber) {
     if (fiber.dom) {
-      updateDom(
-        fiber.dom!,
-        fiber.alternate?.props,
-        fiber.props,
-        findFiberCreateStyle(fiber)
-      )
+      fiber.dom.update(fiber)
     }
     fiber.alternate = undefined
     fiber.effectTag = undefined
@@ -85,7 +78,7 @@ function deepUpdateDirty(fiber: Fiber) {
         ? getCurrentBefore(child.prev)
         : findParentBefore(child)
       if (parentBefore) {
-        appendAfter(child.dom, parentBefore)
+        child.dom.appendAfter(parentBefore)
       } else {
         console.error("未找到", child.dom)
       }
@@ -100,7 +93,7 @@ function deepUpdateDirty(fiber: Fiber) {
   }
 }
 
-type FindParentAndBefore = [FiberNode, FiberNode | null] | [FiberNode | null, FiberNode] | null
+export type FindParentAndBefore = [VirtaulDomNode, VirtaulDomNode | null] | [VirtaulDomNode | null, VirtaulDomNode] | null
 /**
  * portal内的节点不会找到portal外，portal外的节点不会找到portal内。
  * 即向前遍历，如果该节点是portal，跳过再向前
@@ -163,50 +156,45 @@ function getParentDomFilber(fiber: Fiber) {
   }
   return domParentFiber
 }
-function getDomParent(fiber: Fiber) {
-  return getParentDomFilber(fiber).dom!
-}
 /**
  * 需要一直找到具有dom节点的子项
  * @param fiber 
  * @param domParent 
  */
-function commitDeletion(fiber: Fiber, domParent: FiberNode) {
+function commitDeletion(fiber: Fiber) {
   if (fiber.dom) {
-    removeFromDom(fiber, domParent)
+    removeFromDom(fiber)
   } else {
-    circleCommitDelection(fiber.child, domParent)
+    circleCommitDelection(fiber.child)
   }
 }
-function circleCommitDelection(fiber: Fiber | undefined, domParent: FiberNode) {
+function circleCommitDelection(fiber: Fiber | undefined) {
   if (fiber) {
     if (fiber.dom) {
-      removeFromDom(fiber, domParent)
+      removeFromDom(fiber)
     } else {
-      circleCommitDelection(fiber.child, domParent)
+      circleCommitDelection(fiber.child)
     }
-    circleCommitDelection(fiber.sibling, domParent)
+    circleCommitDelection(fiber.sibling)
   }
 }
 
-function removeFromDom(fiber: Fiber, domParent: FiberNode) {
+function removeFromDom(fiber: Fiber) {
   if (fiber.type == createPortal) {
     //portal节点不能移除
     return
   }
   if (fiber.props?.exit) {
     fiber.props.exit(fiber.dom).then(function () {
-      removeFromParent(domParent, fiber.dom!)
+      fiber.dom!.removeFromParent()
     })
   } else {
-    removeFromParent(domParent, fiber.dom!)
+    fiber.dom!.removeFromParent()
   }
   if (fiber.props?.ref) {
     fiber.props.ref(null)
   }
 }
-
-
 function notifyDel(fiber: Fiber) {
   destroyFiber(fiber)
   if (fiber.child) {
@@ -224,6 +212,6 @@ function destroyFiber(fiber: Fiber) {
     effect.forEach(ef => ef().destroy?.())
   }
   if (fiber.dom) {
-    removeFiberDom(fiber.dom)
+    fiber.dom.destroy()
   }
 }

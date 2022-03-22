@@ -1,5 +1,5 @@
-import { createContext } from "../better-react/Fiber";
-import { React } from "../better-react/tsxSupport";
+import { createContext } from "better-react";
+import { React } from "../better-react-dom/tsxSupport";
 
 export interface IconContext {
   color?: string;

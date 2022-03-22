@@ -1,5 +1,6 @@
 import { RouteFun } from '.'
-import Better from '../better-react'
+import { createElement } from '../better-react-dom'
+import { Fragment } from 'better-react'
 import PanelReact from '../drag/PanelReact'
 
 

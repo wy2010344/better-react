@@ -1,5 +1,5 @@
-import { useEffect, useRefValue, useState } from "../better-react/fc"
-
+import { useEffect, useRefValue } from "better-react"
+import { useState } from './useState'
 export type NotifyHandler<T> = (v: T) => void
 
 export class ValueCenter<T>{
