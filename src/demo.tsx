@@ -1,8 +1,7 @@
 import { Fragment } from 'better-react';
-import { createElement } from './better-react-dom';
+import { createElement } from 'better-react-dom';
 import { useEffect } from 'better-react';
-import { useStoreTriggerRender, ValueCenter } from './better-react-helper/ValueCenter';
-import { useState } from './better-react-helper/useState';
+import { useStoreTriggerRender, ValueCenter, useState } from 'better-react-helper';
 const store = ValueCenter.of(1)
 function Counter({ group }: { group: string }) {
   const [state, setState] = useState(1);

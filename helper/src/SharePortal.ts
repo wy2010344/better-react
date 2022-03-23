@@ -1,14 +1,16 @@
-import { Fragment } from "better-react"
+
 import { useEffect } from "better-react"
 import { useOnlyId } from "./useOnlyId"
 import { ValueCenter, useStoreTriggerRender } from "./ValueCenter"
 
 
-
+export interface XElement {
+  key?: string | number | null
+}
 export function createSharePortal() {
-  const portals = ValueCenter.of<JSX.Element[]>([])
+  const portals = ValueCenter.of<XElement[]>([])
 
-  function buildDestroy(id: string, p: JSX.Element) {
+  function buildDestroy(id: string, p: XElement) {
     useEffect(() => {
       const ps = portals.get()
       const idx = ps.findIndex(v => v.key == id)
@@ -32,22 +34,15 @@ export function createSharePortal() {
     usePortals() {
       return useStoreTriggerRender(portals)
     },
-    PortalCall({ children }: { children(i: string): JSX.Element }) {
+    PortalCall({ children }: { children(i: string): XElement }) {
       const { id } = useOnlyId()
       console.log(children)
       buildDestroy(id, children(id))
       return null
     },
-    Portal({ children }: { children: JSX.Element }) {
+    Portal({ children }: { children: XElement }) {
       const { id } = useOnlyId()
       buildDestroy(id, { ...children, key: id })
-      return null
-    },
-    PortalFragmet({ children }: { children: JSX.Element }) {
-      const { id } = useOnlyId()
-      buildDestroy(id, <Fragment key={id}>
-        {children}
-      </Fragment>)
       return null
     }
   }

@@ -1,10 +1,10 @@
 
-import { createElement } from '../better-react-dom'
+import { createElement } from 'better-react-dom'
 import { createPortal, Fragment, useEffect, useMemo } from 'better-react'
 import { RouteFun } from '.'
 import PanelReact from '../drag/PanelReact'
-import { FiberNode } from '../better-react-dom/updateDom'
-import { useState } from '../better-react-helper/useState'
+import { FiberNode } from 'better-react-dom'
+import { useState } from 'better-react-helper'
 
 const 测试createPortal: RouteFun<void> = ({ close, moveToFirst }) => {
 

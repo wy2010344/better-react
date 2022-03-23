@@ -1,6 +1,8 @@
 import { Fiber, Props } from "better-react";
 import { createDom, findFiberCreateStyle } from "./updateDom";
-
+export { FiberNode } from './updateDom'
+export { askTimeWork } from './askTimeWork'
+export type { React } from '../@types/tsxSupport'
 export type FunctionNode<T> = {
   type(v: T): any
   props: T

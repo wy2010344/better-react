@@ -1,9 +1,9 @@
 import PanelMve from './PanelMve'
-import { createElement } from '../better-react-dom'
+import { createElement } from 'better-react-dom'
 import { Fragment } from 'better-react'
 import PanelReact from './PanelReact'
 import { moveFirst, PortalCall, removePanel, usePortals } from './panel'
-import { useState } from '../better-react-helper/useState'
+import { useState } from 'better-react-helper'
 export default function DeskTop() {
 
 

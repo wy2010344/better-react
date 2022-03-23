@@ -1,7 +1,7 @@
 
-import { createElement } from '../better-react-dom'
+import { createElement } from 'better-react-dom'
 import { Fragment, useContext, useEffect, createContext, useRefValue } from 'better-react'
-import { useStoreTriggerRender, ValueCenter } from "../better-react-helper/ValueCenter"
+import { useStoreTriggerRender, ValueCenter } from "better-react-helper"
 import PanelReact from "../drag/PanelReact"
 import prolog from "./prolog"
 import Prolog from "./prolog"

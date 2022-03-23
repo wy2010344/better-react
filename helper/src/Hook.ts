@@ -1,8 +1,8 @@
 export function generateHook() {
-  return function Hook({
+  return function Hook<T>({
     children
   }: {
-    children: () => JSX.Element
+    children: () => T
   }) {
     return children()
   }

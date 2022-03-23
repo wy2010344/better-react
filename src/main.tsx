@@ -1,15 +1,16 @@
 
-import { nestCss } from './better-react-helper/NestCss';
+import { nestCss } from 'better-react-helper';
 import DeskTop from './drag/deskTop';
 import './style.css'
-import { createElement } from './better-react-dom'
+import { createElement } from 'better-react-dom'
 import { render } from 'better-react'
-import { FiberNode } from './better-react-dom/updateDom';
-import { askTimeWork } from './better-react-dom/askTimeWork';
+import { FiberNode } from 'better-react-dom';
+import { askTimeWork } from '../dom/src/askTimeWork';
+import Index from './Index';
 
 function App() {
-  //return <Index />
-  return <DeskTop />
+  return <Index />
+  //return <DeskTop />
   //return <Demo />
 }
 

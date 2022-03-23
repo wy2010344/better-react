@@ -21,6 +21,7 @@
     "noImplicitReturns": true
   },
   "include": [
-    "./src"
+    "./src",
+    "better-react-dom/types"
   ]
 }

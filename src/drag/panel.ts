@@ -1,4 +1,4 @@
-import { createSharePortal } from "../better-react-helper/SharePortal"
+import { createSharePortal } from "better-react-helper"
 
 
 

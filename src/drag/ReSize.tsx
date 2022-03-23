@@ -1,7 +1,7 @@
 
-import { createElement } from '../better-react-dom'
+import { createElement } from 'better-react-dom'
 import { Fragment } from 'better-react'
-import { React } from '../better-react-dom/tsxSupport';
+import { React } from 'better-react-dom';
 import { Direction } from './drag';
 
 export default function ReSize({

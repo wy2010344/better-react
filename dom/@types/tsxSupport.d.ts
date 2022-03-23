@@ -41,7 +41,7 @@
 
 import * as CSS from 'csstype';
 import * as PropTypes from 'prop-types';
-import { StyleNode } from './updateDom';
+import { StyleNode } from '../src/updateDom';
 
 type NativeAnimationEvent = AnimationEvent;
 type NativeClipboardEvent = ClipboardEvent;

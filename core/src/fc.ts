@@ -3,7 +3,6 @@ import { ContextProvider, Fiber, StoreValue } from "./Fiber"
 import { createPortal, Fragment } from "./index"
 import { reconcile } from "./reconcile"
 import { reconcileChildren } from "./reconcileChildren"
-
 /**当前计算的hook节点 */
 let wipFiber: Fiber | undefined = undefined
 /**当前计算节点的hook下标 */

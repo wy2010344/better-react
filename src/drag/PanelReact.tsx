@@ -1,9 +1,9 @@
-import { BetterNode, createElement } from '../better-react-dom'
+import { BetterNode, createElement } from 'better-react-dom'
 import { useRefValue } from "better-react"
 import { dragMoveHelper, dragResizeHelper } from "./drag"
 import ReSize from "./ReSize"
-import { useState } from '../better-react-helper/useState'
-import { useRef } from '../better-react-helper/useRef'
+import { useState } from 'better-react-helper'
+import { useRef } from 'better-react-helper'
 
 export type RenderChildren = (x: { width: number, height: number }) => BetterNode
 
