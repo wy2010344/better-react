@@ -12,10 +12,11 @@ export function findFiberCreateStyle(fiber: Fiber | undefined) {
 }
 export class FiberNode implements VirtaulDomNode {
   private constructor(
-    public node: Node
+    public node: Node,
+    private _updateProp: (node: Node, key: string, value: any) => void
   ) { }
-  static create(node: Node) {
-    return new FiberNode(node)
+  static create(node: Node, updateProps: (node: Node, key: string, value: any) => void = updatePorps) {
+    return new FiberNode(node, updateProps)
   }
   appendAfter(value: FindParentAndBefore): void {
     appendAfter(this, value as any)
@@ -36,6 +37,10 @@ export class FiberNode implements VirtaulDomNode {
     this.node.parentElement?.removeChild(this.node)
   }
   style?: StyleNode
+
+  updateProp(key: string, value: any) {
+    this._updateProp(this.node, key, value)
+  }
 }
 export type StyleNode = {
   className: string
@@ -87,12 +92,12 @@ export function updateDom(
   prevKeys
     .filter(isProperty)
     .filter(isGone(prevProps, nextProps))
-    .forEach(name => dom[name] = "")
+    .forEach(name => _dom.updateProp(name, undefined))
   //修改变更属性
   nextKeys
     .filter(isProperty)
     .filter(isNew(prevProps, nextProps))
-    .forEach(name => dom[name] = nextProps[name])
+    .forEach(name => _dom.updateProp(name, nextProps[name]))
   //添加变更事件
   nextKeys
     .filter(isEvent)
@@ -171,6 +176,17 @@ function isGone(prev: Props, next: Props) {
     return !(key in next)
   }
 }
+
+export function updatePorps(node: any, key: string, value: any) {
+  node[key] = value
+}
+export function updateSVGProps(node: any, key: string, value: any) {
+  if (value) {
+    node.setAttribute(key, value)
+  } else {
+    node.removeAttribute(key)
+  }
+}
 /**
  * 创建节点
  * @param fiber 
@@ -181,14 +197,12 @@ export function createDom(
   props: Props | undefined,
   createStyle?: () => StyleNode
 ): FiberNode {
-  const dom = type == "TEXT_ELEMENT"
-    ? document.createTextNode("")
+  const node = type == "TEXT_ELEMENT"
+    ? FiberNode.create(document.createTextNode(""))
     : isSVG(type)
-      ? document.createElementNS("http://www.w3.org/2000/svg", type)
-      : document.createElement(type)
+      ? FiberNode.create(document.createElementNS("http://www.w3.org/2000/svg", type), updateSVGProps)
+      : FiberNode.create(document.createElement(type))
 
-
-  const node = FiberNode.create(dom)
   updateDom(node, {}, props, createStyle)
   return node
 }

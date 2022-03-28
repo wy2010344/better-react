@@ -1520,6 +1520,11 @@ declare namespace React {
     // Transition Events
     onTransitionEnd?: TransitionEventHandler<T> | undefined;
     onTransitionEndCapture?: TransitionEventHandler<T> | undefined;
+
+    /**加一个css属性，作为全局的类配置*/
+    css?: string
+    /**增加一个退出类型 */
+    exit?(e: T): Promise<void>
   }
 
   export interface CSSProperties extends CSS.Properties<string | number> {
@@ -1861,11 +1866,6 @@ declare namespace React {
      * @see https://html.spec.whatwg.org/multipage/custom-elements.html#attr-is
      */
     is?: string | undefined;
-
-    /**加一个css属性，作为全局的类配置*/
-    css?: string
-    /**增加一个退出类型 */
-    exit?(e: T): Promise<void>
   }
 
   interface AllHTMLAttributes<T> extends HTMLAttributes<T> {

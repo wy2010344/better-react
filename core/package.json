@@ -1,5 +1,5 @@
 {
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -32,7 +32,7 @@
     "trailingComma": "es5"
   },
   "name": "better-react",
-  "author": "汪洋",
+  "author": "wangyang2010344",
   "module": "dist/better-react.esm.js",
   "size-limit": [
     {

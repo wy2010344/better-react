@@ -54,6 +54,8 @@ export interface MbRange {
   end: number
   dir?: "->" | "<-"
 }
+
+
 const mb = {
   DOM: {
     addEvent(v: any, key: string, fun: any) {
@@ -204,7 +206,7 @@ type Browser = {
   version: number
   documentMode: any
 }
-mb.browser = (function () {
+export const browser = (function () {
   //http://www.jb51.net/article/50464.htm
   var myBrowser = function () {
     var ret: Browser = {
@@ -238,4 +240,8 @@ mb.browser = (function () {
   var ret = myBrowser();
   return ret;
 })();
+
+export const contentEditable = {
+  text: browser.type == "FF" ? "true" : "plaintext-only"
+}
 export default mb

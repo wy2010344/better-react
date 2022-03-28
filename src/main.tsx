@@ -14,4 +14,4 @@ function App() {
   //return <Demo />
 }
 
-render(<App styleCreater={nestCss} />, FiberNode.create(document.getElementById("app")!), askTimeWork);
+render(<App styleCreater={nestCss} />, FiberNode.create(document.getElementById("app")!,), askTimeWork);

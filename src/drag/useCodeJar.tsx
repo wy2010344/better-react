@@ -1,4 +1,4 @@
-import mb, { MbRange } from "./mb"
+import mb, { contentEditable, MbRange } from "./mb"
 
 /**
  * 固定参数，返回一个延时函数
@@ -48,11 +48,15 @@ function beforeCursor(editor: HTMLElement) {
  */
 function afterCursor(editor: HTMLElement) {
 	const s = window.getSelection()
-	const r0 = s.getRangeAt(0)
-	const r = document.createRange()
-	r.selectNodeContents(editor)
-	r.setStart(r0.endContainer, r0.endOffset)
-	return r.toString()
+	if (s) {
+		const r0 = s.getRangeAt(0)
+		const r = document.createRange()
+		r.selectNodeContents(editor)
+		r.setStart(r0.endContainer, r0.endOffset)
+		return r.toString()
+	} else {
+		return ""
+	}
 }
 
 /**
@@ -347,50 +351,58 @@ export interface CodeJar {
 	setSelection(v: MbRange): void
 }
 export interface CodeJarOption {
-	type?: string
 	content?: string
 	/**内容改变时触发，包括设置内容|keyup|paste */
 	highlight(e: HTMLElement, pos: MbRange): void
-	init?(v: CodeJar): void
 	callback?(content: string): string
 	tab?: string
 	indentOn?: RegExp
 	spellcheck?: boolean
 	noClosing?: boolean
 	closePair?: string[]
-	width?: number
 	height?: number
+	width?: number
 	readonly?: boolean
-	element?: DOMNode
 }
-export default function CodeJar(p: CodeJarOption) {
-	p.tab = p.tab || "\t"
-	p.indentOn = p.indentOn || /{$/
-	p.closePair = p.closePair || ["()", "[]", '{}', '""', "''"]
-	const vm = {
-		tab: mve.valueOrCall(p.tab),
-		indentOn: mve.valueOrCall(p.indentOn),
-		spellcheck: mve.valueOrCall(p.spellcheck),
-		noClosing: mve.valueOrCall(p.noClosing),
-		closePair: mve.valueOrCall(p.closePair),
-		content: mve.valueOrCall(p.content || '')
+
+import { useState } from 'better-react-helper'
+export default function useCodeJar({
+	tab = "\t",
+	indentOn = /{$/,
+	closePair = ["()", "[]", '{}', '""', "''"],
+	height,
+	width,
+	highlight,
+	noClosing,
+	readonly,
+	spellcheck,
+	callback
+}: CodeJarOption) {
+	const [history, setHistory] = useState<HistoryRecord[]>([])
+	const [at, setAt] = useState<number>(-1)
+	function rememberHistory() {
+		setAt(recordHistory(editor, history, focus, at))
+		setHistory(history)
 	}
+
+
+
+
 	let editor: HTMLElement
 	const debounceHighlight = debounce(function () {
 		const pos = mb.DOM.getSelectionRange(editor)
-		p.highlight(editor, pos)
+		highlight(editor, pos)
 		mb.DOM.setSelectionRange(editor, pos)
 	}, 30)
 	let recording = false
 	const debounceRecordHistory = debounce(function (event: KeyboardEvent) {
 		if (shouldRecord(event)) {
 			//记录keydown-up之间的改变。
-			at = recordHistory(editor, history, focus, at)
+			rememberHistory()
 			recording = false
 		}
 	}, 300)
-	const history: HistoryRecord[] = []
-	let at = -1
+
 	let focus = false
 	//代码之前的鼠标事件
 	let prev: string
@@ -407,128 +419,89 @@ export default function CodeJar(p: CodeJarOption) {
 		}
 	}
 	function orCallback() {
-		if (p.callback) {
-			p.callback(jar.getContent())
+		if (callback) {
+			callback(jar.getContent())
 		}
 	}
 
 	return {
-		keydown(e: KeyboardEvent) {
-			if (e.defaultPrevented) return
-			prev = jar.getContent()
-			if (mb.DOM.keyCode.ENTER(e)) {
-				//换行
-				handleNewLine(editor, vm.indentOn(), vm.tab(), e)
-			} else
-				if (mb.DOM.keyCode.TAB(e)) {
+		event: {
+			keydown(e: KeyboardEvent) {
+				if (e.defaultPrevented) return
+				prev = jar.getContent()
+				if (mb.DOM.keyCode.ENTER(e)) {
+					//换行
+					handleNewLine(editor, indentOn, tab, e)
+				} else if (mb.DOM.keyCode.TAB(e)) {
 					//缩进与反缩进
-					handleTabCharacters(editor, vm.tab(), e)
-				} else
-					if (isUndo(e)) {
-						//撤销
-						mb.DOM.preventDefault(e)
-						at--
-						const record = history[at]
-						if (record) {
-							editor.innerHTML = record.html
-							//会对history的record产生副作用
-							mb.DOM.setSelectionRange(editor, record.pos)
-						}
-						if (at < 0) { at = 0 }
-					} else
-						if (isRedo(e)) {
-							//重做
-							mb.DOM.preventDefault(e)
-							at++
-							const record = history[at]
-							if (record) {
-								editor.innerHTML = record.html
-								//会对history的record产生副作用
-								mb.DOM.setSelectionRange(editor, record.pos)
-							}
-							if (at >= history.length) { at-- }
-						} else
-							if (!p.noClosing) {
-								//补全括号
-								handleSelfClosingCharacters(editor, e, vm.closePair())
-							}
-			if (shouldRecord(e) && !recording) {
-				at = recordHistory(editor, history, focus, at)
-				recording = true
-			}
-		},
-		keyup(e: KeyboardEvent) {
-
-			if (e.defaultPrevented) return
-			if (e.isComposing) return
-
-			if (prev != jar.getContent()) {
-				debounceHighlight()
-			}
-			debounceRecordHistory(e)
-			orCallback()
-		},
-		focus() {
-			focus = true
-		},
-		blur() {
-			focus = false
+					handleTabCharacters(editor, tab, e)
+				} else if (isUndo(e)) {
+					//撤销
+					mb.DOM.preventDefault(e)
+					let newAt = at - 1
+					const record = history[newAt]
+					if (record) {
+						editor.innerHTML = record.html
+						//会对history的record产生副作用
+						mb.DOM.setSelectionRange(editor, record.pos)
+					}
+					if (newAt < 0) { newAt = 0 }
+					setAt(newAt)
+				} else if (isRedo(e)) {
+					//重做
+					mb.DOM.preventDefault(e)
+					let newAt = at + 1
+					const record = history[newAt]
+					if (record) {
+						editor.innerHTML = record.html
+						//会对history的record产生副作用
+						mb.DOM.setSelectionRange(editor, record.pos)
+					}
+					if (newAt >= history.length) { newAt-- }
+					setAt(newAt)
+				} else if (!noClosing) {
+					//补全括号
+					handleSelfClosingCharacters(editor, e, closePair)
+				}
+				if (shouldRecord(e) && !recording) {
+					rememberHistory()
+					recording = true
+				}
+			},
+			keyup(e: KeyboardEvent) {
+				if (e.defaultPrevented) return
+				if (e.isComposing) return
+				if (prev != jar.getContent()) {
+					debounceHighlight()
+				}
+				debounceRecordHistory(e)
+				orCallback()
+			},
+			focus() {
+				focus = true
+			},
+			blur() {
+				focus = false
+			},
 		},
 		paste(e: ClipboardEvent) {
-			at = recordHistory(editor, history, focus, at)
-			handlePaste(editor, p.highlight, e)
-			at = recordHistory(editor, history, focus, at)
+			rememberHistory()
+			handlePaste(editor, highlight, e)
+			rememberHistory()
 			orCallback()
 		},
-		init(v: HTMLElement) {
-			editor = v
-			if (p.init) {
-				p.init(jar)
-			}
-		},
 		attr: {
-			contentEditable: mb.Object.reDefine(p.readonly, function (r) {
-				if (typeof (r) == 'function') {
-					return function () {
-						return r() ? undefined : mb.DOM.contentEditable.text
-					}
-				} else {
-					return r ? undefined : mb.DOM.contentEditable.text
-				}
-			}),
-			spellcheck: p.spellcheck
+			contentEditable: readonly ? contentEditable.text : false,
+			spellcheck
 		},
 		style: {
-
 			outline: "none",
-			"overflow-wrap": "break-word",
-			"overflow-y": "auto",
-			resize: p.height ? "none" : "vertical",
-			"white-space": "pre-wrap",
-			width: mb.Object.reDefine(p.width, function (w) {
-				if (typeof (w) == 'function') {
-					return function () {
-						return w() + "px"
-					}
-				} else {
-					return w + "px"
-				}
-			}),
-			height: mb.Object.reDefine(p.height, function (height) {
-				if (typeof (height) == 'function') {
-					return function () {
-						return height() + "px"
-					}
-				} else {
-					return height + "px"
-				}
-			})
-		},
-		text(content, set) {
-			if (content != jar.getContent()) {
-				set(content)
-				p.highlight(editor, jar.getSelection())
-			}
+			overflowWrap: "break-word",
+			overflowY: "auto",
+			resize: height ? "none" : "vertical",
+			whiteSpace: "pre-wrap",
+			width: width ? width + 'px' : '',
+			height: height ? height + "px" : ""
 		}
 	}
 }
