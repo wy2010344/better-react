@@ -1208,6 +1208,8 @@ declare namespace React {
     shiftKey: boolean;
     /** @deprecated */
     which: number;
+
+    isComposing: boolean
   }
 
   interface MouseEvent<T = Element, E = NativeMouseEvent> extends UIEvent<T, E> {
@@ -1818,7 +1820,7 @@ declare namespace React {
     lang?: string | undefined;
     placeholder?: string | undefined;
     slot?: string | undefined;
-    spellCheck?: Booleanish | undefined;
+    spellcheck?: Booleanish | undefined;
     //增加一个string类型
     style?: CSSProperties | undefined | string;
     tabIndex?: number | undefined;

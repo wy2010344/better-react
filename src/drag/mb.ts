@@ -1,10 +1,15 @@
+type MBKeyboard = {
+  code?: string
+  keyCode: number,
+  key: string
+}
 function isKey(v: number, key: string, code?: string) {
   if (code) {
-    return function (e: KeyboardEvent) {
+    return function (e: MBKeyboard) {
       return (e.keyCode == v || e.key == key) && e.code == code
     }
   } else {
-    return function (e: KeyboardEvent) {
+    return function (e: MBKeyboard) {
       return e.keyCode == v || e.key == key
     }
   }
@@ -208,36 +213,31 @@ type Browser = {
 }
 export const browser = (function () {
   //http://www.jb51.net/article/50464.htm
-  var myBrowser = function () {
-    var ret: Browser = {
-      type: "FF", version: 0, documentMode: ""
-    };
-
-    var userAgent = navigator.userAgent; //取得浏览器的userAgent字符串
-    var isOpera = userAgent.indexOf("Opera") > -1; //判断是否Opera浏览器
-    var isIE = userAgent.indexOf("compatible") > -1 && userAgent.indexOf("MSIE") > -1 && !isOpera; //判断是否IE浏览器
-    var isFF = userAgent.indexOf("Firefox") > -1; //判断是否Firefox浏览器
-    var isSafari = userAgent.indexOf("Safari") > -1; //判断是否Safari浏览器
-    if (isIE) {
-      mb.isIE = true;
-      var reIE = new RegExp("MSIE (\\d+\\.\\d+);");
-      reIE.test(userAgent);
-      ret.type = "IE";
-      ret.version = parseFloat(RegExp["$1"]);
-      ret.documentMode = (document as any).documentMode;//IE的文档模式
-    }
-    if (isFF) {
-      ret.type = "FF";
-    }
-    if (isOpera) {
-      ret.type == "Opera";
-    }
-    if (isSafari) {
-      ret.type == "Safari";
-    }
-    return ret;
+  var ret: Browser = {
+    type: "FF", version: 0, documentMode: ""
   };
-  var ret = myBrowser();
+  var userAgent = navigator.userAgent; //取得浏览器的userAgent字符串
+  var isOpera = userAgent.indexOf("Opera") > -1; //判断是否Opera浏览器
+  var isIE = userAgent.indexOf("compatible") > -1 && userAgent.indexOf("MSIE") > -1 && !isOpera; //判断是否IE浏览器
+  var isFF = userAgent.indexOf("Firefox") > -1; //判断是否Firefox浏览器
+  var isSafari = userAgent.indexOf("Safari") > -1; //判断是否Safari浏览器
+  if (isIE) {
+    mb.isIE = true;
+    var reIE = new RegExp("MSIE (\\d+\\.\\d+);");
+    reIE.test(userAgent);
+    ret.type = "IE";
+    ret.version = parseFloat(RegExp["$1"]);
+    ret.documentMode = (document as any).documentMode;//IE的文档模式
+  }
+  if (isFF) {
+    ret.type = "FF";
+  }
+  if (isOpera) {
+    ret.type = "Opera";
+  }
+  if (isSafari) {
+    ret.type = "Safari";
+  }
   return ret;
 })();
 

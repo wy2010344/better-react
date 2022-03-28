@@ -1,5 +1,4 @@
 import mb, { contentEditable, MbRange } from "./mb"
-
 /**
  * 固定参数，返回一个延时函数
  * @param cb 
@@ -15,7 +14,7 @@ function debounce<TS extends any[]>(cb: (...ts: TS) => void, wait: number) {
 	}
 }
 
-function shouldRecord(e: KeyboardEvent) {
+function shouldRecord(e: React.KeyboardEvent) {
 	return !isUndo(e)
 		&& !isRedo(e)
 		&& !mb.DOM.keyCode.META(e)
@@ -89,7 +88,7 @@ function handleNewLine(
 	editor: HTMLElement,
 	indentOn: RegExp,
 	tab: string,
-	e: KeyboardEvent) {
+	e: React.KeyboardEvent) {
 	const before = beforeCursor(editor)
 	const after = afterCursor(editor)
 
@@ -119,7 +118,7 @@ function handleNewLine(
  */
 function handleSelfClosingCharacters(
 	editor: HTMLElement,
-	e: KeyboardEvent,
+	e: React.KeyboardEvent,
 	closePair: string[]
 ) {
 	const codeBefore = beforeCursor(editor)
@@ -167,7 +166,7 @@ function deleteTab(editor: HTMLElement, start: number, padding: string, tab: str
  * @param tab 
  * @param e 
  */
-function handleTabCharacters(editor: HTMLElement, tab: string, e: KeyboardEvent) {
+function handleTabCharacters(editor: HTMLElement, tab: string, e: React.KeyboardEvent) {
 	mb.DOM.preventDefault(e)
 	const selection = window.getSelection()
 	if (!selection) {
@@ -271,7 +270,6 @@ interface HistoryRecord {
 function recordHistory(
 	editor: HTMLElement,
 	history: HistoryRecord[],
-	focus: boolean,
 	at: number
 ) {
 	if (!focus) return at
@@ -306,7 +304,7 @@ function recordHistory(
 function handlePaste(
 	editor: HTMLElement,
 	hightlight: (e: HTMLElement, pos: MbRange) => void,
-	e: ClipboardEvent
+	e: React.ClipboardEvent
 ) {
 	mb.DOM.preventDefault(e)
 	const text = ((e as any).originalEvent || e).clipboardData.getData("text/plain") as string
@@ -319,13 +317,13 @@ function handlePaste(
 	})
 }
 
-function isCtrl(e: KeyboardEvent) {
+function isCtrl(e: React.KeyboardEvent) {
 	return e.metaKey || e.ctrlKey
 }
-function isUndo(e: KeyboardEvent) {
+function isUndo(e: React.KeyboardEvent) {
 	return isCtrl(e) && !e.shiftKey && mb.DOM.keyCode.Z(e)
 }
-function isRedo(e: KeyboardEvent) {
+function isRedo(e: React.KeyboardEvent) {
 	return isCtrl(e) && e.shiftKey && mb.DOM.keyCode.Z(e)
 }
 
@@ -363,10 +361,13 @@ export interface CodeJarOption {
 	height?: number
 	width?: number
 	readonly?: boolean
+	type?: string
 }
 
-import { useState } from 'better-react-helper'
+import { useRefValue } from 'better-react'
+import { React, createElement } from 'better-react-dom'
 export default function useCodeJar({
+	type,
 	tab = "\t",
 	indentOn = /{$/,
 	closePair = ["()", "[]", '{}', '""', "''"],
@@ -378,44 +379,40 @@ export default function useCodeJar({
 	spellcheck,
 	callback
 }: CodeJarOption) {
-	const [history, setHistory] = useState<HistoryRecord[]>([])
-	const [at, setAt] = useState<number>(-1)
+	const history = useRefValue<HistoryRecord[]>(() => [])()
+	const atValue = useRefValue(() => -1)
+	const recording = useRefValue(() => false)
+	const focus = useRefValue(() => false)
+	//代码之前的鼠标事件
+	const prev = useRefValue(() => "")
+	const editor = useRefValue(() => document.body)
 	function rememberHistory() {
-		setAt(recordHistory(editor, history, focus, at))
-		setHistory(history)
+		if (focus()) {
+			atValue(recordHistory(editor(), history, atValue()))
+		}
 	}
-
-
-
-
-	let editor: HTMLElement
 	const debounceHighlight = debounce(function () {
-		const pos = mb.DOM.getSelectionRange(editor)
-		highlight(editor, pos)
-		mb.DOM.setSelectionRange(editor, pos)
+		const pos = mb.DOM.getSelectionRange(editor())
+		highlight(editor(), pos)
+		mb.DOM.setSelectionRange(editor(), pos)
 	}, 30)
-	let recording = false
-	const debounceRecordHistory = debounce(function (event: KeyboardEvent) {
+	const debounceRecordHistory = debounce(function (event: React.KeyboardEvent) {
 		if (shouldRecord(event)) {
 			//记录keydown-up之间的改变。
 			rememberHistory()
-			recording = false
+			recording(false)
 		}
 	}, 300)
 
-	let focus = false
-	//代码之前的鼠标事件
-	let prev: string
-
 	const jar: CodeJar = {
 		getContent() {
-			return editor?.textContent || ""
+			return editor().textContent || ""
 		},
 		getSelection() {
-			return mb.DOM.getSelectionRange(editor)
+			return mb.DOM.getSelectionRange(editor())
 		},
 		setSelection(v) {
-			mb.DOM.setSelectionRange(editor, v)
+			mb.DOM.setSelectionRange(editor(), v)
 		}
 	}
 	function orCallback() {
@@ -424,76 +421,73 @@ export default function useCodeJar({
 		}
 	}
 
-	return {
-		event: {
-			keydown(e: KeyboardEvent) {
-				if (e.defaultPrevented) return
-				prev = jar.getContent()
-				if (mb.DOM.keyCode.ENTER(e)) {
-					//换行
-					handleNewLine(editor, indentOn, tab, e)
-				} else if (mb.DOM.keyCode.TAB(e)) {
-					//缩进与反缩进
-					handleTabCharacters(editor, tab, e)
-				} else if (isUndo(e)) {
-					//撤销
-					mb.DOM.preventDefault(e)
-					let newAt = at - 1
-					const record = history[newAt]
-					if (record) {
-						editor.innerHTML = record.html
-						//会对history的record产生副作用
-						mb.DOM.setSelectionRange(editor, record.pos)
-					}
-					if (newAt < 0) { newAt = 0 }
-					setAt(newAt)
-				} else if (isRedo(e)) {
-					//重做
-					mb.DOM.preventDefault(e)
-					let newAt = at + 1
-					const record = history[newAt]
-					if (record) {
-						editor.innerHTML = record.html
-						//会对history的record产生副作用
-						mb.DOM.setSelectionRange(editor, record.pos)
-					}
-					if (newAt >= history.length) { newAt-- }
-					setAt(newAt)
-				} else if (!noClosing) {
-					//补全括号
-					handleSelfClosingCharacters(editor, e, closePair)
+	return createElement(type || "div", {
+		ref: editor,
+		onKeydown(e: React.KeyboardEvent) {
+			if (e.defaultPrevented) return
+			prev(jar.getContent())
+			if (mb.DOM.keyCode.ENTER(e)) {
+				//换行
+				handleNewLine(editor(), indentOn, tab, e)
+			} else if (mb.DOM.keyCode.TAB(e)) {
+				//缩进与反缩进
+				handleTabCharacters(editor(), tab, e)
+			} else if (isUndo(e)) {
+				//撤销
+				mb.DOM.preventDefault(e)
+				let newAt = atValue() - 1
+				const record = history[newAt]
+				if (record) {
+					editor().innerHTML = record.html
+					//会对history的record产生副作用
+					mb.DOM.setSelectionRange(editor(), record.pos)
 				}
-				if (shouldRecord(e) && !recording) {
-					rememberHistory()
-					recording = true
+				if (newAt < 0) { newAt = 0 }
+				atValue(newAt)
+			} else if (isRedo(e)) {
+				//重做
+				mb.DOM.preventDefault(e)
+				let newAt = atValue() + 1
+				const record = history[newAt]
+				if (record) {
+					editor().innerHTML = record.html
+					//会对history的record产生副作用
+					mb.DOM.setSelectionRange(editor(), record.pos)
 				}
-			},
-			keyup(e: KeyboardEvent) {
-				if (e.defaultPrevented) return
-				if (e.isComposing) return
-				if (prev != jar.getContent()) {
-					debounceHighlight()
-				}
-				debounceRecordHistory(e)
-				orCallback()
-			},
-			focus() {
-				focus = true
-			},
-			blur() {
-				focus = false
-			},
+				if (newAt >= history.length) { newAt-- }
+				atValue(newAt)
+			} else if (!noClosing) {
+				//补全括号
+				handleSelfClosingCharacters(editor(), e, closePair)
+			}
+			if (shouldRecord(e) && !recording()) {
+				rememberHistory()
+				recording(true)
+			}
 		},
-		paste(e: ClipboardEvent) {
+		onKeyup(e: React.KeyboardEvent) {
+			if (e.defaultPrevented) return
+			if (e.isComposing) return
+			if (prev() != jar.getContent()) {
+				debounceHighlight()
+			}
+			debounceRecordHistory(e)
+			orCallback()
+		},
+		onFocus() {
+			focus(true)
+		},
+		onBlur() {
+			focus(false)
+		},
+		onPaste(e: React.ClipboardEvent) {
 			rememberHistory()
-			handlePaste(editor, highlight, e)
+			handlePaste(editor(), highlight, e)
 			rememberHistory()
 			orCallback()
 		},
-		attr: {
-			contentEditable: readonly ? contentEditable.text : false,
-			spellcheck
-		},
+		contentEditable: readonly ? false : contentEditable.text,
+		spellcheck,
 		style: {
 			outline: "none",
 			overflowWrap: "break-word",
@@ -501,7 +495,8 @@ export default function useCodeJar({
 			resize: height ? "none" : "vertical",
 			whiteSpace: "pre-wrap",
 			width: width ? width + 'px' : '',
-			height: height ? height + "px" : ""
+			height: height ? height + "px" : "",
+			textAlign: "left"
 		}
-	}
+	})
 }
