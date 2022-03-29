@@ -348,7 +348,7 @@ export interface CodeJar {
 	getSelection(): MbRange
 	setSelection(v: MbRange): void
 }
-export interface CodeJarOption {
+export interface CodeJarOption<T> {
 	content?: string
 	/**内容改变时触发，包括设置内容|keyup|paste */
 	highlight(e: HTMLElement, pos: MbRange): void
@@ -361,12 +361,12 @@ export interface CodeJarOption {
 	height?: number
 	width?: number
 	readonly?: boolean
-	type?: string
+	type?: T
 }
 
-import { useRefValue } from 'better-react'
+import { useRefValue, useEffect } from 'better-react'
 import { React, createElement } from 'better-react-dom'
-export default function useCodeJar({
+export default function useCodeJar<T = "div">({
 	type,
 	tab = "\t",
 	indentOn = /{$/,
@@ -376,9 +376,10 @@ export default function useCodeJar({
 	highlight,
 	noClosing,
 	readonly,
-	spellcheck,
-	callback
-}: CodeJarOption) {
+	spellcheck = false,
+	callback,
+	...options
+}: CodeJarOption<T> & React.HTMLAttributes<T>) {
 	const history = useRefValue<HistoryRecord[]>(() => [])()
 	const atValue = useRefValue(() => -1)
 	const recording = useRefValue(() => false)
@@ -421,7 +422,15 @@ export default function useCodeJar({
 		}
 	}
 
+	useEffect(() => {
+		const record = history.at(-1)
+		if (record) {
+			editor().innerHTML = record.html
+			mb.DOM.setSelectionRange(editor(), record.pos)
+		}
+	}, [type])
 	return createElement(type || "div", {
+		...options,
 		ref: editor,
 		onKeydown(e: React.KeyboardEvent) {
 			if (e.defaultPrevented) return

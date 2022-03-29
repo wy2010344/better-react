@@ -1,5 +1,4 @@
 export * from './Hook'
-export * from './NestCss'
 export * from './SharePortal'
 export * from './UseEffect'
 export * from './useOnlyId'

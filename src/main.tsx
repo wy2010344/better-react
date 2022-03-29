@@ -7,6 +7,8 @@ import { render } from 'better-react'
 import { FiberNode } from 'better-react-dom';
 import { askTimeWork } from '../dom/src/askTimeWork';
 import Index from './Index';
+import { StylisCreater } from 'stylis-creater';
+
 
 function App() {
   return <Index />
@@ -14,4 +16,4 @@ function App() {
   //return <Demo />
 }
 
-render(<App styleCreater={nestCss} />, FiberNode.create(document.getElementById("app")!,), askTimeWork);
+render(<App styleCreater={StylisCreater} />, FiberNode.create(document.getElementById("app")!,), askTimeWork);

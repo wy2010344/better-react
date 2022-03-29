@@ -92,8 +92,8 @@ function RenderHost({ historys }: { historys: ValueCenter<HistoryRow<keyof Route
         const idx = list.findIndex(x => x.key == v.key)
         if (idx < 0) {
           console.error("不正确，idx小于0")
-        } else if (idx == list.length - 1) {
-          console.log('无需处理')
+          // } else if (idx == list.length - 1) {
+          //   console.log('无需处理')
         } else {
           const [row] = list.splice(idx, 1)
           historys.set(list.concat(row))

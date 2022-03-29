@@ -218,13 +218,35 @@ export function appendAfter(dom: FiberNode, parentAndBefore: [FiberNode, FiberNo
 
   const parentDom = parent ? parent.node : before?.node.parentNode
   if (parentDom) {
-    const next = before?.node.nextSibling
-    if (next) {
-      if (next != dom.node) {
-        parentDom.insertBefore(dom.node, next!)
+    const beforeNode = before?.node
+    if (beforeNode) {
+      //如果有前节点
+      const nextNode = beforeNode.nextSibling
+      if (nextNode) {
+        //如果有后继节点,且后继不为自身
+        if (nextNode != dom.node) {
+          //console.log("next-insert-before", dom.node, nextNode)
+          parentDom.insertBefore(dom.node, nextNode)
+        }
+      } else {
+        //如果没有后继节点,直接尾随
+        //console.log("next-append", dom.node)
+        parentDom.appendChild(dom.node)
       }
-    } else if (parentDom.lastChild != dom.node) {
-      parentDom.appendChild(dom.node)
+    } else {
+      //如果没有前继节点
+      const firstChild = parentDom.firstChild
+      if (firstChild) {
+        //父元素有子元素,
+        if (firstChild != dom.node) {
+          //console.log("first-insert-before", dom.node, firstChild)
+          parentDom.insertBefore(dom.node, firstChild)
+        }
+      } else {
+        //父元素无子元素,直接尾随
+        //console.log("first-append", dom.node)
+        parentDom.appendChild(dom.node)
+      }
     }
   } else {
     console.error("未找到parent-dom????")

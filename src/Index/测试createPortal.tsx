@@ -40,7 +40,6 @@ function Page() {
       <TestView />
       <button onClick={() => stateValue(state + 1)}>文字++</button>
     </div> : undefined, FiberNode.create(document.body))}
-
     <div>{Array(state).fill("").map((_, i) => {
       return <div>测试{i}</div>
     })}</div>

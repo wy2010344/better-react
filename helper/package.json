@@ -34,7 +34,7 @@
     "trailingComma": "es5"
   },
   "name": "better-react-helper",
-  "author": "汪洋",
+  "author": "wangyang2010344",
   "module": "dist/better-react-helper.esm.js",
   "size-limit": [
     {
