@@ -81,6 +81,7 @@ export type Props = { [key: string]: any }
 export type FunctionNode<T> = {
   type(v: T): any
   props: T
+  key: any
 }
 
 let contextUid = 0
