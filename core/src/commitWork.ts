@@ -1,4 +1,4 @@
-import { createPortal } from "."
+import { Portal } from "."
 import { Fiber, VirtaulDomNode } from "./Fiber"
 
 //等待删除的fiber
@@ -72,7 +72,7 @@ function deepUpdateDirty(fiber: Fiber) {
   let prevChild: Fiber | undefined
   while (child) {
     child.prev = prevChild
-    if (child.dom && child.type != createPortal) {
+    if (child.dom && child.type != Portal) {
       //portal不能作为子节点
       const parentBefore = child.prev
         ? getCurrentBefore(child.prev)
@@ -102,7 +102,7 @@ export type FindParentAndBefore = [VirtaulDomNode, VirtaulDomNode | null] | [Vir
  * @returns 
  */
 function getCurrentBefore(fiber: Fiber): FindParentAndBefore {
-  if (fiber.type == createPortal) {
+  if (fiber.type == Portal) {
     if (fiber.prev) {
       return getCurrentBefore(fiber.prev)
     } else {
@@ -180,7 +180,7 @@ function circleCommitDelection(fiber: Fiber | undefined) {
 }
 
 function removeFromDom(fiber: Fiber) {
-  if (fiber.type == createPortal) {
+  if (fiber.type == Portal) {
     //portal节点不能移除
     return
   }

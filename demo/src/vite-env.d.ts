@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+/// <reference types="better-react-dom/@types/tsxSupport"/>
 
 // declare namespace JSX {
 //   type IntrinsicElements = import("./better-react/tsxSupport").JSX.IntrinsicElements

@@ -1,6 +1,6 @@
 import { useEffect } from 'better-react';
 import { useRef, useOnlyId } from 'better-react-helper';
-import { createPortal } from 'better-react';
+import { Portal as BasePortal } from 'better-react';
 import { FiberNode, React } from 'better-react-dom';
 /**
  * Creates DOM element to be used as React root.
@@ -24,7 +24,7 @@ function createRootElement(id: string) {
  */
 function usePortal(id: string, appendElement: (v: Element) => void) {
   const rootElemRef = useRef<HTMLElement | null>(null);
-  useEffect(function setupElement() {
+  useEffect(function () {
     // Look for existing target dom element to append to
     const existingParent = document.querySelector(`#${id}`);
     // Parent is either a new root or the existing dom element
@@ -72,7 +72,7 @@ export function Portal({
   getParent,
   children
 }: {
-  getParent(): HTMLElement
+  getParent(): HTMLElement | undefined | null
   children: React.ReactNode
 }) {
   const { id } = useOnlyId("portal")
@@ -84,17 +84,18 @@ export function Portal({
       console.error(`can't find parent id`)
     }
   })
-  return createPortal(
-    children,
-    FiberNode.create(target),
-  );
+  return <BasePortal children={children} node={FiberNode.create(target)} />
+}
+
+function getDocument() {
+  return document.body
 }
 export function RootPortal({
   children
 }: {
   children: React.ReactNode
 }) {
-  return <Portal getParent={() => document.body} children={children} />
+  return <Portal getParent={getDocument} children={children} />
 }
 export function IdPortal({
   id: parentId,
@@ -103,5 +104,5 @@ export function IdPortal({
   id: string
   children: React.ReactNode
 }) {
-  return <Portal getParent={() => document.getElementById(parentId)!} children={children} />
+  return <Portal getParent={() => document.getElementById(parentId)} children={children} />
 }

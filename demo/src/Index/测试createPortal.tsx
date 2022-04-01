@@ -1,6 +1,6 @@
 
 import { createElement } from 'better-react-dom'
-import { createPortal, Fragment, useEffect, useMemo } from 'better-react'
+import { Portal, Fragment, useEffect, useMemo } from 'better-react'
 import { RouteFun } from '.'
 import PanelReact from '../drag/PanelReact'
 import { FiberNode } from 'better-react-dom'
@@ -35,17 +35,19 @@ function Page() {
   return <>
     <button onClick={() => stateValue(state - 1)}>文字--{aa}</button>
     <button onClick={() => setShowPortal(!showPortal)}>切换portal</button>
-    {createPortal(showPortal && state < 3 ? <div>
-      我是追加 {state}
-      <TestView />
-      <button onClick={() => stateValue(state + 1)}>文字++</button>
-    </div> : undefined, FiberNode.create(document.body))}
+    <Portal node={FiberNode.create(document.body)}>
+      {showPortal && state < 3 ? <div>
+        我是追加 {state}
+        <TestView />
+        <button onClick={() => stateValue(state + 1)}>文字++</button>
+      </div>
+        : undefined}
+    </Portal>
     <div>{Array(state).fill("").map((_, i) => {
       return <div>测试{i}</div>
     })}</div>
   </>
 }
-
 function TestView() {
   useEffect(() => {
     console.log("初始化")

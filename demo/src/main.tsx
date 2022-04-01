@@ -5,7 +5,7 @@ import './style.css'
 import { createElement } from 'better-react-dom'
 import { render } from 'better-react'
 import { FiberNode } from 'better-react-dom';
-import { askTimeWork } from '../dom/src/askTimeWork';
+import { askTimeWork } from '../../dom/src/askTimeWork';
 import Index from './Index';
 import { StylisCreater } from 'stylis-creater';
 

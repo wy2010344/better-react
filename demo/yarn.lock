@@ -7,13 +7,13 @@
   resolved "https://registry.yarnpkg.com/@types/prismjs/-/prismjs-1.26.0.tgz#a1c3809b0ad61c62cac6d4e0c56d610c910b7654"
   integrity sha512-ZTaqn/qSqUuAq1YwvOFQfVW1AR/oQJlLSZVustdjwI+GZ8kr0MSHBj0tsXPW1EqHubx50gtBEjbPGsdZwQwCjQ==
 
-better-react-dom@./dom:
+better-react-dom@../dom:
   version "0.0.2"
 
-better-react-helper@./helper:
+better-react-helper@../helper:
   version "0.1.0"
 
-better-react@./core:
+better-react@../core:
   version "0.0.2"
 
 esbuild-android-arm64@0.14.23:
@@ -210,7 +210,7 @@ source-map-js@^1.0.2:
   resolved "https://registry.yarnpkg.com/source-map-js/-/source-map-js-1.0.2.tgz#adbc361d9c62df380125e7f161f71c826f1e490c"
   integrity sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==
 
-stylis-creater@./stylis-creater:
+stylis-creater@../stylis-creater:
   version "0.1.0"
   dependencies:
     stylis "^4.0.13"

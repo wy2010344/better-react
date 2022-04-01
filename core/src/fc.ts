@@ -1,6 +1,6 @@
 import { updateEffect } from "./commitWork"
 import { ContextProvider, Fiber, StoreValue } from "./Fiber"
-import { createPortal, Fragment } from "./index"
+import { Portal, Fragment } from "./index"
 import { reconcile } from "./reconcile"
 import { reconcileChildren } from "./reconcileChildren"
 /**当前计算的hook节点 */
@@ -23,10 +23,10 @@ export function updateFunctionComponent(fiber: Fiber) {
   } else if (fiber.type == reconcileChildren) {
     //是数组
     reconcileChildren(fiber, fiber.props?.children)
-  } else if (fiber.type == createPortal) {
+  } else if (fiber.type == Portal) {
     //是portal
     fiber.dom = fiber.props?.node
-    reconcileChildren(fiber, [fiber.props!.content])
+    reconcileChildren(fiber, fiber.props?.children)
   } else {
     wipFiber = fiber
     hookIndex.value = 0

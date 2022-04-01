@@ -77,13 +77,6 @@ export function getFiberKey(fiber: Fiber | undefined, key: any): Fiber | void {
 
 export type StoreValue<T> = ((v: T) => void) & (() => T)
 export type Props = { [key: string]: any }
-
-export type FunctionNode<T> = {
-  type(v: T): any
-  props: T
-  key: any
-}
-
 let contextUid = 0
 export class ContextProvider<T>{
   id = contextUid++

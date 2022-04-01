@@ -1,7 +1,7 @@
-import { Fiber, FunctionNode, Props, VirtaulDomNode } from "./Fiber"
+import { Fiber, Props, VirtaulDomNode } from "./Fiber"
 import { AskNextTimeWork, reconcile, setRootFiber } from "./reconcile"
 export { useValue, useEffect, useRefValue, useMemo, useContext } from './fc'
-export { Fiber, Props, VirtaulDomNode, createContext } from './Fiber'
+export { Fiber, Props, VirtaulDomNode, createContext, Context } from './Fiber'
 export { FindParentAndBefore } from './commitWork'
 export { AskNextTimeWork }
 function RootFiberFun(fiber: Fiber) {
@@ -24,15 +24,13 @@ export function render(
   reconcile()
 }
 
-
-function createFragment(props: Props) {
+export function Fragment(props: Props) {
   return {
-    type: createFragment,
+    type: Fragment,
     props,
     key: props?.key
   }
 }
-export const Fragment = createFragment
 /**
  * 类似fragment
  * 但不会添加到父节点
@@ -42,12 +40,10 @@ export const Fragment = createFragment
  * @param node 
  * @returns 
  */
-export function createPortal(content: any, node: VirtaulDomNode): FunctionNode<any> {
+export function Portal(props: Props) {
   return {
-    type: createPortal as any,
-    props: {
-      node,
-      content
-    }
+    type: Portal,
+    props: props,
+    key: props.key
   }
 }
