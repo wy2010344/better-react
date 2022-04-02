@@ -21,7 +21,7 @@ export class FiberNode implements VirtaulDomNode {
   appendAfter(value: FindParentAndBefore): void {
     appendAfter(this, value as any)
   }
-  destroy(): void {
+  destroy(props: Props): void {
     if (this.style) {
       this.style.destroy()
     }
@@ -33,8 +33,26 @@ export class FiberNode implements VirtaulDomNode {
       findFiberCreateStyle(fiber)
     )
   }
-  removeFromParent() {
+  init(props: Props) {
+    if (props?.ref) {
+      props.ref(this.node)
+    }
+  }
+  private realRemove() {
     this.node.parentElement?.removeChild(this.node)
+  }
+  removeFromParent(props: Props) {
+    if (props?.exit) {
+      const that = this
+      props.exit(this.node).then(() => {
+        that.realRemove()
+      })
+    } else {
+      this.realRemove()
+    }
+    if (props?.ref) {
+      props.ref(null)
+    }
   }
   style?: StyleNode
 
@@ -187,6 +205,15 @@ export function updateSVGProps(node: any, key: string, value: any) {
     node.removeAttribute(key)
   }
 }
+
+export function createTextNode(
+  props: Props | undefined,
+  createStyle?: () => StyleNode
+) {
+  const node = FiberNode.create(document.createTextNode(""))
+  updateDom(node, {}, props, createStyle)
+  return node
+}
 /**
  * 创建节点
  * @param fiber 
@@ -197,12 +224,9 @@ export function createDom(
   props: Props | undefined,
   createStyle?: () => StyleNode
 ): FiberNode {
-  const node = type == "TEXT_ELEMENT"
-    ? FiberNode.create(document.createTextNode(""))
-    : isSVG(type)
-      ? FiberNode.create(document.createElementNS("http://www.w3.org/2000/svg", type), updateSVGProps)
-      : FiberNode.create(document.createElement(type))
-
+  const node = isSVG(type)
+    ? FiberNode.create(document.createElementNS("http://www.w3.org/2000/svg", type), updateSVGProps)
+    : FiberNode.create(document.createElement(type))
   updateDom(node, {}, props, createStyle)
   return node
 }
@@ -255,7 +279,6 @@ export function appendAfter(dom: FiberNode, parentAndBefore: [FiberNode, FiberNo
 
 export function removeFromParent(domParent: FiberNode, dom: FiberNode) {
   domParent.node.removeChild(dom.node)
-
 }
 
 

@@ -38,12 +38,11 @@
 // for reference and documentation on how exactly to do it.
 /// <reference path="react.d.ts" />
 import { React, ReactManagedAttributes } from './react'
+import { BRNode, Context } from 'better-react'
+import { StyleNode } from '../src/updateDom';
 declare global {
   namespace JSX {
-    interface Element extends React.ReactElement<any, any> { }
-    interface ElementClass extends React.Component<any> {
-      render(): React.ReactNode;
-    }
+    interface Element extends BRNode<any> { }
     interface ElementAttributesProperty { props: {}; }
     interface ElementChildrenAttribute { children: {}; }
 
@@ -55,9 +54,13 @@ declare global {
       : ReactManagedAttributes<T, P>
       : ReactManagedAttributes<C, P>;
 
-    interface IntrinsicAttributes extends React.Attributes { }
-    interface IntrinsicClassAttributes<T> extends React.ClassAttributes<T> { }
-
+    /**通用的属性 */
+    interface IntrinsicAttributes {
+      /**创建style的 */
+      styleCreater?: () => StyleNode
+      contexts?: Context<any>[]
+      key?: string | number | null | undefined;
+    }
     interface IntrinsicElements {
       // HTML
       a: React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement>;

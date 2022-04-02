@@ -54,9 +54,7 @@ export function commitRoot() {
   addes.forEach(function (fiber) {
     fiber.effectTag = undefined
     if (fiber.dom) {
-      if (fiber.props?.ref) {
-        fiber.props.ref(fiber.dom.node)
-      }
+      fiber.dom.init(fiber.props)
     }
   })
   addes.length = 0
@@ -184,16 +182,7 @@ function removeFromDom(fiber: Fiber) {
     //portal节点不能移除
     return
   }
-  if (fiber.props?.exit) {
-    fiber.props.exit(fiber.dom).then(function () {
-      fiber.dom!.removeFromParent()
-    })
-  } else {
-    fiber.dom!.removeFromParent()
-  }
-  if (fiber.props?.ref) {
-    fiber.props.ref(null)
-  }
+  fiber.dom?.removeFromParent(fiber.props)
 }
 function notifyDel(fiber: Fiber) {
   destroyFiber(fiber)
@@ -212,6 +201,6 @@ function destroyFiber(fiber: Fiber) {
     effect.forEach(ef => ef().destroy?.())
   }
   if (fiber.dom) {
-    fiber.dom.destroy()
+    fiber.dom.destroy(fiber.props)
   }
 }

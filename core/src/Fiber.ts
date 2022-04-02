@@ -1,22 +1,33 @@
 import { FindParentAndBefore } from "./commitWork"
 
 export type VirtaulDomNode = {
-  node: any
   update(fiber: Fiber): void
   appendAfter(value: FindParentAndBefore): void
-  removeFromParent(): void
-  destroy(): void
+  removeFromParent(props: Props): void
+  init(props: Props): void
+  destroy(props: Props): void
 }
 
-export type Fiber = {
-  type?: any
+
+
+type EMPTY = {}
+type BRParam<T extends EMPTY> = Omit<T, "key" | "contexts">
+type BRParamAll<T extends EMPTY> = {
+  key?: string | number
+  contexts?: Context<any>[]
+} & BRParam<T>
+export type BRNode<T extends EMPTY = EMPTY> = {
+  type: BRFun<T>
+  props: BRParamAll<T>
+}
+export type BRFun<T extends EMPTY = EMPTY> = (params: BRParamAll<T>) => BRNode<T>
+export type Fiber = BRNode<any> & {
   /**
    * @param fiber 自身，可能在函数中附加DOM节点
    * @param props 
    * @returns 返回供使用的DOM节点
    */
   render(fiber: Fiber): any[]
-  props?: Props
   /**第一个子节点 */
   child?: Fiber
   /**父Fiber节点 */

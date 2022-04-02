@@ -96,7 +96,7 @@ export namespace React {
   interface Attributes {
     /**创建style的 */
     styleCreater?: () => StyleNode
-    contexts?: Context<any>
+    contexts?: Context<any>[]
     key?: Key | null | undefined;
   }
   interface ClassAttributes<T> extends Attributes {

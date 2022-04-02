@@ -5,7 +5,9 @@ import { ValueCenter, useStoreTriggerRender } from "./ValueCenter"
 
 
 export interface XElement {
-  key?: string | number | null
+  props: {
+    key?: string | number | null
+  }
 }
 export function createSharePortal() {
   const portals = ValueCenter.of<XElement[]>([])
@@ -13,7 +15,7 @@ export function createSharePortal() {
   function buildDestroy(id: string, p: XElement) {
     useEffect(() => {
       const ps = portals.get()
-      const idx = ps.findIndex(v => v.key == id)
+      const idx = ps.findIndex(v => v.props?.key == id)
       console.log("更新portals", ps, id, p)
       if (idx < 0) {
         portals.set(ps.concat(p))
@@ -25,7 +27,7 @@ export function createSharePortal() {
     }, [p])
     useEffect(function () {
       return () => {
-        portals.set(portals.get().filter(v => v.key != id))
+        portals.set(portals.get().filter(v => v.props?.key != id))
       }
     }, [])
   }
@@ -42,7 +44,7 @@ export function createSharePortal() {
     },
     Portal({ children }: { children: XElement }) {
       const { id } = useOnlyId()
-      buildDestroy(id, { ...children, key: id })
+      buildDestroy(id, { ...children, props: { ...children.props, key: id } })
       return null
     }
   }

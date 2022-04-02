@@ -7,14 +7,20 @@
   resolved "https://registry.yarnpkg.com/@types/prismjs/-/prismjs-1.26.0.tgz#a1c3809b0ad61c62cac6d4e0c56d610c910b7654"
   integrity sha512-ZTaqn/qSqUuAq1YwvOFQfVW1AR/oQJlLSZVustdjwI+GZ8kr0MSHBj0tsXPW1EqHubx50gtBEjbPGsdZwQwCjQ==
 
-better-react-dom@../dom:
-  version "0.0.2"
+better-react-dom@^0.0.4:
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/better-react-dom/-/better-react-dom-0.0.4.tgz#1cbc252e9294f187907277bc3497fb247f827550"
+  integrity sha512-AIsp5QB9vVJe2zp1YqTUcAW8Rx7JPcrOS2RUkFhX1lcoHim6+LbwVBqlL56dk9BoqWYOEfpCBGwt1wQBwSt5Mg==
 
-better-react-helper@../helper:
-  version "0.1.0"
+better-react-helper@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/better-react-helper/-/better-react-helper-0.0.3.tgz#42dc8b3fd0fca33bf12ec17afb23add476173fc6"
+  integrity sha512-TY0XZJVHM8K86zlYpoeqXmQ7QKGp2zdiCZT8bmwLpFy1wdAU5YD4ZFBwfJ0rh4+cnvQdOmY4aluW0JLHK3Tp6A==
 
-better-react@../core:
-  version "0.0.2"
+better-react@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/better-react/-/better-react-0.0.3.tgz#80d57416f9aaa723157a86a1ed18d1b78a7979af"
+  integrity sha512-iSRJ8egBc7Pyb0v7mzPJw42p3Fjz6hqzaNmHuoSw411ckZkbB7EvNKy/QoxBmpb3enEuSaen+smGWWnJViiSiA==
 
 esbuild-android-arm64@0.14.23:
   version "0.14.23"
@@ -210,8 +216,10 @@ source-map-js@^1.0.2:
   resolved "https://registry.yarnpkg.com/source-map-js/-/source-map-js-1.0.2.tgz#adbc361d9c62df380125e7f161f71c826f1e490c"
   integrity sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==
 
-stylis-creater@../stylis-creater:
+stylis-creater@^0.1.0:
   version "0.1.0"
+  resolved "https://registry.yarnpkg.com/stylis-creater/-/stylis-creater-0.1.0.tgz#b2f32730b481db186a33d8f0eda4164fd7f68eca"
+  integrity sha512-bK7WO5OAeh/Vkte/9jh/sJ0wqBUM09oUL/OqyMReQykMZiYcStPGPTtqDsOSTDDM2YW2YDc1DP2DeV7ibz9/NA==
   dependencies:
     stylis "^4.0.13"
 

@@ -11,9 +11,8 @@ import { StylisCreater } from 'stylis-creater';
 
 
 function App() {
-  return <Index />
-  //return <DeskTop />
+  //return <Index />
+  return <DeskTop />
   //return <Demo />
 }
-
 render(<App styleCreater={StylisCreater} />, FiberNode.create(document.getElementById("app")!,), askTimeWork);

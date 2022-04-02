@@ -40,7 +40,7 @@ export default function DeskTop() {
             }}>{({ }) => <>
               <div css={`
             background:red;
-            :hover{
+            &:hover{
               background:white;
             }
             color:green;
