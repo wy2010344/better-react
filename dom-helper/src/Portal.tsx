@@ -1,4 +1,4 @@
-import { useEffect } from 'better-react';
+import { FragmentParam, useEffect } from 'better-react';
 import { useRef, useOnlyId } from 'better-react-helper';
 import { Portal as BasePortal } from 'better-react';
 import { FiberNode, React } from 'better-react-dom';
@@ -71,9 +71,8 @@ function usePortal(id: string, appendElement: (v: Element) => void) {
 export function Portal({
   getParent,
   children
-}: {
+}: FragmentParam & {
   getParent(): HTMLElement | undefined | null
-  children: React.ReactNode
 }) {
   const { id } = useOnlyId("portal")
   const target = usePortal(id, function (v) {
@@ -92,17 +91,12 @@ function getDocument() {
 }
 export function RootPortal({
   children
-}: {
-  children: React.ReactNode
-}) {
+}: FragmentParam) {
   return <Portal getParent={getDocument} children={children} />
 }
 export function IdPortal({
   id: parentId,
   children
-}: {
-  id: string
-  children: React.ReactNode
-}) {
+}: FragmentParam & { id: string }) {
   return <Portal getParent={() => document.getElementById(parentId)} children={children} />
 }

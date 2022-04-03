@@ -38,7 +38,7 @@ export function commitRoot() {
 
   updates.forEach(function (fiber) {
     if (fiber.dom) {
-      fiber.dom.update(fiber)
+      fiber.dom.update(fiber.props, fiber.alternate?.props)
     }
     fiber.alternate = undefined
     fiber.effectTag = undefined

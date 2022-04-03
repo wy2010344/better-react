@@ -2,7 +2,7 @@
 import { nestCss } from './drag/NestCss';
 import DeskTop from './drag/deskTop';
 import './style.css'
-import { createElement } from 'better-react-dom'
+import { createElement, StyleContext } from 'better-react-dom'
 import { render } from 'better-react'
 import { FiberNode } from 'better-react-dom';
 import { askTimeWork } from '../../dom/src/askTimeWork';
@@ -11,8 +11,8 @@ import { StylisCreater } from 'stylis-creater';
 
 
 function App() {
-  //return <Index />
-  return <DeskTop />
+  return <Index />
+  //return <DeskTop />
   //return <Demo />
 }
-render(<App styleCreater={StylisCreater} />, FiberNode.create(document.getElementById("app")!,), askTimeWork);
+render(<App contexts={[StyleContext.provide(StylisCreater)]} />, FiberNode.create(document.getElementById("app")!,), askTimeWork);

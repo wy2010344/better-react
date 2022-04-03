@@ -1,7 +1,7 @@
 import { FindParentAndBefore } from "./commitWork"
 
 export type VirtaulDomNode = {
-  update(fiber: Fiber): void
+  update(props?: Props, oldProps?: Props): void
   appendAfter(value: FindParentAndBefore): void
   removeFromParent(props: Props): void
   init(props: Props): void

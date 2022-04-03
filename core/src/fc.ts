@@ -173,7 +173,7 @@ export function useMemo<T>(effect: () => T, deps: readonly any[]) {
     return value
   }
 }
-export function useContext<T>(contextParent: ContextProvider<T>): T {
+export function findContext<T>(contextParent: ContextProvider<T>): T {
   let currentFiber = wipFiber
   while (currentFiber) {
     const contexts = currentFiber?.props?.contexts

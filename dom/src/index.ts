@@ -1,7 +1,7 @@
-import { Fiber, Props } from "better-react";
+import { Fiber, findContext, Props } from "better-react";
 import { BRFun } from "better-react/dist/Fiber";
-import { createDom, createTextNode, findFiberCreateStyle } from "./updateDom";
-export { FiberNode, updatePorps, updateSVGProps, StyleNode } from './updateDom'
+import { createDom, createTextNode, StyleContext } from "./updateDom";
+export { FiberNode, updatePorps, updateSVGProps, StyleNode, StyleContext } from './updateDom'
 export { askTimeWork } from './askTimeWork'
 export type { React } from '../@types/react'
 export type FunctionNode<T> = {
@@ -82,7 +82,7 @@ function createFun<T extends {} = any>() {
 function getRenderDom(type: string) {
   return function (fiber: Fiber) {
     if (!fiber.dom) {
-      fiber.dom = createDom(type, fiber.props, findFiberCreateStyle(fiber))
+      fiber.dom = createDom(type, fiber.props, findContext(StyleContext))
     }
     return fiber.props!.children
   }

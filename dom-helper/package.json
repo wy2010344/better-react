@@ -19,7 +19,6 @@
     "size": "size-limit",
     "analyze": "size-limit --why"
   },
-  "peerDependencies": {},
   "husky": {
     "hooks": {
       "pre-commit": "tsdx lint"
@@ -32,8 +31,9 @@
     "trailingComma": "es5"
   },
   "peerDependencies": {
-    "better-react-dom": "^0.0.2",
-    "better-react-helper":"^0.0.2"
+    "better-react": "^0.0.4",
+    "better-react-dom": "^0.0.5",
+    "better-react-helper": "^0.0.4"
   },
   "name": "better-react-dom-helper",
   "author": "wangyang2010344",
@@ -50,6 +50,9 @@
   ],
   "devDependencies": {
     "@size-limit/preset-small-lib": "^7.0.8",
+    "better-react": "^0.0.4",
+    "better-react-dom": "^0.0.5",
+    "better-react-helper": "^0.0.4",
     "husky": "^7.0.4",
     "size-limit": "^7.0.8",
     "tsdx": "^0.14.1",

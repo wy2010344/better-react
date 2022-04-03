@@ -1,15 +1,23 @@
-import { FindParentAndBefore } from "better-react"
+import { createContext, findContext, FindParentAndBefore } from "better-react"
 import { Fiber, Props, VirtaulDomNode } from "better-react"
 
-
-export function findFiberCreateStyle(fiber: Fiber | undefined) {
-  while (fiber) {
-    if (fiber?.props?.styleCreater) {
-      return fiber?.props?.styleCreater
-    }
-    fiber = fiber.parent
-  }
+export type StyleNode = {
+  className: string
+  update(css: string): void
+  destroy(): void
 }
+export type CreateStyleNode = () => StyleNode
+export const StyleContext = createContext<CreateStyleNode>(() => {
+  return {
+    className: "un expected",
+    update() {
+      throw `un expected`
+    },
+    destroy() {
+      throw `un expected`
+    }
+  }
+})
 export class FiberNode implements VirtaulDomNode {
   private constructor(
     public node: Node,
@@ -26,11 +34,11 @@ export class FiberNode implements VirtaulDomNode {
       this.style.destroy()
     }
   }
-  update(fiber: Fiber) {
+  update(props?: Props, oldProps?: Props) {
     updateDom(this,
-      fiber.alternate?.props,
-      fiber.props,
-      findFiberCreateStyle(fiber)
+      props,
+      oldProps,
+      findContext(StyleContext)
     )
   }
   init(props: Props) {
@@ -60,11 +68,6 @@ export class FiberNode implements VirtaulDomNode {
     this._updateProp(this.node, key, value)
   }
 }
-export type StyleNode = {
-  className: string
-  update(css: string): void
-  destroy(): void
-}
 const emptyProps = {}
 
 
@@ -80,74 +83,74 @@ function underline(str: string) {
 }
 /**
  * 更新节点
- * @param _dom 
- * @param prevProps 
- * @param nextProps 
+ * @param dom 
+ * @param oldProps 
+ * @param props 
  */
 export function updateDom(
-  _dom: FiberNode,
-  prevProps: Props = emptyProps,
-  nextProps: Props = emptyProps,
+  dom: FiberNode,
+  props: Props = emptyProps,
+  oldProps: Props = emptyProps,
   styleCreater?: () => StyleNode
 ) {
-  const dom = _dom.node as any
+  const node = dom.node
   //移除旧事件：新属性中不存在相应事件，或者事件不一样
-  const prevKeys = Object.keys(prevProps)
-  const nextKeys = Object.keys(nextProps)
-  const style = nextProps.style
+  const prevKeys = Object.keys(oldProps)
+  const nextKeys = Object.keys(props)
+  const style = props.style
   if (style && typeof (style) == 'object') {
     //转化成字符串。会造成对style的全覆盖，所以不能单独修改元素
-    nextProps.style = purifyStyle(style)
+    props.style = purifyStyle(style)
   }
   prevKeys
     .filter(isEvent)
-    .filter(key => !(key in nextProps) || isNew(prevProps, nextProps)(key))
+    .filter(key => !(key in props) || isNew(oldProps, props)(key))
     .forEach(name => {
       const eventType = name.toLowerCase().substring(2)
-      dom.removeEventListener(eventType, prevProps[name])
+      node.removeEventListener(eventType, oldProps[name])
     })
   //移除旧的不存在属性
   prevKeys
     .filter(isProperty)
-    .filter(isGone(prevProps, nextProps))
-    .forEach(name => _dom.updateProp(name, undefined))
+    .filter(isGone(oldProps, props))
+    .forEach(name => dom.updateProp(name, undefined))
   //修改变更属性
   nextKeys
     .filter(isProperty)
-    .filter(isNew(prevProps, nextProps))
-    .forEach(name => _dom.updateProp(name, nextProps[name]))
+    .filter(isNew(oldProps, props))
+    .forEach(name => dom.updateProp(name, props[name]))
   //添加变更事件
   nextKeys
     .filter(isEvent)
-    .filter(isNew(prevProps, nextProps))
+    .filter(isNew(oldProps, props))
     .forEach(name => {
       const eventType = name.toLowerCase().substring(2)
-      dom.addEventListener(eventType, nextProps[name])
+      node.addEventListener(eventType, props[name])
     })
 
-  if (prevProps.css) {
-    if (!_dom.style) {
+  if (oldProps.css) {
+    if (!dom.style) {
       throw `请传入oldStyle`
     }
-    if (nextProps.css) {
+    if (props.css) {
       //更新
-      if (nextProps.css != prevProps.css) {
-        _dom.style.update(nextProps.css)
+      if (props.css != oldProps.css) {
+        dom.style.update(props.css)
       }
     } else {
       //删除
-      _dom.style.destroy();
-      (_dom.node as HTMLElement).classList.remove(_dom.style.className)
-      _dom.style = undefined
+      dom.style.destroy();
+      (dom.node as HTMLElement).classList.remove(dom.style.className)
+      dom.style = undefined
     }
   } else {
-    if (nextProps.css) {
+    if (props.css) {
       //新增
       if (styleCreater) {
         const style = styleCreater()
-        style.update(nextProps.css)
-        _dom.style = style;
-        (_dom.node as HTMLElement).classList.add(style.className)
+        style.update(props.css)
+        dom.style = style;
+        (dom.node as HTMLElement).classList.add(style.className)
       } else {
         throw `使用css但没有找到styleCreater`
       }
@@ -211,7 +214,7 @@ export function createTextNode(
   createStyle?: () => StyleNode
 ) {
   const node = FiberNode.create(document.createTextNode(""))
-  updateDom(node, {}, props, createStyle)
+  updateDom(node, props, {}, createStyle)
   return node
 }
 /**
@@ -227,7 +230,7 @@ export function createDom(
   const node = isSVG(type)
     ? FiberNode.create(document.createElementNS("http://www.w3.org/2000/svg", type), updateSVGProps)
     : FiberNode.create(document.createElement(type))
-  updateDom(node, {}, props, createStyle)
+  updateDom(node, props, {}, createStyle)
   return node
 }
 

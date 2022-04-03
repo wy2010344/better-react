@@ -1,6 +1,6 @@
 
 import { createElement } from 'better-react-dom'
-import { Fragment, useContext, useEffect, createContext, useRefValue } from 'better-react'
+import { Fragment, findContext, useEffect, createContext, useRefValue } from 'better-react'
 import { useStoreTriggerRender, ValueCenter } from "better-react-helper"
 import PanelReact from "../drag/PanelReact"
 import prolog from "./prolog"
@@ -33,8 +33,8 @@ const PanelContext = createContext({
   }
 })
 
-export function usePanel() {
-  return useContext(PanelContext)
+export function findPanel() {
+  return findContext(PanelContext)
 }
 let globalUID = 0
 
@@ -115,7 +115,7 @@ function RenderHost({ historys }: { historys: ValueCenter<HistoryRow<keyof Route
 
 
 function FirstPage() {
-  const { navigate } = usePanel()
+  const { navigate } = findPanel()
 
   useEffect(() => {
     navigate("首页", null)

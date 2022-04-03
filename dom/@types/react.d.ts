@@ -3,7 +3,6 @@
 
 import * as CSS from 'csstype';
 import * as PropTypes from 'prop-types';
-import { StyleNode } from '../src/updateDom';
 import { Context } from 'better-react'
 
 type NativeAnimationEvent = AnimationEvent;
@@ -94,8 +93,6 @@ export namespace React {
    * inside your component or have to validate them.
    */
   interface Attributes {
-    /**创建style的 */
-    styleCreater?: () => StyleNode
     contexts?: Context<any>[]
     key?: Key | null | undefined;
   }
