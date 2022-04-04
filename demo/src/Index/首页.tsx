@@ -18,7 +18,7 @@ const 首页: RouteFun<void> = ({
 
 
 const Page: BRFun<{ key: boolean }> = (prp) => {
-  console.log("pro", prp)
+  //console.log("pro", prp)
   const { navigate } = findPanel()
   return <div>
     <div>

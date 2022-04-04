@@ -15,7 +15,9 @@ const prolog: RouteFun<void> = ({ close, moveToFirst }) => {
 
   const editorRef = useRefValue(() => document.body)
   const [value, setValue] = useState("div")
-  console.log(value)
+  //console.log(value)
+  const [content, setContent] = useState('')
+  //innerHTML={highlight(content, languages.javascript, "javascript")}
   return (
     <PanelReact
       moveFirst={moveToFirst}
@@ -25,17 +27,25 @@ const prolog: RouteFun<void> = ({ close, moveToFirst }) => {
       return <>
         <CodeJar
           className={javascripClass}
-          type={value}
+          type={value as any}
           height={100}
-          highlight={e => {
-            e.innerHTML = highlight(e.textContent || "", languages.javascript, "javascript")
-          }} />
+          setContent={setContent}
+          innerHTML={highlight(content, languages.javascript, "javascript")}
+        />
         <select value={value} onChange={e => {
           setValue(e.target.value)
+          e.stopPropagation()
         }}>
           <option>pre</option>
           <option>div</option>
         </select>
+        <div contentEditable
+          onKeyDown={e => {
+            e.preventDefault()
+          }}
+          onKeyUp={e => {
+            e.preventDefault()
+          }}>dddddd</div>
       </>
     }}</PanelReact>
   )

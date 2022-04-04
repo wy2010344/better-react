@@ -60,6 +60,10 @@ export interface MbRange {
   dir?: "->" | "<-"
 }
 
+export function MBRangeEqual(a: MbRange, b: MbRange) {
+  return a.start == b.start && a.end == b.end && a.dir == b.dir
+}
+
 
 const mb = {
   DOM: {

@@ -1229,9 +1229,8 @@ export namespace React {
 
   interface DOMAttributes<T> {
     children?: ReactNode | undefined;
-    dangerouslySetInnerHTML?: {
-      __html: string;
-    } | undefined;
+    innerHTML?: string
+    textContent?: string
 
     // Clipboard Events
     onCopy?: ClipboardEventHandler<T> | undefined;

@@ -173,7 +173,7 @@ function isEvent(key: string) {
  * @returns 
  */
 function isProperty(key: string) {
-  return key != 'children' && key != 'css' && !isEvent(key)
+  return key != 'children' && key != 'css' && key != 'ref' && key != 'exit' && !isEvent(key)
 }
 /**
  * 属性发生变更
