@@ -39,6 +39,9 @@ export function updateFunctionComponent(fiber: Fiber) {
       ref: [],
       memo: []
     }
+    if (fiber.dom) {
+      fiber.dom.reconcile()
+    }
     reconcileChildren(fiber, fiber.render(fiber))
   }
 }

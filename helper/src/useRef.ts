@@ -10,3 +10,9 @@ export function useConstRefValue<T>(init: () => T) {
 export function useConstRef<T>(init: T) {
   return useRef(init)()
 }
+
+export function useAlways<T>(init: T) {
+  const ref = useRef(init)
+  ref(init)
+  return ref
+}

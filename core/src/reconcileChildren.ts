@@ -25,6 +25,9 @@ export function reconcileChildren(fiber: Fiber, elements?: any[], mustKey?: bool
     const element = getElement(elements[index])
     let newFiber: Fiber | undefined = undefined
     if (element) {
+      if (!element.props) {
+        console.warn("不合法的节点", element)
+      }
       const key = element.props.key
       if (existKey(key)) {
         //如果有key,优先去寻找旧池中的key。

@@ -8,6 +8,8 @@ import Prolog from "./prolog"
 import 测试createPortal from "./测试createPortal"
 
 import 首页 from './首页'
+import animation from './Animation'
+import popover from './popover'
 
 export type RouteFun<T> = (params: {
   args: T,
@@ -17,7 +19,9 @@ export type RouteFun<T> = (params: {
 const routes = {
   prolog,
   首页,
-  测试createPortal
+  测试createPortal,
+  animation,
+  popover
 } as const
 
 

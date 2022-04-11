@@ -8,20 +8,30 @@ import { useRef } from 'better-react-helper'
 export type RenderChildren = (x: { width: number, height: number }) => BetterNode
 
 export default function PanelReact({
+  initWidth = 400,
+  initHeight = 600,
+  initTop = 100,
+  initLeft = 100,
   title,
+  bodyCss,
   children,
   close,
   moveFirst
 }: {
+  initWidth?: number
+  initHeight?: number
+  initTop?: number
+  initLeft?: number
   title?: BetterNode
+  bodyCss?: string
   children: RenderChildren
   close(): void
   moveFirst(): void
 }) {
-  const [top, valueTop] = useState(100)
-  const [left, valueLeft] = useState(100)
-  const [width, valueWidth] = useState(400)
-  const [height, valueHeight] = useState(600)
+  const [top, valueTop] = useState(initTop)
+  const [left, valueLeft] = useState(initLeft)
+  const [width, valueWidth] = useState(initWidth)
+  const [height, valueHeight] = useState(initHeight)
   const container = useRef<HTMLElement | undefined>(undefined)
 
   const moveRef = useRefValue(function () {
@@ -101,7 +111,15 @@ export default function PanelReact({
           </svg>
         </button>
       </div>
-      {children({ width, height })}
+      <div css={`
+      position:relative;
+      display:flex;
+      ${bodyCss || ''}
+      width:${width}px;
+      height:${height - titleHeight}px;
+      `}>
+        {children({ width, height })}
+      </div>
     </div>
   )
 }

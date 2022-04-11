@@ -1,5 +1,5 @@
 import { createContext, findContext, FindParentAndBefore } from "better-react"
-import { Fiber, Props, VirtaulDomNode } from "better-react"
+import { Props, VirtaulDomNode } from "better-react"
 
 export type StyleNode = {
   className: string
@@ -7,7 +7,7 @@ export type StyleNode = {
   destroy(): void
 }
 export type CreateStyleNode = () => StyleNode
-export const StyleContext = createContext<CreateStyleNode>(() => {
+const DefaultStyleCreater: CreateStyleNode = () => {
   return {
     className: "un expected",
     update() {
@@ -17,14 +17,41 @@ export const StyleContext = createContext<CreateStyleNode>(() => {
       throw `un expected`
     }
   }
-})
+}
+export const StyleContext = createContext<CreateStyleNode>(DefaultStyleCreater)
 export class FiberNode implements VirtaulDomNode {
   private constructor(
     public node: Node,
-    private _updateProp: (node: Node, key: string, value: any) => void
-  ) { }
-  static create(node: Node, updateProps: (node: Node, key: string, value: any) => void = updatePorps) {
-    return new FiberNode(node, updateProps)
+    private _updateProp: (node: Node, key: string, value: any) => void,
+    private isText?: boolean
+  ) {
+    this.createStyle = this.findStyleCreate()
+  }
+  private createStyle: CreateStyleNode
+  reconcile(): void {
+    this.createStyle = this.findStyleCreate()
+  }
+  private findStyleCreate() {
+    if (this.isText) {
+      return DefaultStyleCreater
+    } else {
+      return findContext(StyleContext)
+    }
+  }
+  static create(node: Node, updateProps: (node: Node, key: string, value: any) => void = updatePorps, isText?: boolean) {
+    return new FiberNode(node, updateProps, isText)
+  }
+  static createText(props: Props) {
+    const node = FiberNode.create(document.createTextNode(""), updatePorps, true)
+    updateDom(node, props, {})
+    return node
+  }
+  static createFrom(type: string, props: Props) {
+    const node = isSVG(type)
+      ? FiberNode.create(document.createElementNS("http://www.w3.org/2000/svg", type), updateSVGProps)
+      : FiberNode.create(document.createElement(type))
+    node.update(props, {})
+    return node
   }
   appendAfter(value: FindParentAndBefore): void {
     appendAfter(this, value as any)
@@ -38,7 +65,7 @@ export class FiberNode implements VirtaulDomNode {
     updateDom(this,
       props,
       oldProps,
-      findContext(StyleContext)
+      this.createStyle
     )
   }
   init(props: Props) {
@@ -87,7 +114,7 @@ function underline(str: string) {
  * @param oldProps 
  * @param props 
  */
-export function updateDom(
+function updateDom(
   dom: FiberNode,
   props: Props = emptyProps,
   oldProps: Props = emptyProps,
@@ -208,32 +235,6 @@ export function updateSVGProps(node: any, key: string, value: any) {
     node.removeAttribute(key)
   }
 }
-
-export function createTextNode(
-  props: Props | undefined,
-  createStyle?: () => StyleNode
-) {
-  const node = FiberNode.create(document.createTextNode(""))
-  updateDom(node, props, {}, createStyle)
-  return node
-}
-/**
- * 创建节点
- * @param fiber 
- * @returns 
- */
-export function createDom(
-  type: string,
-  props: Props | undefined,
-  createStyle?: () => StyleNode
-): FiberNode {
-  const node = isSVG(type)
-    ? FiberNode.create(document.createElementNS("http://www.w3.org/2000/svg", type), updateSVGProps)
-    : FiberNode.create(document.createElement(type))
-  updateDom(node, props, {}, createStyle)
-  return node
-}
-
 /**
  * 调整、追加节点
  * @param parent 
@@ -305,7 +306,7 @@ export const svgTagNames = [
   'animateTransform',
   'animation',
   'audio',
-  'canvas',
+  //'canvas',
   'circle',
   'clipPath',
   'color-profile',

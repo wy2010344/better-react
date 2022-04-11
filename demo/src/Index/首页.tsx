@@ -35,6 +35,18 @@ const Page: BRFun<{ key: boolean }> = (prp) => {
             navigate("测试createPortal", null)
           }}>测试createPortal</button>
         </li>
+        <li css="">
+          <button onClick={(e) => {
+            e.stopPropagation()
+            navigate("animation", null)
+          }}>动画页面</button>
+        </li>
+        <li css="">
+          <button onClick={(e) => {
+            e.stopPropagation()
+            navigate("popover", null)
+          }}>popover</button>
+        </li>
       </ul>
       <svg><rect style={{
         width: 100,
