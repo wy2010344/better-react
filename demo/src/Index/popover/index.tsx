@@ -3,7 +3,6 @@ import PanelReact from "../../drag/PanelReact";
 import { Fragment, useEffect } from "better-react";
 import { createElement } from "better-react-dom";
 import { useRef, useState } from "better-react-helper";
-import { RootPortal } from "../../Portal";
 import { Alignment, computePosition, waitUntilQuit, Direction, foreverCheck, CheckCallBack, ArrowLocation, opsiteDirection } from "./computePosition";
 
 
@@ -93,14 +92,15 @@ function PopView() {
       background:grey;
     `}></div>
     {
-      show && <RootPortal ref={portalRef} className={`cfc${count}`} style={{
-        background: "red",
-        position: 'absolute',
-        left: `${left}px`,
-        top: `${top}px`
-      }} onClick={() => {
-        console.log("dg")
-      }}>
+      show && <div ref={portalRef} portalTarget={() => document.body} className={`cfc${count}`} css={`
+        background: red;
+        position: absolute;
+        left: ${left}px;
+        top: ${top}px;
+      `}
+        onClick={() => {
+          console.log("dg")
+        }}>
         <div css={`
       position:absolute;
       ${arrowLocation.zeroDirection}:-10px;
@@ -114,7 +114,7 @@ function PopView() {
       `} />
         <div>我是内容</div>
         <div>ddd</div>
-      </RootPortal>
+      </div>
     }
     <div css={`
       position:absolute;

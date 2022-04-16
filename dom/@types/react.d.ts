@@ -3,7 +3,8 @@
 
 import * as CSS from 'csstype';
 import * as PropTypes from 'prop-types';
-import { Context } from 'better-react'
+import { Context, VirtaulDomNode } from 'better-react'
+import { FiberNode } from '../src';
 
 type NativeAnimationEvent = AnimationEvent;
 type NativeClipboardEvent = ClipboardEvent;
@@ -1422,6 +1423,8 @@ export namespace React {
     onTransitionEnd?: TransitionEventHandler<T> | undefined;
     onTransitionEndCapture?: TransitionEventHandler<T> | undefined;
 
+    /**作为转移到别的父节点下 */
+    portalTarget?(): Node
     /**加一个css属性，作为全局的类配置*/
     css?: string
     /**增加一个退出类型 */

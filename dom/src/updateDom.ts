@@ -27,6 +27,7 @@ export class FiberNode implements VirtaulDomNode {
   ) {
     this.createStyle = this.findStyleCreate()
   }
+  private props: Props = {}
   private createStyle: CreateStyleNode
   reconcile(): void {
     this.createStyle = this.findStyleCreate()
@@ -38,7 +39,11 @@ export class FiberNode implements VirtaulDomNode {
       return findContext(StyleContext)
     }
   }
-  static create(node: Node, updateProps: (node: Node, key: string, value: any) => void = updatePorps, isText?: boolean) {
+  static create(
+    node: Node,
+    updateProps: (node: Node, key: string, value: any) => void = updatePorps,
+    isText?: boolean
+  ) {
     return new FiberNode(node, updateProps, isText)
   }
   static createText(props: Props) {
@@ -50,43 +55,57 @@ export class FiberNode implements VirtaulDomNode {
     const node = isSVG(type)
       ? FiberNode.create(document.createElementNS("http://www.w3.org/2000/svg", type), updateSVGProps)
       : FiberNode.create(document.createElement(type))
-    node.update(props, {})
+    node.update(props)
     return node
   }
-  appendAfter(value: FindParentAndBefore): void {
+  isPortal(): boolean {
+    return this.props.portalTarget
+  }
+  appendAsPortal(): void {
+    if (this.isPortal()) {
+      const parent = this.props.portalTarget()
+      if (parent) {
+        parent.appendChild(this.node)
+      } else {
+        console.warn('no parent get', this.props)
+      }
+    }
+  }
+  appendAfter(value?: FindParentAndBefore): void {
     appendAfter(this, value as any)
   }
-  destroy(props: Props): void {
+  destroy(): void {
     if (this.style) {
       this.style.destroy()
     }
   }
-  update(props?: Props, oldProps?: Props) {
+  update(props: Props) {
     updateDom(this,
       props,
-      oldProps,
+      this.props,
       this.createStyle
     )
+    this.props = props
   }
-  init(props: Props) {
-    if (props?.ref) {
-      props.ref(this.node)
+  init() {
+    if (this.props?.ref) {
+      this.props.ref(this.node)
     }
   }
   private realRemove() {
     this.node.parentElement?.removeChild(this.node)
   }
-  removeFromParent(props: Props) {
-    if (props?.exit) {
+  removeFromParent() {
+    if (this.props?.exit) {
       const that = this
-      props.exit(this.node).then(() => {
+      this.props.exit(this.node).then(() => {
         that.realRemove()
       })
     } else {
       this.realRemove()
     }
-    if (props?.ref) {
-      props.ref(null)
+    if (this.props?.ref) {
+      this.props.ref(null)
     }
   }
   style?: StyleNode
@@ -120,6 +139,38 @@ function updateDom(
   oldProps: Props = emptyProps,
   styleCreater?: () => StyleNode
 ) {
+  let addClass = ''
+  let removeClass = ''
+  //先执行全局css可能发生的突变
+  if (oldProps.css) {
+    if (!dom.style) {
+      throw `请传入oldStyle`
+    }
+    if (props.css) {
+      //更新
+      if (props.css != oldProps.css) {
+        dom.style.update(props.css)
+      }
+    } else {
+      //删除
+      dom.style.destroy();
+      removeClass = dom.style.className
+      dom.style = undefined
+    }
+  } else {
+    if (props.css) {
+      //新增
+      if (styleCreater) {
+        const style = styleCreater()
+        style.update(props.css)
+        dom.style = style
+        addClass = style.className
+      } else {
+        throw `使用css但没有找到styleCreater`
+      }
+    }
+  }
+
   const node = dom.node
   //移除旧事件：新属性中不存在相应事件，或者事件不一样
   const prevKeys = Object.keys(oldProps)
@@ -155,33 +206,11 @@ function updateDom(
       node.addEventListener(eventType, props[name])
     })
 
-  if (oldProps.css) {
-    if (!dom.style) {
-      throw `请传入oldStyle`
-    }
-    if (props.css) {
-      //更新
-      if (props.css != oldProps.css) {
-        dom.style.update(props.css)
-      }
-    } else {
-      //删除
-      dom.style.destroy();
-      (dom.node as HTMLElement).classList.remove(dom.style.className)
-      dom.style = undefined
-    }
-  } else {
-    if (props.css) {
-      //新增
-      if (styleCreater) {
-        const style = styleCreater()
-        style.update(props.css)
-        dom.style = style;
-        (dom.node as HTMLElement).classList.add(style.className)
-      } else {
-        throw `使用css但没有找到styleCreater`
-      }
-    }
+  if (removeClass) {
+    (dom.node as HTMLElement).classList.remove(removeClass)
+  }
+  if (addClass) {
+    (dom.node as HTMLElement).classList.add(addClass)
   }
 }
 

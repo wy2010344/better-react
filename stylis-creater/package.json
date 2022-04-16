@@ -20,7 +20,8 @@
     "analyze": "size-limit --why"
   },
   "peerDependencies": {
-    "better-react-dom": "^0.0.3"
+    "better-react-dom": "^0.0.6",
+    "better-react": "^0.0.5"
   },
   "husky": {
     "hooks": {
@@ -50,8 +51,10 @@
     "stylis": "^4.0.13"
   },
   "devDependencies": {
-    "@types/stylis": "^4.0.2",
     "@size-limit/preset-small-lib": "^7.0.8",
+    "@types/stylis": "^4.0.2",
+    "better-react": "^0.0.5",
+    "better-react-dom": "^0.0.6",
     "husky": "^7.0.4",
     "size-limit": "^7.0.8",
     "tsdx": "^0.14.1",

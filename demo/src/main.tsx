@@ -12,8 +12,17 @@ import { StylisCreater } from 'stylis-creater';
 
 function App() {
   //return <>aaaa</>
-  return <Index />
+  return <>
+    <button onClick={() => {
+      destroy()
+    }}>销毁</button>
+    <Index />
+  </>
   //return <DeskTop />
   //return <Demo />
 }
-render(<App contexts={[StyleContext.provide(StylisCreater)]} />, FiberNode.create(document.getElementById("app")!,), askTimeWork);
+const destroy = render(<App
+  contexts={[StyleContext.provide(StylisCreater)]} />,
+  FiberNode.create(document.getElementById("app")!,),
+  askTimeWork
+);

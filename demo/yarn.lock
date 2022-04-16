@@ -7,20 +7,20 @@
   resolved "https://registry.yarnpkg.com/@types/prismjs/-/prismjs-1.26.0.tgz#a1c3809b0ad61c62cac6d4e0c56d610c910b7654"
   integrity sha512-ZTaqn/qSqUuAq1YwvOFQfVW1AR/oQJlLSZVustdjwI+GZ8kr0MSHBj0tsXPW1EqHubx50gtBEjbPGsdZwQwCjQ==
 
-better-react-dom@^0.0.4:
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/better-react-dom/-/better-react-dom-0.0.4.tgz#1cbc252e9294f187907277bc3497fb247f827550"
-  integrity sha512-AIsp5QB9vVJe2zp1YqTUcAW8Rx7JPcrOS2RUkFhX1lcoHim6+LbwVBqlL56dk9BoqWYOEfpCBGwt1wQBwSt5Mg==
+better-react-dom@^0.0.7:
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/better-react-dom/-/better-react-dom-0.0.7.tgz#a04884958cd2b76463aac932c99bf3985658dff0"
+  integrity sha512-3O22PM4tu08YgNinqjbmCh/Mh09P9/UKfiQ7xpqJ+83xRLc6K5iXoUiwyN6/YN4AC5599Xh+4dqD18J3d7zd5Q==
 
 better-react-helper@^0.0.3:
   version "0.0.3"
   resolved "https://registry.yarnpkg.com/better-react-helper/-/better-react-helper-0.0.3.tgz#42dc8b3fd0fca33bf12ec17afb23add476173fc6"
   integrity sha512-TY0XZJVHM8K86zlYpoeqXmQ7QKGp2zdiCZT8bmwLpFy1wdAU5YD4ZFBwfJ0rh4+cnvQdOmY4aluW0JLHK3Tp6A==
 
-better-react@^0.0.3:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/better-react/-/better-react-0.0.3.tgz#80d57416f9aaa723157a86a1ed18d1b78a7979af"
-  integrity sha512-iSRJ8egBc7Pyb0v7mzPJw42p3Fjz6hqzaNmHuoSw411ckZkbB7EvNKy/QoxBmpb3enEuSaen+smGWWnJViiSiA==
+better-react@^0.0.7:
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/better-react/-/better-react-0.0.7.tgz#1de8e51b311839f94c64f5856fd7787e0d4f02df"
+  integrity sha512-NOHYtRJHsIv2EzNPRTKymzuyB4gqJl5YHgkJH4xl4CtGXzaBNhm80YkgBdCaLMYSQY4SvhmyUzy/2K+RTM8OuQ==
 
 esbuild-android-arm64@0.14.23:
   version "0.14.23"
@@ -216,10 +216,10 @@ source-map-js@^1.0.2:
   resolved "https://registry.yarnpkg.com/source-map-js/-/source-map-js-1.0.2.tgz#adbc361d9c62df380125e7f161f71c826f1e490c"
   integrity sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==
 
-stylis-creater@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/stylis-creater/-/stylis-creater-0.1.0.tgz#b2f32730b481db186a33d8f0eda4164fd7f68eca"
-  integrity sha512-bK7WO5OAeh/Vkte/9jh/sJ0wqBUM09oUL/OqyMReQykMZiYcStPGPTtqDsOSTDDM2YW2YDc1DP2DeV7ibz9/NA==
+stylis-creater@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/stylis-creater/-/stylis-creater-0.0.3.tgz#e517d5e139ef73863d78695931014b016a24b405"
+  integrity sha512-K7Nc+4SjUXDC4wX09Zp5DKcH7ExZpMmARk7DPM2UC+f+mGeXvhl5erTZyUY1hPIwN4oMLwLY9/yYWdwODnswJA==
   dependencies:
     stylis "^4.0.13"
 

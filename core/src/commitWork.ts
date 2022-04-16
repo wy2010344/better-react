@@ -1,4 +1,3 @@
-import { Portal } from "."
 import { Fiber, VirtaulDomNode } from "./Fiber"
 
 //等待删除的fiber
@@ -38,7 +37,7 @@ export function commitRoot() {
 
   updates.forEach(function (fiber) {
     if (fiber.dom) {
-      fiber.dom.update(fiber.props, fiber.alternate?.props)
+      fiber.dom.update(fiber.props)
     }
     fiber.alternate = undefined
     fiber.effectTag = undefined
@@ -54,7 +53,7 @@ export function commitRoot() {
   addes.forEach(function (fiber) {
     fiber.effectTag = undefined
     if (fiber.dom) {
-      fiber.dom.init(fiber.props)
+      fiber.dom.init()
     }
   })
   addes.length = 0
@@ -70,15 +69,19 @@ function deepUpdateDirty(fiber: Fiber) {
   let prevChild: Fiber | undefined
   while (child) {
     child.prev = prevChild
-    if (child.dom && child.type != Portal) {
-      //portal不能作为子节点
-      const parentBefore = child.prev
-        ? getCurrentBefore(child.prev)
-        : findParentBefore(child)
-      if (parentBefore) {
-        child.dom.appendAfter(parentBefore)
+    if (child.dom) {
+      if (child.dom.isPortal()) {
+        child.dom.appendAsPortal()
       } else {
-        console.error("未找到", child.dom)
+        //portal不能作为子节点
+        const parentBefore = child.prev
+          ? getCurrentBefore(child.prev)
+          : findParentBefore(child)
+        if (parentBefore) {
+          child.dom.appendAfter(parentBefore)
+        } else {
+          console.error("未找到", child.dom)
+        }
       }
     }
     deepUpdateDirty(child)
@@ -100,7 +103,7 @@ export type FindParentAndBefore = [VirtaulDomNode, VirtaulDomNode | null] | [Vir
  * @returns 
  */
 function getCurrentBefore(fiber: Fiber): FindParentAndBefore {
-  if (fiber.type == Portal) {
+  if (fiber.dom?.isPortal()) {
     if (fiber.prev) {
       return getCurrentBefore(fiber.prev)
     } else {
@@ -178,11 +181,10 @@ function circleCommitDelection(fiber: Fiber | undefined) {
 }
 
 function removeFromDom(fiber: Fiber) {
-  if (fiber.type == Portal) {
-    //portal节点不能移除
+  if (fiber.dom?.isPortal()) {
     return
   }
-  fiber.dom?.removeFromParent(fiber.props)
+  fiber.dom?.removeFromParent()
 }
 function notifyDel(fiber: Fiber) {
   destroyFiber(fiber)
@@ -201,6 +203,9 @@ function destroyFiber(fiber: Fiber) {
     effect.forEach(ef => ef().destroy?.())
   }
   if (fiber.dom) {
-    fiber.dom.destroy(fiber.props)
+    if (fiber.dom.isPortal()) {
+      fiber.dom.removeFromParent()
+    }
+    fiber.dom.destroy()
   }
 }

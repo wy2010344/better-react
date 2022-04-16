@@ -3,14 +3,17 @@ import { FindParentAndBefore } from "./commitWork"
 export type VirtaulDomNode = {
   /**每次执行 */
   reconcile(): void
+  //每次更新props
+  update(props: Props): void
+  //只第一次更新
+  init(): void
 
-  init(props: Props): void
-  update(props?: Props, oldProps?: Props): void
+  isPortal(): boolean
+  appendAsPortal(): void
 
   appendAfter(value: FindParentAndBefore): void
-
-  removeFromParent(props: Props): void
-  destroy(props: Props): void
+  removeFromParent(): void
+  destroy(): void
 }
 
 

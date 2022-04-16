@@ -1,6 +1,6 @@
 
 import { createElement } from 'better-react-dom'
-import { Portal, Fragment, useEffect, useMemo } from 'better-react'
+import { Fragment, useEffect, useMemo } from 'better-react'
 import { RouteFun } from '.'
 import PanelReact from '../drag/PanelReact'
 import { FiberNode } from 'better-react-dom'
@@ -12,6 +12,9 @@ const 测试createPortal: RouteFun<void> = ({ close, moveToFirst }) => {
     title="首页"
     close={close}
     moveFirst={moveToFirst}
+    bodyCss={`
+    flex-direction:column;
+    `}
   >{x => {
     return <Page />
   }}</PanelReact>
@@ -24,6 +27,7 @@ function Page() {
   useEffect(() => {
     return () => {
       console.log("全部销毁")
+      //这个地方导致的!!!
       setShowPortal(false)
     }
   }, [])
@@ -35,14 +39,17 @@ function Page() {
   return <>
     <button onClick={() => stateValue(state - 1)}>文字--{aa}</button>
     <button onClick={() => setShowPortal(!showPortal)}>切换portal</button>
-    <Portal node={FiberNode.create(document.body)}>
-      {showPortal && state < 3 ? <div>
-        我是追加 {state}
-        <TestView />
-        <button onClick={() => stateValue(state + 1)}>文字++</button>
-      </div>
-        : undefined}
-    </Portal>
+    {showPortal && state < 3 ? <div portalTarget={() => document.body} css={`
+      position:absolute;
+      left:20px;
+      top:20px;
+      `}
+    >
+      我是追加 {state}
+      <TestView />
+      <button onClick={() => stateValue(state + 1)}>文字++</button>
+    </div>
+      : undefined}
     <div>{Array(state).fill("").map((_, i) => {
       return <div>测试{i}</div>
     })}</div>

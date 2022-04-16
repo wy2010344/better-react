@@ -14,10 +14,10 @@
     "vite": "^2.8.0"
   },
   "dependencies": {
-    "better-react": "^0.0.3",
-    "better-react-dom": "^0.0.4",
+    "better-react": "^0.0.7",
+    "better-react-dom": "^0.0.7",
     "better-react-helper": "^0.0.3",
     "prismjs": "^1.27.0",
-    "stylis-creater": "^0.1.0"
+    "stylis-creater": "^0.0.3"
   }
 }

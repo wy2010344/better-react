@@ -13,7 +13,7 @@ export function StylisCreater(): StyleNode {
       styled.textContent = serialize(compile(`.${className}{${css}}`), middleware([prefixer, stringify]))
     },
     destroy() {
-      document.body.removeChild(styled)
+      styled.parentElement?.removeChild(styled)
     }
   }
 }

@@ -1,4 +1,4 @@
-import { addDirty, commitRoot } from "./commitWork"
+import { addDelect, addDirty, commitRoot } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
 import { Fiber } from "./Fiber"
 let nextUnitOfWork: Fiber | undefined = undefined
@@ -48,6 +48,11 @@ export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
     afterRenderSet.delete(afterRender)
   }
   afterRenderSet.add(afterRender)
+  reconcile()
+  return function () {
+    addDelect(rootFiber)
+    reconcile()
+  }
 }
 /**deadline.timeRemaining() > 1
  * 被通知去找到最新的根节点，并计算
