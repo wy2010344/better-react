@@ -6,14 +6,15 @@ export function StylisCreater(): StyleNode {
   const className = 'stylis-' + uid++
   const styled = document.createElement("style")
   styled.id = className
-  document.body.appendChild(styled)
+  const body = document.body
+  body.appendChild(styled)
   return {
     className,
     update(css) {
       styled.textContent = serialize(compile(`.${className}{${css}}`), middleware([prefixer, stringify]))
     },
     destroy() {
-      styled.parentElement?.removeChild(styled)
+      body.removeChild(styled)
     }
   }
 }

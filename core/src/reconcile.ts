@@ -30,7 +30,7 @@ let doWork = false
 //是否有下一次任务
 let nextJob = false
 
-let rootFiber: Fiber
+let rootFiber: Fiber | undefined = undefined
 export type AskNextTimeWork = (v: (v: () => boolean) => void) => void
 let askNextTimeWork: AskNextTimeWork = () => { }
 /**每次render后调用，可以用于Layout动画之类的，在useEffect里监听与移除*/
@@ -40,18 +40,27 @@ export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
   rootFiber = fiber
   addDirty(fiber)
   const afterRender = function () {
-    rootFiber = {
-      ...rootFiber,
-      effectTag: undefined,
-      alternate: rootFiber
+    if (rootFiber) {
+      rootFiber = {
+        ...rootFiber,
+        effectTag: undefined,
+        alternate: rootFiber
+      }
     }
     afterRenderSet.delete(afterRender)
   }
   afterRenderSet.add(afterRender)
   reconcile()
   return function () {
-    addDelect(rootFiber)
-    reconcile()
+    if (rootFiber) {
+      addDelect(rootFiber)
+      const afterRender = function () {
+        rootFiber = undefined
+        afterRenderSet.delete(afterRender)
+      }
+      afterRenderSet.add(afterRender)
+      reconcile()
+    }
   }
 }
 /**deadline.timeRemaining() > 1
