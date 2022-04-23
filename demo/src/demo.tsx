@@ -1,5 +1,3 @@
-import { Fragment } from 'better-react';
-import { createElement } from 'better-react-dom';
 import { useEffect } from 'better-react';
 import { useStoreTriggerRender, ValueCenter, useState } from 'better-react-helper';
 const store = ValueCenter.of(1)

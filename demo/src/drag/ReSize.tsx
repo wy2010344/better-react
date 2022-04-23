@@ -1,6 +1,3 @@
-
-import { createElement } from 'better-react-dom'
-import { Fragment } from 'better-react'
 import { React } from 'better-react-dom';
 import { Direction } from './drag';
 

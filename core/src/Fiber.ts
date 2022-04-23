@@ -1,8 +1,6 @@
 import { FindParentAndBefore } from "./commitWork"
 
 export type VirtaulDomNode = {
-  /**每次执行 */
-  reconcile(): void
   //每次更新props
   update(props: Props): void
   //只第一次更新

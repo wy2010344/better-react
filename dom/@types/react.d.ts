@@ -4,7 +4,7 @@
 import * as CSS from 'csstype';
 import * as PropTypes from 'prop-types';
 import { Context, VirtaulDomNode } from 'better-react'
-import { FiberNode } from '../src';
+import { FiberNode, BetterNode } from '../src';
 
 type NativeAnimationEvent = AnimationEvent;
 type NativeClipboardEvent = ClipboardEvent;
@@ -195,7 +195,7 @@ export namespace React {
    */
   interface ReactNodeArray extends ReadonlyArray<ReactNode> { }
   type ReactFragment = {} | Iterable<ReactNode>;
-  type ReactNode = ReactChild | ReactFragment | ReactPortal | boolean | null | undefined;
+  type ReactNode = BetterNode
 
   //
   // Top Level API

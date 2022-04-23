@@ -1,7 +1,5 @@
 
 
-import { BetterNode, createElement } from 'better-react-dom'
-import { Fragment } from 'better-react'
 import { useEffect, useRefValue } from "better-react"
 import { dragMoveHelper, dragMoveUtil, dragResizeHelper } from "./drag"
 import { useRefVueValue } from "better-react-helper"
@@ -9,13 +7,14 @@ import { newLifeModel } from "better-react-helper"
 import { moveFirst, removePanel } from "./panel"
 import ReSize from "./ReSize"
 import { useRef } from 'better-react-helper'
+import { React } from "better-react-dom"
 
 export default function PanelMve({
   index,
   children
 }: {
   index: string
-  children: BetterNode[]
+  children: React.ReactNode
 }) {
   const container = useRef<HTMLElement | undefined>(undefined)
   const moveLeft = useRefVueValue(100)

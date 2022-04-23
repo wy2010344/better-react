@@ -1,9 +1,9 @@
 import { RouteFun } from "..";
 import PanelReact from "../../drag/PanelReact";
-import { Fragment, useEffect } from "better-react";
-import { createElement } from "better-react-dom";
+import { useEffect } from "better-react";
 import { useRef, useState } from "better-react-helper";
 import { Alignment, computePosition, waitUntilQuit, Direction, foreverCheck, CheckCallBack, ArrowLocation, opsiteDirection } from "./computePosition";
+import AbsPopOver from "./AbsPopOver";
 
 
 const popover: RouteFun<void> = ({ close, moveToFirst }) => {
@@ -92,16 +92,17 @@ function PopView() {
       background:grey;
     `}></div>
     {
-      show && <div ref={portalRef} portalTarget={() => document.body} className={`cfc${count}`} css={`
+      show
+        ? <div ref={portalRef} portalTarget={() => document.body} className={`cfc${count}`} css={`
         background: red;
         position: absolute;
         left: ${left}px;
         top: ${top}px;
       `}
-        onClick={() => {
-          console.log("dg")
-        }}>
-        <div css={`
+          onClick={() => {
+            console.log("dg")
+          }}>
+          <div css={`
       position:absolute;
       ${arrowLocation.zeroDirection}:-10px;
       ${arrowLocation.offsetDirection}:${arrowLocation.offset - 5}px;
@@ -112,10 +113,29 @@ function PopView() {
       border-color:transparent;
       border-${opsiteDirection(arrowLocation.zeroDirection)}-color:green;
       `} />
-        <div>我是内容</div>
-        <div>ddd</div>
-      </div>
+          <div>我是内容</div>
+          <div>ddd</div>
+        </div>
+        : ''
     }
+
+    <AbsPopOver
+      alignment={alignment}
+      direction={direction}
+      overlay={show ? <div css={`
+      width:50px;
+      height:50px;
+      background:red;
+      `}>
+
+      </div> : ''}
+    >
+      <div onClick={() => setShow(!show)} css={`
+      width:100px;
+      height:100px;
+      background:green;
+      `} />
+    </AbsPopOver>
     <div css={`
       position:absolute;
       bottom:0px;

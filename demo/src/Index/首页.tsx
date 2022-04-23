@@ -1,6 +1,5 @@
 import { RouteFun, findPanel } from ".";
-import { createElement } from 'better-react-dom'
-import { BRFun, BRNode, Fragment } from 'better-react'
+import { BRFun } from 'better-react'
 import PanelReact from "../drag/PanelReact";
 
 const 首页: RouteFun<void> = ({
@@ -20,8 +19,11 @@ const 首页: RouteFun<void> = ({
 const Page: BRFun<{ key: boolean }> = (prp) => {
   //console.log("pro", prp)
   const { navigate } = findPanel()
+  let a = <div />
+  a.type
   return <div>
     <div>
+      {[1, 2, 3, 4].map(i => <>{i}</>)}
       <ul>
         <li>
           <button onClick={(e) => {

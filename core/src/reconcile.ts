@@ -35,11 +35,18 @@ export type AskNextTimeWork = (v: (v: () => boolean) => void) => void
 let askNextTimeWork: AskNextTimeWork = () => { }
 /**每次render后调用，可以用于Layout动画之类的，在useEffect里监听与移除*/
 export const afterRenderSet = new Set<() => void>()
+export function nextTick(fun: () => void) {
+  const afterRender = function () {
+    fun()
+    afterRenderSet.delete(afterRender)
+  }
+  afterRenderSet.add(afterRender)
+}
 export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
   askNextTimeWork = ask
   rootFiber = fiber
   addDirty(fiber)
-  const afterRender = function () {
+  nextTick(function () {
     if (rootFiber) {
       rootFiber = {
         ...rootFiber,
@@ -47,22 +54,19 @@ export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
         alternate: rootFiber
       }
     }
-    afterRenderSet.delete(afterRender)
-  }
-  afterRenderSet.add(afterRender)
+  })
   reconcile()
   return function () {
     if (rootFiber) {
       addDelect(rootFiber)
-      const afterRender = function () {
+      nextTick(function () {
         rootFiber = undefined
-        afterRenderSet.delete(afterRender)
-      }
-      afterRenderSet.add(afterRender)
+      })
       reconcile()
     }
   }
 }
+
 /**deadline.timeRemaining() > 1
  * 被通知去找到最新的根节点，并计算
  */

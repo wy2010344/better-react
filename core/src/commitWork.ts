@@ -28,13 +28,23 @@ export function updateEffect(set: UpdateEffect) {
  * 找到最顶层dirty节点->计算出新的节点替换当前->对比标记新节点->更新
  */
 export function commitRoot() {
+  /******清理删除********************************************************/
   deletions.forEach(function (fiber) {
+    //清理effect
     notifyDel(fiber)
+    //删除
     commitDeletion(fiber)
     fiber.effectTag = undefined
   })
   deletions.length = 0
-
+  /******更新属性********************************************************/
+  //新加的初始化属性
+  addes.forEach(function (fiber) {
+    if (fiber.dom) {
+      fiber.dom.update(fiber.props)
+    }
+  })
+  //旧的更新属性
   updates.forEach(function (fiber) {
     if (fiber.dom) {
       fiber.dom.update(fiber.props)
@@ -43,13 +53,13 @@ export function commitRoot() {
     fiber.effectTag = undefined
   })
   updates.length = 0
-
+  /******遍历修补********************************************************/
   dirtys.forEach(function (fiber) {
     fiber.effectTag = undefined
     deepUpdateDirty(fiber)
   })
   dirtys.length = 0
-  //初始化ref
+  /******初始化ref********************************************************/
   addes.forEach(function (fiber) {
     fiber.effectTag = undefined
     if (fiber.dom) {
@@ -57,7 +67,7 @@ export function commitRoot() {
     }
   })
   addes.length = 0
-  //执行所有的effect
+  /******执行所有的effect********************************************************/
   updateEffects.forEach(update => {
     update()
   })
@@ -196,7 +206,6 @@ function notifyDel(fiber: Fiber) {
     }
   }
 }
-
 function destroyFiber(fiber: Fiber) {
   const effect = fiber.hooks?.effect
   if (effect) {

@@ -19,11 +19,13 @@ const DefaultStyleCreater: CreateStyleNode = () => {
   }
 }
 export const StyleContext = createContext<CreateStyleNode>(DefaultStyleCreater)
+
+type FiberNodeType = "svg" | "dom" | "text"
 export class FiberNode implements VirtaulDomNode {
   private constructor(
     public node: Node,
     private _updateProp: (node: Node, key: string, value: any) => void,
-    private isText?: boolean
+    public type: FiberNodeType = 'dom'
   ) {
     this.createStyle = this.findStyleCreate()
   }
@@ -33,7 +35,7 @@ export class FiberNode implements VirtaulDomNode {
     this.createStyle = this.findStyleCreate()
   }
   private findStyleCreate() {
-    if (this.isText) {
+    if (this.type == 'text') {
       return DefaultStyleCreater
     } else {
       return findContext(StyleContext)
@@ -42,20 +44,19 @@ export class FiberNode implements VirtaulDomNode {
   static create(
     node: Node,
     updateProps: (node: Node, key: string, value: any) => void = updatePorps,
-    isText?: boolean
+    type?: FiberNodeType
   ) {
-    return new FiberNode(node, updateProps, isText)
+    return new FiberNode(node, updateProps, type)
   }
-  static createText(props: Props) {
-    const node = FiberNode.create(document.createTextNode(""), updatePorps, true)
-    updateDom(node, props, {})
+  static createText() {
+    const node = FiberNode.create(document.createTextNode(""), updatePorps, "text")
     return node
   }
-  static createFrom(type: string, props: Props) {
-    const node = isSVG(type)
-      ? FiberNode.create(document.createElementNS("http://www.w3.org/2000/svg", type), updateSVGProps)
+  static createFrom(type: string) {
+    const svg = isSVG(type)
+    const node = svg
+      ? FiberNode.create(document.createElementNS("http://www.w3.org/2000/svg", type), updateSVGProps, "svg")
       : FiberNode.create(document.createElement(type))
-    node.update(props)
     return node
   }
   isPortal(): boolean {
@@ -79,6 +80,10 @@ export class FiberNode implements VirtaulDomNode {
       this.style.destroy()
     }
   }
+  /**
+   * 属性更新
+   * @param props 
+   */
   update(props: Props) {
     updateDom(this,
       props,

@@ -1,6 +1,5 @@
 import { updateEffect } from "./commitWork"
 import { ContextProvider, Fiber, StoreValue } from "./Fiber"
-import { Fragment } from "./index"
 import { reconcile } from "./reconcile"
 import { reconcileChildren } from "./reconcileChildren"
 /**当前计算的hook节点 */
@@ -17,29 +16,18 @@ const hookIndex = {
  * @param fiber 
  */
 export function updateFunctionComponent(fiber: Fiber) {
-  if (fiber.type == Fragment) {
-    //是fragment
-    reconcileChildren(fiber, fiber.props?.children)
-  } else if (fiber.type == reconcileChildren) {
-    //是数组
-    reconcileChildren(fiber, fiber.props?.children)
-  } else {
-    wipFiber = fiber
-    hookIndex.value = 0
-    hookIndex.effect = 0
-    hookIndex.ref = 0
-    hookIndex.memo = 0
-    wipFiber.hooks = {
-      value: [],
-      effect: [],
-      ref: [],
-      memo: []
-    }
-    if (fiber.dom) {
-      fiber.dom.reconcile()
-    }
-    reconcileChildren(fiber, fiber.render(fiber))
+  wipFiber = fiber
+  hookIndex.value = 0
+  hookIndex.effect = 0
+  hookIndex.ref = 0
+  hookIndex.memo = 0
+  wipFiber.hooks = {
+    value: [],
+    effect: [],
+    ref: [],
+    memo: []
   }
+  reconcileChildren(fiber, fiber.render(fiber))
 }
 
 export function useValue<T>(init: () => T) {

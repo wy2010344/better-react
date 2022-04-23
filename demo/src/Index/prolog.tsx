@@ -1,6 +1,5 @@
 import { RouteFun } from '.'
-import { createElement } from 'better-react-dom'
-import { Fragment, useRefValue } from 'better-react'
+import { useRefValue } from 'better-react'
 import PanelReact from '../drag/PanelReact'
 import { contentEditable } from '../drag/mb'
 import CodeJar from '../drag/CodeJar'
