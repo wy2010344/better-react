@@ -1,5 +1,5 @@
 import { updateEffect } from "./commitWork"
-import { ContextProvider, Fiber, StoreValue } from "./Fiber"
+import { ContextProvider, Fiber, StoreRef, StoreValue } from "./Fiber"
 import { reconcile } from "./reconcile"
 import { reconcileChildren } from "./reconcileChildren"
 /**当前计算的hook节点 */
@@ -52,7 +52,7 @@ function storeValue<T>(value: T) {
         if (temp != value) {
           value = temp
           fiber.effectTag = "DIRTY"
-          reconcile()
+          return reconcile()
         }
       }
     }
@@ -73,7 +73,7 @@ export function useRefValue<T>(init: () => T) {
   const hook = wipFiber?.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks.ref[hookIndex.ref] || storeRef(init())
   wipFiber!.hooks!.ref.push(hook)
   hookIndex.ref!++
-  return hook as StoreValue<T>
+  return hook as StoreRef<T>
 }
 
 const DEFAULT_EFFECT = () => { }
@@ -81,7 +81,7 @@ export function useEffect(effects: () => (void | (() => void)), deps?: readonly 
   const hook = wipFiber?.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks.effect[hookIndex.effect] || storeRef({
     effect: DEFAULT_EFFECT,
     deps: []
-  }) as StoreValue<{
+  }) as StoreRef<{
     deps?: any[]
     effect: any
     destroy?(): void
@@ -127,7 +127,7 @@ export function useMemo<T>(effect: () => T, deps: readonly any[]) {
     effect: DEFAULT_EFFECT,
     value: null,
     deps: []
-  }) as StoreValue<{
+  }) as StoreRef<{
     deps: readonly any[]
     value: any
     effect: any

@@ -159,8 +159,6 @@ function TweenAnimation({
           }} />
         {tween.name}
       </span>))}
-      <input type="radio"
-      />
     </div>
     {currentTween.eases && <div>
       <div>Ease类型 {currentEasy}</div>

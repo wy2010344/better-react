@@ -1,6 +1,7 @@
 import { RouteFun, findPanel } from ".";
 import { BRFun } from 'better-react'
 import PanelReact from "../drag/PanelReact";
+import { useRef, useState } from "better-react-helper";
 
 const 首页: RouteFun<void> = ({
   close,
@@ -19,11 +20,25 @@ const 首页: RouteFun<void> = ({
 const Page: BRFun<{ key: boolean }> = (prp) => {
   //console.log("pro", prp)
   const { navigate } = findPanel()
-  let a = <div />
-  a.type
+
+  const divRef = useRef<HTMLDivElement | null>(null)
+  const [count, setCount] = useState(1)
+  const [index, setIndex] = useState(0)
   return <div>
     <div>
       {[1, 2, 3, 4].map(i => <>{i}</>)}
+      <div ref={divRef}>{count} {index}</div>
+      <button onClick={(e) => {
+        console.log("abc", divRef()?.innerText)
+        setIndex(index + 3).then(() => {
+          console.log("vvv", divRef()?.innerText)
+        })
+        setCount(count + 1).then(() => {
+          console.log("text", divRef()?.innerText)
+        })
+        e.stopPropagation()
+        e.preventDefault()
+      }}>增加{count}</button>
       <ul>
         <li>
           <button onClick={(e) => {

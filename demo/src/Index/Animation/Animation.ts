@@ -280,8 +280,7 @@ export function drawOfBezier3(p: DrawOfBezier3): AnimationFun {
  * https://blog.maximeheckel.com/posts/the-physics-behind-spring-animations/
  * 
  * 刚度、摩擦系数越大,越快停止
- * 
- * 这个计算是粗糙的,主要是1,有时间间隔,而且时间间隔不均匀.而摩擦力与位移呈现出相关性
+ * 这个计算是粗糙的,主要是,有时间间隔,而且时间间隔不均匀.而摩擦力与位移呈现出相关性
  * @param param0 
  * @returns 
  */
@@ -352,6 +351,7 @@ const { sqrt, exp, sin, cos } = Math;
 /**
  * 
  * https://github.com/pomber/use-spring  stiffness=170 mass=1 damping=26
+ * 这个缺点,不能用最小能量计算归0
  * @param param0 
  * @returns 
  */
@@ -409,3 +409,14 @@ type Output = {
   /**当前速度 */
   v: number;
 };
+
+/**
+ * 保留小数点后N位
+ * @param x 
+ * @param decimals 
+ * @returns 
+ */
+function roundTo(x: number, decimals: number) {
+  const p = Math.pow(10, decimals);
+  return Math.round(x * p) / p;
+}

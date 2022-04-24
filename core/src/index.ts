@@ -4,7 +4,6 @@ export { useValue, useEffect, useRefValue, useMemo, findContext } from './fc'
 export { Fiber, Props, VirtaulDomNode, createContext, Context, BRFun, BRNode } from './Fiber'
 export { FindParentAndBefore } from './commitWork'
 export { AskNextTimeWork }
-export { nextTick } from './reconcile'
 function RootFiberFun(fiber: Fiber) {
   return fiber.props!.children
 }

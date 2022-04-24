@@ -9,7 +9,6 @@ import 测试createPortal from "./测试createPortal"
 import 首页 from './首页'
 import animation from './Animation'
 import popover from './popover'
-import { Fragment } from 'better-react-dom'
 
 export type RouteFun<T> = (params: {
   args: T,

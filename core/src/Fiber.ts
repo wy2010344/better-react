@@ -62,19 +62,19 @@ export type Fiber = BRNode<any> & {
   hooks?: {
     value: {
       setFiber(v: Fiber): void
-      render: StoreValue<any>
+      render: StoreRef<any>
     }[]
-    effect: StoreValue<{
+    effect: StoreRef<{
       deps?: readonly any[]
       effect(): void | (() => void)
       destroy?(): void
     }>[]
-    memo: StoreValue<{
+    memo: StoreRef<{
       deps: readonly any[]
       value: any
       effect(): any
     }>[]
-    ref: StoreValue<any>[]
+    ref: StoreRef<any>[]
   },
   contexts?: Context<any>[]
 }
@@ -92,7 +92,8 @@ export function getFiberKey(fiber: Fiber | undefined, key: any): Fiber | void {
   }
 }
 
-export type StoreValue<T> = ((v: T) => void) & (() => T)
+export type StoreRef<T> = ((v: T) => void) & (() => T)
+export type StoreValue<T> = ((v: T) => Promise<void>) & (() => T)
 export type Props = { [key: string]: any }
 let contextUid = 0
 export class ContextProvider<T>{
