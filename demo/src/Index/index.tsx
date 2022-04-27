@@ -1,14 +1,13 @@
 
-import { findContext, useEffect, createContext, useRefValue } from 'better-react'
+import { useEffect, createContext, useRefValue, useValue } from 'better-react'
 import { useStoreTriggerRender, ValueCenter } from "better-react-helper"
-import PanelReact from "../drag/PanelReact"
 import prolog from "./prolog"
-import Prolog from "./prolog"
 import 测试createPortal from "./测试createPortal"
 
 import 首页 from './首页'
 import animation from './Animation'
 import popover from './popover'
+import 测试JSX不render from './测试JSX不render'
 
 export type RouteFun<T> = (params: {
   args: T,
@@ -20,7 +19,8 @@ const routes = {
   首页,
   测试createPortal,
   animation,
-  popover
+  popover,
+  测试JSX不render
 } as const
 
 
@@ -36,8 +36,8 @@ const PanelContext = createContext({
   }
 })
 
-export function findPanel() {
-  return findContext(PanelContext)
+export function usePanel() {
+  return PanelContext.useConsumer()
 }
 let globalUID = 0
 
@@ -51,37 +51,38 @@ type HistoryRow<K extends keyof Route> = {
 export default function index() {
 
   const historys = useRefValue(() => ValueCenter.of<HistoryRow<keyof Route>[]>([]))()
-  return (
-    <Fragment contexts={[PanelContext.provide({
-      navigate(path, params) {
-        const list = historys.get()
-        const index = list.findIndex(v => v.path == path)
-        let key = ''
-        if (index < 0) {
-          key = `panel-${globalUID++}`
-        } else {
-          const [old] = list.splice(index, 1)
-          key = old.key
-        }
-        const nList = list.concat({
-          key,
-          path,
-          params
-        })
-        historys.set(nList)
-      },
-      push(path, params) {
-        const list = historys.get()
-        historys.set(list.concat({
-          key: `panel-${globalUID++}`,
-          path,
-          params
-        }))
+  PanelContext.useProvider({
+    navigate(path, params) {
+      const list = historys.get()
+      const index = list.findIndex(v => v.path == path)
+      let key = ''
+      if (index < 0) {
+        key = `panel-${globalUID++}`
+      } else {
+        const [old] = list.splice(index, 1)
+        key = old.key
       }
-    })]}>
+      const nList = list.concat({
+        key,
+        path,
+        params
+      })
+      historys.set(nList)
+    },
+    push(path, params) {
+      const list = historys.get()
+      historys.set(list.concat({
+        key: `panel-${globalUID++}`,
+        path,
+        params
+      }))
+    }
+  })
+  return (
+    <>
       <RenderHost historys={historys} />
       <FirstPage />
-    </Fragment>
+    </>
   )
 }
 function RenderHost({ historys }: { historys: ValueCenter<HistoryRow<keyof Route>[]> }) {
@@ -118,13 +119,13 @@ function RenderHost({ historys }: { historys: ValueCenter<HistoryRow<keyof Route
 
 
 function FirstPage() {
-  const { navigate } = findPanel()
+  const { navigate } = usePanel()
 
   useEffect(() => {
     navigate("首页", null)
   }, [])
   return <>
-
+    feawfawefawef
   </>
 
 }

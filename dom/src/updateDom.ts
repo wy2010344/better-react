@@ -1,4 +1,4 @@
-import { createContext, findContext, FindParentAndBefore } from "better-react"
+import { createContext, FindParentAndBefore } from "better-react"
 import { Props, VirtaulDomNode } from "better-react"
 
 export type StyleNode = {
@@ -38,7 +38,7 @@ export class FiberNode implements VirtaulDomNode {
     if (this.type == 'text') {
       return DefaultStyleCreater
     } else {
-      return findContext(StyleContext)
+      return StyleContext.useConsumer()
     }
   }
   static create(

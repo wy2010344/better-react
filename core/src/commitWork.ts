@@ -211,6 +211,10 @@ function destroyFiber(fiber: Fiber) {
   if (effect) {
     effect.forEach(ef => ef().destroy?.())
   }
+  const listeners = fiber.hooks?.contextCosumer
+  if (listeners) {
+    listeners.forEach(listener => listener().destroy())
+  }
   if (fiber.dom) {
     if (fiber.dom.isPortal()) {
       fiber.dom.removeFromParent()

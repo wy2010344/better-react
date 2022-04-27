@@ -15,26 +15,35 @@ function workLoop(shouldContinue: () => boolean) {
   if (nextUnitOfWork) {
     askNextTimeWork(workLoop)
   } else {
+    currentTick.on = 'commit'
     commitRoot()
     //执行所有的当前任务
-    for (const tick of currentTicks) {
+    for (const tick of currentTick.works) {
       tick()
     }
-    if (nextTicks.length > 0) {
-      currentTicks = nextTicks
-      nextTicks = []
+    if (nextTick.on) {
+      currentTick.works = nextTick.works
+      nextTick.on = false
+      nextTick.works = []
       //重置更新,下一次执行所有currentTicks,nextTick待更新
       nextUnitOfWork = rootFiber
       askNextTimeWork(workLoop)
     } else {
-      currentTicks = []
+      currentTick.on = false
+      currentTick.works = []
     }
   }
 }
-//当前完成后的任务.如果存在,则在执行中
-let currentTicks: EMPTY_FUN[] = []
-//下一次工作
-let nextTicks: EMPTY_FUN[] = []
+//当前任务
+const currentTick = {
+  on: false as boolean | "commit",
+  works: [] as EMPTY_FUN[]
+}
+//下一次的任务
+const nextTick = {
+  on: false,
+  works: [] as EMPTY_FUN[]
+}
 type EMPTY_FUN = () => void
 
 let rootFiber: Fiber | undefined = undefined
@@ -44,7 +53,7 @@ export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
   askNextTimeWork = ask
   rootFiber = fiber
   addDirty(fiber)
-  reconcile().then(() => {
+  reconcile(() => {
     if (rootFiber) {
       rootFiber = {
         ...rootFiber,
@@ -56,7 +65,7 @@ export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
   return function () {
     if (rootFiber) {
       addDelect(rootFiber)
-      reconcile().then(() => {
+      reconcile(() => {
         rootFiber = undefined
       })
     }
@@ -65,11 +74,11 @@ export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
 /**deadline.timeRemaining() > 1
  * 被通知去找到最新的根节点，并计算
  */
-export function reconcile() {
-  return new Promise<void>(resolve => {
-    tempWorks.push(resolve)
-    askTempWork()
-  })
+export function reconcile(callback?: EMPTY_FUN) {
+  if (callback) {
+    tempWorks.push(callback)
+  }
+  askTempWork()
 }
 /**
  * 如果一个事件中有多次setState,
@@ -88,10 +97,14 @@ function askTempWork() {
   askedTempWork = true
   askNextTimeWork(() => {
     //空闲时间再来处理
-    if (currentTicks.length > 0) {
-      nextTicks = nextTicks.concat(tempWorks)
+    if (currentTick.on) {
+      nextTick.on = true
+      for (const work of tempWorks) {
+        nextTick.works.push(work)
+      }
     } else {
-      currentTicks = tempWorks
+      currentTick.on = true
+      currentTick.works = tempWorks
       //重置更新
       nextUnitOfWork = rootFiber
       askNextTimeWork(workLoop)

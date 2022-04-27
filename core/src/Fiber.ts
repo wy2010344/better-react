@@ -20,7 +20,6 @@ type EMPTY = {}
 type BRParam<T extends EMPTY> = Omit<T, "key" | "contexts">
 type BRParamAll<T extends EMPTY> = {
   key?: string | number
-  contexts?: Context<any>[]
 } & BRParam<T>
 export type BRNode<T extends EMPTY = EMPTY> = {
   type: BRFun<T>
@@ -75,8 +74,15 @@ export type Fiber = BRNode<any> & {
       effect(): any
     }>[]
     ref: StoreRef<any>[]
-  },
-  contexts?: Context<any>[]
+    contextProvider: StoreRef<{
+      changeValue(v: any): void
+    }>[]
+    contextCosumer: StoreRef<{
+      setFiber(v: Fiber): void
+      getValue(): any
+      destroy(): void
+    }>[]
+  }
 }
 
 export function getPool(fiber: Fiber) {
@@ -93,25 +99,24 @@ export function getFiberKey(fiber: Fiber | undefined, key: any): Fiber | void {
 }
 
 export type StoreRef<T> = ((v: T) => void) & (() => T)
-export type StoreValue<T> = ((v: T) => Promise<void>) & (() => T)
+export type StoreValue<T> = ((v: T, callback?: () => void) => void) & (() => T)
 export type Props = { [key: string]: any }
-let contextUid = 0
-export class ContextProvider<T>{
-  id = contextUid++
-  constructor(
-    public readonly out: T
-  ) { }
-  provide(value: T): Context<T> {
-    return new Context(value, this)
-  }
-}
-
-export class Context<T>{
-  constructor(
-    public value: T,
-    public parent: ContextProvider<T>
-  ) { }
-}
-export function createContext<T>(init: T) {
-  return new ContextProvider(init)
-}
+// let contextUid = 0
+// export class ContextProvider<T>{
+//   id = contextUid++
+//   constructor(
+//     public readonly out: T
+//   ) { }
+//   provide(value: T): Context<T> {
+//     return new Context(value, this)
+//   }
+// }
+// export class Context<T>{
+//   constructor(
+//     public value: T,
+//     public parent: ContextProvider<T>
+//   ) { }
+// }
+// export function createContext<T>(init: T) {
+//   return new ContextProvider(init)
+// }

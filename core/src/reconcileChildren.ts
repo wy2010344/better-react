@@ -29,16 +29,7 @@ export function reconcileChildren(fiber: Fiber, elements?: any[], mustKey?: bool
       const oldKeyFiber = getFiberKey(alternate, key)
       if (oldKeyFiber && oldKeyFiber.type == element.type) {
         //如果找到了，就更新
-        newFiber = {
-          type: oldKeyFiber.type,
-          render: element.render,
-          props: element.props,
-          dom: oldKeyFiber.dom,
-          parent: fiber,
-          alternate: oldKeyFiber,
-          effectTag: "UPDATE"
-        }
-        addUpdate(newFiber)
+        newFiber = updateFiber(oldKeyFiber, element, fiber)
       } else {
         //没找到，就新建
         newFiber = {
@@ -70,16 +61,7 @@ export function reconcileChildren(fiber: Fiber, elements?: any[], mustKey?: bool
           //旧成员没有key，按位比较
           if (element.type == oldFiber.type) {
             //匹配上，同位更新
-            newFiber = {
-              type: oldFiber.type,
-              props: element.props,
-              render: element.render,
-              dom: oldFiber.dom,
-              parent: fiber,
-              alternate: oldFiber,
-              effectTag: "UPDATE"
-            }
-            addUpdate(newFiber)
+            newFiber = updateFiber(oldFiber, element, fiber)
           } else {
             //没匹配上，新增旧删
             newFiber = {
@@ -158,4 +140,22 @@ export function reconcileChildren(fiber: Fiber, elements?: any[], mustKey?: bool
 
 function existKey(key: any) {
   return key !== undefined
+}
+
+function updateFiber(oldKeyFiber: Fiber, element: any, fiber: Fiber) {
+  if (!oldKeyFiber.effectTag && oldKeyFiber.props == element.props) {
+    //不改变,跳过
+    return oldKeyFiber
+  }
+  const newFiber: Fiber = {
+    type: oldKeyFiber.type,
+    render: element.render,
+    props: element.props,
+    dom: oldKeyFiber.dom,
+    parent: fiber,
+    alternate: oldKeyFiber,
+    effectTag: "UPDATE"
+  }
+  addUpdate(newFiber)
+  return newFiber
 }

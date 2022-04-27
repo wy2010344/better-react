@@ -94,7 +94,6 @@ export namespace React {
    * inside your component or have to validate them.
    */
   interface Attributes {
-    contexts?: Context<any>[]
     key?: Key | null | undefined;
   }
   interface ClassAttributes<T> extends Attributes {

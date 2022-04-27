@@ -12,6 +12,7 @@ import { StylisCreater } from 'stylis-creater';
 
 function App() {
   //return <>aaaa</>
+  StyleContext.useProvider(StylisCreater)
   return <>
     <button onClick={() => {
       destroy()
@@ -23,8 +24,7 @@ function App() {
 }
 const node = FiberNode.create(document.getElementById("app")!)
 console.log(node)
-const destroy = render(<App
-  contexts={[StyleContext.provide(StylisCreater)]} />,
+const destroy = render(<App />,
   node,
   askTimeWork
 );

@@ -38,7 +38,7 @@
 // for reference and documentation on how exactly to do it.
 /// <reference path="react.d.ts" />
 import { React, ReactManagedAttributes } from './react'
-import { BRNode, Context } from 'better-react'
+import { BRNode } from 'better-react'
 declare global {
   namespace JSX {
     interface Element extends BRNode<any> { }
@@ -55,7 +55,6 @@ declare global {
 
     /**通用的属性 */
     interface IntrinsicAttributes {
-      contexts?: Context<any>[]
       key?: string | number | null | undefined;
     }
     interface IntrinsicElements {
