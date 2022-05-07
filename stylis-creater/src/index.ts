@@ -33,9 +33,9 @@ export function css(ts: TemplateStringsArray, ...vs: (string | number)[]) {
   return body.className
 }
 
-import { useRefValue, useEffect } from 'better-react'
+import { useMemo, useEffect } from 'better-react'
 export function useCss(fun: () => string, deps: any[]) {
-  const css = useRefValue(() => StylisCreater())()
+  const css = useMemo(() => StylisCreater(), [])
   useEffect(() => {
     return () => css.destroy()
   }, [])

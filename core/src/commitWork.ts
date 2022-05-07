@@ -17,11 +17,17 @@ const addes: Fiber[] = []
 export function addAdd(fiber: Fiber) {
   addes.push(fiber)
 }
-
 export type UpdateEffect = () => void
 const updateEffects: UpdateEffect[] = []
 export function updateEffect(set: UpdateEffect) {
   updateEffects.push(set)
+}
+export function clearWork() {
+  deletions.length = 0
+  updates.length = 0
+  dirtys.length = 0
+  addes.length = 0
+  updateEffects.length = 0
 }
 /**
  * 提交变更应该从根dirty节点开始。

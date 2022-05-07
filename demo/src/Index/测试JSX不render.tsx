@@ -1,4 +1,4 @@
-import { createContext } from "better-react"
+import { createContext, useMemo } from "better-react"
 import { useState } from "better-react-helper"
 import { RouteFun } from "."
 import PanelReact from "../drag/PanelReact"
@@ -24,12 +24,17 @@ function Page() {
 
   const [first, setfirst] = useState(0)
   VMContext.useProvider(first)
+
+  // const view = useMemo(() => <div>我是内容{first}</div>, [])
+  // console.log(view)
   return <div>
     我是内容
     {inner}
     <button onClick={() => setfirst(first + 1)}>增加{first}</button>
+    {view}
   </div>
 }
+const view = <div>ccccc</div>
 
 const VMContext = createContext(100)
 

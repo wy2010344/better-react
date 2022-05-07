@@ -1,4 +1,5 @@
-import { useEffect, useRefValue } from "better-react"
+import { useEffect } from "better-react"
+import { useRefValue } from "./useRef"
 import { useState } from './useState'
 export type NotifyHandler<T> = (v: T) => void
 

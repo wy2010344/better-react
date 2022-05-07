@@ -1,6 +1,6 @@
 
-import { useEffect, createContext, useRefValue, useValue } from 'better-react'
-import { useStoreTriggerRender, ValueCenter } from "better-react-helper"
+import { useEffect, createContext, useValue } from 'better-react'
+import { useRefValue, useStoreTriggerRender, ValueCenter } from "better-react-helper"
 import prolog from "./prolog"
 import 测试createPortal from "./测试createPortal"
 
@@ -8,6 +8,7 @@ import 首页 from './首页'
 import animation from './Animation'
 import popover from './popover'
 import 测试JSX不render from './测试JSX不render'
+import ExpensivePanel from './ExpensiveView'
 
 export type RouteFun<T> = (params: {
   args: T,
@@ -20,7 +21,8 @@ const routes = {
   测试createPortal,
   animation,
   popover,
-  测试JSX不render
+  测试JSX不render,
+  ExpensivePanel
 } as const
 
 
@@ -87,8 +89,10 @@ export default function index() {
 }
 function RenderHost({ historys }: { historys: ValueCenter<HistoryRow<keyof Route>[]> }) {
   const vs = useStoreTriggerRender(historys)
-  return <>{vs.map(v => {
+  console.log("长度", vs.length)
+  return <div>{vs.map(v => {
     const route = routes[v.path]
+    console.log("key", v.key)
     return <Fragment key={v.key} >{route({
       args: v.params as any,
       moveToFirst() {
@@ -114,7 +118,7 @@ function RenderHost({ historys }: { historys: ValueCenter<HistoryRow<keyof Route
         }
       }
     })}</Fragment>
-  })}</>
+  })}</div>
 }
 
 

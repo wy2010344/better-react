@@ -70,6 +70,12 @@ const Page: BRFun<{ key: boolean }> = (prp) => {
             navigate("popover", null)
           }}>popover</button>
         </li>
+        <li css="">
+          <button onClick={(e) => {
+            e.stopPropagation()
+            navigate("ExpensivePanel", null)
+          }}>ExpensivePanel</button>
+        </li>
       </ul>
       <svg><rect style={{
         width: 100,

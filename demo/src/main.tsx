@@ -4,15 +4,18 @@ import DeskTop from './drag/deskTop';
 import './style.css'
 import { createElement, StyleContext } from 'better-react-dom'
 import { render } from 'better-react'
-import { FiberNode } from 'better-react-dom';
-import { askTimeWork } from '../../dom/src/askTimeWork';
+import { FiberNode, askTimeWork } from 'better-react-dom';
 import Index from './Index';
 import { StylisCreater } from 'stylis-creater';
+import TestFix from './TestFix';
+import { ScheduleAskTime } from './schedule';
+import { askIdleTimeWork } from './scheduleIdle';
 
 
 function App() {
   //return <>aaaa</>
   StyleContext.useProvider(StylisCreater)
+  //return <TestFix />
   return <>
     <button onClick={() => {
       destroy()
@@ -26,5 +29,7 @@ const node = FiberNode.create(document.getElementById("app")!)
 console.log(node)
 const destroy = render(<App />,
   node,
-  askTimeWork
+  //askTimeWork,
+  //askIdleTimeWork,
+  ScheduleAskTime
 );

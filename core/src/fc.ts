@@ -8,9 +8,7 @@ let wipFiber: Fiber | undefined = undefined
 const hookIndex = {
   value: 0,
   effect: 0,
-  ref: 0,
   memo: 0,
-  contextProvider: 0,
   contextConsumer: 0
 }
 /**
@@ -21,20 +19,18 @@ export function updateFunctionComponent(fiber: Fiber) {
   wipFiber = fiber
   hookIndex.value = 0
   hookIndex.effect = 0
-  hookIndex.ref = 0
   hookIndex.memo = 0
-  hookIndex.contextProvider = 0
   hookIndex.contextConsumer = 0
   wipFiber.hooks = {
     value: [],
     effect: [],
-    ref: [],
     memo: [],
-    contextProvider: [],
+    contextProvider: new Map(),
     contextCosumer: []
   }
+  const children = fiber.render(fiber)
   wipFiber = undefined
-  reconcileChildren(fiber, fiber.render(fiber))
+  reconcileChildren(fiber, children)
 }
 
 export function useValue<T>(init: () => T) {
@@ -71,26 +67,19 @@ function storeValue<T>(value: T) {
   }
 }
 
-function storeRef<T>(value: T) {
+export function storeRef<T>(value: T) {
   return function () {
     if (arguments.length == 0) {
       return value
     } else {
       value = arguments[0]
     }
-  }
-}
-
-export function useRefValue<T>(init: () => T) {
-  const hook = wipFiber?.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks.ref[hookIndex.ref] || storeRef(init())
-  wipFiber!.hooks!.ref.push(hook)
-  hookIndex.ref!++
-  return hook as StoreRef<T>
+  } as StoreRef<T>
 }
 
 const DEFAULT_EFFECT = () => { }
 export function useEffect(effects: () => (void | (() => void)), deps?: readonly any[]) {
-  const hook = wipFiber?.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks.effect[hookIndex.effect] || storeRef({
+  const hook = wipFiber?.alternate?.hooks?.effect[hookIndex.effect] || storeRef({
     effect: DEFAULT_EFFECT,
     deps: []
   }) as StoreRef<{
@@ -101,7 +90,6 @@ export function useEffect(effects: () => (void | (() => void)), deps?: readonly 
   wipFiber!.hooks!.effect.push(hook)
   hookIndex.effect++
   const last = hook()
-
   //hook都需要结束的时候才计算！！。
   if (Array.isArray(last.deps)
     && Array.isArray(deps)
@@ -134,8 +122,8 @@ export function useEffect(effects: () => (void | (() => void)), deps?: readonly 
   }
 }
 
-export function useMemo<T>(effect: () => T, deps: readonly any[]) {
-  const hook = wipFiber?.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks.memo[hookIndex.memo] || storeRef({
+export function useMemo<T>(effect: () => T, deps: readonly any[]): T {
+  const hook = wipFiber?.alternate?.hooks?.memo[hookIndex.memo] || storeRef({
     effect: DEFAULT_EFFECT,
     value: null,
     deps: []
@@ -197,11 +185,9 @@ class ContextFactory<T> implements Context<T>{
     return new ContextListener(this.findProvider(fiber), fiber)
   }
   useProvider(v: T) {
-    const hook = wipFiber?.alternate?.hooks?.contextProvider[hookIndex.contextProvider] || storeRef(this.createProvider(v)) as StoreRef<ContextProvider<T>>
-    wipFiber?.hooks?.contextProvider.push(hook)
-    hookIndex.contextProvider++
-    const last = hook()
-    last.changeValue(v)
+    const hook = wipFiber?.alternate?.hooks?.contextProvider.get(this) || this.createProvider(v)
+    wipFiber?.hooks?.contextProvider.set(this, hook)
+    hook.changeValue(v)
   }
   useConsumer() {
     const hook = wipFiber?.alternate?.hooks?.contextCosumer[hookIndex.contextConsumer] || storeRef(this.createConsumer(wipFiber!)) as StoreRef<{
@@ -220,11 +206,8 @@ class ContextFactory<T> implements Context<T>{
     while (fiber) {
       if (fiber.hooks) {
         const providers = fiber.hooks.contextProvider
-        for (let i = 0; i < providers.length; i++) {
-          const provider = providers[i]() as ContextProvider<T>
-          if (provider.parent == this) {
-            return provider
-          }
+        if (providers.has(this)) {
+          return providers.get(this) as ContextProvider<T>
         }
       }
       fiber = fiber.parent
@@ -279,28 +262,5 @@ class ContextListener<T>{
     this.context.off(this)
   }
 }
-
-/**
- * 不再使用这个
- * @param contextParent
- * @returns
- */
-// export function findContext<T>(contextParent: ContextProvider<T>): T {
-//   let currentFiber = wipFiber
-//   while (currentFiber) {
-//     const contexts = currentFiber?.props?.contexts
-//     if (contexts) {
-//       for (let i = 0; i < contexts.length; i++) {
-//         const context = contexts[i]
-//         if (context.parent.id == contextParent.id) {
-//           return context.value
-//         }
-//       }
-//     }
-//     currentFiber = currentFiber?.parent
-//   }
-//   return contextParent.out
-// }
-
 
 

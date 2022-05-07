@@ -1,6 +1,5 @@
-import { useRefValue } from "better-react";
 import { notEqualChange, ShouldChange, valueOf } from "./Vue";
-
+import { useRefValue } from "./useRef";
 
 
 export function useRefVueValueFrom<T>(init: () => T, shouldChange?: ShouldChange<any>) {

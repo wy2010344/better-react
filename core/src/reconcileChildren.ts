@@ -1,5 +1,6 @@
 import { addAdd, addDelect, addUpdate } from "./commitWork"
 import { Fiber, getFiberKey, getPool } from "./Fiber"
+import { revertDirtyList } from "./reconcile"
 
 /**
  * 更新子节点为新的计算后的fiber
@@ -144,7 +145,14 @@ function existKey(key: any) {
 
 function updateFiber(oldKeyFiber: Fiber, element: any, fiber: Fiber) {
   if (!oldKeyFiber.effectTag && oldKeyFiber.props == element.props) {
-    //不改变,跳过
+    //不改变,跳过.这里会有问题,导出来的没有alternate
+    //所有都有问题
+    revertDirtyList.push({
+      type: "parent",
+      fiber: oldKeyFiber,
+      subFiber: oldKeyFiber.parent!
+    })
+    oldKeyFiber.parent = fiber
     return oldKeyFiber
   }
   const newFiber: Fiber = {

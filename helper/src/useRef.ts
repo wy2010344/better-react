@@ -1,4 +1,9 @@
-import { useRefValue } from 'better-react'
+import { useMemo, storeRef } from 'better-react'
+
+export function useRefValue<T>(init: () => T) {
+  return useMemo(() => storeRef(init()), [])
+}
+
 export function useRef<T>(init: T) {
   return useRefValue(() => init)
 }

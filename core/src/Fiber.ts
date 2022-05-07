@@ -73,10 +73,9 @@ export type Fiber = BRNode<any> & {
       value: any
       effect(): any
     }>[]
-    ref: StoreRef<any>[]
-    contextProvider: StoreRef<{
+    contextProvider: Map<any, {
       changeValue(v: any): void
-    }>[]
+    }>
     contextCosumer: StoreRef<{
       setFiber(v: Fiber): void
       getValue(): any
@@ -101,22 +100,3 @@ export function getFiberKey(fiber: Fiber | undefined, key: any): Fiber | void {
 export type StoreRef<T> = ((v: T) => void) & (() => T)
 export type StoreValue<T> = ((v: T, callback?: () => void) => void) & (() => T)
 export type Props = { [key: string]: any }
-// let contextUid = 0
-// export class ContextProvider<T>{
-//   id = contextUid++
-//   constructor(
-//     public readonly out: T
-//   ) { }
-//   provide(value: T): Context<T> {
-//     return new Context(value, this)
-//   }
-// }
-// export class Context<T>{
-//   constructor(
-//     public value: T,
-//     public parent: ContextProvider<T>
-//   ) { }
-// }
-// export function createContext<T>(init: T) {
-//   return new ContextProvider(init)
-// }

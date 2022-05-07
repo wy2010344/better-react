@@ -331,8 +331,9 @@ class HistoryManager {
 	}
 }
 
-import { useRefValue, useEffect, useValue } from 'better-react'
+import { useEffect, useValue } from 'better-react'
 import { React, createElement } from 'better-react-dom'
+import { useRefValue } from "better-react-helper"
 export default function useCodeJar<T extends keyof JSX.IntrinsicAttributes>({
 	type,
 	tab = "\t",

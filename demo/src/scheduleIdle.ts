@@ -5,7 +5,7 @@ const queue: ((shouldContinue: () => boolean) => void)[] = []
 function peek<T>(queue: T[]): T | undefined {
   return queue[0]
 }
-export const askTimeWork: AskNextTimeWork = (request) => {
+export const askIdleTimeWork: AskNextTimeWork = (request) => {
   queue.push(request)
   if (queue.length == 1) {
     requestIdle()

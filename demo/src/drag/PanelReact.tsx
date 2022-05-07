@@ -1,11 +1,13 @@
 import { React } from 'better-react-dom'
-import { useRefValue } from "better-react"
+import { startTransition } from "better-react"
 import { dragMoveHelper, dragResizeHelper } from "./drag"
 import ReSize from "./ReSize"
-import { useState } from 'better-react-helper'
+import { useState, useRefValue } from 'better-react-helper'
 import { useRef } from 'better-react-helper'
 
 export type RenderChildren = (x: { width: number, height: number }) => React.ReactNode
+
+
 
 export default function PanelReact({
   initWidth = 400,
@@ -41,36 +43,71 @@ export default function PanelReact({
       },
       diffY(y) {
         valueTop(valueTop() + y)
-      }
+      },
+      // diffX(x) {
+      //   startTransition(() => {
+      //     valueLeft(valueLeft() + x)
+      //   })
+      // },
+      // diffY(y) {
+      //   startTransition(() => {
+      //     valueTop(valueTop() + y)
+      //   })
+      // }
     })
   })()
 
 
   const dragResize = useRefValue(() => {
     return dragResizeHelper({
+      // addHeight(x) {
+      //   valueHeight(valueHeight() + x)
+      // },
+      // addLeft(x) {
+      //   valueLeft(valueLeft() + x)
+      // },
+      // addTop(x) {
+      //   valueTop(valueTop() + x)
+      // },
+      // addWidth(x) {
+      //   valueWidth(valueWidth() + x)
+      // }
       addHeight(x) {
-        valueHeight(valueHeight() + x)
+        startTransition(() => {
+          valueHeight(valueHeight() + x)
+        })
       },
       addLeft(x) {
-        valueLeft(valueLeft() + x)
+        startTransition(() => {
+          valueLeft(valueLeft() + x)
+        })
       },
       addTop(x) {
-        valueTop(valueTop() + x)
+        startTransition(() => {
+          valueTop(valueTop() + x)
+        })
       },
       addWidth(x) {
-        valueWidth(valueWidth() + x)
+        startTransition(() => {
+          valueWidth(valueWidth() + x)
+        })
       }
     })
   })()
   //console.log(children, "react-children", container())
   const titleHeight = 32;
   return (
-    <div ref={container} css={`
+    <div ref={container}
+      style={{
+
+        left: `${left}px`,
+        top: `${top}px`
+      }}
+      css={`
       position:absolute;background:white;
       border:1px solid gray;
       width:${width}px;
       height:${height}px;
-      left:${left}px;top:${top}px;
       box-shadow:0px 0px 20px 10px;          
       border-radius:5px;
     `}
