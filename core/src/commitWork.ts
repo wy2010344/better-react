@@ -22,13 +22,6 @@ const updateEffects: UpdateEffect[] = []
 export function updateEffect(set: UpdateEffect) {
   updateEffects.push(set)
 }
-export function clearWork() {
-  deletions.length = 0
-  updates.length = 0
-  dirtys.length = 0
-  addes.length = 0
-  updateEffects.length = 0
-}
 /**
  * 提交变更应该从根dirty节点开始。
  * 找到最顶层dirty节点->计算出新的节点替换当前->对比标记新节点->更新

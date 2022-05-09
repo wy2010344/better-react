@@ -25,8 +25,8 @@ function runMicroTask(fun: () => void) {
   }
   return runMacroTask(fun)
 }
-export type ITaskCallback = (shouldContinue: () => boolean) => void
-const queue: ITaskCallback[] = []
+let workList: (() => void)[]
+let onWork = false
 const threshold: number = 5
 /**
  * 执行queue中的任务
@@ -35,33 +35,26 @@ const threshold: number = 5
  */
 const flush = () => {
   const deadline = getTime() + threshold
-  const shouldContinue = () => {
-    return getTime() < deadline
-  }
-  let callback = peek(queue)
+  let callback = peek(workList)
   while (callback) {
-    if (shouldContinue()) {
-      callback(shouldContinue)
-      queue.shift()
-      callback = peek(queue)
+    if (getTime() < deadline) {
+      workList.shift()
+      callback()
+      callback = peek(workList)
     } else {
       //需要中止,进入宏任务.原列表未处理完
       runMacroTask(flush)
       break
     }
   }
-}
-//批量任务
-const schedule = (callback: ITaskCallback): void => {
-  queue.push(callback)
-  if (queue.length == 1) {
-    //原列表已经处理完了,使用微任务进入下一步
-    runMicroTask(flush)
+  if (!callback) {
+    onWork = false
   }
 }
-
-export const ScheduleAskTime: AskNextTimeWork = (fun) => {
-  schedule((shouldContinue) => {
-    fun(shouldContinue)
-  })
+export const ScheduleAskTime: AskNextTimeWork = (works) => {
+  workList = works
+  if (!onWork) {
+    onWork = true
+    runMicroTask(flush)
+  }
 }

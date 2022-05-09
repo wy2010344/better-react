@@ -30,6 +30,6 @@ console.log(node)
 const destroy = render(<App />,
   node,
   //askTimeWork,
-  //askIdleTimeWork,
-  ScheduleAskTime
+  askIdleTimeWork,
+  //ScheduleAskTime
 );
