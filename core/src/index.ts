@@ -1,6 +1,6 @@
 import { BRFun, Fiber, VirtaulDomNode } from "./Fiber"
 import { AskNextTimeWork, setRootFiber } from "./reconcile"
-export { flushSync, startTransition } from './reconcile'
+export { flushSync, startTransition,REAL_WORK } from './reconcile'
 export { useValue, useEffect, storeRef, useMemo, createContext } from './fc'
 export { Fiber, Props, VirtaulDomNode, BRFun, BRNode } from './Fiber'
 export { FindParentAndBefore } from './commitWork'

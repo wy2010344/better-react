@@ -1,9 +1,5 @@
-import { AskNextTimeWork } from "better-react"
+import { AskNextTimeWork, REAL_WORK } from "better-react"
 export const getTime = () => performance.now()
-//返回第一个
-function peek<T>(queue: T[]): T | undefined {
-  return queue[0]
-}
 const canPromise = typeof Promise !== 'undefined' && window.queueMicrotask
 const canMessageChannel = typeof MessageChannel !== 'undefined'
 function runMacroTask(fun: () => void) {
@@ -25,9 +21,10 @@ function runMicroTask(fun: () => void) {
   }
   return runMacroTask(fun)
 }
-let workList: (() => void)[]
+let getNextWork:()=>REAL_WORK|void
 let onWork = false
 const threshold: number = 5
+let lastRenderTime=getTime()
 /**
  * 执行queue中的任务
  * 本次没执行完,下次执行.
@@ -35,12 +32,26 @@ const threshold: number = 5
  */
 const flush = () => {
   const deadline = getTime() + threshold
-  let callback = peek(workList)
+  let rendered=false
+  let callback = getNextWork()
   while (callback) {
     if (getTime() < deadline) {
-      workList.shift()
-      callback()
-      callback = peek(workList)
+      if(callback.isRender){
+        rendered=true
+        const thisRenderTime=getTime()
+        if(thisRenderTime-lastRenderTime<16){
+          //和上次的间隔需要大于16ms
+          runMacroTask(flush)
+          break
+        }
+        callback()
+        rendered=true
+        console.log("render",thisRenderTime-lastRenderTime)
+        lastRenderTime=thisRenderTime
+      }else{
+        callback()
+      }
+      callback =getNextWork()
     } else {
       //需要中止,进入宏任务.原列表未处理完
       runMacroTask(flush)
@@ -51,8 +62,8 @@ const flush = () => {
     onWork = false
   }
 }
-export const ScheduleAskTime: AskNextTimeWork = (works) => {
-  workList = works
+export const ScheduleAskTime: AskNextTimeWork = (_getNextWork) => {
+  getNextWork = _getNextWork
   if (!onWork) {
     onWork = true
     runMicroTask(flush)

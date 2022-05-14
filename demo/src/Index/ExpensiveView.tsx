@@ -4,6 +4,13 @@ import { RouteFun } from ".";
 import PanelReact from "../drag/PanelReact";
 
 
+/**
+ * react性能测试 https://react-fractals-git-react-18-swizec.vercel.app/[1] fractals树
+ * 另一个是包含
+ * 另一个是颜色
+ * 
+ * 
+ */
 
 
 const ExpensivePanel: RouteFun<void> = ({ close, moveToFirst }) => {
@@ -30,7 +37,7 @@ function App() {
   //const [isPending, startTransition] = useTransition();
 
   const view = useMemo(() => <ExpensiveView count={renderValue} />, [renderValue])
-  console.log("render....", value, renderValue)
+  //console.log("render....", value, renderValue)
   return (
     <div className="App" css={`overflow:auto;`}>
       <div className="app-content">

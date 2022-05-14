@@ -1,26 +1,35 @@
-import { AskNextTimeWork } from 'better-react'
+import { AskNextTimeWork,REAL_WORK } from 'better-react'
 declare const requestIdleCallback: (fun: (v: any) => void) => void
-let workList: (() => void)[]
+let getNextWork:()=>REAL_WORK|void
+export const getTime = () => performance.now()
 let onWork = false
-//返回第一个
-function peek<T>(queue: T[]): T | undefined {
-  return queue[0]
-}
-export const askIdleTimeWork: AskNextTimeWork = (works) => {
-  workList = works
+export const askIdleTimeWork: AskNextTimeWork = (_getNextWork) => {
+  getNextWork=_getNextWork
   if (!onWork) {
     onWork = true
     requestIdle()
   }
 }
+let lastRenderTime=getTime()
 function requestIdle() {
   requestIdleCallback(idleCallback => {
-    let callback = peek(workList)
+    let rendered=false
+    let callback = getNextWork()
     while (callback) {
       if (idleCallback.timeRemaining() > 0) {
-        workList.shift()
         callback()
-        callback = peek(workList)
+        if(callback.isRender){
+          rendered=true
+          const thisRenderTime=getTime()
+          console.log("render",thisRenderTime-lastRenderTime)
+          lastRenderTime=thisRenderTime
+        }
+        callback =getNextWork()
+        if(callback && callback.isRender && rendered){
+          console.log("禁止二次render")
+          requestIdle()
+          break
+        }
       } else {
         requestIdle()
         break

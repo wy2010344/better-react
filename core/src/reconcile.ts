@@ -43,7 +43,7 @@ export type WorkUnit = {
 export type NextTimeWork = () => (NextTimeWork | void)
 //任务列表
 const workList: WorkUnit[] = []
-export type AskNextTimeWork = (workList: EMPTY_FUN[]) => void
+export type AskNextTimeWork = (askNextWork:()=>REAL_WORK|void) => void
 let askNextTimeWork: AskNextTimeWork = () => { }
 //异步地执行任务
 let asyncAskNextTimeWork: AskNextTimeWork
@@ -70,24 +70,34 @@ export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
     }
   }
 }
-const realWorks: EMPTY_FUN[] = []
+
+const renderWorks: EMPTY_FUN[] = []
+type REAL_WORK=EMPTY_FUN & {
+  isRender?:boolean
+}
 const addAfter = (fun: NextTimeWork) => {
   return function () {
     const after = fun()
     if (after) {
-      realWorks.unshift(addAfter(after))
+      renderWorks.unshift(addAfter(after))
     }
   }
 }
-function checkWork() {
+function getNextWork():REAL_WORK|void{
+  //执行计划任务
+  if(renderWorks.length){
+    return function(){
+      const work=renderWorks.shift()
+      work!()
+    }
+  }
   //寻找批量任务
   const index = workList.findIndex(v => v.type == 'batchCollect')
   if (index > -1) {
-    realWorks.push(workList[index].work)
-    workList.splice(index, 1)
-    //检查
-    realWorks.push(checkWork)
-    return
+    return function(){
+      workList[index].work()
+      workList.splice(index,1)
+    }
   }
   //寻找渲染任务
   let loopIndex = -1
@@ -95,45 +105,47 @@ function checkWork() {
     const work = workList[i]
     if (work.type == 'loop') {
       loopIndex = i
-      realWorks.push(addAfter(work.work))
+      const realWork:REAL_WORK=function(){
+        const next=work.work()
+        if(next){
+          renderWorks.push(addAfter(next))
+        }
+        //寻找渲染后的任务
+        for (let i = 0; i < workList.length; i++) {
+          const work = workList[i]
+          if (work.type == 'afterLoop') {
+            renderWorks.push(work.work)
+          }
+        }
+        //清空渲染任务
+        for (let i = workList.length - 1; i > -1; i--) {
+          const work = workList[i]
+          if (work.type == 'loop' || work.type == 'afterLoop') {
+            workList.splice(i, 1)
+          }
+        }
+      }
+      realWork.isRender=true
+      return realWork
     }
   }
-  //寻找渲染后的任务
-  for (let i = 0; i < workList.length; i++) {
-    const work = workList[i]
-    if (work.type == 'afterLoop') {
-      realWorks.push(work.work)
-    }
-  }
-  let needCheck = false
-  //清空渲染任务
-  for (let i = workList.length - 1; i > -1; i--) {
-    const work = workList[i]
-    if (work.type == 'loop' || work.type == 'afterLoop') {
-      needCheck = true
-      workList.splice(i, 1)
-    }
-  }
-  //检查
-  if (needCheck) {
-    realWorks.push(checkWork)
-    return
-  }
-  //执行最后的低级任务
+  //执行最后的低级任务.低任务生成的loop应该是可以中断的
   if (workList.length > 0) {
-    const lowestWorks = workList.map(v => v.work)
-    realWorks.push(() => {
-      lowestWorks.forEach(work => work())
-    })
-    workList.length = 0
+    return function(){
+      console.log("执行最后的低级任务")
+      const nextWork=workList.map(v=>v.work)
+      workList.length = 0
+      nextWork.forEach(v => v())
+    }
   }
 }
 
 //同步地清空所的的任务
-const sycAskNextTimeWork: AskNextTimeWork = (works) => {
-  while (works.length) {
-    const work = works.shift()
-    work!()
+const sycAskNextTimeWork: AskNextTimeWork = (getNextWork) => {
+  let work=getNextWork()
+  while(work){
+    work()
+    work=getNextWork()
   }
 }
 export function flushSync(fun: () => void) {
@@ -143,10 +155,7 @@ export function flushSync(fun: () => void) {
   askNextTimeWork = asyncAskNextTimeWork
 }
 function callNextTimeWork() {
-  if (realWorks.length == 0) {
-    realWorks.push(checkWork)
-  }
-  askNextTimeWork(realWorks)
+  askNextTimeWork(getNextWork)
 }
 
 

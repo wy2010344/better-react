@@ -10,12 +10,15 @@ import { StylisCreater } from 'stylis-creater';
 import TestFix from './TestFix';
 import { ScheduleAskTime } from './schedule';
 import { askIdleTimeWork } from './scheduleIdle';
+import Post from './blog/Post';
 
 
 function App() {
   //return <>aaaa</>
   StyleContext.useProvider(StylisCreater)
   //return <TestFix />
+
+  //return <Post/>
   return <>
     <button onClick={() => {
       destroy()
@@ -30,6 +33,6 @@ console.log(node)
 const destroy = render(<App />,
   node,
   //askTimeWork,
-  askIdleTimeWork,
-  //ScheduleAskTime
+  //askIdleTimeWork,
+  ScheduleAskTime
 );
