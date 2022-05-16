@@ -59,10 +59,7 @@ export type Fiber = BRNode<any> & {
   dom?: VirtaulDomNode
   /**只有hooks有Fiber有这两个属性 */
   hooks?: {
-    value: {
-      setFiber(v: Fiber): void
-      render: StoreRef<any>
-    }[]
+    value: StoreValue<any>[]
     effect: StoreRef<{
       deps?: readonly any[]
       effect(): void | (() => void)
@@ -76,11 +73,11 @@ export type Fiber = BRNode<any> & {
     contextProvider: Map<any, {
       changeValue(v: any): void
     }>
-    contextCosumer: StoreRef<{
+    contextCosumer: {
       setFiber(v: Fiber): void
       getValue(): any
       destroy(): void
-    }>[]
+    }[]
   }
 }
 
@@ -97,6 +94,13 @@ export function getFiberKey(fiber: Fiber | undefined, key: any): Fiber | void {
   }
 }
 
-export type StoreRef<T> = ((v: T) => void) & (() => T)
-export type StoreValue<T> = ((v: T, callback?: () => void) => void) & (() => T)
+export type StoreRef<T> = {
+  get(): T
+  set(v: T): void
+}
+export type StoreValue<T> = {
+  setFiber(v: Fiber): void
+  get(): T
+  set(v: T, callback?: () => void): void
+}
 export type Props = { [key: string]: any }

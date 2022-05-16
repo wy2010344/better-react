@@ -43,7 +43,7 @@ export type WorkUnit = {
 export type NextTimeWork = () => (NextTimeWork | void)
 //任务列表
 const workList: WorkUnit[] = []
-export type AskNextTimeWork = (askNextWork:()=>REAL_WORK|void) => void
+export type AskNextTimeWork = (askNextWork: () => REAL_WORK | void) => void
 let askNextTimeWork: AskNextTimeWork = () => { }
 //异步地执行任务
 let asyncAskNextTimeWork: AskNextTimeWork
@@ -72,8 +72,8 @@ export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
 }
 
 const renderWorks: EMPTY_FUN[] = []
-export type REAL_WORK=EMPTY_FUN & {
-  isRender?:boolean
+export type REAL_WORK = EMPTY_FUN & {
+  isRender?: boolean
 }
 const addAfter = (fun: NextTimeWork) => {
   return function () {
@@ -83,20 +83,20 @@ const addAfter = (fun: NextTimeWork) => {
     }
   }
 }
-function getNextWork():REAL_WORK|void{
+function getNextWork(): REAL_WORK | void {
   //执行计划任务
-  if(renderWorks.length){
-    return function(){
-      const work=renderWorks.shift()
+  if (renderWorks.length) {
+    return function () {
+      const work = renderWorks.shift()
       work!()
     }
   }
   //寻找批量任务
   const index = workList.findIndex(v => v.type == 'batchCollect')
   if (index > -1) {
-    return function(){
+    return function () {
       workList[index].work()
-      workList.splice(index,1)
+      workList.splice(index, 1)
     }
   }
   //寻找渲染任务
@@ -105,9 +105,9 @@ function getNextWork():REAL_WORK|void{
     const work = workList[i]
     if (work.type == 'loop') {
       loopIndex = i
-      const realWork:REAL_WORK=function(){
-        const next=work.work()
-        if(next){
+      const realWork: REAL_WORK = function () {
+        const next = work.work()
+        if (next) {
           renderWorks.push(addAfter(next))
         }
         //寻找渲染后的任务
@@ -125,15 +125,15 @@ function getNextWork():REAL_WORK|void{
           }
         }
       }
-      realWork.isRender=true
+      realWork.isRender = true
       return realWork
     }
   }
   //执行最后的低级任务.低任务生成的loop应该是可以中断的.这里要恢复,不仅仅需要恢复hooks树,还要恢复状态的修改
   if (workList.length > 0) {
-    return function(){
+    return function () {
       console.log("执行最后的低级任务")
-      const nextWork=workList.map(v=>v.work)
+      const nextWork = workList.map(v => v.work)
       workList.length = 0
       nextWork.forEach(v => v())
     }
@@ -142,10 +142,10 @@ function getNextWork():REAL_WORK|void{
 
 //同步地清空所的的任务
 const sycAskNextTimeWork: AskNextTimeWork = (getNextWork) => {
-  let work=getNextWork()
-  while(work){
+  let work = getNextWork()
+  while (work) {
     work()
-    work=getNextWork()
+    work = getNextWork()
   }
 }
 export function flushSync(fun: () => void) {

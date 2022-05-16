@@ -1,44 +1,60 @@
-import { updateEffect } from "./commitWork"
-import { Fiber, StoreRef, StoreValue } from "./Fiber"
-import { reconcile } from "./reconcile"
-import { reconcileChildren } from "./reconcileChildren"
-/**当前计算的hook节点 */
+import { updateEffect } from "./commitWork";
+import { Fiber, HookValue, LinkValue, StoreRef, StoreValue } from "./Fiber";
+import { reconcile } from "./reconcile";
+
+
 let wipFiber: Fiber | undefined = undefined
-/**当前计算节点的hook下标 */
+
+
 const hookIndex = {
   value: 0,
   effect: 0,
   memo: 0,
-  contextConsumer: 0
+  contextConsumer: 0,
+  beforeValue:undefined as (LinkValue<any>|undefined),
+  beforeFiber:undefined as (Fiber|undefined)
 }
-/**
- * 更新函数式组件
- * @param fiber 
- */
+
 export function updateFunctionComponent(fiber: Fiber) {
   wipFiber = fiber
   hookIndex.value = 0
   hookIndex.effect = 0
   hookIndex.memo = 0
   hookIndex.contextConsumer = 0
-  wipFiber.hooks = {
-    value: [],
-    effect: [],
-    memo: [],
-    contextProvider: new Map(),
-    contextCosumer: []
-  }
-  const children = fiber.render(fiber)
+  hookIndex.beforeValue=undefined
+  hookIndex.beforeFiber=undefined
+  // wipFiber.hooks = {
+  //   value: [],
+  //   effect: [],
+  //   memo: [],
+  //   contextProvider: new Map(),
+  //   contextCosumer: []
+  // }
+  fiber.render(fiber)
   wipFiber = undefined
-  reconcileChildren(fiber, children)
 }
 
+
 export function useValue<T>(init: () => T) {
-  const hook = (wipFiber!.alternate?.hooks!.value[hookIndex.value] || storeValue(init())) as StoreValue<T>
-  hook.setFiber(wipFiber!)
-  wipFiber!.hooks!.value.push(hook)
-  hookIndex.value++
-  return [hook.get, hook.set]
+  let hookValue:LinkValue<HookValue<T>>
+  if(wipFiber?.alternate){
+    if(hookIndex.beforeValue){
+      hookValue=hookIndex.beforeValue.next!
+    }else{
+      hookValue=wipFiber.hookValue!
+    }
+  }else{
+    hookValue={
+      value:storeValue(init())
+    }
+    if(hookIndex.beforeValue){
+      hookIndex.beforeValue.next=hookValue
+    }else{
+      wipFiber!.hookValue=hookValue
+    }
+  }
+  hookValue.value.setFiber(wipFiber!)
+  return [hookValue.value.get, hookValue.value.set]
 }
 
 function storeValue<T>(value: T) {
@@ -121,6 +137,12 @@ export function useEffect(effects: () => (void | (() => void)), deps?: readonly 
 }
 
 export function useMemo<T>(effect: () => T, deps: readonly any[]): T {
+
+  if(wipFiber?.alternate){
+    
+  }else{
+
+  }
   const hook = wipFiber?.alternate?.hooks?.memo[hookIndex.memo] || storeRef({
     effect: DEFAULT_EFFECT,
     value: null,
@@ -157,6 +179,30 @@ export function useMemo<T>(effect: () => T, deps: readonly any[]): T {
     })
     return value
   }
+}
+
+export function useElement(callback: (fiber: Fiber) => void, props: any) {
+  let hookFiber:Fiber|undefined
+  if(wipFiber?.alternate){
+    //有旧节点
+    if(hookIndex.beforeFiber){
+      hookFiber=hookIndex.beforeFiber.sibling
+    }else{
+      hookFiber=wipFiber.alternate.child
+    }
+  }else{
+    //无旧节点,创建新节点
+    hookFiber={
+      render:callback,
+      props
+    }
+    if(hookIndex.beforeFiber){
+      hookIndex.beforeFiber.sibling=hookFiber
+    }else{
+      wipFiber!.child=hookFiber
+    }
+  }
+  hookIndex.beforeFiber=hookFiber
 }
 
 export interface Context<T> {
@@ -259,5 +305,6 @@ class ContextListener<T>{
     this.context.off(this)
   }
 }
+
 
 
