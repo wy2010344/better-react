@@ -76,7 +76,7 @@ export function storeRef<T>(value: T) {
 }
 
 const DEFAULT_EFFECT = () => { }
-export function useEffect(effects: () => (void | (() => void)), deps?: readonly any[]) {
+export function useEffect(effect: () => (void | (() => void)), deps?: readonly any[]) {
   const hook = wipFiber!.alternate?.hooks!.effect[hookIndex.effect] || storeRef({
     effect: DEFAULT_EFFECT,
     deps: []
@@ -98,24 +98,24 @@ export function useEffect(effects: () => (void | (() => void)), deps?: readonly 
       //延迟到DOM元素数据化后初始化
       const nextHook = {
         deps,
-        effects,
+        effect,
         destroy: undefined
       }
       hook.set(nextHook as any)
       updateEffect(() => {
-        nextHook.destroy = effects() as undefined
+        nextHook.destroy = effect() as undefined
       })
     }
   } else {
     const nextHook = {
       deps,
-      effects,
+      effect,
       destroy: undefined
     }
     hook.set(nextHook as any)
     updateEffect(() => {
       last.destroy?.()
-      nextHook.destroy = effects() as undefined
+      nextHook.destroy = effect() as undefined
     })
   }
 }

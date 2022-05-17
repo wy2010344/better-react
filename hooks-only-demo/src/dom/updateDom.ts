@@ -1,8 +1,8 @@
 import {
   FindParentAndBefore,
   Props, VirtaulDomNode
-} from "core/Fiber"
-import { createContext } from 'core/fc'
+} from "../core/Fiber"
+import { createContext } from '../core/fc'
 
 export type StyleNode = {
   className: string

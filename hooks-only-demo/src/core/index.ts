@@ -6,27 +6,18 @@ export { useValue, useEffect, storeRef, useMemo, createContext } from './fc'
 export type { Fiber, Props, VirtaulDomNode } from './Fiber'
 export type { FindParentAndBefore } from './commitWork'
 export type { AskNextTimeWork }
-function RootFiberFun(fiber: Fiber) {
-  return fiber.props!.children
-}
-const ROOTTYPE: BRFun<any> = (props) => {
-  return {
-    type: ROOTTYPE,
-    props
-  }
+function RootFiberFun(fiber: Fiber<() => void>) {
+  fiber.props()
 }
 export function render(
-  element: any,
+  element: () => void,
   container: VirtaulDomNode,
   ask: AskNextTimeWork
 ) {
   const rootFiber: Fiber = {
-    type: ROOTTYPE,
     render: RootFiberFun,
     dom: container,
-    props: {
-      children: [element]
-    },
+    props: element,
     effectTag: "UPDATE"
   } as const
   return setRootFiber(rootFiber, ask)
