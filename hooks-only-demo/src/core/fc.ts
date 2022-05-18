@@ -1,4 +1,4 @@
-import { updateEffect } from "./commitWork";
+import { addAdd, addUpdate, updateEffect } from "./commitWork";
 import { Fiber, HookContextCosumer, HookEffect, HookMemo, HookValue, LinkValue, StoreRef, StoreValue } from "./Fiber";
 import { reconcile } from "./reconcile";
 
@@ -26,7 +26,7 @@ export function updateFunctionComponent(fiber: Fiber) {
 }
 
 
-export function useValue<T>(init: () => T) {
+export function useState<T>(init: () => T) {
   let hookValue: LinkValue<HookValue<T>>
   if (wipFiber?.alternate) {
     if (hookIndex.beforeValue) {
@@ -47,7 +47,7 @@ export function useValue<T>(init: () => T) {
   hookIndex.beforeValue = hookValue
 
   hookValue.value.setFiber(wipFiber!)
-  return [hookValue.value.get, hookValue.value.set]
+  return [hookValue.value.get(), hookValue.value.set, hookValue.value.get] as const
 }
 
 function storeValue<T>(value: T) {
@@ -190,7 +190,7 @@ export function useMemo<T>(effect: () => T, deps: readonly any[]): T {
   }
 }
 
-export function useFiber<T>(callback: (fiber: Fiber) => void, props: T) {
+export function useFiber<T>(callback: (fiber: Fiber<T>) => void, props: T) {
   let hookFiber: Fiber | undefined
   if (wipFiber?.alternate) {
     //有旧节点
@@ -199,12 +199,22 @@ export function useFiber<T>(callback: (fiber: Fiber) => void, props: T) {
     } else {
       hookFiber = wipFiber.alternate.child
     }
+    if (hookFiber?.render != callback || hookFiber.props != props) {
+      hookFiber!.render = callback
+      hookFiber!.props = props
+      hookFiber!.effectTag = "UPDATE"
+      hookFiber!.parent = wipFiber
+      addUpdate(hookFiber!)
+    }
   } else {
     //无旧节点,创建新节点
     hookFiber = {
       render: callback,
-      props
+      props,
+      effectTag: "PLACEMENT",
+      parent: wipFiber
     }
+    addAdd(hookFiber)
     if (hookIndex.beforeFiber) {
       hookIndex.beforeFiber.sibling = hookFiber
     } else {

@@ -27,7 +27,7 @@ export class FiberNode implements VirtaulDomNode {
     private _updateProp: (node: Node, key: string, value: any) => void,
     public type: FiberNodeType = 'dom'
   ) {
-    this.createStyle = this.findStyleCreate()
+    this.createStyle = DefaultStyleCreater
   }
   private props: Props = {}
   private createStyle: CreateStyleNode
@@ -55,9 +55,15 @@ export class FiberNode implements VirtaulDomNode {
   static createFrom(type: string) {
     const svg = isSVG(type)
     const node = svg
-      ? FiberNode.create(document.createElementNS("http://www.w3.org/2000/svg", type), updateSVGProps, "svg")
-      : FiberNode.create(document.createElement(type))
+      ? this.createDom(type)
+      : this.createSvg(type)
     return node
+  }
+  static createDom(type: string) {
+    return FiberNode.create(document.createElement(type))
+  }
+  static createSvg(type: string) {
+    return FiberNode.create(document.createElementNS("http://www.w3.org/2000/svg", type), updateSVGProps, "svg")
   }
   isPortal(): boolean {
     return this.props.portalTarget

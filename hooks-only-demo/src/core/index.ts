@@ -2,11 +2,12 @@ import { Fiber, VirtaulDomNode } from "./Fiber"
 import { AskNextTimeWork, setRootFiber } from "./reconcile"
 export { flushSync, startTransition } from './reconcile'
 export type { REAL_WORK } from './reconcile'
-export { useValue, useEffect, storeRef, useMemo, createContext } from './fc'
+export { useState, useEffect, storeRef, useMemo, createContext } from './fc'
 export type { Fiber, Props, VirtaulDomNode } from './Fiber'
 export type { FindParentAndBefore } from './commitWork'
 export type { AskNextTimeWork }
 function RootFiberFun(fiber: Fiber<() => void>) {
+  console.log("RENDER", fiber.props)
   fiber.props()
 }
 export function render(

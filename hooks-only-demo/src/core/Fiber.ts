@@ -33,7 +33,7 @@ export type Fiber<T = Props> = {
 
   alternate?: Fiber<T>
   effectTag?: "UPDATE" | "PLACEMENT" | "DELETION" | "DIRTY"
-  dom?: VirtaulDomNode
+  dom?: VirtaulDomNode<T>
 
   /**第一个子节点 */
   child?: Fiber
@@ -59,9 +59,9 @@ export type Fiber<T = Props> = {
 
 
 
-export type VirtaulDomNode = {
+export type VirtaulDomNode<T = Props> = {
   //每次更新props
-  update(props: Props): void
+  update(props: T): void
   //只第一次更新
   init(): void
 
