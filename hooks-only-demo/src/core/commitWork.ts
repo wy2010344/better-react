@@ -48,7 +48,6 @@ export function commitRoot() {
     if (fiber.dom) {
       fiber.dom.update(fiber.props)
     }
-    fiber.alternate = undefined
     fiber.effectTag = undefined
   })
   updates.length = 0

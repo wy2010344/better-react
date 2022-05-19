@@ -52,15 +52,7 @@ export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
   askNextTimeWork = asyncAskNextTimeWork
   rootFiber = fiber
   addDirty(fiber)
-  reconcile(() => {
-    if (rootFiber) {
-      rootFiber = {
-        ...rootFiber,
-        effectTag: undefined,
-        alternate: rootFiber
-      }
-    }
-  })
+  reconcile()
   return function () {
     if (rootFiber) {
       addDelect(rootFiber)
@@ -221,29 +213,18 @@ export function startTransition(fun: () => void) {
 function performUnitOfWork(fiber: Fiber) {
   //当前fiber脏了，需要重新render
   if (fiber.effectTag) {
+    if (fiber.effectTag == "DIRTY") {
+      addDirty(fiber)
+    }
     updateFunctionComponent(fiber)
   }
   if (fiber.child) {
-    if (fiber.child.effectTag == "DIRTY") {
-      fiber.child = {
-        ...fiber.child,
-        alternate: fiber.child
-      }
-      addDirty(fiber.child)
-    }
     return fiber.child
   }
   /**寻找叔叔节点 */
   let nextFiber: Fiber | undefined = fiber
   while (nextFiber) {
     if (nextFiber.sibling) {
-      if (nextFiber.sibling.effectTag == "DIRTY") {
-        nextFiber.sibling = {
-          ...nextFiber.sibling,
-          alternate: nextFiber.sibling
-        }
-        addDirty(nextFiber.sibling)
-      }
       return nextFiber.sibling
     }
     nextFiber = nextFiber.parent

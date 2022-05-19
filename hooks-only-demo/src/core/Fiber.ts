@@ -31,7 +31,7 @@ export type Fiber<T = Props> = {
   render(v: Fiber<T>): void
   props: T
 
-  alternate?: Fiber<T>
+  //alternate?: Fiber<T>
   effectTag?: "UPDATE" | "PLACEMENT" | "DELETION" | "DIRTY"
   dom?: VirtaulDomNode<T>
 

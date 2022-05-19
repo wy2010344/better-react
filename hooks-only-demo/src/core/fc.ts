@@ -28,19 +28,24 @@ export function updateFunctionComponent(fiber: Fiber) {
 
 export function useState<T>(init: () => T) {
   let hookValue: LinkValue<HookValue<T>>
-  if (wipFiber?.alternate) {
-    if (hookIndex.beforeValue) {
-      hookValue = hookIndex.beforeValue.next!
+  if (hookIndex.beforeValue) {
+    const temp = hookIndex.beforeValue.next
+    if (temp) {
+      hookValue = temp
     } else {
-      hookValue = wipFiber.hookValue!
+      hookValue = {
+        value: storeValue(init())
+      }
+      hookIndex.beforeValue.next = hookValue
     }
   } else {
-    hookValue = {
-      value: storeValue(init())
-    }
-    if (hookIndex.beforeValue) {
-      hookIndex.beforeValue.next = hookValue
+    const temp = wipFiber?.hookValue
+    if (temp) {
+      hookValue = temp
     } else {
+      hookValue = {
+        value: storeValue(init())
+      }
       wipFiber!.hookValue = hookValue
     }
   }
@@ -87,26 +92,36 @@ export function storeRef<T>(value: T) {
 const DEFAULT_EFFECT = () => { }
 export function useEffect(effect: () => (void | (() => void)), deps?: readonly any[]) {
   let hookEffect: LinkValue<HookEffect>
-  if (wipFiber?.alternate) {
-    if (hookIndex.beforeEffect) {
-      hookEffect = hookIndex.beforeEffect.next!
+  if (hookIndex.beforeEffect) {
+    const temp = hookIndex.beforeEffect.next
+    if (temp) {
+      hookEffect = temp
     } else {
-      hookEffect = wipFiber.hookEffect!
+      hookEffect = {
+        value: {
+          effect: DEFAULT_EFFECT,
+          deps: []
+        }
+      }
+      hookIndex.beforeEffect.next = hookEffect
     }
   } else {
-    hookEffect = {
-      value: {
-        effect: DEFAULT_EFFECT,
-        deps: []
-      }
-    }
-    if (hookIndex.beforeEffect) {
-      hookIndex.beforeEffect.next = hookEffect
+    const temp = wipFiber?.hookEffect
+    if (temp) {
+      hookEffect = temp
     } else {
+      hookEffect = {
+        value: {
+          effect: DEFAULT_EFFECT,
+          deps: []
+        }
+      }
       wipFiber!.hookEffect = hookEffect
     }
   }
   hookIndex.beforeEffect = hookEffect
+
+
   const last = hookEffect.value
   //hook都需要结束的时候才计算！！。
   if (Array.isArray(last.deps)
@@ -142,27 +157,37 @@ export function useEffect(effect: () => (void | (() => void)), deps?: readonly a
 
 export function useMemo<T>(effect: () => T, deps: readonly any[]): T {
   let hookMemo: LinkValue<HookMemo<T>>
-  if (wipFiber?.alternate) {
-    if (hookIndex.beforeMemo) {
-      hookMemo = hookIndex.beforeMemo.next!
+  if (hookIndex.beforeMemo) {
+    const temp = hookIndex.beforeMemo.next
+    if (temp) {
+      hookMemo = temp
     } else {
-      hookMemo = wipFiber.hookMemo!
+      hookMemo = {
+        value: {
+          effect: DEFAULT_EFFECT,
+          value: null,
+          deps: []
+        } as any
+      }
+      hookIndex.beforeMemo.next = hookMemo
     }
   } else {
-    hookMemo = {
-      value: {
-        effect: DEFAULT_EFFECT,
-        value: null,
-        deps: []
-      } as any
-    }
-    if (hookIndex.beforeMemo) {
-      hookIndex.beforeMemo.next = hookMemo
+    const temp = wipFiber?.hookMemo
+    if (temp) {
+      hookMemo = temp
     } else {
+      hookMemo = {
+        value: {
+          effect: DEFAULT_EFFECT,
+          value: null,
+          deps: []
+        } as any
+      }
       wipFiber!.hookMemo = hookMemo
     }
   }
   hookIndex.beforeMemo = hookMemo
+
   const last = hookMemo.value
   if (last.deps.length == deps.length && deps.every((v, i) => v == last.deps![i])) {
     //完全相同，不处理
@@ -192,32 +217,44 @@ export function useMemo<T>(effect: () => T, deps: readonly any[]): T {
 
 export function useFiber<T>(callback: (fiber: Fiber<T>) => void, props: T) {
   let hookFiber: Fiber | undefined
-  if (wipFiber?.alternate) {
-    //有旧节点
-    if (hookIndex.beforeFiber) {
-      hookFiber = hookIndex.beforeFiber.sibling
+  if (hookIndex.beforeFiber) {
+    const temp = hookIndex.beforeFiber.sibling
+    if (temp) {
+      hookFiber = temp
+      if (hookFiber?.render != callback || hookFiber.props != props) {
+        hookFiber.render = callback
+        hookFiber.props = props
+        hookFiber.effectTag = "UPDATE"
+        addUpdate(hookFiber!)
+      }
     } else {
-      hookFiber = wipFiber.alternate.child
-    }
-    if (hookFiber?.render != callback || hookFiber.props != props) {
-      hookFiber!.render = callback
-      hookFiber!.props = props
-      hookFiber!.effectTag = "UPDATE"
-      hookFiber!.parent = wipFiber
-      addUpdate(hookFiber!)
+      hookFiber = {
+        render: callback,
+        props,
+        effectTag: "PLACEMENT",
+        parent: wipFiber
+      }
+      addAdd(hookFiber)
+      hookIndex.beforeFiber.sibling = hookFiber
     }
   } else {
-    //无旧节点,创建新节点
-    hookFiber = {
-      render: callback,
-      props,
-      effectTag: "PLACEMENT",
-      parent: wipFiber
-    }
-    addAdd(hookFiber)
-    if (hookIndex.beforeFiber) {
-      hookIndex.beforeFiber.sibling = hookFiber
+    const temp = wipFiber?.child
+    if (temp) {
+      hookFiber = temp
+      if (hookFiber?.render != callback || hookFiber.props != props) {
+        hookFiber.render = callback
+        hookFiber.props = props
+        hookFiber.effectTag = "UPDATE"
+        addUpdate(hookFiber!)
+      }
     } else {
+      hookFiber = {
+        render: callback,
+        props,
+        effectTag: "PLACEMENT",
+        parent: wipFiber
+      }
+      addAdd(hookFiber)
       wipFiber!.child = hookFiber
     }
   }
@@ -251,15 +288,11 @@ class ContextFactory<T> implements Context<T>{
     let map: Map<any, {
       changeValue(v: any): void
     }>
-    if (wipFiber?.alternate) {
-      map = wipFiber.alternate.contextProvider!
+    if (wipFiber?.contextProvider) {
+      map = wipFiber.contextProvider
     } else {
-      if (wipFiber?.contextProvider) {
-        map = wipFiber.contextProvider
-      } else {
-        map = new Map()
-        wipFiber!.contextProvider = map
-      }
+      map = new Map()
+      wipFiber!.contextProvider = map
     }
     let hook = map.get(this)
     if (!hook) {
@@ -270,19 +303,24 @@ class ContextFactory<T> implements Context<T>{
   }
   useConsumer() {
     let hookConsumer: LinkValue<HookContextCosumer>
-    if (wipFiber?.alternate) {
-      if (hookIndex.beforeContextConsumer) {
-        hookConsumer = hookIndex.beforeContextConsumer.next!
+    if (hookIndex.beforeContextConsumer) {
+      const temp = hookIndex.beforeContextConsumer.next
+      if (temp) {
+        hookConsumer = temp
       } else {
-        hookConsumer = wipFiber.hookContextCosumer!
+        hookConsumer = {
+          value: this.createConsumer(wipFiber!)
+        }
+        hookIndex.beforeContextConsumer.next = hookConsumer
       }
     } else {
-      hookConsumer = {
-        value: this.createConsumer(wipFiber!)
-      }
-      if (hookIndex.beforeContextConsumer) {
-        hookIndex.beforeContextConsumer.next = hookConsumer
+      const temp = wipFiber?.hookContextCosumer
+      if (temp) {
+        hookConsumer = temp
       } else {
+        hookConsumer = {
+          value: this.createConsumer(wipFiber!)
+        }
         wipFiber!.hookContextCosumer = hookConsumer
       }
     }
