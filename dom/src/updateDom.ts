@@ -20,26 +20,24 @@ const DefaultStyleCreater: CreateStyleNode = () => {
 }
 export const StyleContext = createContext<CreateStyleNode>(DefaultStyleCreater)
 
-type FiberNodeType = "svg" | "dom" | "text"
-export class FiberNode implements VirtaulDomNode {
+interface FiberAbsNode extends VirtaulDomNode {
+  node: Node
+}
+type FiberNodeType = "svg" | "dom"
+
+export class FiberNode implements FiberAbsNode {
   private constructor(
     public node: Node,
     private _updateProp: (node: Node, key: string, value: any) => void,
     public type: FiberNodeType = 'dom'
-  ) {
-    this.createStyle = DefaultStyleCreater
-  }
+  ) { }
   private props: Props = {}
-  private createStyle: CreateStyleNode
+  private createStyle: CreateStyleNode = DefaultStyleCreater
   reconcile(): void {
     this.createStyle = this.findStyleCreate()
   }
   private findStyleCreate() {
-    if (this.type == 'text') {
-      return DefaultStyleCreater
-    } else {
-      return StyleContext.useConsumer()
-    }
+    return StyleContext.useConsumer()
   }
   static create(
     node: Node,
@@ -47,10 +45,6 @@ export class FiberNode implements VirtaulDomNode {
     type?: FiberNodeType
   ) {
     return new FiberNode(node, updateProps, type)
-  }
-  static createText() {
-    const node = FiberNode.create(document.createTextNode(""), updatePorps, "text")
-    return node
   }
   static createFrom(type: string) {
     const svg = isSVG(type)
@@ -125,6 +119,39 @@ export class FiberNode implements VirtaulDomNode {
     this._updateProp(this.node, key, value)
   }
 }
+
+
+export class FiberText implements FiberAbsNode {
+  private constructor(
+    public node: Node
+  ) { }
+  static create() {
+    return new FiberText(document.createTextNode(""))
+  }
+  private oldProps: Props = emptyProps
+  update(props: Props): void {
+    if (this.oldProps.nodeValue != props.nodeValue) {
+      this.node.nodeValue = props.nodeValue
+      this.oldProps = props
+    }
+  }
+  init(): void {
+  }
+  isPortal(): boolean {
+    return false
+  }
+  appendAsPortal(): void {
+  }
+  appendAfter(value: FindParentAndBefore): void {
+    appendAfter(this, value as any)
+  }
+  removeFromParent(): void {
+    this.node.parentElement?.removeChild(this.node)
+  }
+  destroy(): void {
+  }
+}
+
 const emptyProps = {}
 
 
@@ -281,7 +308,7 @@ export function updateSVGProps(node: any, key: string, value: any) {
  * @param dom 
  * @param before 
  */
-export function appendAfter(dom: FiberNode, parentAndBefore: [FiberNode, FiberNode | null] | [FiberNode | null, FiberNode]) {
+export function appendAfter(dom: FiberAbsNode, parentAndBefore: [FiberAbsNode, FiberAbsNode | null] | [FiberAbsNode | null, FiberAbsNode]) {
   const [parent, before] = parentAndBefore
 
   const parentDom = parent ? parent.node : before?.node.parentNode

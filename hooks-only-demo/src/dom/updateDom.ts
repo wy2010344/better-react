@@ -128,8 +128,7 @@ export class FiberText implements FiberAbsNode<string>{
     public node: Node
   ) { }
   static create() {
-    const node = new FiberText(document.createTextNode(""))
-    return node
+    return new FiberText(document.createTextNode(""))
   }
   private content: string = ""
   update(props: string): void {

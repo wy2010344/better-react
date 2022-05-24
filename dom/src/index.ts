@@ -1,6 +1,6 @@
 import { Fiber, Props, BRNode } from "better-react";
 import { BRFun } from "better-react/dist/Fiber";
-import { FiberNode } from "./updateDom";
+import { FiberNode, FiberText } from "./updateDom";
 export { FiberNode, StyleNode, StyleContext } from './updateDom'
 export { askTimeWork } from './askTimeWork'
 export type { React } from '../@types/react'
@@ -16,7 +16,7 @@ export type BetterNode = BRNode<any>
 
 function TextElement(fiber: Fiber) {
   if (!fiber.dom) {
-    fiber.dom = FiberNode.createText()
+    fiber.dom = FiberText.create()
   }
   return []
 }
