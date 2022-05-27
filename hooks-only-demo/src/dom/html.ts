@@ -33,6 +33,7 @@ interface StyleMedia { }
 interface Element { }
 interface DocumentFragment { }
 
+//58个
 interface HTMLElement extends Element { }
 interface HTMLAnchorElement extends HTMLElement { }
 interface HTMLAreaElement extends HTMLElement { }
@@ -93,6 +94,7 @@ interface HTMLUListElement extends HTMLElement { }
 interface HTMLVideoElement extends HTMLElement { }
 interface HTMLWebViewElement extends HTMLElement { }
 
+//55个svg
 interface SVGElement extends Element { }
 interface SVGSVGElement extends SVGElement { }
 interface SVGCircleElement extends SVGElement { }
@@ -536,7 +538,7 @@ export namespace React {
     isComposing: boolean
   }
 
-  interface MouseEvent<T = Element, E = NativeMouseEvent> extends UIEvent<T, E> {
+  export interface MouseEvent<T = Element, E = NativeMouseEvent> extends UIEvent<T, E> {
     altKey: boolean;
     button: number;
     buttons: number;
@@ -1104,14 +1106,7 @@ export namespace React {
     z?: number | string | undefined;
     zoomAndPan?: string | undefined;
   }
-  /**
- * @internal You shouldn't need to use this type since you never see these attributes
- * inside your component or have to validate them.
- */
-  interface Attributes {
-    key?: string | number | null | undefined;
-  }
-  interface ClassAttributes<T> extends Attributes {
+  interface ClassAttributes<T> {
     ref?(v: T): void
   }
   export interface SVGProps<T> extends SVGAttributes<T>, ClassAttributes<T> {
@@ -1667,6 +1662,7 @@ export namespace React {
     webpreferences?: string | undefined;
   }
 }
+//117个
 export type DomElements = {
   a: React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement>;
   abbr: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
@@ -1785,14 +1781,11 @@ export type DomElements = {
   video: React.DetailedHTMLProps<React.VideoHTMLAttributes<HTMLVideoElement>, HTMLVideoElement>;
   wbr: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
   webview: React.DetailedHTMLProps<React.WebViewHTMLAttributes<HTMLWebViewElement>, HTMLWebViewElement>;
-
 }
 
+//58个svg
 export type SvgElements = {
-
-  // SVG
   svg: React.SVGProps<SVGSVGElement>;
-
   animate: React.SVGProps<SVGElement>; // TODO: It is SVGAnimateElement but is not in TypeScript's lib.dom.d.ts for now.
   animateMotion: React.SVGProps<SVGElement>;
   animateTransform: React.SVGProps<SVGElement>; // TODO: It is SVGAnimateTransformElement but is not in TypeScript's lib.dom.d.ts for now.

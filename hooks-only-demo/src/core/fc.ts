@@ -25,8 +25,15 @@ export function updateFunctionComponent(fiber: Fiber) {
   wipFiber = undefined
 }
 
+function getInit<T>(init: T | (() => T)) {
+  if (typeof (init) == 'function') {
+    return (init as any)()
+  } else {
+    return init
+  }
+}
 
-export function useState<T>(init: () => T) {
+export function useState<T>(init: T | (() => T)) {
   let hookValue: LinkValue<HookValue<T>>
   if (hookIndex.beforeValue) {
     const temp = hookIndex.beforeValue.next
@@ -34,7 +41,7 @@ export function useState<T>(init: () => T) {
       hookValue = temp
     } else {
       hookValue = {
-        value: storeValue(init())
+        value: storeValue(getInit(init))
       }
       hookIndex.beforeValue.next = hookValue
     }
@@ -44,7 +51,7 @@ export function useState<T>(init: () => T) {
       hookValue = temp
     } else {
       hookValue = {
-        value: storeValue(init())
+        value: storeValue(getInit(init))
       }
       wipFiber!.hookValue = hookValue
     }
@@ -71,8 +78,12 @@ function storeValue<T>(value: T) {
         }
       } else {
         value = temp
-        fiber.effectTag = "DIRTY"
-        reconcile(callback)
+        reconcile({
+          beforeLoop() {
+            fiber.effectTag = "DIRTY"
+          },
+          afterLoop: callback
+        })
       }
     }
   }

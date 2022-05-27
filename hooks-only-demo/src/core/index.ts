@@ -2,7 +2,7 @@ import { addAdd, addDelect, addUpdate } from "./commitWork"
 import { storeRef, useFiber, useMemo } from "./fc"
 import { Fiber, VirtaulDomNode } from "./Fiber"
 import { AskNextTimeWork, setRootFiber } from "./reconcile"
-export { flushSync, startTransition } from './reconcile'
+export { flushSync } from './reconcile'
 export type { REAL_WORK } from './reconcile'
 export { useState, useEffect, storeRef, useMemo, createContext } from './fc'
 export type { Fiber, Props, VirtaulDomNode } from './Fiber'
@@ -255,4 +255,21 @@ function GuardStringFilber(fiber: Fiber<{
     cache.fiber = fiber
     fiber.child = undefined
   }
+}
+export function useFragment(fun: () => void): void
+export function useFragment<T>(fun: (v: T) => void, v: T): void;
+export function useFragment<T>(fun: (v?: T) => void, v?: T): void {
+  useFiber<{
+    call(v?: T): void
+    args?: T
+  }>(Fragment, { call: fun, args: v })
+}
+
+function Fragment<T>(fiber: Fiber<{
+  call(v?: T): void
+  args?: T
+}>) {
+
+  const { call, args } = fiber.props
+  call(args)
 }

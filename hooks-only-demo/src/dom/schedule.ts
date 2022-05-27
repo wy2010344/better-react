@@ -46,7 +46,7 @@ const flush = () => {
         }
         callback()
         rendered = true
-        console.log("render", thisRenderTime - lastRenderTime)
+        //console.log("render", thisRenderTime - lastRenderTime)
         lastRenderTime = thisRenderTime
       } else {
         callback()

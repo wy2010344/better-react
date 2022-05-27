@@ -224,8 +224,13 @@ function updateDom(
     .filter(isEvent)
     .filter(key => !(key in props) || isNew(oldProps, props)(key))
     .forEach(name => {
-      const eventType = name.toLowerCase().substring(2)
-      node.removeEventListener(eventType, oldProps[name])
+      let eventType = name.toLowerCase().substring(2)
+      if (eventType.endsWith(Capture)) {
+        eventType = eventType.slice(0, eventType.length - Capture.length)
+        node.removeEventListener(eventType, oldProps[name], true)
+      } else {
+        node.removeEventListener(eventType, oldProps[name])
+      }
     })
   //移除旧的不存在属性
   prevKeys
@@ -242,8 +247,13 @@ function updateDom(
     .filter(isEvent)
     .filter(isNew(oldProps, props))
     .forEach(name => {
-      const eventType = name.toLowerCase().substring(2)
-      node.addEventListener(eventType, props[name])
+      let eventType = name.toLowerCase().substring(2)
+      if (eventType.endsWith(Capture)) {
+        eventType = eventType.slice(0, eventType.length - Capture.length)
+        node.addEventListener(eventType, props[name], true)
+      } else {
+        node.addEventListener(eventType, props[name])
+      }
     })
 
   if (removeClass) {
@@ -254,6 +264,7 @@ function updateDom(
   }
 }
 
+const Capture = "capture"
 
 /**
  * 是否是事件

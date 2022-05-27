@@ -31,10 +31,11 @@ export type WorkUnit = {
   /**
    * 任务收集不能停止,会动态增加loop和afterLoop
    * loop可以跳过
+   * beforeLoop不可以减少,每次渲染前
    * afterLoop不可以减少
-   * lowest为最次
+   * lowest为最次---目前是无法实现的
    */
-  type: "batchCollect" | "afterLoop" | "lowest"
+  type: "batchCollect" | "beforeLoop" | "afterLoop"
   work: EMPTY_FUN
 } | {
   type: "loop"
@@ -52,12 +53,14 @@ export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
   askNextTimeWork = asyncAskNextTimeWork
   rootFiber = fiber
   addDirty(fiber)
-  reconcile()
+  reconcile({})
   return function () {
     if (rootFiber) {
       addDelect(rootFiber)
-      reconcile(() => {
-        rootFiber = undefined
+      reconcile({
+        afterLoop() {
+          rootFiber = undefined
+        }
       })
     }
   }
@@ -98,10 +101,20 @@ function getNextWork(): REAL_WORK | void {
     if (work.type == 'loop') {
       loopIndex = i
       const realWork: REAL_WORK = function () {
-        const next = work.work()
-        if (next) {
-          renderWorks.push(addAfter(next))
+        //寻找渲染前的任务
+        for (let i = 0; i < workList.length; i++) {
+          const work = workList[i]
+          if (work.type == 'beforeLoop') {
+            renderWorks.push(work.work)
+          }
         }
+        //动态添加渲染任务
+        renderWorks.push(() => {
+          const next = work.work()
+          if (next) {
+            renderWorks.push(addAfter(next))
+          }
+        })
         //寻找渲染后的任务
         for (let i = 0; i < workList.length; i++) {
           const work = workList[i]
@@ -112,7 +125,7 @@ function getNextWork(): REAL_WORK | void {
         //清空渲染任务
         for (let i = workList.length - 1; i > -1; i--) {
           const work = workList[i]
-          if (work.type == 'loop' || work.type == 'afterLoop') {
+          if (work.type == 'beforeLoop' || work.type == 'loop' || work.type == 'afterLoop') {
             workList.splice(i, 1)
           }
         }
@@ -122,14 +135,14 @@ function getNextWork(): REAL_WORK | void {
     }
   }
   //执行最后的低级任务.低任务生成的loop应该是可以中断的.这里要恢复,不仅仅需要恢复hooks树,还要恢复状态的修改
-  if (workList.length > 0) {
-    return function () {
-      console.log("执行最后的低级任务")
-      const nextWork = workList.map(v => v.work)
-      workList.length = 0
-      nextWork.forEach(v => v())
-    }
-  }
+  // if (workList.length > 0) {
+  //   return function () {
+  //     console.log("执行最后的低级任务")
+  //     const nextWork = workList.map(v => v.work)
+  //     workList.length = 0
+  //     nextWork.forEach(v => v())
+  //   }
+  // }
 }
 
 //同步地清空所的的任务
@@ -153,39 +166,57 @@ function callNextTimeWork() {
 
 const batchUpdate = {
   on: false,
+  beforeLoops: [] as EMPTY_FUN[],
+  afterLoops: [] as EMPTY_FUN[]
 }
 /**
  * 由于是触发的,需要批量触发
  * @param callback 
  */
-export function reconcile(callback?: EMPTY_FUN) {
-  if (batchUpdate.on) {
-    if (callback) {
-      workList.push({
-        type: "afterLoop",
-        work: callback
-      })
-    }
-  } else {
+export function reconcile({
+  beforeLoop,
+  afterLoop
+}: {
+  beforeLoop?: EMPTY_FUN
+  afterLoop?: EMPTY_FUN
+}) {
+  if (beforeLoop) {
+    batchUpdate.beforeLoops.push(beforeLoop)
+  }
+  if (afterLoop) {
+    batchUpdate.afterLoops.push(afterLoop)
+  }
+  if (!batchUpdate.on) {
     batchUpdate.on = true
     workList.push({
       type: "batchCollect",
       work() {
         //批量提交
         batchUpdate.on = false
+        for (const work of batchUpdate.beforeLoops) {
+          workList.push({
+            type: "beforeLoop",
+            work
+          })
+        }
         workList.push({
           type: "loop",
           work() {
             currentTick.on = true
-            return workLoop(rootFiber!)
+            if (rootFiber) {
+              return workLoop(rootFiber)
+            }
           }
         })
-        if (callback) {
+        for (const work of batchUpdate.afterLoops) {
           workList.push({
             type: "afterLoop",
-            work: callback
+            work
           })
         }
+
+        batchUpdate.beforeLoops.length = 0
+        batchUpdate.afterLoops.length = 0
       }
     })
     callNextTimeWork()
@@ -197,13 +228,13 @@ export function reconcile(callback?: EMPTY_FUN) {
  * 但fun里面仍然是setState,不会减少触发呢
  * @param fun 
  */
-export function startTransition(fun: () => void) {
-  workList.push({
-    type: "lowest",
-    work: fun
-  })
-  callNextTimeWork()
-}
+// export function startTransition(fun: () => void) {
+//   workList.push({
+//     type: "lowest",
+//     work: fun
+//   })
+//   callNextTimeWork()
+// }
 /**
  * 当前工作结点，返回下一个工作结点
  * 先子，再弟，再父(父的弟)
