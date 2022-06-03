@@ -1,5 +1,5 @@
-import { useFragment, useMemo, useState } from "../core"
-import { useDom, useSvg } from "../dom"
+import { useFragment, useMemo, useState } from "better-react"
+import { useDom, useSvg } from "better-react-dom"
 import { dragMoveHelper, dragResizeHelper } from "./drag"
 import useResize from "./useResize"
 

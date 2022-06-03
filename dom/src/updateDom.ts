@@ -1,5 +1,7 @@
-import { createContext, FindParentAndBefore } from "better-react"
-import { Props, VirtaulDomNode } from "better-react"
+import {
+  FindParentAndBefore,
+  Props, VirtaulDomNode, createContext
+} from "better-react"
 
 export type StyleNode = {
   className: string
@@ -20,12 +22,11 @@ const DefaultStyleCreater: CreateStyleNode = () => {
 }
 export const StyleContext = createContext<CreateStyleNode>(DefaultStyleCreater)
 
-interface FiberAbsNode extends VirtaulDomNode {
+interface FiberAbsNode<T = any> extends VirtaulDomNode<T> {
   node: Node
 }
 type FiberNodeType = "svg" | "dom"
-
-export class FiberNode implements FiberAbsNode {
+export class FiberNode implements FiberAbsNode<Props> {
   private constructor(
     public node: Node,
     private _updateProp: (node: Node, key: string, value: any) => void,
@@ -121,18 +122,18 @@ export class FiberNode implements FiberAbsNode {
 }
 
 
-export class FiberText implements FiberAbsNode {
+export class FiberText implements FiberAbsNode<string>{
   private constructor(
     public node: Node
   ) { }
   static create() {
     return new FiberText(document.createTextNode(""))
   }
-  private oldProps: Props = emptyProps
-  update(props: Props): void {
-    if (this.oldProps.nodeValue != props.nodeValue) {
-      this.node.nodeValue = props.nodeValue
-      this.oldProps = props
+  private content: string = ""
+  update(props: string): void {
+    if (props != this.content) {
+      this.node.textContent = props
+      this.content = props
     }
   }
   init(): void {
@@ -222,8 +223,13 @@ function updateDom(
     .filter(isEvent)
     .filter(key => !(key in props) || isNew(oldProps, props)(key))
     .forEach(name => {
-      const eventType = name.toLowerCase().substring(2)
-      node.removeEventListener(eventType, oldProps[name])
+      let eventType = name.toLowerCase().substring(2)
+      if (eventType.endsWith(Capture)) {
+        eventType = eventType.slice(0, eventType.length - Capture.length)
+        node.removeEventListener(eventType, oldProps[name], true)
+      } else {
+        node.removeEventListener(eventType, oldProps[name])
+      }
     })
   //移除旧的不存在属性
   prevKeys
@@ -240,8 +246,13 @@ function updateDom(
     .filter(isEvent)
     .filter(isNew(oldProps, props))
     .forEach(name => {
-      const eventType = name.toLowerCase().substring(2)
-      node.addEventListener(eventType, props[name])
+      let eventType = name.toLowerCase().substring(2)
+      if (eventType.endsWith(Capture)) {
+        eventType = eventType.slice(0, eventType.length - Capture.length)
+        node.addEventListener(eventType, props[name], true)
+      } else {
+        node.addEventListener(eventType, props[name])
+      }
     })
 
   if (removeClass) {
@@ -252,6 +263,7 @@ function updateDom(
   }
 }
 
+const Capture = "capture"
 
 /**
  * 是否是事件
@@ -348,17 +360,7 @@ export function appendAfter(dom: FiberAbsNode, parentAndBefore: [FiberAbsNode, F
   }
 }
 
-export function removeFromParent(domParent: FiberNode, dom: FiberNode) {
-  domParent.node.removeChild(dom.node)
-}
-
-
-export function getPortalDom(node: Node) {
-  return { node }
-}
-
-
-function isSVG(name: string) {
+export function isSVG(name: string) {
   name = name.toLowerCase()
   return svgTagNames.includes(name)
 }

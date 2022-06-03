@@ -1,5 +1,4 @@
-import { useDom } from "../dom";
-import { React } from "../dom/html";
+import { useDom, React } from "better-react-dom";
 import { Direction } from "./drag";
 
 

@@ -1,6 +1,5 @@
-import { useEffect } from "better-react"
+import { useEffect, useState } from "better-react"
 import { useRefValue } from "./useRef"
-import { useState } from './useState'
 export type NotifyHandler<T> = (v: T) => void
 
 export class ValueCenter<T>{
@@ -48,7 +47,7 @@ export function useStoreTriggerRender<T>(store: ValueCenter<T>) {
 
 
 export function useRefValueCenterFrom<T>(fun: () => T) {
-  return useRefValue(() => ValueCenter.of(fun()))()
+  return useRefValue(() => ValueCenter.of(fun())).get()
 }
 export function useRefValueCenter<T>(v: T) {
   return useRefValueCenterFrom(() => v)

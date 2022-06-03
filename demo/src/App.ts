@@ -1,4 +1,4 @@
-import { useContent, useDom } from "./dom";
+import { useContent, useDom } from "better-react-dom";
 import usePanel from "./panel/usePanel";
 
 export default function App() {

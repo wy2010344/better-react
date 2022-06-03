@@ -48,7 +48,6 @@ export function commitRoot() {
     if (fiber.dom) {
       fiber.dom.update(fiber.props)
     }
-    fiber.alternate = undefined
     fiber.effectTag = undefined
   })
   updates.length = 0
@@ -206,13 +205,15 @@ function notifyDel(fiber: Fiber) {
   }
 }
 function destroyFiber(fiber: Fiber) {
-  const effect = fiber.hooks?.effect
-  if (effect) {
-    effect.forEach(ef => ef.get().destroy?.())
+  let effect = fiber.hookEffect
+  while (effect) {
+    effect.value.destroy?.()
+    effect = effect.next
   }
-  const listeners = fiber.hooks?.contextCosumer
-  if (listeners) {
-    listeners.forEach(listener => listener.destroy())
+  let listeners = fiber.hookContextCosumer
+  while (listeners) {
+    listeners.value.destroy()
+    listeners = listeners.next
   }
   if (fiber.dom) {
     if (fiber.dom.isPortal()) {

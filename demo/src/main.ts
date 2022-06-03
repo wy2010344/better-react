@@ -1,14 +1,11 @@
 import App from "./App";
-import { render, useFragment, useGuard, useGuardString, useIf, useMap } from "./core";
-import { createContext, useEffect, useMemo, useState } from "./core/fc";
-import { useContent, useDom } from "./dom";
-import { ScheduleAskTime } from "./dom/schedule";
-import { FiberNode, StyleContext } from "./dom/updateDom";
+import { render, useFragment, useGuard, useGuardString, useIf, useMap, useEffect, useMemo, useState } from "better-react";
+import { useContent, useDom, scheduleAskTime, FiberNode, StyleContext } from "better-react-dom";
 import dsl from "./dsl";
 import { PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
 import usePanel from "./panel/usePanel";
-import { useStoreTriggerRender, ValueCenter } from "./panel/ValueCenter";
-import { StylisCreater } from "./stylis";
+import { useStoreTriggerRender, ValueCenter } from "better-react-helper";
+import { StylisCreater } from "stylis-creater";
 
 
 
@@ -61,7 +58,7 @@ const destroy = render(
   node,
   //askTimeWork,
   //askIdleTimeWork,
-  ScheduleAskTime
+  scheduleAskTime
 );
 
 

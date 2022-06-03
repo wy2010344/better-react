@@ -1,4 +1,4 @@
-import { AskNextTimeWork, REAL_WORK } from "../core"
+import { AskNextTimeWork, REAL_WORK } from "better-react"
 export const getTime = () => performance.now()
 const canPromise = typeof Promise !== 'undefined' && window.queueMicrotask
 const canMessageChannel = typeof MessageChannel !== 'undefined'
@@ -62,7 +62,7 @@ const flush = () => {
     onWork = false
   }
 }
-export const ScheduleAskTime: AskNextTimeWork = (_getNextWork) => {
+export const scheduleAskTime: AskNextTimeWork = (_getNextWork) => {
   getNextWork = _getNextWork
   if (!onWork) {
     onWork = true

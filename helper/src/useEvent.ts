@@ -1,7 +1,7 @@
 import { useRefValue } from "./useRef";
 
 export function useEvent<T extends (...vs: any[]) => any>(fun: T): T {
-  const ref = useRefValue(delegateFun)()
+  const ref = useRefValue(delegateFun).get()
   ref.setCurrent(fun)
   return ref.run as T
 }

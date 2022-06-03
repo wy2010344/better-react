@@ -1,8 +1,68 @@
-import { FindParentAndBefore } from "./commitWork"
 
-export type VirtaulDomNode = {
+export type LinkValue<T> = {
+  value: T
+  next?: LinkValue<T>
+}
+export type HookValue<T> = {
+  setFiber(v: Fiber): void
+  get(): T
+  set(v: T, callback?: () => void): void
+}
+export type HookMemo<T> = {
+  deps: readonly any[]
+  value: T
+  effect(): T
+}
+export type HookEffect = {
+  deps?: readonly any[]
+  effect(): void | (() => void)
+  destroy?(): void
+}
+export type HookContextCosumer = {
+  setFiber(v: Fiber): void
+  getValue(): any
+  destroy(): void
+}
+/**
+ * 并不需要新旧diff,所以不需要alter
+ * 节点树是固定的,除了特殊的map/if
+ */
+export type Fiber<T = Props> = {
+  render(v: Fiber<T>): void
+  shouldUpdate?(oldP: T, newP: T): boolean
+  props: T
+
+  //alternate?: Fiber<T>
+  effectTag?: "UPDATE" | "PLACEMENT" | "DELETION" | "DIRTY"
+  dom?: VirtaulDomNode<T>
+
+  /**第一个子节点 */
+  child?: Fiber
+  /**父Fiber节点 */
+  parent?: Fiber
+  /**弟节点 */
+  sibling?: Fiber
+  /*-最后遍历时生成-*/
+  /**最后一个节点 */
+  lastChild?: Fiber
+  /**前一个节点 */
+  prev?: Fiber
+
+  hookValue?: LinkValue<HookValue<any>>
+  hookEffect?: LinkValue<HookEffect>
+  hookMemo?: LinkValue<HookMemo<any>>
+  contextProvider?: Map<any, {
+    changeValue(v: any): void
+  }>
+  hookContextCosumer?: LinkValue<HookContextCosumer>
+}
+
+
+
+
+export type VirtaulDomNode<T = Props> = {
   //每次更新props
-  update(props: Props): void
+  update(props: T): void
   //只第一次更新
   init(): void
 
@@ -13,87 +73,7 @@ export type VirtaulDomNode = {
   removeFromParent(): void
   destroy(): void
 }
-
-
-
-type EMPTY = {}
-type BRParam<T extends EMPTY> = Omit<T, "key" | "contexts">
-type BRParamAll<T extends EMPTY> = {
-  key?: string | number
-} & BRParam<T>
-export type BRNode<T extends EMPTY = EMPTY> = {
-  type: BRFun<T>
-  props: BRParamAll<T>
-}
-export type BRFun<T extends EMPTY = EMPTY> = (params: BRParamAll<T>) => BRNode<T>
-export type Fiber = BRNode<any> & {
-  /**
-   * @param fiber 自身，可能在函数中附加DOM节点
-   * @param props 
-   * @returns 返回供使用的DOM节点
-   */
-  render(fiber: Fiber): any[]
-  /**第一个子节点 */
-  child?: Fiber
-  /**父Fiber节点 */
-  parent?: Fiber
-  /**弟节点 */
-  sibling?: Fiber
-
-  /*-最后遍历时生成-*/
-  /**最后一个节点 */
-  lastChild?: Fiber
-  /**前一个节点 */
-  prev?: Fiber
-
-  //旧的成员
-  alternate?: Fiber
-  //更新方式，是在和旧hook对比得出的结论。
-  //树里只有UPDATE/PLACEMENT，是需要计算子节点的
-  //一计算，所有子节点，非2之一
-  effectTag?: "UPDATE" | "PLACEMENT" | "DELETION" | "DIRTY"
-  /**元素池*/
-  pool?: Map<any, Fiber>
-
-  /**只有dom的节点有这两个属性 */
-  dom?: VirtaulDomNode
-  /**只有hooks有Fiber有这两个属性 */
-  hooks?: {
-    value: StoreValue<any>[]
-    effect: StoreRef<{
-      deps?: readonly any[]
-      effect(): void | (() => void)
-      destroy?(): void
-    }>[]
-    memo: StoreRef<{
-      deps: readonly any[]
-      value: any
-      effect(): any
-    }>[]
-    contextProvider: Map<any, {
-      changeValue(v: any): void
-    }>
-    contextCosumer: {
-      setFiber(v: Fiber): void
-      getValue(): any
-      destroy(): void
-    }[]
-  }
-}
-
-export function getPool(fiber: Fiber) {
-  if (!fiber.pool) {
-    fiber.pool = new Map()
-  }
-  return fiber.pool!
-}
-
-export function getFiberKey(fiber: Fiber | undefined, key: any): Fiber | void {
-  if (fiber) {
-    return fiber.pool?.get(key)
-  }
-}
-
+export type FindParentAndBefore = [VirtaulDomNode, VirtaulDomNode | null] | [VirtaulDomNode | null, VirtaulDomNode] | null
 export type StoreRef<T> = {
   get(): T
   set(v: T): void

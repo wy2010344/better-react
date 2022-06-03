@@ -1843,15 +1843,17 @@ bcrypt-pbkdf@^1.0.0:
   dependencies:
     tweetnacl "^0.14.3"
 
-better-react-dom@^0.0.6:
-  version "0.0.6"
-  resolved "https://registry.yarnpkg.com/better-react-dom/-/better-react-dom-0.0.6.tgz#769ad9c8f08379badc71b3bcf8c095d8e4e374f7"
-  integrity sha512-JobADwmo1WkjS9ziCL/gL/9gKIQYRKxQfhOAm6xVMOdNeCDRBNOpqhamyZwAwaiAn74fTugWuD/ShK/TX4xZJg==
+better-react-dom@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/better-react-dom/-/better-react-dom-1.0.0.tgz#18c6ad724efcbc3b116e8be2232db6f758794875"
+  integrity sha512-YhX2IYK8SfWQafoUi502YPlRZa52tEzuS5V/GaIoDBnjYG1wBsARptJQq3k8FdkdwUKowDNYq5KpJ1APy10aeA==
+  dependencies:
+    csstype "^3.1.0"
 
-better-react@^0.0.5:
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/better-react/-/better-react-0.0.5.tgz#472d64ea421a08542e90e74e5869c339adbe0be0"
-  integrity sha512-pMaULfCTui2zZrLjMqkT3i++12iTs9jmynILPrSYR5lrxD2Hw/tUccJxiU6qVEwgN9O4gMe7SKXpa8qPQC/NIw==
+better-react@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.0.0.tgz#08b40b6d738188524afb0eea31c83d9daa3479c6"
+  integrity sha512-kCyREr51ooaFExKxvCQodf7Zi2vRAGpSUew0XGSWBk23VYty5VJ8iygcbhVE75c9ui5IalB5fsXk/R+AbroajQ==
 
 binary-extensions@^2.0.0:
   version "2.2.0"
@@ -2255,6 +2257,11 @@ cssstyle@^2.0.0:
   integrity sha512-AZL67abkUzIuvcHqk7c09cezpGNcxUxU4Ioi/05xHk4DQeTkWmGYftIE6ctU6AEt+Gn4n1lDStOtj7FKycP71A==
   dependencies:
     cssom "~0.3.6"
+
+csstype@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/csstype/-/csstype-3.1.0.tgz#4ddcac3718d787cf9df0d1b7d15033925c8f29f2"
+  integrity sha512-uX1KG+x9h5hIJsaKR9xHUeUraxf8IODOwq9JLNPq6BwB04a/xgpq3rcx47l5BZu5zBPlgD342tdke3Hom/nJRA==
 
 damerau-levenshtein@^1.0.7:
   version "1.0.8"

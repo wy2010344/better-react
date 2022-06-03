@@ -1,44 +1,65 @@
-import { updateEffect } from "./commitWork"
-import { Fiber, StoreRef, StoreValue } from "./Fiber"
-import { reconcile } from "./reconcile"
-import { reconcileChildren } from "./reconcileChildren"
-/**当前计算的hook节点 */
+import { addAdd, addUpdate, updateEffect } from "./commitWork";
+import { Fiber, HookContextCosumer, HookEffect, HookMemo, HookValue, LinkValue, StoreRef } from "./Fiber";
+import { reconcile } from "./reconcile";
+
+
 let wipFiber: Fiber | undefined = undefined
-/**当前计算节点的hook下标 */
+
+
 const hookIndex = {
-  value: 0,
-  effect: 0,
-  memo: 0,
-  contextConsumer: 0
-}
-/**
- * 更新函数式组件
- * @param fiber 
- */
-export function updateFunctionComponent(fiber: Fiber) {
-  wipFiber = fiber
-  hookIndex.value = 0
-  hookIndex.effect = 0
-  hookIndex.memo = 0
-  hookIndex.contextConsumer = 0
-  wipFiber.hooks = {
-    value: [],
-    effect: [],
-    memo: [],
-    contextProvider: new Map(),
-    contextCosumer: []
-  }
-  const children = fiber.render(fiber)
-  wipFiber = undefined
-  reconcileChildren(fiber, children)
+  beforeValue: undefined as (LinkValue<HookValue<any>> | undefined),
+  beforeEffect: undefined as (LinkValue<HookEffect> | undefined),
+  beforeMemo: undefined as (LinkValue<HookMemo<any>> | undefined),
+  beforeFiber: undefined as (Fiber | undefined),
+  beforeContextConsumer: undefined as (LinkValue<HookContextCosumer> | undefined)
 }
 
-export function useValue<T>(init: () => T) {
-  const hook = (wipFiber!.alternate?.hooks!.value[hookIndex.value] || storeValue(init())) as StoreValue<T>
-  hook.setFiber(wipFiber!)
-  wipFiber!.hooks!.value.push(hook)
-  hookIndex.value++
-  return [hook.get, hook.set]
+export function updateFunctionComponent(fiber: Fiber) {
+  wipFiber = fiber
+  hookIndex.beforeValue = undefined
+  hookIndex.beforeEffect = undefined
+  hookIndex.beforeMemo = undefined
+  hookIndex.beforeFiber = undefined
+  hookIndex.beforeContextConsumer = undefined
+  fiber.render(fiber)
+  wipFiber = undefined
+}
+
+function getInit<T>(init: T | (() => T)) {
+  if (typeof (init) == 'function') {
+    return (init as any)()
+  } else {
+    return init
+  }
+}
+
+export function useState<T>(init: T | (() => T)) {
+  let hookValue: LinkValue<HookValue<T>>
+  if (hookIndex.beforeValue) {
+    const temp = hookIndex.beforeValue.next
+    if (temp) {
+      hookValue = temp
+    } else {
+      hookValue = {
+        value: storeValue(getInit(init))
+      }
+      hookIndex.beforeValue.next = hookValue
+    }
+  } else {
+    const temp = wipFiber?.hookValue
+    if (temp) {
+      hookValue = temp
+    } else {
+      hookValue = {
+        value: storeValue(getInit(init))
+      }
+      wipFiber!.hookValue = hookValue
+    }
+  }
+  hookIndex.beforeValue = hookValue
+
+  hookValue.value.setFiber(wipFiber!)
+  return [hookValue.value.get(), hookValue.value.set, hookValue.value.get] as const
 }
 
 function storeValue<T>(value: T) {
@@ -57,8 +78,12 @@ function storeValue<T>(value: T) {
         }
       } else {
         value = temp
-        fiber.effectTag = "DIRTY"
-        reconcile(callback)
+        reconcile({
+          beforeLoop() {
+            fiber.effectTag = "DIRTY"
+          },
+          afterLoop: callback
+        })
       }
     }
   }
@@ -75,24 +100,81 @@ export function storeRef<T>(value: T) {
   } as StoreRef<T>
 }
 
+export function simpleEqual<T>(a: T, b: T) {
+  return a == b
+}
+export function arrayEqual<T>(a1: readonly T[], a2: readonly T[], equal: (x: T, y: T) => boolean) {
+  if (a1 == a2) {
+    return true
+  }
+  const len = a1.length
+  if (a2.length == len) {
+    for (let i = 0; i < len; i++) {
+      if (!equal(a1[i], a2[i])) {
+        return false
+      }
+    }
+    return true
+  }
+  return false
+}
+export function simpleNotEqual<T>(a: T, b: T) {
+  return a != b
+}
+export function arrayNotEqual<T>(a1: readonly T[], a2: readonly T[], notEqual: (x: T, y: T) => boolean) {
+  if (a1 == a2) {
+    return false
+  }
+  const len = a1.length
+  if (a2.length == len) {
+    for (let i = 0; i < len; i++) {
+      if (!notEqual(a1[i], a2[i])) {
+        return true
+      }
+    }
+    return false
+  }
+  return true
+}
+
 const DEFAULT_EFFECT = () => { }
 export function useEffect(effect: () => (void | (() => void)), deps?: readonly any[]) {
-  const hook = wipFiber!.alternate?.hooks!.effect[hookIndex.effect] || storeRef({
-    effect: DEFAULT_EFFECT,
-    deps: []
-  }) as StoreRef<{
-    deps?: any[]
-    effect: any
-    destroy?(): void
-  }>
-  wipFiber!.hooks!.effect.push(hook)
-  hookIndex.effect++
-  const last = hook.get()
+  let hookEffect: LinkValue<HookEffect>
+  if (hookIndex.beforeEffect) {
+    const temp = hookIndex.beforeEffect.next
+    if (temp) {
+      hookEffect = temp
+    } else {
+      hookEffect = {
+        value: {
+          effect: DEFAULT_EFFECT,
+          deps: []
+        }
+      }
+      hookIndex.beforeEffect.next = hookEffect
+    }
+  } else {
+    const temp = wipFiber?.hookEffect
+    if (temp) {
+      hookEffect = temp
+    } else {
+      hookEffect = {
+        value: {
+          effect: DEFAULT_EFFECT,
+          deps: []
+        }
+      }
+      wipFiber!.hookEffect = hookEffect
+    }
+  }
+  hookIndex.beforeEffect = hookEffect
+
+
+  const last = hookEffect.value
   //hook都需要结束的时候才计算！！。
   if (Array.isArray(last.deps)
     && Array.isArray(deps)
-    && last.deps.length == deps.length
-    && deps.every((v, i) => v == last.deps![i])) {
+    && arrayEqual(last.deps, deps, simpleEqual)) {
     //完全相同，不处理
     if (last.effect == DEFAULT_EFFECT) {
       //延迟到DOM元素数据化后初始化
@@ -101,7 +183,7 @@ export function useEffect(effect: () => (void | (() => void)), deps?: readonly a
         effect,
         destroy: undefined
       }
-      hook.set(nextHook as any)
+      hookEffect.value = nextHook
       updateEffect(() => {
         nextHook.destroy = effect() as undefined
       })
@@ -109,10 +191,10 @@ export function useEffect(effect: () => (void | (() => void)), deps?: readonly a
   } else {
     const nextHook = {
       deps,
-      effect,
+      effect: effect,
       destroy: undefined
     }
-    hook.set(nextHook as any)
+    hookEffect.value = nextHook
     updateEffect(() => {
       last.destroy?.()
       nextHook.destroy = effect() as undefined
@@ -121,42 +203,128 @@ export function useEffect(effect: () => (void | (() => void)), deps?: readonly a
 }
 
 export function useMemo<T>(effect: () => T, deps: readonly any[]): T {
-  const hook = wipFiber?.alternate?.hooks?.memo[hookIndex.memo] || storeRef({
-    effect: DEFAULT_EFFECT,
-    value: null,
-    deps: []
-  }) as StoreRef<{
-    deps: readonly any[]
-    value: any
-    effect: any
-  }>
-  wipFiber!.hooks!.memo.push(hook)
-  hookIndex.memo++
-  const last = hook.get()
-  if (last.deps.length == deps.length && deps.every((v, i) => v == last.deps![i])) {
+  let hookMemo: LinkValue<HookMemo<T>>
+  if (hookIndex.beforeMemo) {
+    const temp = hookIndex.beforeMemo.next
+    if (temp) {
+      hookMemo = temp
+    } else {
+      hookMemo = {
+        value: {
+          effect: DEFAULT_EFFECT,
+          value: null,
+          deps: []
+        } as any
+      }
+      hookIndex.beforeMemo.next = hookMemo
+    }
+  } else {
+    const temp = wipFiber?.hookMemo
+    if (temp) {
+      hookMemo = temp
+    } else {
+      hookMemo = {
+        value: {
+          effect: DEFAULT_EFFECT,
+          value: null,
+          deps: []
+        } as any
+      }
+      wipFiber!.hookMemo = hookMemo
+    }
+  }
+  hookIndex.beforeMemo = hookMemo
+
+  const last = hookMemo.value
+  if (arrayEqual(last.deps, deps, simpleEqual)) {
     //完全相同，不处理
     if (last.effect == DEFAULT_EFFECT) {
       //第一次，要处理
       const value = effect()
-      hook.set({
+      hookMemo.value = {
         deps,
         effect,
         value
-      })
+      }
       return value
     } else {
       //返回上一次结果
-      return hook.get().value
+      return hookMemo.value.value
     }
   } else {
     const value = effect()
-    hook.set({
+    hookMemo.value = {
       deps,
       effect,
       value
-    })
+    }
     return value
   }
+}
+
+function propsShouldUpdate<T>(fiber: Fiber<T>, newP: T) {
+  if (fiber.shouldUpdate) {
+    return fiber.shouldUpdate(newP, fiber.props)
+  } else {
+    return fiber.props != newP
+  }
+}
+export function useFiber<T>(
+  callback: (fiber: Fiber<T>) => void,
+  props: T,
+  shouldUpdate?: (newP: T, oldP: T) => boolean
+) {
+  let hookFiber: Fiber | undefined
+  if (hookIndex.beforeFiber) {
+    const temp = hookIndex.beforeFiber.sibling
+    if (temp) {
+      hookFiber = temp
+      const v = hookFiber.render != callback || hookFiber.shouldUpdate != shouldUpdate || propsShouldUpdate(hookFiber, props)
+      //console.log("should-----Update", v)
+      if (v) {
+        hookFiber.render = callback
+        hookFiber.props = props
+        hookFiber.shouldUpdate = shouldUpdate
+        hookFiber.effectTag = "UPDATE"
+        addUpdate(hookFiber!)
+      }
+    } else {
+      hookFiber = {
+        render: callback,
+        shouldUpdate,
+        props,
+        effectTag: "PLACEMENT",
+        parent: wipFiber
+      }
+      addAdd(hookFiber)
+      hookIndex.beforeFiber.sibling = hookFiber
+    }
+  } else {
+    const temp = wipFiber?.child
+    if (temp) {
+      hookFiber = temp
+      const v = hookFiber.render != callback || hookFiber.shouldUpdate != shouldUpdate || propsShouldUpdate(hookFiber, props)
+      //console.log("shouldUpdate", v)
+      if (v) {
+        hookFiber.render = callback
+        hookFiber.props = props
+        hookFiber.shouldUpdate = shouldUpdate
+        hookFiber.effectTag = "UPDATE"
+        addUpdate(hookFiber!)
+      }
+    } else {
+      hookFiber = {
+        render: callback,
+        shouldUpdate,
+        props,
+        effectTag: "PLACEMENT",
+        parent: wipFiber
+      }
+      addAdd(hookFiber)
+      wipFiber!.child = hookFiber
+    }
+  }
+  hookIndex.beforeFiber = hookFiber
 }
 
 export interface Context<T> {
@@ -183,26 +351,55 @@ class ContextFactory<T> implements Context<T>{
     return new ContextListener(this.findProvider(fiber), fiber)
   }
   useProvider(v: T) {
-    const hook = wipFiber?.alternate?.hooks?.contextProvider.get(this) || this.createProvider(v)
-    wipFiber?.hooks?.contextProvider.set(this, hook)
+    let map: Map<any, {
+      changeValue(v: any): void
+    }>
+    if (wipFiber?.contextProvider) {
+      map = wipFiber.contextProvider
+    } else {
+      map = new Map()
+      wipFiber!.contextProvider = map
+    }
+    let hook = map.get(this)
+    if (!hook) {
+      hook = this.createProvider(v)
+      map.set(this, hook)
+    }
     hook.changeValue(v)
   }
   useConsumer() {
-    const hook = wipFiber?.alternate?.hooks?.contextCosumer[hookIndex.contextConsumer] || this.createConsumer(wipFiber!) as {
-      setFiber(v: Fiber): void
-      getValue(): T
-      destroy(): void
+    let hookConsumer: LinkValue<HookContextCosumer>
+    if (hookIndex.beforeContextConsumer) {
+      const temp = hookIndex.beforeContextConsumer.next
+      if (temp) {
+        hookConsumer = temp
+      } else {
+        hookConsumer = {
+          value: this.createConsumer(wipFiber!)
+        }
+        hookIndex.beforeContextConsumer.next = hookConsumer
+      }
+    } else {
+      const temp = wipFiber?.hookContextCosumer
+      if (temp) {
+        hookConsumer = temp
+      } else {
+        hookConsumer = {
+          value: this.createConsumer(wipFiber!)
+        }
+        wipFiber!.hookContextCosumer = hookConsumer
+      }
     }
-    wipFiber?.hooks?.contextCosumer.push(hook)
-    hookIndex.contextConsumer++
+    hookIndex.beforeContextConsumer = hookConsumer
+    const hook = hookConsumer.value
     hook.setFiber(wipFiber!)
     return hook.getValue()
   }
   private findProvider(_fiber: Fiber) {
     let fiber = _fiber as Fiber | undefined
     while (fiber) {
-      if (fiber.hooks) {
-        const providers = fiber.hooks.contextProvider
+      if (fiber.contextProvider) {
+        const providers = fiber.contextProvider
         if (providers.has(this)) {
           return providers.get(this) as ContextProvider<T>
         }
@@ -259,5 +456,6 @@ class ContextListener<T>{
     this.context.off(this)
   }
 }
+
 
 

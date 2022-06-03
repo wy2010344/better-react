@@ -9,15 +9,15 @@ export function useRef<T>(init: T) {
 }
 
 export function useConstRefValue<T>(init: () => T) {
-  return useRefValue(init)()
+  return useRefValue(init).get()
 }
 
 export function useConstRef<T>(init: T) {
-  return useRef(init)()
+  return useRef(init).get()
 }
 
 export function useAlways<T>(init: T) {
   const ref = useRef(init)
-  ref(init)
-  return ref
+  ref.set(init)
+  return ref.get
 }

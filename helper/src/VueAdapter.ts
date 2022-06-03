@@ -3,14 +3,14 @@ import { useRefValue } from "./useRef";
 
 
 export function useRefVueValueFrom<T>(init: () => T, shouldChange?: ShouldChange<any>) {
-  return useRefValue(() => valueOf(init(), shouldChange))()
+  return useRefValue(() => valueOf(init(), shouldChange)).get()
 }
 export function useRefVueValue<T>(init: T, shouldChange?: ShouldChange<any>) {
   return useRefVueValueFrom(() => init, shouldChange)
 }
 
 export function useRefAtomVueValueFrom<T>(init: () => T, shouldChange: ShouldChange<any> = notEqualChange) {
-  return useRefValue(() => valueOf(init(), shouldChange))()
+  return useRefValue(() => valueOf(init(), shouldChange)).get()
 }
 export function useRefAtomVueValue<T>(init: T, shouldChange: ShouldChange<any> = notEqualChange) {
   return useRefVueValueFrom(() => init, shouldChange)

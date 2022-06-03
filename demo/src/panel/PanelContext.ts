@@ -1,4 +1,4 @@
-import { createContext } from "../core"
+import { createContext } from "better-react"
 import usePanel from "./usePanel"
 
 export type PanelCollection = {
