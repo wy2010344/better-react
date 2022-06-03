@@ -1,6 +1,5 @@
 import { createContext, useEffect, useMemo } from "../core/fc";
 import usePanel, { PanelParams } from "./usePanel";
-import { PanelContext } from "../main";
 import { ValueCenter } from "./ValueCenter";
 
 const PortalContext = createContext(ValueCenter.of<{

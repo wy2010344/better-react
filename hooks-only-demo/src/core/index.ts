@@ -4,7 +4,7 @@ import { Fiber, VirtaulDomNode } from "./Fiber"
 import { AskNextTimeWork, setRootFiber } from "./reconcile"
 export { flushSync } from './reconcile'
 export type { REAL_WORK } from './reconcile'
-export { useState, useEffect, storeRef, useMemo, createContext } from './fc'
+export { useState, useEffect, storeRef, useMemo, createContext, useFiber } from './fc'
 export type { Fiber, Props, VirtaulDomNode } from './Fiber'
 export type { FindParentAndBefore } from './commitWork'
 export type { AskNextTimeWork }
