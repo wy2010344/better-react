@@ -246,6 +246,6 @@ export const browser = (function () {
 })();
 
 export const contentEditable = {
-  text: browser.type == "FF" ? "true" : "plaintext-only"
-}
+  text: browser.type == "FF" ? true : "plaintext-only"
+} as const
 export default mb

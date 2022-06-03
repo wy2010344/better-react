@@ -1,5 +1,5 @@
 import { addAdd, addDelect, addUpdate } from "./commitWork"
-import { storeRef, useFiber, useMemo } from "./fc"
+import { arrayNotEqual, simpleNotEqual, storeRef, useFiber, useMemo } from "./fc"
 import { Fiber, VirtaulDomNode } from "./Fiber"
 import { AskNextTimeWork, setRootFiber } from "./reconcile"
 export { flushSync } from './reconcile'
@@ -26,21 +26,34 @@ export function render(
 }
 
 
+
+type KeepFun<T> = {
+  shouldUpdate(newP: T, oldP: T): boolean
+  call(fiber: Fiber<T>): void
+}
+
+
+
+////////****useMap****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 export function useMap<T>(
   vs: T[],
   getKey: (v: T) => any,
   render: (v: T, i: number) => void
 ) {
-  useFiber(MapFiber, { vs, getKey, render })
+  useFiber(MapFiber, { vs, getKey, render }, shouldMapFiberUpdate)
 }
-function MapFiber<T>(fiber: Fiber<{
+type MapFiberProps<T> = {
   vs: T[],
   getKey: (v: T) => any,
   render: (v: T, i: number) => void
-}>) {
-  const mapRef = useMemo(() => storeRef(new Map<any, Fiber[]>()), [])
+}
+function shouldMapFiberUpdate<T>(newP: MapFiberProps<T>, oldP: MapFiberProps<T>) {
+  return arrayNotEqual(newP.vs, oldP.vs, simpleNotEqual) || newP.getKey != oldP.getKey || newP.render != oldP.render
+}
+function MapFiber<T>(fiber: Fiber<MapFiberProps<T>>) {
+  const mapRef = useMemo(() => storeRef(new Map<any, Fiber<RenderRowProps<T>>[]>()), [])
   const oldMap = mapRef.get()
-  const newMap = new Map<any, Fiber[]>()
+  const newMap = new Map<any, Fiber<RenderRowProps<T>>[]>()
   mapRef.set(newMap)
   const { vs, getKey, render } = fiber.props
 
@@ -64,7 +77,8 @@ function MapFiber<T>(fiber: Fiber<{
       oldFibers?.shift()
     } else {
       oldFiber = {
-        render: RenderRow,
+        render: renderRow,
+        shouldUpdate: shouldRenderRow as any,
         props,
         effectTag: "PLACEMENT",
         parent: fiber
@@ -94,182 +108,227 @@ function MapFiber<T>(fiber: Fiber<{
   }
 }
 
-function RenderRow<T>(fiber: Fiber<{
+type RenderRowProps<T> = {
   row: T,
   index: number,
   callback(row: T, index: number): void
-}>) {
+}
+function shouldRenderRow<T>(newP: RenderRowProps<T>, oldP: RenderRowProps<T>) {
+  return newP.row != oldP.row || newP.index != oldP.index || newP.callback != oldP.callback
+}
+function renderRow<T>(fiber: Fiber<RenderRowProps<T>>) {
   const { row, index, callback } = fiber.props
   callback(row, index)
 }
 
-
-export function useGuard<T>(v: T, ...matches: (readonly [(v: T) => boolean, (v: T) => void])[]) {
-  useFiber(GuardFiber, { v, matches })
-}
-function GuardFiber<T>(fiber: Fiber<{
+////////****guard****////////////////////////////////////////////////////////////////////////////////////////////////////////////
+type GuardBaseFiber<A, T> = (readonly [
+  A,
+  (v: T) => void
+])
+type GuardBaseFiberProps<A, T> = {
   v: T
-  matches: (readonly [(v: T) => boolean, (v: T) => void])[]
-}>) {
-  const cache = useMemo(() => {
-    return {
-      index: -1,
-      fiber: fiber as Fiber<any>
-    }
-  }, [])
-  const { v, matches } = fiber.props
+  matches: GuardBaseFiber<A, T>[]
+}
+function getGuardFiber<A, T>(shouldDo: (a: A, v: T) => boolean) {
+  return function (fiber: Fiber<GuardBaseFiberProps<A, T>>) {
+    const cache = useMemo(() => {
+      return {
+        index: -1,
+        fiber: fiber as Fiber<any>
+      }
+    }, [])
+    const { v, matches } = fiber.props
 
-  let noStop = true
-  for (let i = 0; (i < matches.length) && noStop; i++) {
-    const match = matches[i]
-    if (match[0](v)) {
-      const props = {
-        value: v,
-        callback: match[1]
-      }
-      if (cache.index == i) {
-        //复用
-        cache.fiber.props = props
-        cache.fiber.effectTag = "UPDATE"
-        addUpdate(cache.fiber)
-      } else {
-        //删旧增新
-        if (cache.index > -1) {
-          cache.fiber.effectTag = "DELETION"
-          addDelect(cache.fiber)
+    let noStop = true
+    for (let i = 0; (i < matches.length) && noStop; i++) {
+      const match = matches[i]
+      if (shouldDo(match[0], v)) {
+        const props = {
+          value: v,
+          callback: match[1]
         }
-        cache.index = i
-        cache.fiber = {
-          render: CacheNode,
-          props,
-          effectTag: "PLACEMENT",
-          parent: fiber
+        if (cache.index == i) {
+          //复用
+          cache.fiber.props = props
+          cache.fiber.effectTag = "UPDATE"
+          addUpdate(cache.fiber)
+        } else {
+          //删旧增新
+          if (cache.index > -1) {
+            cache.fiber.effectTag = "DELETION"
+            addDelect(cache.fiber)
+          }
+          cache.index = i
+          cache.fiber = {
+            render: cacheNode,
+            shouldUpdate: shouldCacheNodeUpdate,
+            props,
+            effectTag: "PLACEMENT",
+            parent: fiber
+          }
+          fiber.child = cache.fiber
+          addAdd(cache.fiber)
         }
-        fiber.child = cache.fiber
-        addAdd(cache.fiber)
+        noStop = false
       }
-      noStop = false
     }
-  }
-  if (noStop && cache.index > -1) {
-    cache.index = -1
-    addDelect(cache.fiber)
-    cache.fiber = fiber
-    fiber.child = undefined
+    if (noStop && cache.index > -1) {
+      cache.index = -1
+      addDelect(cache.fiber)
+      cache.fiber = fiber
+      fiber.child = undefined
+    }
   }
 }
-
-function CacheNode<T>(fiber: Fiber<{
+function shouldGuardUpdate<A, T>(newP: GuardBaseFiberProps<A, T>, oldP: GuardBaseFiberProps<A, T>) {
+  return newP.v != oldP.v || arrayNotEqual(newP.matches, oldP.matches, (x, y) => {
+    return x[0] != y[0] || x[1] != y[1]
+  })
+}
+////////****guard****////////////////////////////////////////////////////////////////////////////////////////////////////////////
+type GuardMatchType<T> = GuardBaseFiber<(v: T) => boolean, T>
+function isGuardMatch<T>(fun: (v: T) => boolean, v: T) {
+  return fun(v)
+}
+const guardFiber = getGuardFiber(isGuardMatch)
+export function useGuard<T>(v: T, ...matches: GuardMatchType<T>[]) {
+  useFiber(guardFiber, { v, matches }, shouldGuardUpdate)
+}
+type CacheNodeProps<T> = {
   value: T,
   callback(v: T): void
-}>) {
+}
+function shouldCacheNodeUpdate<T>(newP: CacheNodeProps<T>, oldP: CacheNodeProps<T>) {
+  return newP.value != oldP.value || newP.callback != oldP.callback
+}
+function cacheNode<T>(fiber: Fiber<CacheNodeProps<T>>) {
   const { value, callback } = fiber.props
   callback(value)
 }
 
 
+////////****useIf****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 export function useIf(
   v: boolean,
   whenTrue: () => void,
   whenFalse?: () => void
 ) {
-  useGuard(v,
+  const matches: GuardMatchType<boolean>[] = [
     [
-      v => v,
+      quote,
       whenTrue
-    ],
-    [
-      v => !v,
-      () => whenFalse?.()
     ]
-  )
+  ]
+  if (whenFalse) {
+    matches.push([
+      toOppsite,
+      whenFalse
+    ])
+  }
+  useFiber(guardFiber, { v, matches }, shouldGuardUpdate)
 }
-
-export function useSwitch<T>(v: T, ...matches: [T, (v: T) => void][]) {
-  return useGuard(v, ...matches.map(function ([a, b]) {
-    return [(x: T) => a == x, b] as const
-  }))
+function quote<T>(v: T) { return v }
+function toOppsite(v: boolean) { return !v }
+////////****useSwitch****////////////////////////////////////////////////////////////////////////////////////////////////////////////
+type GuardSwitchType<T> = GuardBaseFiber<T, T>
+function isSwitch<T>(a: T, v: T) {
+  return a == v
 }
-
-export function useSwitchString(
-  v: string,
+const switchFiber = getGuardFiber(isSwitch)
+export function useSwitch<T>(v: T, ...matches: GuardSwitchType<T>[]) {
+  useFiber(switchFiber, {
+    v,
+    matches
+  }, shouldGuardUpdate)
+}
+////////****useGuardString****////////////////////////////////////////////////////////////////////////////////////////////////////////////
+export function useGuardString(
+  value: string,
   map: {
-    [key: string]: () => void
+    [key: string]: (k: string) => void
   }
 ) {
+  return useFiber(guardConfig.call, { value, map }, guardConfig.shouldUpdate)
 }
-
-export function useGuardString(value: string, map: {
-  [key: string]: (k: string) => void
-}) {
-  return useFiber(GuardStringFilber, { value, map })
-}
-function GuardStringFilber(fiber: Fiber<{
+const guardConfig: KeepFun<{
   value: string
   map: {
     [key: string]: (k: string) => void
   }
-}>) {
-  const { value, map } = fiber.props
-  const cache = useMemo(() => {
-    return {
-      key: "",
-      fiber: fiber as any
-    }
-  }, [])
-  let noStop = true
-  const entitys = Object.entries(map)
-  for (let i = 0; i < entitys.length && noStop; i++) {
-    const [key, callback] = entitys[i]
-    if (value == key) {
-      const props = {
-        value: key,
-        callback
+}> = {
+  shouldUpdate(newP, oldP) {
+    return newP.value != oldP.value || newP.map != oldP.map
+  },
+  call(fiber) {
+    const { value, map } = fiber.props
+    const cache = useMemo(() => {
+      return {
+        key: "",
+        fiber: fiber as any
       }
-      if (cache.key == key) {
-        //复用
-        cache.fiber.props = props
-        cache.fiber.effectTag = "UPDATE"
-        addUpdate(cache.fiber)
-      } else {
-        //删旧增新
-        if (cache.fiber != fiber) {
-          cache.fiber.effectTag = "DELETION"
-          addDelect(cache.fiber)
+    }, [])
+    let noStop = true
+    const entitys = Object.entries(map)
+    for (let i = 0; i < entitys.length && noStop; i++) {
+      const [key, callback] = entitys[i]
+      if (value == key) {
+        const props = {
+          value: key,
+          callback
         }
-        cache.key = key
-        cache.fiber = {
-          render: CacheNode,
-          props,
-          effectTag: "PLACEMENT",
-          parent: fiber
+        if (cache.key == key) {
+          //复用
+          cache.fiber.props = props
+          cache.fiber.effectTag = "UPDATE"
+          addUpdate(cache.fiber)
+        } else {
+          //删旧增新
+          if (cache.fiber != fiber) {
+            cache.fiber.effectTag = "DELETION"
+            addDelect(cache.fiber)
+          }
+          cache.key = key
+          cache.fiber = {
+            render: cacheNode,
+            shouldUpdate: shouldCacheNodeUpdate,
+            props,
+            effectTag: "PLACEMENT",
+            parent: fiber
+          }
+          fiber.child = cache.fiber
+          addAdd(cache.fiber)
         }
-        fiber.child = cache.fiber
-        addAdd(cache.fiber)
+        noStop = false
       }
-      noStop = false
     }
-  }
-  if (noStop && cache.fiber != fiber) {
-    addDelect(cache.fiber)
-    cache.fiber = fiber
-    fiber.child = undefined
+    if (noStop && cache.fiber != fiber) {
+      addDelect(cache.fiber)
+      cache.fiber = fiber
+      fiber.child = undefined
+    }
   }
 }
+////////****类似函数式组件****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 export function useFragment(fun: () => void): void
 export function useFragment<T>(fun: (v: T) => void, v: T): void;
 export function useFragment<T>(fun: (v?: T) => void, v?: T): void {
-  useFiber<{
-    call(v?: T): void
-    args?: T
-  }>(Fragment, { call: fun, args: v })
+  useFiber<FragmentProps<T>>(Fragment, { call: fun, args: v }, fragmentShouldUpdate)
 }
-
+type FragmentProps<T> = {
+  call(v?: T): void
+  args?: T
+} | {
+  call(v: T): void
+  args: T
+}
+function fragmentShouldUpdate<T>(newP: FragmentProps<T>, oldP: FragmentProps<T>) {
+  return newP.call != oldP.call || newP.args != oldP.args
+}
 function Fragment<T>(fiber: Fiber<{
   call(v?: T): void
   args?: T
 }>) {
-
   const { call, args } = fiber.props
   call(args)
 }

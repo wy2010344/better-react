@@ -470,7 +470,7 @@ export namespace React {
  */
   interface SyntheticEvent<T = Element, E = Event> extends BaseSyntheticEvent<E, EventTarget & T, EventTarget> { }
 
-  interface ClipboardEvent<T = Element> extends SyntheticEvent<T, NativeClipboardEvent> {
+  export interface ClipboardEvent<T = Element> extends SyntheticEvent<T, NativeClipboardEvent> {
     clipboardData: DataTransfer;
   }
 
@@ -511,7 +511,7 @@ export namespace React {
     target: EventTarget & T;
   }
 
-  interface KeyboardEvent<T = Element> extends UIEvent<T, NativeKeyboardEvent> {
+  export interface KeyboardEvent<T = Element> extends UIEvent<T, NativeKeyboardEvent> {
     altKey: boolean;
     /** @deprecated */
     charCode: number;
@@ -1121,7 +1121,7 @@ export namespace React {
     // Standard HTML Attributes
     accessKey?: string | undefined;
     className?: string | undefined;
-    contentEditable?: Booleanish | "inherit" | undefined;
+    contentEditable?: Booleanish | "inherit" | "plaintext-only" | undefined;
     contextMenu?: string | undefined;
     dir?: string | undefined;
     draggable?: Booleanish | undefined;

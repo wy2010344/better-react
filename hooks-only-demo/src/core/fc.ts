@@ -100,6 +100,43 @@ export function storeRef<T>(value: T) {
   } as StoreRef<T>
 }
 
+export function simpleEqual<T>(a: T, b: T) {
+  return a == b
+}
+export function arrayEqual<T>(a1: readonly T[], a2: readonly T[], equal: (x: T, y: T) => boolean) {
+  if (a1 == a2) {
+    return true
+  }
+  const len = a1.length
+  if (a2.length == len) {
+    for (let i = 0; i < len; i++) {
+      if (!equal(a1[i], a2[i])) {
+        return false
+      }
+    }
+    return true
+  }
+  return false
+}
+export function simpleNotEqual<T>(a: T, b: T) {
+  return a != b
+}
+export function arrayNotEqual<T>(a1: readonly T[], a2: readonly T[], notEqual: (x: T, y: T) => boolean) {
+  if (a1 == a2) {
+    return false
+  }
+  const len = a1.length
+  if (a2.length == len) {
+    for (let i = 0; i < len; i++) {
+      if (!notEqual(a1[i], a2[i])) {
+        return true
+      }
+    }
+    return false
+  }
+  return true
+}
+
 const DEFAULT_EFFECT = () => { }
 export function useEffect(effect: () => (void | (() => void)), deps?: readonly any[]) {
   let hookEffect: LinkValue<HookEffect>
@@ -137,8 +174,7 @@ export function useEffect(effect: () => (void | (() => void)), deps?: readonly a
   //hook都需要结束的时候才计算！！。
   if (Array.isArray(last.deps)
     && Array.isArray(deps)
-    && last.deps.length == deps.length
-    && deps.every((v, i) => v == last.deps![i])) {
+    && arrayEqual(last.deps, deps, simpleEqual)) {
     //完全相同，不处理
     if (last.effect == DEFAULT_EFFECT) {
       //延迟到DOM元素数据化后初始化
@@ -200,7 +236,7 @@ export function useMemo<T>(effect: () => T, deps: readonly any[]): T {
   hookIndex.beforeMemo = hookMemo
 
   const last = hookMemo.value
-  if (last.deps.length == deps.length && deps.every((v, i) => v == last.deps![i])) {
+  if (arrayEqual(last.deps, deps, simpleEqual)) {
     //完全相同，不处理
     if (last.effect == DEFAULT_EFFECT) {
       //第一次，要处理
@@ -226,21 +262,36 @@ export function useMemo<T>(effect: () => T, deps: readonly any[]): T {
   }
 }
 
-export function useFiber<T>(callback: (fiber: Fiber<T>) => void, props: T) {
+function propsShouldUpdate<T>(fiber: Fiber<T>, newP: T) {
+  if (fiber.shouldUpdate) {
+    return fiber.shouldUpdate(newP, fiber.props)
+  } else {
+    return fiber.props != newP
+  }
+}
+export function useFiber<T>(
+  callback: (fiber: Fiber<T>) => void,
+  props: T,
+  shouldUpdate?: (newP: T, oldP: T) => boolean
+) {
   let hookFiber: Fiber | undefined
   if (hookIndex.beforeFiber) {
     const temp = hookIndex.beforeFiber.sibling
     if (temp) {
       hookFiber = temp
-      if (hookFiber?.render != callback || hookFiber.props != props) {
+      const v = hookFiber.render != callback || hookFiber.shouldUpdate != shouldUpdate || propsShouldUpdate(hookFiber, props)
+      //console.log("should-----Update", v)
+      if (v) {
         hookFiber.render = callback
         hookFiber.props = props
+        hookFiber.shouldUpdate = shouldUpdate
         hookFiber.effectTag = "UPDATE"
         addUpdate(hookFiber!)
       }
     } else {
       hookFiber = {
         render: callback,
+        shouldUpdate,
         props,
         effectTag: "PLACEMENT",
         parent: wipFiber
@@ -252,15 +303,19 @@ export function useFiber<T>(callback: (fiber: Fiber<T>) => void, props: T) {
     const temp = wipFiber?.child
     if (temp) {
       hookFiber = temp
-      if (hookFiber?.render != callback || hookFiber.props != props) {
+      const v = hookFiber.render != callback || hookFiber.shouldUpdate != shouldUpdate || propsShouldUpdate(hookFiber, props)
+      //console.log("shouldUpdate", v)
+      if (v) {
         hookFiber.render = callback
         hookFiber.props = props
+        hookFiber.shouldUpdate = shouldUpdate
         hookFiber.effectTag = "UPDATE"
         addUpdate(hookFiber!)
       }
     } else {
       hookFiber = {
         render: callback,
+        shouldUpdate,
         props,
         effectTag: "PLACEMENT",
         parent: wipFiber

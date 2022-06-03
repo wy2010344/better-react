@@ -4,22 +4,14 @@ import { createContext, useEffect, useMemo, useState } from "./core/fc";
 import { useContent, useDom } from "./dom";
 import { ScheduleAskTime } from "./dom/schedule";
 import { FiberNode, StyleContext } from "./dom/updateDom";
+import dsl from "./dsl";
+import { PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
 import usePanel from "./panel/usePanel";
 import { useStoreTriggerRender, ValueCenter } from "./panel/ValueCenter";
 import { StylisCreater } from "./stylis";
 
 
 
-type PanelCollection = {
-  id: number
-  callback(): void
-}[]
-type PanelOperate = {
-  push(callback: () => void): number
-  close(id: number): void
-  exist(id: number): boolean
-  moveToFirst(id: number): void
-}
 const node = FiberNode.create(document.getElementById("app")!)
 const destroy = render(
   function () {
@@ -85,7 +77,17 @@ function FirstPage() {
         children() {
           useContent("root")
           TestButtonPage()
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              dsl(operate)
+            },
+            children() {
+              useContent("进入DSL")
+            }
+          })
           Demo()
+
         },
         moveFirst() {
           operate.moveToFirst(id)
@@ -133,24 +135,11 @@ function TestButtonPage() {
   }, [thisId])
 }
 
-export const PanelContext = createContext<PanelOperate>({
-  push() {
-    throw new Error("")
-  },
-  exist() {
-    throw new Error("")
-  },
-  moveToFirst() {
-    throw new Error("")
-  },
-  close() {
-    throw new Error("")
-  }
-})
+
 
 function RenderHost(panels: ValueCenter<PanelCollection>) {
   const vs = useStoreTriggerRender(panels)
-  useMap(vs, v => v.id, v => v.callback())
+  useMap(vs, v => v.id, v => v.callback(v.id))
 }
 
 
@@ -172,15 +161,15 @@ function Demo() {
           background-color:green;
           `,
       })
-      Count()
     }
   })
   MapList()
-  Count()
-
+  console.log("render--根")
+  useFragment(Count)
   useDom("div", {
     children() {
-      useContent("内容")
+
+      useContent("ccc内容")
       const [count, setCount] = useState(() => 0)
 
       // useIf(count % 2 == 0, () => {
@@ -236,10 +225,12 @@ function Demo() {
 }
 
 function Count() {
+  console.log("render-count")
   const [count, setCount] = useState(() => 9)
   useDom("button", {
-    onClick() {
+    onClick(e) {
       setCount(count + 1)
+      e.stopPropagation()
     },
     children() {
       useContent(`点击了${count}次`)
@@ -278,13 +269,14 @@ function MapList() {
   })
 
   useDom("button", {
-    onClick() {
+    onClick(e) {
       list.unshift({
         index: list.length,
         key: "vvv" + list.length
       })
       setList([...list])
       console.log(list)
+      e.stopPropagation()
     },
     children() {
       useContent("增加列表")

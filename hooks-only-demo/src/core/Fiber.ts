@@ -29,6 +29,7 @@ export type HookContextCosumer = {
  */
 export type Fiber<T = Props> = {
   render(v: Fiber<T>): void
+  shouldUpdate?(oldP: T, newP: T): boolean
   props: T
 
   //alternate?: Fiber<T>
