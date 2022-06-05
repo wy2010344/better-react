@@ -114,9 +114,11 @@ export function getData<T>(v: Fiber<T>) {
 
 
 export type VirtaulDomNode<T = Props> = {
+  //创建
+  create(props: T): void
   //每次更新props
   update(props: T): void
-  //只第一次更新
+  //只第一次更新,在create之后,即不权updateProps,还准备好了子节点
   init(): void
 
   isPortal(): boolean

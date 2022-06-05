@@ -84,7 +84,7 @@ export function commitRoot() {
   //新加的初始化属性
   addes.forEach(function (fiber) {
     if (fiber.dom) {
-      fiber.dom.update(getEditData(fiber).props)
+      fiber.dom.create(getEditData(fiber).props)
     }
   })
   //旧的更新属性

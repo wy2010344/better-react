@@ -3,13 +3,15 @@ import { React, useContent, useDom } from "better-react-dom";
 import { useRef } from "better-react-helper";
 import { normalPanel } from "./panel/PanelContext";
 
+let lastRenderTime = performance.now()
 export default normalPanel(function (operate, id) {
   const [value, setValue] = useState(0);
   const [renderValue, setRenderValue] = useState(0);
+
   const [transition, setTransition] = useState(false)
-  useEffect(() => {
-    console.log("执行过渡完成")
-  }, [renderValue])
+  const thisRenderTime = performance.now()
+  console.log("render-", thisRenderTime - lastRenderTime)
+  lastRenderTime = thisRenderTime
 
   const view = useMemo(() => {
     return () => {

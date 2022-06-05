@@ -9,7 +9,7 @@ import { StylisCreater } from "stylis-creater";
 
 import test from './test'
 
-const node = FiberNode.create(document.getElementById("app")!)
+const node = FiberNode.create(() => document.getElementById("app")!)
 const destroy = render(
   function () {
     StyleContext.useProvider(StylisCreater)

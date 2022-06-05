@@ -25,52 +25,63 @@ export const StyleContext = createContext<CreateStyleNode>(DefaultStyleCreater)
 interface FiberAbsNode<T = any> extends VirtaulDomNode<T> {
   node: Node
 }
-type FiberNodeType = "svg" | "dom"
-
-const INPUTS = ["INPUT", "TEXTAREA", "SELECT"]
+const INPUTS = ["input", "textarea", "select"]
 export class FiberNode implements FiberAbsNode<Props> {
+  public node: Node = undefined as unknown as Node
+  init() {
+    if (this.props?.ref) {
+      this.props.ref(this.node)
+    }
+  }
   private constructor(
-    public node: Node,
+    private initNode: () => Node,
+    private outReconcile: (fn: FiberNode) => void,
     private _updateProp: (node: Node, key: string, value: any) => void,
-    public type: FiberNodeType = 'dom'
   ) { }
   private props: Props = {}
   private createStyle: CreateStyleNode = DefaultStyleCreater
   reconcile(): void {
     this.createStyle = this.findStyleCreate()
-    if (INPUTS.includes(this.node.nodeName)) {
-      const that = this
-      useEffect(() => {
-        //事后修改
-        const node = that.node as HTMLInputElement
-        if ('value' in that.props) {
-          node.value = that.props.value
-        }
-      })
-    }
+    this.outReconcile(this)
   }
   private findStyleCreate() {
     return StyleContext.useConsumer()
   }
   static create(
-    node: Node,
-    updateProps: (node: Node, key: string, value: any) => void = updatePorps,
-    type?: FiberNodeType
+    createNode: () => Node,
+    outReconcile: (props: FiberNode) => void = emptyFun,
+    updateProps: (node: Node, key: string, value: any) => void = updatePorps
   ) {
-    return new FiberNode(node, updateProps, type)
-  }
-  static createFrom(type: string) {
-    const svg = isSVG(type)
-    const node = svg
-      ? this.createDom(type)
-      : this.createSvg(type)
-    return node
+    return new FiberNode(createNode, outReconcile, updateProps)
   }
   static createDom(type: string) {
-    return FiberNode.create(document.createElement(type))
+    const outReconcile = INPUTS.includes(type) ? (that: FiberNode) => {
+      useEffect(() => {
+        //事后修改.感觉不是很科学,因为别的useEffect里访问到ref的值不一致?
+        const node = that.node as HTMLInputElement
+        if ('value' in that.props) {
+          node.value = that.props.value
+        }
+      })
+    } : emptyFun
+    const create = () => document.createElement(type)
+    return function () {
+      return new FiberNode(
+        create,
+        outReconcile,
+        updatePorps
+      )
+    }
   }
   static createSvg(type: string) {
-    return FiberNode.create(document.createElementNS("http://www.w3.org/2000/svg", type), updateSVGProps, "svg")
+    const create = () => document.createElementNS("http://www.w3.org/2000/svg", type)
+    return function () {
+      return new FiberNode(
+        create,
+        emptyFun,
+        updateSVGProps
+      )
+    }
   }
   isPortal(): boolean {
     return this.props.portalTarget
@@ -94,6 +105,14 @@ export class FiberNode implements FiberAbsNode<Props> {
     }
   }
   /**
+   * 创建元素
+   * @param props 
+   */
+  create(props: Props) {
+    this.node = this.initNode()
+    this.update(props)
+  }
+  /**
    * 属性更新
    * @param props 
    */
@@ -104,11 +123,6 @@ export class FiberNode implements FiberAbsNode<Props> {
       this.createStyle
     )
     this.props = props
-  }
-  init() {
-    if (this.props?.ref) {
-      this.props.ref(this.node)
-    }
   }
   private realRemove() {
     this.node.parentElement?.removeChild(this.node)
@@ -135,13 +149,15 @@ export class FiberNode implements FiberAbsNode<Props> {
 
 
 export class FiberText implements FiberAbsNode<string>{
-  private constructor(
-    public node: Node
-  ) { }
+  public node: Node = undefined as unknown as Node
   static create() {
-    return new FiberText(document.createTextNode(""))
+    return new FiberText()
   }
   private content: string = ""
+  create(props: string): void {
+    this.node = document.createTextNode("")
+    this.update(props)
+  }
   update(props: string): void {
     if (props != this.content) {
       this.node.textContent = props
@@ -166,7 +182,7 @@ export class FiberText implements FiberAbsNode<string>{
 }
 
 const emptyProps = {}
-
+const emptyFun = () => { }
 
 function purifyStyle(style: object) {
   const s = Object.entries(style).map(function (v) {

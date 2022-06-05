@@ -17,9 +17,10 @@ function createOrGetDomFun<T extends keyof DomElements>(type: T) {
   type = type.toLowerCase() as T
   let old = domMap.get(type)
   if (!old) {
+    const createDom = FiberNode.createDom(type)
     old = function (fiber) {
       if (!fiber.dom) {
-        fiber.dom = FiberNode.createDom(type)
+        fiber.dom = createDom()
       }
       const dom = fiber.dom as FiberNode
       dom.reconcile()
@@ -40,9 +41,10 @@ function createOrGetSvgFun<T extends keyof SvgElements>(type: T) {
   type = type.toLowerCase() as T
   let old = svgMap.get(type)
   if (!old) {
+    const createSvg = FiberNode.createSvg(type)
     old = function (fiber) {
       if (!fiber.dom) {
-        fiber.dom = FiberNode.createSvg(type)
+        fiber.dom = createSvg()
       }
       const dom = fiber.dom as FiberNode
       dom.reconcile()
