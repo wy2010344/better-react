@@ -90,7 +90,9 @@ export class FiberNode implements FiberAbsNode<Props> {
     if (this.isPortal()) {
       const parent = this.props.portalTarget()
       if (parent) {
-        parent.appendChild(this.node)
+        if (parent != this.node.parentNode) {
+          parent.appendChild(this.node)
+        }
       } else {
         console.warn('no parent get', this.props)
       }

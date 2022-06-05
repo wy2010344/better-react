@@ -1,5 +1,5 @@
 import { addAdd, addDraftConsumer, addUpdate, updateEffect } from "./commitWork";
-import { Fiber, fiberDataClone, getData, HookContextCosumer, HookEffect, HookMemo, HookValue, HookValueSet, isWithDraftFiber, PlacementFiber, StoreRef, WithDraftFiber } from "./Fiber";
+import { Fiber, fiberDataClone, getData, getEditData, HookContextCosumer, HookEffect, HookMemo, HookValue, HookValueSet, isWithDraftFiber, PlacementFiber, StoreRef, WithDraftFiber } from "./Fiber";
 import { reconcile } from "./reconcile";
 
 
@@ -94,7 +94,7 @@ function buildSetValue<T>(index: number, fiber: Fiber<any>) {
 export function toWithDraftFiber<V>(fiber: Fiber<V>): WithDraftFiber<V> {
   const nFiber = fiber as any
   if (!nFiber.effectTag) {
-    nFiber.effectTag = "DIRTY"
+    nFiber.effectTag = "UPDATE"
     nFiber.draft = fiberDataClone(nFiber.current)
   }
   return nFiber
@@ -239,16 +239,20 @@ export function useFiber<T>(
       draft: {
         render,
         props,
-        shouldUpdate
+        shouldUpdate,
+        prev: hookIndex.beforeFiber
       }
     }
     addAdd(hook)
+
     //第一次要标记sibling
     if (hookIndex.beforeFiber) {
-      (hookIndex.beforeFiber as PlacementFiber<any>).draft.sibling = hook
+      getEditData(hookIndex.beforeFiber).sibling = hook
     } else {
-      currentFiber.draft.child = hook
+      getEditData(currentFiber).child = hook
     }
+    //一直组装到最后
+    getEditData(currentFiber).lastChild = hook
 
     hookIndex.beforeFiber = hook
   } else {
@@ -264,13 +268,11 @@ export function useFiber<T>(
       throw new Error("非预期地多出现了fiter")
     }
     hookIndex.beforeFiber = oldFiber
-
     if (isWithDraftFiber(oldFiber)) {
       //已经被标记为脏
       oldFiber.draft.render = render
       oldFiber.draft.props = props
       oldFiber.draft.shouldUpdate = shouldUpdate
-      oldFiber.effectTag = "UPDATE"
       addUpdate(oldFiber)
     } else {
       if (oldFiber.current.render != render
@@ -411,8 +413,7 @@ class ContextListener<T>{
     return this.context.value
   }
   change() {
-    const fiber = toWithDraftFiber(this.fiber)
-    fiber.effectTag = "DIRTY"
+    toWithDraftFiber(this.fiber)
   }
   destroy() {
     this.context.off(this)

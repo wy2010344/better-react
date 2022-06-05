@@ -13,10 +13,6 @@ const updates: Fiber[] = []
 export function addUpdate(fiber: Fiber) {
   updates.push(fiber)
 }
-const dirtys: Fiber[] = []
-export function addDirty(fiber: Fiber) {
-  dirtys.push(fiber)
-}
 const addes: Fiber[] = []
 export function addAdd(fiber: Fiber) {
   addes.push(fiber)
@@ -27,19 +23,28 @@ export function updateEffect(set: UpdateEffect) {
   updateEffects.push(set)
 }
 
+const appends: [VirtaulDomNode, FindParentAndBefore][] = []
+export function addAppends(dom: VirtaulDomNode, pb: FindParentAndBefore) {
+  appends.push([dom, pb])
+}
+const appendAsPortals: VirtaulDomNode[] = []
+export function addAppendAsPortal(dom: VirtaulDomNode) {
+  appendAsPortals.push(dom)
+}
+
 export function rollback() {
   addes.forEach(rollbackTag)
   updates.forEach(rollbackTag)
   deletions.forEach(rollbackTag)
-  dirtys.forEach(rollbackTag)
 
   draftConsumer.forEach(draft => draft.destroy())
   addes.length = 0
   updates.length = 0
   deletions.length = 0
-  dirtys.length = 0
   updateEffects.length = 0
   draftConsumer.length = 0
+  appends.length = 0
+  appendAsPortals.length = 0
 }
 function rollbackTag(v: Fiber<any>) {
   const mv = v as any
@@ -71,7 +76,6 @@ export function commitRoot() {
   addes.forEach(clearEffectTag)
   updates.forEach(clearEffectTag)
   deletions.forEach(clearEffectTag)
-  dirtys.forEach(clearEffectTag)
   /******清理删除********************************************************/
   deletions.forEach(function (fiber) {
     //清理effect
@@ -95,10 +99,10 @@ export function commitRoot() {
   })
   updates.length = 0
   /******遍历修补********************************************************/
-  dirtys.forEach(function (fiber) {
-    deepUpdateDirty(fiber)
-  })
-  dirtys.length = 0
+  appendAsPortals.forEach(v => v.appendAsPortal())
+  appendAsPortals.length = 0
+  appends.forEach(v => v[0].appendAfter(v[1]))
+  appends.length = 0
   /******初始化ref********************************************************/
   addes.forEach(function (fiber) {
     if (fiber.dom) {
@@ -115,37 +119,6 @@ export function commitRoot() {
   draftConsumer.length = 0
 }
 
-function deepUpdateDirty(fiber: Fiber) {
-  let child = getEditData(fiber).child
-  let prevChild: Fiber | undefined
-  while (child) {
-    getEditData(child).prev = prevChild
-    if (child.dom) {
-      if (child.dom.isPortal()) {
-        child.dom.appendAsPortal()
-      } else {
-        //portal不能作为子节点
-        const prevData = getEditData(child).prev
-        const parentBefore = prevData
-          ? getCurrentBefore(prevData)
-          : findParentBefore(child)
-        if (parentBefore) {
-          child.dom.appendAfter(parentBefore)
-        } else {
-          console.error("未找到", child.dom)
-        }
-      }
-    }
-    deepUpdateDirty(child)
-    const nextChild = getEditData(child).sibling
-    if (!nextChild) {
-      getEditData(fiber).lastChild = child
-    }
-    prevChild = child
-    child = nextChild
-  }
-}
-
 export type FindParentAndBefore = [VirtaulDomNode, VirtaulDomNode | null] | [VirtaulDomNode | null, VirtaulDomNode] | null
 /**
  * portal内的节点不会找到portal外，portal外的节点不会找到portal内。
@@ -154,65 +127,8 @@ export type FindParentAndBefore = [VirtaulDomNode, VirtaulDomNode | null] | [Vir
  * @param fiber 
  * @returns 
  */
-function getCurrentBefore(fiber: Fiber): FindParentAndBefore {
-  if (fiber.dom?.isPortal()) {
-    const prev = getEditData(fiber).prev
-    if (prev) {
-      return getCurrentBefore(prev)
-    } else {
-      return findParentBefore(fiber)
-    }
-  }
-  if (fiber.dom) {
-    //portal节点不能作为邻节点
-    return [getParentDomFilber(fiber).dom!, fiber.dom]
-  }
-  const lastChild = getEditData(fiber).lastChild
-  if (lastChild) {
-    //在子节点中寻找
-    const dom = getCurrentBefore(lastChild)
-    if (dom) {
-      return dom
-    }
-  }
-  const prev = getEditData(fiber).prev
-  if (prev) {
-    //在兄节点中找
-    const dom = getCurrentBefore(prev)
-    if (dom) {
-      return dom
-    }
-  }
-  return findParentBefore(fiber)
-}
 
-function findParentBefore(fiber: Fiber): FindParentAndBefore {
-  const parent = fiber.parent
-  if (parent) {
-    if (parent.dom) {
-      //找到父节点，且父节点是有dom的
-      return [parent.dom, null]
-    }
-    const prev = getEditData(parent).prev
-    if (prev) {
-      //在父的兄节点中寻找
-      const dom = getCurrentBefore(prev)
-      if (dom) {
-        return dom
-      }
-    }
-    return findParentBefore(parent)
-  }
-  return null
-}
 
-function getParentDomFilber(fiber: Fiber) {
-  let domParentFiber = fiber.parent
-  while (!domParentFiber?.dom) {
-    domParentFiber = domParentFiber?.parent
-  }
-  return domParentFiber
-}
 /**
  * 需要一直找到具有dom节点的子项
  * @param fiber 

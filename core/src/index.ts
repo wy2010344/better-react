@@ -1,6 +1,6 @@
 import { addAdd, addDelect, addUpdate } from "./commitWork"
-import { arrayNotEqual, simpleNotEqual, storeRef, useEffect, useFiber, useMemo } from "./fc"
-import { Fiber, fiberDataClone, isWithDraftFiber, PlacementFiber, VirtaulDomNode, WithDraftFiber } from "./Fiber"
+import { arrayNotEqual, simpleNotEqual, storeRef, toWithDraftFiber, useEffect, useFiber, useMemo } from "./fc"
+import { Fiber, fiberDataClone, getEditData, isWithDraftFiber, PlacementFiber, VirtaulDomNode, WithDraftFiber } from "./Fiber"
 import { AskNextTimeWork, setRootFiber } from "./reconcile"
 export { flushSync, startTransition } from './reconcile'
 export type { REAL_WORK } from './reconcile'
@@ -8,6 +8,8 @@ export { useState, useEffect, storeRef, useMemo, createContext, useFiber, arrayE
 export type { Fiber, Props, VirtaulDomNode, WithDraftFiber, PlacementFiber } from './Fiber'
 export type { FindParentAndBefore } from './commitWork'
 export type { AskNextTimeWork }
+export { findParentAndBefore } from './Fiber'
+
 function RootFiberFun(fiber: WithDraftFiber<RootProps>) {
   const { dom, render } = fiber.draft.props
   if (!fiber.dom) {
@@ -49,7 +51,24 @@ type KeepFun<T> = {
 }
 
 
+function simpleUpdate(fiber: Fiber<any>, props: any) {
+  if (isWithDraftFiber(fiber)) {
+    fiber.draft.props = props
 
+    addUpdate(fiber)
+  } else {
+    if (fiber.current.shouldUpdate(props, fiber.current.props)) {
+      const draft = fiberDataClone(fiber.current)
+      draft.props = props
+
+      const nOldFiber = fiber as any
+      nOldFiber.effectTag = "UPDATE"
+      nOldFiber.draft = draft
+
+      addUpdate(nOldFiber)
+    }
+  }
+}
 ////////****useMap****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 export function useMap<T>(
   vs: T[],
@@ -85,7 +104,10 @@ function MapFiber<T>(fiber: WithDraftFiber<MapFiberProps<T>>) {
   const { vs, getKey, render } = draft.props
 
   let beforeFiber: Fiber | undefined = undefined
+
+  //提前置空
   draft.child = undefined
+  draft.lastChild = undefined
 
   for (let i = 0; i < vs.length; i++) {
     const v = vs[i]
@@ -98,11 +120,11 @@ function MapFiber<T>(fiber: WithDraftFiber<MapFiberProps<T>>) {
       index: i
     }
     if (oldFiber) {
-      const nOldFiber = oldFiber as any
-      const oldDraft = fiberDataClone(nOldFiber.current)
-      nOldFiber.draft = oldDraft
-      nOldFiber.effectTag = "UPDATE"
+      //因为新排序了,必须产生draft用于排序.
+      const oldDraft = toWithDraftFiber(oldFiber).draft
       oldDraft.props = props
+      oldDraft.prev = beforeFiber
+
       addUpdate(oldFiber)
       oldFibers?.shift()
     } else {
@@ -113,6 +135,7 @@ function MapFiber<T>(fiber: WithDraftFiber<MapFiberProps<T>>) {
           render: renderRow,
           shouldUpdate: shouldRenderRow as any,
           props,
+          prev: beforeFiber
         }
       }
       oldFiber = tempFiber
@@ -124,12 +147,16 @@ function MapFiber<T>(fiber: WithDraftFiber<MapFiberProps<T>>) {
     }
     newFibers.push(oldFiber)
     newMap.set(key, newFibers)
+
+    //构建双向树
     if (beforeFiber) {
-      (beforeFiber as any).draft.sibling = oldFiber
+      getEditData(beforeFiber).sibling = oldFiber
     } else {
       draft.child = oldFiber
     }
-    (oldFiber as any).draft.sibling = undefined
+    draft.lastChild = oldFiber
+    getEditData(oldFiber).sibling = undefined
+
     beforeFiber = oldFiber
   }
 
@@ -187,12 +214,7 @@ function getGuardFiber<A, T>(shouldDo: (a: A, v: T) => boolean) {
         }
         if (cache.index == i) {
           //复用
-          const tmpCache = cache.fiber as any
-          const draft = fiberDataClone(tmpCache.current)
-          tmpCache.draft = draft
-          tmpCache.effectTag = "UPDATE"
-          draft.props = props
-          addUpdate(cache.fiber)
+          simpleUpdate(cache.fiber, props)
         } else {
           //删旧增新
           if (cache.index > -1) {
@@ -211,7 +233,11 @@ function getGuardFiber<A, T>(shouldDo: (a: A, v: T) => boolean) {
             cache.index = i
             cache.fiber = plaFiber
           }
+
+          //只有一个节点,故是同一个
+          fiber.draft.lastChild = plaFiber
           fiber.draft.child = plaFiber
+
           addAdd(plaFiber)
         }
         noStop = false
@@ -223,6 +249,8 @@ function getGuardFiber<A, T>(shouldDo: (a: A, v: T) => boolean) {
         cache.index = -1
         cache.fiber = fiber
       }
+      //
+      fiber.draft.lastChild = undefined
       fiber.draft.child = undefined
     }
   }
@@ -331,11 +359,7 @@ const guardConfig: KeepFun<{
         }
         if (cache.key == key) {
           //复用
-          const draft = fiberDataClone(cache.fiber.current)
-          cache.fiber.draft = draft
-          cache.fiber.effectTag = "UPDATE"
-          draft.props = props
-          addUpdate(cache.fiber)
+          simpleUpdate(cache.fiber, props)
         } else {
           //删旧增新
           if (cache.fiber != fiber) {
@@ -354,7 +378,10 @@ const guardConfig: KeepFun<{
             cache.key = key
             cache.fiber = draftFiber
           }
+          //只有一个节点,故是同一个
           fiber.draft.child = draftFiber
+          fiber.draft.lastChild = draftFiber
+
           addAdd(draftFiber)
         }
         noStop = false
@@ -366,6 +393,8 @@ const guardConfig: KeepFun<{
         cache.key = ""
         cache.fiber = fiber
       })
+      //置空
+      fiber.draft.lastChild = undefined
       fiber.draft.child = undefined
     }
   }

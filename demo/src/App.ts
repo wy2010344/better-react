@@ -2,7 +2,7 @@ import { useEffect, useFragment, useGuard, useGuardString, useMap, useState } fr
 import { useContent, useDom } from "better-react-dom";
 import dsl from "./dsl";
 import ExpensiveView from "./ExpensiveView";
-import { normalPanel, PanelContext } from "./panel/PanelContext";
+import { CountContext, normalPanel, PanelContext } from "./panel/PanelContext";
 import usePanel from "./panel/usePanel";
 
 
@@ -38,6 +38,10 @@ export default function FirstPage() {
           })
           Demo()
 
+          console.log("在这里")
+
+          const value = CountContext.useConsumer()
+          useContent(`在这里${value}`)
         },
         moveFirst() {
           operate.moveToFirst(id)

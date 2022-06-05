@@ -1,3 +1,5 @@
+import { addAppendAsPortal, addAppends } from "./commitWork"
+
 export type HookValueSet<T> = (v: T | ((v: T) => T), after?: () => void) => void
 export type HookValue<T> = {
   value: T
@@ -23,9 +25,6 @@ export type FiberData<T> = {
   child?: Fiber
   /**弟节点 */
   sibling?: Fiber
-
-
-  /*-最后遍历时生成-*/
   /**最后一个节点 */
   lastChild?: Fiber
   /**前一个节点 */
@@ -73,7 +72,6 @@ export type Fiber<T = Props> = WithDraftFiber<T> | {
   contextProvider?: Map<any, {
     changeValue(v: any): void
   }>
-
   current: Readonly<FiberData<T>>
 }
 export type PlacementFiber<T> = {
@@ -86,17 +84,18 @@ export type PlacementFiber<T> = {
   effectTag: "PLACEMENT"
   draft: FiberData<T>
 }
-export type WithDraftFiber<T = Props> = {
+export type UpdateFiber<T> = {
   parent?: Fiber<any>
   dom?: VirtaulDomNode<T>
   contextProvider?: Map<any, {
     changeValue(v: any): void
   }>
 
-  effectTag: "UPDATE" | "DIRTY"
+  effectTag: "UPDATE"
   current: Readonly<FiberData<T>>
   draft: FiberData<T>
-} | PlacementFiber<T>
+}
+export type WithDraftFiber<T = Props> = PlacementFiber<T> | UpdateFiber<T>
 export function isWithDraftFiber<V>(v: Fiber<V>): v is WithDraftFiber<V> {
   return !!(v as any).effectTag
 }
@@ -111,7 +110,9 @@ export function getData<T>(v: Fiber<T>) {
     return v.current
   }
 }
-
+export function getEditData<T>(v: Fiber<T>): FiberData<T> {
+  return (v as any).draft
+}
 
 export type VirtaulDomNode<T = Props> = {
   //创建
@@ -139,3 +140,80 @@ export type StoreValue<T> = {
   set(v: T, callback?: () => void): void
 }
 export type Props = { [key: string]: any }
+
+export function findParentAndBefore<T>(dom: VirtaulDomNode<T>, fiber: Fiber<T>) {
+  if (dom.isPortal()) {
+    addAppendAsPortal(dom)
+  } else {
+    const prevData = getData(fiber).prev
+    const parentBefore = prevData
+      ? getCurrentBefore(prevData)
+      : findParentBefore(fiber)
+    if (parentBefore) {
+      addAppends(dom, parentBefore)
+    } else {
+      console.error("未找到", fiber.dom)
+    }
+  }
+}
+
+function getCurrentBefore(fiber: Fiber): FindParentAndBefore {
+  if (fiber.dom?.isPortal()) {
+    const prev = getData(fiber).prev
+    if (prev) {
+      return getCurrentBefore(prev)
+    } else {
+      return findParentBefore(fiber)
+    }
+  }
+  if (fiber.dom) {
+    //portal节点不能作为邻节点
+    return [getParentDomFilber(fiber).dom!, fiber.dom]
+  }
+  const lastChild = getData(fiber).lastChild
+  if (lastChild) {
+    //在子节点中寻找
+    const dom = getCurrentBefore(lastChild)
+    if (dom) {
+      return dom
+    }
+  }
+  const prev = getData(fiber).prev
+  if (prev) {
+    //在兄节点中找
+    const dom = getCurrentBefore(prev)
+    if (dom) {
+      return dom
+    }
+  }
+  return findParentBefore(fiber)
+}
+
+
+function findParentBefore(fiber: Fiber): FindParentAndBefore {
+  const parent = fiber.parent
+  if (parent) {
+    if (parent.dom) {
+      //找到父节点，且父节点是有dom的
+      return [parent.dom, null]
+    }
+    const prev = getData(parent).prev
+    if (prev) {
+      //在父的兄节点中寻找
+      const dom = getCurrentBefore(prev)
+      if (dom) {
+        return dom
+      }
+    }
+    return findParentBefore(parent)
+  }
+  return null
+}
+
+function getParentDomFilber(fiber: Fiber) {
+  let domParentFiber = fiber.parent
+  while (!domParentFiber?.dom) {
+    domParentFiber = domParentFiber?.parent
+  }
+  return domParentFiber
+}

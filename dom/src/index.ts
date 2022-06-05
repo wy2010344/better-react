@@ -1,4 +1,4 @@
-import { WithDraftFiber, useFiber } from "better-react";
+import { WithDraftFiber, useFiber, findParentAndBefore } from "better-react";
 import { DomElements, SvgElements } from "./html";
 import { FiberNode, FiberText } from "./updateDom";
 export { scheduleAskTime } from './schedule'
@@ -9,6 +9,7 @@ export function useContent(content: string) {
     if (!fiber.dom) {
       fiber.dom = FiberText.create()
     }
+    findParentAndBefore(fiber.dom, fiber)
   }, content)
 }
 
@@ -23,6 +24,7 @@ function createOrGetDomFun<T extends keyof DomElements>(type: T) {
         fiber.dom = createDom()
       }
       const dom = fiber.dom as FiberNode
+      findParentAndBefore(dom, fiber)
       dom.reconcile()
       fiber.draft.props?.children?.()
     }
@@ -47,6 +49,7 @@ function createOrGetSvgFun<T extends keyof SvgElements>(type: T) {
         fiber.dom = createSvg()
       }
       const dom = fiber.dom as FiberNode
+      findParentAndBefore(dom, fiber)
       dom.reconcile()
       fiber.draft.props?.children?.()
     }

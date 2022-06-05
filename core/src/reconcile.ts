@@ -1,4 +1,4 @@
-import { addAdd, addDelect, addDirty, commitRoot, rollback } from "./commitWork"
+import { addAdd, addDelect, commitRoot, rollback } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
 import { Fiber, getData, isWithDraftFiber } from "./Fiber"
 /**
@@ -60,10 +60,7 @@ export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
   asyncAskNextTimeWork = ask
   askNextTimeWork = asyncAskNextTimeWork
   rootFiber = fiber
-
   addAdd(fiber)
-  addDirty(fiber)
-
   reconcile({})
   return function () {
     if (rootFiber) {
@@ -270,11 +267,7 @@ export function startTransition(fun: () => void) {
 function performUnitOfWork(fiber: Fiber) {
   //当前fiber脏了，需要重新render
   if (isWithDraftFiber(fiber)) {
-    if (fiber.effectTag == "DIRTY") {
-      addDirty(fiber)
-    }
     updateFunctionComponent(fiber)
-
     if (fiber.draft.child) {
       return fiber.draft.child
     }

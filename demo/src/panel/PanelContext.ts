@@ -51,3 +51,6 @@ export function normalPanel(
     })
   }
 }
+
+
+export const CountContext = createContext(0)
