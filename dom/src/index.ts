@@ -1,4 +1,4 @@
-import { Fiber, useFiber } from "better-react";
+import { WithDraftFiber, useFiber } from "better-react";
 import { DomElements, SvgElements } from "./html";
 import { FiberNode, FiberText } from "./updateDom";
 export { scheduleAskTime } from './schedule'
@@ -12,7 +12,7 @@ export function useContent(content: string) {
   }, content)
 }
 
-const domMap = new Map<string, (fiber: Fiber<DomElements[keyof DomElements]>) => void>()
+const domMap = new Map<string, (fiber: WithDraftFiber<DomElements[keyof DomElements]>) => void>()
 function createOrGetDomFun<T extends keyof DomElements>(type: T) {
   type = type.toLowerCase() as T
   let old = domMap.get(type)
@@ -23,18 +23,19 @@ function createOrGetDomFun<T extends keyof DomElements>(type: T) {
       }
       const dom = fiber.dom as FiberNode
       dom.reconcile()
-      fiber.props?.children?.()
+      fiber.draft.props?.children?.()
     }
     domMap.set(type, old)
   }
   return old
 }
 
-export function useDom<T extends keyof DomElements>(type: T, props: DomElements[T]) {
-  useFiber(createOrGetDomFun(type), props)
+const EMPTYPROPS = {}
+export function useDom<T extends keyof DomElements>(type: T, props?: DomElements[T]) {
+  useFiber(createOrGetDomFun(type), props || EMPTYPROPS)
 }
 
-const svgMap = new Map<string, (fiber: Fiber<SvgElements[keyof SvgElements]>) => void>()
+const svgMap = new Map<string, (fiber: WithDraftFiber<SvgElements[keyof SvgElements]>) => void>()
 function createOrGetSvgFun<T extends keyof SvgElements>(type: T) {
   type = type.toLowerCase() as T
   let old = svgMap.get(type)
@@ -45,12 +46,12 @@ function createOrGetSvgFun<T extends keyof SvgElements>(type: T) {
       }
       const dom = fiber.dom as FiberNode
       dom.reconcile()
-      fiber.props?.children?.()
+      fiber.draft.props?.children?.()
     }
     svgMap.set(type, old)
   }
   return old
 }
-export function useSvg<T extends keyof SvgElements>(type: T, props: SvgElements[T]) {
-  useFiber(createOrGetSvgFun(type), props)
+export function useSvg<T extends keyof SvgElements>(type: T, props?: SvgElements[T]) {
+  useFiber(createOrGetSvgFun(type), props || EMPTYPROPS)
 }

@@ -1,7 +1,93 @@
+import { useEffect, useFragment, useGuard, useGuardString, useMap, useState } from "better-react";
 import { useContent, useDom } from "better-react-dom";
+import dsl from "./dsl";
+import ExpensiveView from "./ExpensiveView";
+import { normalPanel, PanelContext } from "./panel/PanelContext";
 import usePanel from "./panel/usePanel";
 
-export default function App() {
+
+export default function FirstPage() {
+  const operate = PanelContext.useConsumer()
+  useEffect(() => {
+    const id = operate.push(function () {
+      usePanel({
+        close() {
+          console.log('v')
+          operate.close(id)
+        },
+        children() {
+          useContent("root")
+          TestButtonPage()
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              dsl(operate)
+            },
+            children() {
+              useContent("进入DSL")
+            }
+          })
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              ExpensiveView(operate)
+            },
+            children() {
+              useContent("进入ExpansiveView")
+            }
+          })
+          Demo()
+
+        },
+        moveFirst() {
+          operate.moveToFirst(id)
+        }
+      })
+    })
+    return () => {
+      operate.close(id)
+    }
+  }, [])
+}
+
+function TestButtonPage() {
+  const operate = PanelContext.useConsumer()
+  const [thisId, setThisId] = useState(-1)
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      if (thisId < 0) {
+        const id = operate.push(function () {
+          usePanel({
+            close() {
+              operate.close(id)
+            },
+            children() {
+              TestButtonPage()
+            },
+            moveFirst() {
+              operate.moveToFirst(id)
+            }
+          })
+        })
+        setThisId(id)
+      }
+    },
+    children() {
+      useContent("新弹窗")
+    }
+  })
+  useEffect(() => {
+    return () => {
+      console.log("销毁了?", thisId)
+      operate.close(thisId)
+    }
+  }, [thisId])
+}
+
+
+
+export function App() {
   useDom("div", {
     css: `
     width:800px;
@@ -83,6 +169,103 @@ export default function App() {
         animation: move 2s linear infinite;
         `
       })
+    }
+  })
+}
+
+
+
+function Demo() {
+  useDom("div", {
+    onClick() {
+      console.log("点击")
+    },
+    style: {
+      width: "100px",
+      height: "100px",
+      backgroundColor: "green"
+    },
+    children() {
+      useDom("div", {
+        css: `
+          width:20px;
+          height:30px;
+          background-color:green;
+          `,
+      })
+    }
+  })
+  //MapList()
+  console.log("render--根")
+  useFragment(Count)
+  useDom("div", {
+    children() {
+
+      useContent("ccc内容")
+      const [count, setCount] = useState(() => 0)
+
+      // useIf(count % 2 == 0, () => {
+      //   useContent("这是偶数")
+      //   useContent("这是偶数1")
+      //   useContent("这是偶数2")
+      //   useContent("这是偶数3")
+      // })
+
+      useGuard(count % 3,
+        [
+          v => v == 0,
+          () => {
+            useContent("是0")
+          }
+        ],
+        [
+          v => v == 1,
+          () => {
+            useContent("是1")
+          }
+        ]
+      )
+
+      useDom("div", {
+        css: `
+          background:yellow;
+          `,
+        children() {
+          useContent("这是内容")
+          useGuardString(count % 3 + 'vv', {
+            '0vv'() {
+              useContent("022")
+              useContent("a322")
+            },
+            '2vv'() {
+
+              useContent("abcdefv")
+            }
+          })
+        }
+      })
+      useDom("button", {
+        onClick() {
+          setCount(count + 1)
+        },
+        children() {
+          useContent("点击")
+        }
+      })
+    }
+  })
+}
+
+function Count() {
+  console.log("render-count")
+  const [count, setCount] = useState(() => 9)
+  useDom("button", {
+    onClick(e) {
+      setCount(count + 1)
+      e.stopPropagation()
+    },
+    children() {
+      useContent(`点击了${count}次`)
     }
   })
 }

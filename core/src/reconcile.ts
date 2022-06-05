@@ -1,6 +1,6 @@
-import { addDelect, addDirty, commitRoot } from "./commitWork"
+import { addAdd, addDelect, addDirty, commitRoot, rollback } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
-import { Fiber } from "./Fiber"
+import { Fiber, getData, isWithDraftFiber } from "./Fiber"
 /**
  * 执行fiber
  * @param unitOfWork 
@@ -15,6 +15,7 @@ function workLoop(unitOfWork: Fiber): NextTimeWork {
   } else {
     return () => {
       currentTick.on = false
+      currentTick.lowRollback.length = 0
       commitRoot()
     }
   }
@@ -22,11 +23,21 @@ function workLoop(unitOfWork: Fiber): NextTimeWork {
 //当前任务
 const currentTick = {
   on: false as boolean,
-  // works: [] as EMPTY_FUN[]
+  //当前执行的render任务是否是低优先级的
+  isLow: false as boolean,
+  //提交的任务
+  lowRollback: [] as LoopWork[]
 }
 type EMPTY_FUN = () => void
 let rootFiber: Fiber | undefined = undefined
 //相当于往线程池中添加一个任务
+type LoopWork = {
+  type: "loop"
+  //是否是低优先级
+  isLow?: boolean
+  beforeWork?: EMPTY_FUN
+  afterWork?: EMPTY_FUN
+}
 export type WorkUnit = {
   /**
    * 任务收集不能停止,会动态增加loop和afterLoop
@@ -35,12 +46,9 @@ export type WorkUnit = {
    * afterLoop不可以减少
    * lowest为最次---目前是无法实现的
    */
-  type: "batchCollect" | "beforeLoop" | "afterLoop"
+  type: "batchCollect"
   work: EMPTY_FUN
-} | {
-  type: "loop"
-  work: NextTimeWork
-}
+} | LoopWork
 export type NextTimeWork = () => (NextTimeWork | void)
 //任务列表
 const workList: WorkUnit[] = []
@@ -52,7 +60,10 @@ export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
   asyncAskNextTimeWork = ask
   askNextTimeWork = asyncAskNextTimeWork
   rootFiber = fiber
+
+  addAdd(fiber)
   addDirty(fiber)
+
   reconcile({})
   return function () {
     if (rootFiber) {
@@ -65,7 +76,6 @@ export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
     }
   }
 }
-
 const renderWorks: EMPTY_FUN[] = []
 export type REAL_WORK = EMPTY_FUN & {
   isRender?: boolean
@@ -79,6 +89,31 @@ const addAfter = (fun: NextTimeWork) => {
   }
 }
 function getNextWork(): REAL_WORK | void {
+  //寻找批量任务
+  const index = workList.findIndex(v => v.type == 'batchCollect')
+  if (index > -1) {
+    return function () {
+      (workList[index] as any).work()
+      workList.splice(index, 1)
+    }
+  }
+
+  if (currentTick.on && currentTick.isLow) {
+    //寻找是否有渲染任务,如果有,则中断
+    const work = findRenderWork(false)
+    if (work) {
+      renderWorks.length = 0
+      rollback()
+      const ws = currentTick.lowRollback
+      for (let i = ws.length - 1; i > -1; i--) {
+        workList.unshift(ws[i])
+      }
+      currentTick.lowRollback.length = 0
+      currentTick.on = false
+      console.log("强行中断低优先级任务,执行高优先级")
+      return work
+    }
+  }
   //执行计划任务
   if (renderWorks.length) {
     return function () {
@@ -86,31 +121,43 @@ function getNextWork(): REAL_WORK | void {
       work!()
     }
   }
-  //寻找批量任务
-  const index = workList.findIndex(v => v.type == 'batchCollect')
-  if (index > -1) {
-    return function () {
-      workList[index].work()
-      workList.splice(index, 1)
-    }
-  }
   //寻找渲染任务
+  const work = findRenderWork(false)
+  if (work) {
+    return work
+  }
+  //寻找低优先级渲染任务
+  const lowWork = findRenderWork(true)
+  if (lowWork) {
+    return lowWork
+  }
+}
+
+function findRenderWork(isLow: boolean) {
   let loopIndex = -1
+  function shouldAdd(work: LoopWork) {
+    return (isLow && work.isLow) || (!isLow && !work.isLow)
+  }
   for (let i = workList.length - 1; i > -1 && loopIndex < 0; i--) {
     const work = workList[i]
-    if (work.type == 'loop') {
+    if (work.type == 'loop' && shouldAdd(work)) {
       loopIndex = i
       const realWork: REAL_WORK = function () {
+        currentTick.on = true
+        currentTick.isLow = isLow
         //寻找渲染前的任务
         for (let i = 0; i < workList.length; i++) {
           const work = workList[i]
-          if (work.type == 'beforeLoop') {
-            renderWorks.push(work.work)
+          if (work.type == 'loop' && shouldAdd(work)) {
+            if (work.beforeWork) {
+              renderWorks.push(work.beforeWork)
+            }
+            currentTick.lowRollback.push(work)
           }
         }
         //动态添加渲染任务
         renderWorks.push(() => {
-          const next = work.work()
+          const next = loopWork()
           if (next) {
             renderWorks.push(addAfter(next))
           }
@@ -118,14 +165,16 @@ function getNextWork(): REAL_WORK | void {
         //寻找渲染后的任务
         for (let i = 0; i < workList.length; i++) {
           const work = workList[i]
-          if (work.type == 'afterLoop') {
-            renderWorks.push(work.work)
+          if (work.type == 'loop' && shouldAdd(work)) {
+            if (work.afterWork) {
+              renderWorks.push(work.afterWork)
+            }
           }
         }
         //清空渲染任务
         for (let i = workList.length - 1; i > -1; i--) {
           const work = workList[i]
-          if (work.type == 'beforeLoop' || work.type == 'loop' || work.type == 'afterLoop') {
+          if (work.type == 'loop' && shouldAdd(work)) {
             workList.splice(i, 1)
           }
         }
@@ -134,16 +183,9 @@ function getNextWork(): REAL_WORK | void {
       return realWork
     }
   }
-  //执行最后的低级任务.低任务生成的loop应该是可以中断的.这里要恢复,不仅仅需要恢复hooks树,还要恢复状态的修改
-  // if (workList.length > 0) {
-  //   return function () {
-  //     console.log("执行最后的低级任务")
-  //     const nextWork = workList.map(v => v.work)
-  //     workList.length = 0
-  //     nextWork.forEach(v => v())
-  //   }
-  // }
 }
+
+
 
 //同步地清空所的的任务
 const sycAskNextTimeWork: AskNextTimeWork = (getNextWork) => {
@@ -166,8 +208,13 @@ function callNextTimeWork() {
 
 const batchUpdate = {
   on: false,
-  beforeLoops: [] as EMPTY_FUN[],
-  afterLoops: [] as EMPTY_FUN[]
+  works: [] as LoopWork[]
+}
+
+function loopWork() {
+  if (rootFiber) {
+    return workLoop(rootFiber)
+  }
 }
 /**
  * 由于是触发的,需要批量触发
@@ -180,12 +227,12 @@ export function reconcile({
   beforeLoop?: EMPTY_FUN
   afterLoop?: EMPTY_FUN
 }) {
-  if (beforeLoop) {
-    batchUpdate.beforeLoops.push(beforeLoop)
-  }
-  if (afterLoop) {
-    batchUpdate.afterLoops.push(afterLoop)
-  }
+  batchUpdate.works.push({
+    type: "loop",
+    isLow: currentTaskIsLow,
+    beforeWork: beforeLoop,
+    afterWork: afterLoop
+  })
   if (!batchUpdate.on) {
     batchUpdate.on = true
     workList.push({
@@ -193,48 +240,27 @@ export function reconcile({
       work() {
         //批量提交
         batchUpdate.on = false
-        for (const work of batchUpdate.beforeLoops) {
-          workList.push({
-            type: "beforeLoop",
-            work
-          })
-        }
-        workList.push({
-          type: "loop",
-          work() {
-            currentTick.on = true
-            if (rootFiber) {
-              return workLoop(rootFiber)
-            }
-          }
+        batchUpdate.works.forEach(work => {
+          workList.push(work)
         })
-        for (const work of batchUpdate.afterLoops) {
-          workList.push({
-            type: "afterLoop",
-            work
-          })
-        }
-
-        batchUpdate.beforeLoops.length = 0
-        batchUpdate.afterLoops.length = 0
+        batchUpdate.works.length = 0
       }
     })
     callNextTimeWork()
   }
 }
 
+let currentTaskIsLow = false
 /**
  * 按理说,与flushSync相反,这个是尽量慢
  * 但fun里面仍然是setState,不会减少触发呢
  * @param fun 
  */
-// export function startTransition(fun: () => void) {
-//   workList.push({
-//     type: "lowest",
-//     work: fun
-//   })
-//   callNextTimeWork()
-// }
+export function startTransition(fun: () => void) {
+  currentTaskIsLow = true
+  fun()
+  currentTaskIsLow = false
+}
 /**
  * 当前工作结点，返回下一个工作结点
  * 先子，再弟，再父(父的弟)
@@ -243,20 +269,27 @@ export function reconcile({
  */
 function performUnitOfWork(fiber: Fiber) {
   //当前fiber脏了，需要重新render
-  if (fiber.effectTag) {
+  if (isWithDraftFiber(fiber)) {
     if (fiber.effectTag == "DIRTY") {
       addDirty(fiber)
     }
     updateFunctionComponent(fiber)
+
+    if (fiber.draft.child) {
+      return fiber.draft.child
+    }
+  } else {
+    if (fiber.current.child) {
+      return fiber.current.child
+    }
   }
-  if (fiber.child) {
-    return fiber.child
-  }
+
   /**寻找叔叔节点 */
   let nextFiber: Fiber | undefined = fiber
   while (nextFiber) {
-    if (nextFiber.sibling) {
-      return nextFiber.sibling
+    const propData = getData(nextFiber)
+    if (propData.sibling) {
+      return propData.sibling
     }
     nextFiber = nextFiber.parent
   }

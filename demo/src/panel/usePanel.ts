@@ -37,32 +37,32 @@ export default ({
   moveFirst
 }: PanelParams) => {
 
-  const [top, setTop, getTop] = useState(initTop)
-  const [left, setLeft, getLeft] = useState(initLeft)
-  const [width, setWidth, getWidth] = useState(initWidth)
-  const [height, setHeight, getHeight] = useState(initHeight)
+  const [top, setTop] = useState(initTop)
+  const [left, setLeft] = useState(initLeft)
+  const [width, setWidth] = useState(initWidth)
+  const [height, setHeight] = useState(initHeight)
 
   const mouseMove = useMemo(() => dragMoveHelper({
     diffX(x) {
-      setLeft(getLeft() + x)
+      setLeft(v => v + x)
     },
     diffY(y) {
-      setTop(getTop() + y)
+      setTop(v => v + y)
     }
   }), [])
 
   const dragResize = useMemo(() => dragResizeHelper({
     addWidth(w) {
-      setWidth(getWidth() + w)
+      setWidth(v => v + w)
     },
     addHeight(h) {
-      setHeight(getHeight() + h)
+      setHeight(v => v + h)
     },
     addLeft(x) {
-      setLeft(getLeft() + x)
+      setLeft(v => v + x)
     },
     addTop(y) {
-      setTop(getTop() + y)
+      setTop(v => v + y)
     }
   }), [])
 

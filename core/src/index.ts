@@ -1,26 +1,42 @@
 import { addAdd, addDelect, addUpdate } from "./commitWork"
-import { arrayNotEqual, simpleNotEqual, storeRef, useFiber, useMemo } from "./fc"
-import { Fiber, VirtaulDomNode } from "./Fiber"
+import { arrayNotEqual, simpleNotEqual, storeRef, useEffect, useFiber, useMemo } from "./fc"
+import { Fiber, fiberDataClone, isWithDraftFiber, PlacementFiber, VirtaulDomNode, WithDraftFiber } from "./Fiber"
 import { AskNextTimeWork, setRootFiber } from "./reconcile"
-export { flushSync } from './reconcile'
+export { flushSync, startTransition } from './reconcile'
 export type { REAL_WORK } from './reconcile'
 export { useState, useEffect, storeRef, useMemo, createContext, useFiber, arrayEqual, arrayNotEqual, simpleEqual, simpleNotEqual } from './fc'
-export type { Fiber, Props, VirtaulDomNode } from './Fiber'
+export type { Fiber, Props, VirtaulDomNode, WithDraftFiber, PlacementFiber } from './Fiber'
 export type { FindParentAndBefore } from './commitWork'
 export type { AskNextTimeWork }
-function RootFiberFun(fiber: Fiber<() => void>) {
-  fiber.props()
+function RootFiberFun(fiber: WithDraftFiber<RootProps>) {
+  const { dom, render } = fiber.draft.props
+  if (!fiber.dom) {
+    fiber.dom = dom
+  }
+  render()
+}
+type RootProps = {
+  dom: VirtaulDomNode
+  render(): void
+}
+function RootShouldUpdate(a: RootProps, b: RootProps) {
+  return a.dom != b.dom || a.render != b.render
 }
 export function render(
   element: () => void,
   container: VirtaulDomNode,
   ask: AskNextTimeWork
 ) {
-  const rootFiber: Fiber = {
-    render: RootFiberFun,
-    dom: container,
-    props: element,
-    effectTag: "DIRTY"
+  const rootFiber: Fiber<RootProps> = {
+    effectTag: "PLACEMENT",
+    draft: {
+      render: RootFiberFun,
+      shouldUpdate: RootShouldUpdate,
+      props: {
+        dom: container,
+        render: element
+      }
+    }
   } as const
   return setRootFiber(rootFiber, ask)
 }
@@ -29,7 +45,7 @@ export function render(
 
 type KeepFun<T> = {
   shouldUpdate(newP: T, oldP: T): boolean
-  call(fiber: Fiber<T>): void
+  call(fiber: WithDraftFiber<T>): void
 }
 
 
@@ -50,15 +66,26 @@ type MapFiberProps<T> = {
 function shouldMapFiberUpdate<T>(newP: MapFiberProps<T>, oldP: MapFiberProps<T>) {
   return arrayNotEqual(newP.vs, oldP.vs, simpleNotEqual) || newP.getKey != oldP.getKey || newP.render != oldP.render
 }
-function MapFiber<T>(fiber: Fiber<MapFiberProps<T>>) {
+
+function cloneMap<T>(map: Map<any, T[]>) {
+  const newMap = new Map<any, T[]>()
+  map.forEach(function (v, k) {
+    newMap.set(k, v.slice())
+  })
+  return newMap
+}
+function MapFiber<T>(fiber: WithDraftFiber<MapFiberProps<T>>) {
   const mapRef = useMemo(() => storeRef(new Map<any, Fiber<RenderRowProps<T>>[]>()), [])
-  const oldMap = mapRef.get()
+  const oldMap = cloneMap(mapRef.get())
   const newMap = new Map<any, Fiber<RenderRowProps<T>>[]>()
-  mapRef.set(newMap)
-  const { vs, getKey, render } = fiber.props
+  useEffect(() => {
+    mapRef.set(newMap)
+  })
+  const draft = fiber.draft
+  const { vs, getKey, render } = draft.props
 
   let beforeFiber: Fiber | undefined = undefined
-  fiber.child = undefined
+  draft.child = undefined
 
   for (let i = 0; i < vs.length; i++) {
     const v = vs[i]
@@ -71,19 +98,25 @@ function MapFiber<T>(fiber: Fiber<MapFiberProps<T>>) {
       index: i
     }
     if (oldFiber) {
-      oldFiber.props = props
-      oldFiber.effectTag = "UPDATE"
+      const nOldFiber = oldFiber as any
+      const oldDraft = fiberDataClone(nOldFiber.current)
+      nOldFiber.draft = oldDraft
+      nOldFiber.effectTag = "UPDATE"
+      oldDraft.props = props
       addUpdate(oldFiber)
       oldFibers?.shift()
     } else {
-      oldFiber = {
-        render: renderRow,
-        shouldUpdate: shouldRenderRow as any,
-        props,
+      const tempFiber: PlacementFiber<any> = {
         effectTag: "PLACEMENT",
-        parent: fiber
+        parent: fiber,
+        draft: {
+          render: renderRow,
+          shouldUpdate: shouldRenderRow as any,
+          props,
+        }
       }
-      addAdd(oldFiber)
+      oldFiber = tempFiber
+      addAdd(tempFiber)
     }
     const newFibers = newMap.get(key) || []
     if (newFibers.length > 0) {
@@ -92,17 +125,16 @@ function MapFiber<T>(fiber: Fiber<MapFiberProps<T>>) {
     newFibers.push(oldFiber)
     newMap.set(key, newFibers)
     if (beforeFiber) {
-      beforeFiber.sibling = oldFiber
+      (beforeFiber as any).draft.sibling = oldFiber
     } else {
-      fiber.child = oldFiber
+      draft.child = oldFiber
     }
-    oldFiber.sibling = undefined
+    (oldFiber as any).draft.sibling = undefined
     beforeFiber = oldFiber
   }
 
   for (const olds of oldMap.values()) {
     for (const old of olds) {
-      old.effectTag = "DELETION"
       addDelect(old)
     }
   }
@@ -116,8 +148,8 @@ type RenderRowProps<T> = {
 function shouldRenderRow<T>(newP: RenderRowProps<T>, oldP: RenderRowProps<T>) {
   return newP.row != oldP.row || newP.index != oldP.index || newP.callback != oldP.callback
 }
-function renderRow<T>(fiber: Fiber<RenderRowProps<T>>) {
-  const { row, index, callback } = fiber.props
+function renderRow<T>(fiber: WithDraftFiber<RenderRowProps<T>>) {
+  const { row, index, callback } = fiber.draft.props
   callback(row, index)
 }
 
@@ -131,15 +163,20 @@ type GuardBaseFiberProps<A, T> = {
   matches: GuardBaseFiber<A, T>[]
 }
 function getGuardFiber<A, T>(shouldDo: (a: A, v: T) => boolean) {
-  return function (fiber: Fiber<GuardBaseFiberProps<A, T>>) {
+  return function (fiber: WithDraftFiber<GuardBaseFiberProps<A, T>>) {
     const cache = useMemo(() => {
       return {
         index: -1,
         fiber: fiber as Fiber<any>
       }
     }, [])
-    const { v, matches } = fiber.props
-
+    const { v, matches } = fiber.draft.props
+    let commitWork: (() => void) | void = undefined
+    useEffect(() => {
+      if (commitWork) {
+        commitWork()
+      }
+    })
     let noStop = true
     for (let i = 0; (i < matches.length) && noStop; i++) {
       const match = matches[i]
@@ -150,34 +187,43 @@ function getGuardFiber<A, T>(shouldDo: (a: A, v: T) => boolean) {
         }
         if (cache.index == i) {
           //复用
-          cache.fiber.props = props
-          cache.fiber.effectTag = "UPDATE"
+          const tmpCache = cache.fiber as any
+          const draft = fiberDataClone(tmpCache.current)
+          tmpCache.draft = draft
+          tmpCache.effectTag = "UPDATE"
+          draft.props = props
           addUpdate(cache.fiber)
         } else {
           //删旧增新
           if (cache.index > -1) {
-            cache.fiber.effectTag = "DELETION"
             addDelect(cache.fiber)
           }
-          cache.index = i
-          cache.fiber = {
-            render: cacheNode,
-            shouldUpdate: shouldCacheNodeUpdate,
-            props,
+          const plaFiber: PlacementFiber<any> = {
             effectTag: "PLACEMENT",
-            parent: fiber
+            parent: fiber,
+            draft: {
+              render: cacheNode,
+              shouldUpdate: shouldCacheNodeUpdate,
+              props,
+            }
           }
-          fiber.child = cache.fiber
-          addAdd(cache.fiber)
+          commitWork = () => {
+            cache.index = i
+            cache.fiber = plaFiber
+          }
+          fiber.draft.child = plaFiber
+          addAdd(plaFiber)
         }
         noStop = false
       }
     }
     if (noStop && cache.index > -1) {
-      cache.index = -1
       addDelect(cache.fiber)
-      cache.fiber = fiber
-      fiber.child = undefined
+      commitWork = () => {
+        cache.index = -1
+        cache.fiber = fiber
+      }
+      fiber.draft.child = undefined
     }
   }
 }
@@ -202,8 +248,8 @@ type CacheNodeProps<T> = {
 function shouldCacheNodeUpdate<T>(newP: CacheNodeProps<T>, oldP: CacheNodeProps<T>) {
   return newP.value != oldP.value || newP.callback != oldP.callback
 }
-function cacheNode<T>(fiber: Fiber<CacheNodeProps<T>>) {
-  const { value, callback } = fiber.props
+function cacheNode<T>(fiber: WithDraftFiber<CacheNodeProps<T>>) {
+  const { value, callback } = fiber.draft.props
   callback(value)
 }
 
@@ -261,13 +307,19 @@ const guardConfig: KeepFun<{
     return newP.value != oldP.value || newP.map != oldP.map
   },
   call(fiber) {
-    const { value, map } = fiber.props
+    const { value, map } = fiber.draft.props
     const cache = useMemo(() => {
       return {
         key: "",
         fiber: fiber as any
       }
     }, [])
+    let commitWork: (() => void) | void = undefined
+    useEffect(() => {
+      if (commitWork) {
+        commitWork()
+      }
+    })
     let noStop = true
     const entitys = Object.entries(map)
     for (let i = 0; i < entitys.length && noStop; i++) {
@@ -279,33 +331,42 @@ const guardConfig: KeepFun<{
         }
         if (cache.key == key) {
           //复用
-          cache.fiber.props = props
+          const draft = fiberDataClone(cache.fiber.current)
+          cache.fiber.draft = draft
           cache.fiber.effectTag = "UPDATE"
+          draft.props = props
           addUpdate(cache.fiber)
         } else {
           //删旧增新
           if (cache.fiber != fiber) {
-            cache.fiber.effectTag = "DELETION"
             addDelect(cache.fiber)
           }
-          cache.key = key
-          cache.fiber = {
-            render: cacheNode,
-            shouldUpdate: shouldCacheNodeUpdate,
-            props,
+          const draftFiber: PlacementFiber<any> = {
             effectTag: "PLACEMENT",
-            parent: fiber
+            parent: fiber,
+            draft: {
+              render: cacheNode,
+              shouldUpdate: shouldCacheNodeUpdate,
+              props
+            }
           }
-          fiber.child = cache.fiber
-          addAdd(cache.fiber)
+          commitWork = () => {
+            cache.key = key
+            cache.fiber = draftFiber
+          }
+          fiber.draft.child = draftFiber
+          addAdd(draftFiber)
         }
         noStop = false
       }
     }
     if (noStop && cache.fiber != fiber) {
       addDelect(cache.fiber)
-      cache.fiber = fiber
-      fiber.child = undefined
+      commitWork = (() => {
+        cache.key = ""
+        cache.fiber = fiber
+      })
+      fiber.draft.child = undefined
     }
   }
 }
@@ -325,10 +386,10 @@ type FragmentProps<T> = {
 function fragmentShouldUpdate<T>(newP: FragmentProps<T>, oldP: FragmentProps<T>) {
   return newP.call != oldP.call || newP.args != oldP.args
 }
-function Fragment<T>(fiber: Fiber<{
+function Fragment<T>(fiber: WithDraftFiber<{
   call(v?: T): void
   args?: T
 }>) {
-  const { call, args } = fiber.props
+  const { call, args } = fiber.draft.props
   call(args)
 }

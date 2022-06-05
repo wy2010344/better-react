@@ -1,6 +1,6 @@
 import {
   FindParentAndBefore,
-  Props, VirtaulDomNode, createContext
+  Props, VirtaulDomNode, createContext, useEffect
 } from "better-react"
 
 export type StyleNode = {
@@ -26,6 +26,8 @@ interface FiberAbsNode<T = any> extends VirtaulDomNode<T> {
   node: Node
 }
 type FiberNodeType = "svg" | "dom"
+
+const INPUTS = ["INPUT", "TEXTAREA", "SELECT"]
 export class FiberNode implements FiberAbsNode<Props> {
   private constructor(
     public node: Node,
@@ -36,6 +38,16 @@ export class FiberNode implements FiberAbsNode<Props> {
   private createStyle: CreateStyleNode = DefaultStyleCreater
   reconcile(): void {
     this.createStyle = this.findStyleCreate()
+    if (INPUTS.includes(this.node.nodeName)) {
+      const that = this
+      useEffect(() => {
+        //事后修改
+        const node = that.node as HTMLInputElement
+        if ('value' in that.props) {
+          node.value = that.props.value
+        }
+      })
+    }
   }
   private findStyleCreate() {
     return StyleContext.useConsumer()
@@ -241,6 +253,7 @@ function updateDom(
     .filter(isProperty)
     .filter(isNew(oldProps, props))
     .forEach(name => dom.updateProp(name, props[name]))
+
   //添加变更事件
   nextKeys
     .filter(isEvent)

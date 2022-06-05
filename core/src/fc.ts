@@ -1,27 +1,29 @@
-import { addAdd, addUpdate, updateEffect } from "./commitWork";
-import { Fiber, HookContextCosumer, HookEffect, HookMemo, HookValue, LinkValue, StoreRef } from "./Fiber";
+import { addAdd, addDraftConsumer, addUpdate, updateEffect } from "./commitWork";
+import { Fiber, fiberDataClone, getData, HookContextCosumer, HookEffect, HookMemo, HookValue, HookValueSet, isWithDraftFiber, PlacementFiber, StoreRef, WithDraftFiber } from "./Fiber";
 import { reconcile } from "./reconcile";
 
 
-let wipFiber: Fiber | undefined = undefined
+let wipFiber: WithDraftFiber | undefined = undefined
 
 
 const hookIndex = {
-  beforeValue: undefined as (LinkValue<HookValue<any>> | undefined),
-  beforeEffect: undefined as (LinkValue<HookEffect> | undefined),
-  beforeMemo: undefined as (LinkValue<HookMemo<any>> | undefined),
+  state: 0,
+  effect: 0,
+  memo: 0,
   beforeFiber: undefined as (Fiber | undefined),
-  beforeContextConsumer: undefined as (LinkValue<HookContextCosumer> | undefined)
+  cusomer: 0
 }
 
-export function updateFunctionComponent(fiber: Fiber) {
+export function updateFunctionComponent(fiber: WithDraftFiber) {
   wipFiber = fiber
-  hookIndex.beforeValue = undefined
-  hookIndex.beforeEffect = undefined
-  hookIndex.beforeMemo = undefined
+  hookIndex.state = 0
+  hookIndex.effect = 0
+  hookIndex.memo = 0
+
   hookIndex.beforeFiber = undefined
-  hookIndex.beforeContextConsumer = undefined
-  fiber.render(fiber)
+
+  hookIndex.cusomer = 0
+  fiber.draft.render(fiber)
   wipFiber = undefined
 }
 
@@ -33,62 +35,70 @@ function getInit<T>(init: T | (() => T)) {
   }
 }
 
-export function useState<T>(init: T | (() => T)) {
-  let hookValue: LinkValue<HookValue<T>>
-  if (hookIndex.beforeValue) {
-    const temp = hookIndex.beforeValue.next
-    if (temp) {
-      hookValue = temp
-    } else {
-      hookValue = {
-        value: storeValue(getInit(init))
-      }
-      hookIndex.beforeValue.next = hookValue
+export function useState<T>(init: T | (() => T)): [T, HookValueSet<T>] {
+  const currentFiber = wipFiber!
+  if (currentFiber.effectTag == 'PLACEMENT') {
+    //新增
+    const hookValues = currentFiber.draft.hookValue || []
+    currentFiber.draft.hookValue = hookValues
+
+    const index = hookValues.length
+    const hook: HookValue<T> = {
+      value: getInit(init),
+      set: buildSetValue(index, currentFiber)
     }
+    hookValues.push(hook)
+    return [hook.value, hook.set]
   } else {
-    const temp = wipFiber?.hookValue
-    if (temp) {
-      hookValue = temp
-    } else {
-      hookValue = {
-        value: storeValue(getInit(init))
-      }
-      wipFiber!.hookValue = hookValue
+    //修改
+    const hookValues = currentFiber.draft.hookValue
+    if (!hookValues) {
+      throw new Error("原组件上不存在state")
     }
+    const hook = hookValues[hookIndex.state] as HookValue<T>
+    if (!hook) {
+      throw new Error("出现了更多的state")
+    }
+    hookIndex.state++
+    return [hook.value, hook.set]
   }
-  hookIndex.beforeValue = hookValue
-
-  hookValue.value.setFiber(wipFiber!)
-  return [hookValue.value.get(), hookValue.value.set, hookValue.value.get] as const
 }
-
-function storeValue<T>(value: T) {
-  let fiber: Fiber
-  return {
-    setFiber(v: Fiber) {
-      fiber = v
-    },
-    get() {
-      return value
-    },
-    set(temp: T, callback?: () => void) {
-      if (temp == value) {
-        if (callback) {
-          callback()
-        }
-      } else {
-        value = temp
-        reconcile({
-          beforeLoop() {
-            fiber.effectTag = "DIRTY"
-          },
-          afterLoop: callback
-        })
-      }
-    }
+/**
+ * setState需要做成异步提交
+ * 提交的时候,只是在一个副本树上修改
+ * 副本树一些节点修改后,遍历修改在树上
+ * 在未提交前舍弃副本树
+ * 
+ * 可以把树节点记为脏存放在另一个池中,只处理这个池的脏数据,克隆处理
+ * 提交的时候,将克隆替换成正式数据
+ * 但是脏节点是嵌套的
+ * useMemo如果是自定义成ref,无法捕获设置值.useEffect还好,必须是提交的时候执行.useState需要克隆.useConsumer需要移除监听.这些都是未提交的内容.dom的修改也在提交时才生效.
+ * 用表的思维去思考,特别是provider和consumer.添加了,但其标记还是draft.
+ * 只添加记录操作方式而不具体操作,在提交时统一操作.
+ */
+function buildSetValue<T>(index: number, fiber: Fiber<any>) {
+  return function set(temp: T | ((v: T) => T), after?: () => void) {
+    reconcile({
+      beforeLoop() {
+        const nFiber = toWithDraftFiber(fiber)
+        const hookValues = nFiber.draft.hookValue! //这里如果多次设置值,则会改动多次,依前一次结果累积.
+        const oldValue = hookValues[index]
+        const newValue = typeof (temp) == 'function' ? (temp as any)(oldValue.value) : temp as T
+        oldValue.value = newValue
+      },
+      afterLoop: after
+    })
   }
 }
 
+export function toWithDraftFiber<V>(fiber: Fiber<V>): WithDraftFiber<V> {
+  const nFiber = fiber as any
+  if (!nFiber.effectTag) {
+    nFiber.effectTag = "DIRTY"
+    nFiber.draft = fiberDataClone(nFiber.current)
+  }
+  return nFiber
+}
 export function storeRef<T>(value: T) {
   return {
     get() {
@@ -136,195 +146,149 @@ export function arrayNotEqual<T>(a1: readonly T[], a2: readonly T[], notEqual: (
   }
   return true
 }
-
-const DEFAULT_EFFECT = () => { }
 export function useEffect(effect: () => (void | (() => void)), deps?: readonly any[]) {
-  let hookEffect: LinkValue<HookEffect>
-  if (hookIndex.beforeEffect) {
-    const temp = hookIndex.beforeEffect.next
-    if (temp) {
-      hookEffect = temp
-    } else {
-      hookEffect = {
-        value: {
-          effect: DEFAULT_EFFECT,
-          deps: []
-        }
-      }
-      hookIndex.beforeEffect.next = hookEffect
+  const currentFiber = wipFiber!
+  if (currentFiber.effectTag == 'PLACEMENT') {
+    //新增
+    const hookEffects = currentFiber.draft.hookEffect || []
+    currentFiber.draft.hookEffect = hookEffects
+
+    const hookEffect: HookEffect = {
+      deps
     }
+    hookEffects.push(hookEffect)
+    updateEffect(() => {
+      hookEffect.destroy = effect()
+    })
   } else {
-    const temp = wipFiber?.hookEffect
-    if (temp) {
-      hookEffect = temp
-    } else {
-      hookEffect = {
-        value: {
-          effect: DEFAULT_EFFECT,
-          deps: []
-        }
-      }
-      wipFiber!.hookEffect = hookEffect
+    const hookEffects = currentFiber.draft.hookEffect
+    if (!hookEffects) {
+      throw new Error("原组件上不存在hookEffects")
     }
-  }
-  hookIndex.beforeEffect = hookEffect
+    const index = hookIndex.effect
+    const hookEffect = hookEffects[index] as HookEffect
+    if (!hookEffect) {
+      throw new Error("出现了更多的effect")
+    }
 
-
-  const last = hookEffect.value
-  //hook都需要结束的时候才计算！！。
-  if (Array.isArray(last.deps)
-    && Array.isArray(deps)
-    && arrayEqual(last.deps, deps, simpleEqual)) {
-    //完全相同，不处理
-    if (last.effect == DEFAULT_EFFECT) {
-      //延迟到DOM元素数据化后初始化
-      const nextHook = {
-        deps,
-        effect,
-        destroy: undefined
-      }
-      hookEffect.value = nextHook
+    hookIndex.effect = index + 1
+    if (Array.isArray(hookEffect.deps)
+      && Array.isArray(deps)
+      && arrayEqual(hookEffect.deps, deps, simpleEqual)) {
+      //不处理
+    } else {
+      hookEffect.deps = deps
       updateEffect(() => {
-        nextHook.destroy = effect() as undefined
+        if (hookEffect.destroy) {
+          hookEffect.destroy()
+        }
+        hookEffect.destroy = effect()
       })
     }
-  } else {
-    const nextHook = {
-      deps,
-      effect: effect,
-      destroy: undefined
-    }
-    hookEffect.value = nextHook
-    updateEffect(() => {
-      last.destroy?.()
-      nextHook.destroy = effect() as undefined
-    })
   }
 }
 
 export function useMemo<T>(effect: () => T, deps: readonly any[]): T {
-  let hookMemo: LinkValue<HookMemo<T>>
-  if (hookIndex.beforeMemo) {
-    const temp = hookIndex.beforeMemo.next
-    if (temp) {
-      hookMemo = temp
-    } else {
-      hookMemo = {
-        value: {
-          effect: DEFAULT_EFFECT,
-          value: null,
-          deps: []
-        } as any
-      }
-      hookIndex.beforeMemo.next = hookMemo
-    }
-  } else {
-    const temp = wipFiber?.hookMemo
-    if (temp) {
-      hookMemo = temp
-    } else {
-      hookMemo = {
-        value: {
-          effect: DEFAULT_EFFECT,
-          value: null,
-          deps: []
-        } as any
-      }
-      wipFiber!.hookMemo = hookMemo
-    }
-  }
-  hookIndex.beforeMemo = hookMemo
+  const currentFiber = wipFiber!
+  if (currentFiber.effectTag == "PLACEMENT") {
+    const hookMemos = currentFiber.draft.hookMemo || []
+    currentFiber.draft.hookMemo = hookMemos
 
-  const last = hookMemo.value
-  if (arrayEqual(last.deps, deps, simpleEqual)) {
-    //完全相同，不处理
-    if (last.effect == DEFAULT_EFFECT) {
-      //第一次，要处理
-      const value = effect()
-      hookMemo.value = {
-        deps,
-        effect,
-        value
-      }
-      return value
-    } else {
-      //返回上一次结果
-      return hookMemo.value.value
+    const hook: HookMemo<T> = {
+      value: effect(),
+      deps
     }
+    hookMemos.push(hook)
+    return hook.value
   } else {
-    const value = effect()
-    hookMemo.value = {
-      deps,
-      effect,
-      value
+    const hookMemos = currentFiber.draft.hookMemo
+    if (!hookMemos) {
+      throw new Error("原组件上不存在memos")
     }
-    return value
+    const index = hookIndex.memo
+    const hook = hookMemos[index]
+    if (!hook) {
+      throw new Error("出现了更多的memo")
+    }
+    hookIndex.memo = index + 1
+    if (arrayEqual(hook.deps, deps, simpleEqual)) {
+      //不处理
+      return hook.value
+    } else {
+      hook.value = effect()
+      hook.deps = deps
+      return hook.value
+    }
   }
 }
 
-function propsShouldUpdate<T>(fiber: Fiber<T>, newP: T) {
-  if (fiber.shouldUpdate) {
-    return fiber.shouldUpdate(newP, fiber.props)
-  } else {
-    return fiber.props != newP
-  }
+function defaultShouldUpdate<T>(a: T, b: T) {
+  return a != b
 }
 export function useFiber<T>(
-  callback: (fiber: Fiber<T>) => void,
+  render: (fiber: WithDraftFiber<T>) => void,
   props: T,
-  shouldUpdate?: (newP: T, oldP: T) => boolean
+  shouldUpdate: (a: T, b: T) => boolean = defaultShouldUpdate
 ) {
-  let hookFiber: Fiber | undefined
-  if (hookIndex.beforeFiber) {
-    const temp = hookIndex.beforeFiber.sibling
-    if (temp) {
-      hookFiber = temp
-      const v = hookFiber.render != callback || hookFiber.shouldUpdate != shouldUpdate || propsShouldUpdate(hookFiber, props)
-      //console.log("should-----Update", v)
-      if (v) {
-        hookFiber.render = callback
-        hookFiber.props = props
-        hookFiber.shouldUpdate = shouldUpdate
-        hookFiber.effectTag = "UPDATE"
-        addUpdate(hookFiber!)
-      }
-    } else {
-      hookFiber = {
-        render: callback,
-        shouldUpdate,
+  const currentFiber = wipFiber!
+  if (currentFiber.effectTag == 'PLACEMENT') {
+    //新增
+    const hook: Fiber<T> = {
+      effectTag: "PLACEMENT",
+      parent: currentFiber,
+      draft: {
+        render,
         props,
-        effectTag: "PLACEMENT",
-        parent: wipFiber
+        shouldUpdate
       }
-      addAdd(hookFiber)
-      hookIndex.beforeFiber.sibling = hookFiber
     }
-  } else {
-    const temp = wipFiber?.child
-    if (temp) {
-      hookFiber = temp
-      const v = hookFiber.render != callback || hookFiber.shouldUpdate != shouldUpdate || propsShouldUpdate(hookFiber, props)
-      //console.log("shouldUpdate", v)
-      if (v) {
-        hookFiber.render = callback
-        hookFiber.props = props
-        hookFiber.shouldUpdate = shouldUpdate
-        hookFiber.effectTag = "UPDATE"
-        addUpdate(hookFiber!)
-      }
+    addAdd(hook)
+    //第一次要标记sibling
+    if (hookIndex.beforeFiber) {
+      (hookIndex.beforeFiber as PlacementFiber<any>).draft.sibling = hook
     } else {
-      hookFiber = {
-        render: callback,
-        shouldUpdate,
-        props,
-        effectTag: "PLACEMENT",
-        parent: wipFiber
+      currentFiber.draft.child = hook
+    }
+
+    hookIndex.beforeFiber = hook
+  } else {
+    //修改
+    let oldFiber: Fiber<any> | undefined
+    if (hookIndex.beforeFiber) {
+      oldFiber = getData(hookIndex.beforeFiber).sibling
+    }
+    if (!oldFiber) {
+      oldFiber = wipFiber?.draft.child
+    }
+    if (!oldFiber) {
+      throw new Error("非预期地多出现了fiter")
+    }
+    hookIndex.beforeFiber = oldFiber
+
+    if (isWithDraftFiber(oldFiber)) {
+      //已经被标记为脏
+      oldFiber.draft.render = render
+      oldFiber.draft.props = props
+      oldFiber.draft.shouldUpdate = shouldUpdate
+      oldFiber.effectTag = "UPDATE"
+      addUpdate(oldFiber)
+    } else {
+      if (oldFiber.current.render != render
+        || oldFiber.current.shouldUpdate != shouldUpdate
+        || oldFiber.current.shouldUpdate(props, oldFiber.current.props)
+      ) {
+        //检查出来需要更新
+        const draft = fiberDataClone(oldFiber.current)
+        draft.render = render
+        draft.props = props
+        draft.shouldUpdate = shouldUpdate
+        const nOldFiber = oldFiber as any
+        nOldFiber.effectTag = "UPDATE"
+        nOldFiber.draft = draft
+        addUpdate(oldFiber)
       }
-      addAdd(hookFiber)
-      wipFiber!.child = hookFiber
     }
   }
-  hookIndex.beforeFiber = hookFiber
 }
 
 export interface Context<T> {
@@ -354,11 +318,12 @@ class ContextFactory<T> implements Context<T>{
     let map: Map<any, {
       changeValue(v: any): void
     }>
-    if (wipFiber?.contextProvider) {
-      map = wipFiber.contextProvider
+    const currentFiber = wipFiber!
+    if (currentFiber.contextProvider) {
+      map = currentFiber.contextProvider
     } else {
       map = new Map()
-      wipFiber!.contextProvider = map
+      currentFiber.contextProvider = map
     }
     let hook = map.get(this)
     if (!hook) {
@@ -368,32 +333,29 @@ class ContextFactory<T> implements Context<T>{
     hook.changeValue(v)
   }
   useConsumer() {
-    let hookConsumer: LinkValue<HookContextCosumer>
-    if (hookIndex.beforeContextConsumer) {
-      const temp = hookIndex.beforeContextConsumer.next
-      if (temp) {
-        hookConsumer = temp
-      } else {
-        hookConsumer = {
-          value: this.createConsumer(wipFiber!)
-        }
-        hookIndex.beforeContextConsumer.next = hookConsumer
-      }
+    const currentFiber = wipFiber!
+    if (currentFiber.effectTag == "PLACEMENT") {
+      const hookConsumers = currentFiber.draft.hookContextCosumer || []
+      currentFiber.draft.hookContextCosumer = hookConsumers
+
+      const hook: HookContextCosumer = this.createConsumer(currentFiber)
+      hookConsumers.push(hook)
+      addDraftConsumer(hook)
+      //如果draft废弃,需要移除该hook
+      return hook.getValue()
     } else {
-      const temp = wipFiber?.hookContextCosumer
-      if (temp) {
-        hookConsumer = temp
-      } else {
-        hookConsumer = {
-          value: this.createConsumer(wipFiber!)
-        }
-        wipFiber!.hookContextCosumer = hookConsumer
+      const hookConsumers = currentFiber.draft.hookContextCosumer
+      if (!hookConsumers) {
+        throw new Error("原组件上不存在hookConsumers")
       }
+      const index = hookIndex.cusomer
+      const hook = hookConsumers[index]
+      if (!hook) {
+        throw new Error("没有出现更多consumes")
+      }
+      hookIndex.cusomer = index + 1
+      return hook.getValue()
     }
-    hookIndex.beforeContextConsumer = hookConsumer
-    const hook = hookConsumer.value
-    hook.setFiber(wipFiber!)
-    return hook.getValue()
   }
   private findProvider(_fiber: Fiber) {
     let fiber = _fiber as Fiber | undefined
@@ -415,8 +377,10 @@ class ContextProvider<T>{
     public parent: ContextFactory<T>
   ) { }
   changeValue(v: T) {
-    this.value = v
-    this.notify()
+    if (this.value != v) {
+      this.value = v
+      this.notify()
+    }
   }
   notify() {
     this.list.forEach(row => row.change())
@@ -446,11 +410,9 @@ class ContextListener<T>{
   getValue() {
     return this.context.value
   }
-  setFiber(fiber: Fiber) {
-    this.fiber = fiber
-  }
   change() {
-    this.fiber.effectTag = "DIRTY"
+    const fiber = toWithDraftFiber(this.fiber)
+    fiber.effectTag = "DIRTY"
   }
   destroy() {
     this.context.off(this)
