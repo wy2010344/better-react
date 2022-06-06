@@ -41,13 +41,9 @@ export default ({
   const [left, setLeft] = useState(initLeft)
   const [width, setWidth] = useState(initWidth)
   const [height, setHeight] = useState(initHeight)
-  console.log(top, left)
   const mouseMove = useMemo(() => dragMoveHelper({
     diffX(x) {
-      setLeft(v => {
-        console.log(v, x)
-        return v + x
-      })
+      setLeft(v => v + x)
     },
     diffY(y) {
       setTop(v => v + y)
