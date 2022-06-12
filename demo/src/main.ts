@@ -21,7 +21,7 @@ const destroy = render(
         useContent("销毁所有")
       }
     })
-    console.log("正在render")
+    //console.log("正在render")
 
 
     const [count, setCount] = useState(0)

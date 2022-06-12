@@ -13,8 +13,8 @@
     "vite": "^2.9.9"
   },
   "dependencies": {
-    "better-react": "^1.0.0",
-    "better-react-dom": "^1.0.1",
+    "better-react": "^1.0.1",
+    "better-react-dom": "^1.0.2",
     "better-react-helper": "^1.0.0",
     "stylis-creater": "^1.0.0"
   }

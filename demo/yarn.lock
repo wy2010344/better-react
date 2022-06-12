@@ -7,10 +7,10 @@
   resolved "https://registry.yarnpkg.com/@types/stylis/-/stylis-4.0.2.tgz#311c62d68a23dfb01462d54b04549484a4c5cb2a"
   integrity sha512-wtckGuk1eXUlUz0Qb1eXHG37Z7HWT2GfMdqRf8F/ifddTwadSS9Jwsqi4qtXk7cP7MtoyGVIHPElFCLc6HItbg==
 
-better-react-dom@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/better-react-dom/-/better-react-dom-1.0.1.tgz#62b1f2d645e6e767e91cf5587866155cea91b4d2"
-  integrity sha512-lsEwdcRCVW9A/ix4DgbilotNHLu6/j6TRJ8cAguz+23jiq9O095K1sbnePHH8oDrAkJlKzG88+lbhDQ1NdOX0g==
+better-react-dom@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/better-react-dom/-/better-react-dom-1.0.2.tgz#374a6590f60a4896b58fe0190622abb6a5838cb8"
+  integrity sha512-+pkNAwxoPDyNaIjEIXy43ndxBXaMGVOk5eGBra/0rNGT97E1PwbkCX9mqKpkrW6VZJarWIJp+kZBrWdUbM900Q==
   dependencies:
     csstype "^3.1.0"
 
@@ -19,10 +19,10 @@ better-react-helper@^1.0.0:
   resolved "https://registry.yarnpkg.com/better-react-helper/-/better-react-helper-1.0.0.tgz#42cfc0e83735da535ef1085e64cf4b6eb11d7e87"
   integrity sha512-/+TxHYDyLOUHalg4GAh4fUY3mPGsueOOLVjP3rDGf54SiIoTcUlZD4T8jSiEcKCHRHD7izXU/Q1SfRAaAAJFGQ==
 
-better-react@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.0.0.tgz#08b40b6d738188524afb0eea31c83d9daa3479c6"
-  integrity sha512-kCyREr51ooaFExKxvCQodf7Zi2vRAGpSUew0XGSWBk23VYty5VJ8iygcbhVE75c9ui5IalB5fsXk/R+AbroajQ==
+better-react@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.0.1.tgz#3e3088497d93588cea085e9875716f1fa0e2bcb5"
+  integrity sha512-YqsnKae43XYwE7BQEpGc6Grz6J5Z3DqawW6Ae1k74sfIyd0AhnVsRbKroh8sFSxe2n+/8nEUBWfIYNvdgh/PkQ==
 
 csstype@^3.1.0:
   version "3.1.0"

@@ -281,7 +281,7 @@ export interface CodeJar {
   getSelection(): MbRange
   setSelection(v: MbRange): void
 }
-export interface CodeJarOption<T extends keyof DomElements> {
+export interface CodeJarOption {
   content?: string
   setContent(content: string): void
   tab?: string
@@ -292,7 +292,6 @@ export interface CodeJarOption<T extends keyof DomElements> {
   height?: number
   width?: number
   readonly?: boolean
-  type?: T
 }
 
 
@@ -336,8 +335,7 @@ class HistoryManager {
 }
 
 
-export default function useCodeJar<T extends keyof DomElements>({
-  type,
+export default function useCodeJar({
   tab = "\t",
   indentOn = /{$/,
   closePair = ["()", "[]", '{}', '""', "''"],
@@ -348,14 +346,16 @@ export default function useCodeJar<T extends keyof DomElements>({
   setContent,
   spellcheck = false,
   ...options
-}: CodeJarOption<T> & React.HTMLAttributes<T>) {
+}: CodeJarOption & React.HTMLAttributes<HTMLDivElement>) {
   //缓存上一次向外的更新,保证下一次生效时,才能更新选择.只能有这一个content.
-  const [content, setInterContent, getContent] = useState<string>(() => "")
+  const [content, setInterContent] = useState<string>(() => "")
   const history = useConstRefValue<HistoryManager>(() => new HistoryManager(v => {
-    if (v != getContent()) {
-      setContent(v)
-      setInterContent(v)
-    }
+    setInterContent(x => {
+      if (v != x) {
+        setContent(v)
+      }
+      return v
+    })
   }))
   const recording = useRefValue(() => false)
   const focus = useRefValue(() => false)
@@ -382,12 +382,12 @@ export default function useCodeJar<T extends keyof DomElements>({
     if (record) {
       mb.DOM.setSelectionRange(editor.get(), record.pos)
     }
-  }, [content, type])
+  }, [content])
 
-  return useDom(type || "div", {
+  return useDom("div", {
     ...options,
     ref: editor.set,
-    onKeydown(e: React.KeyboardEvent) {
+    onKeyDown(e) {
       if (e.defaultPrevented) return
       if (mb.DOM.keyCode.ENTER(e)) {
         //换行
@@ -412,7 +412,7 @@ export default function useCodeJar<T extends keyof DomElements>({
         recording.set(true)
       }
     },
-    onKeyup(e: React.KeyboardEvent) {
+    onKeyUp(e) {
       if (e.defaultPrevented) return
       if (e.isComposing) return
       if (shouldRecord(e) && recording.get()) {
@@ -427,7 +427,7 @@ export default function useCodeJar<T extends keyof DomElements>({
     onBlur() {
       focus.set(false)
     },
-    onPaste(e: React.ClipboardEvent) {
+    onPaste(e) {
       rememberHistory()
       mb.DOM.preventDefault(e)
       const text = ((e as any).originalEvent || e).clipboardData.getData("text/plain") as string
@@ -442,7 +442,7 @@ export default function useCodeJar<T extends keyof DomElements>({
     },
     contentEditable: readonly ? false : contentEditable.text,
     spellcheck,
-    async exit(e: T) {
+    async exit(e) {
       const record = history.current()
       if (record) {
         record.pos = mb.DOM.getSelectionRange(editor.get())

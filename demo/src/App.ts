@@ -4,6 +4,7 @@ import dsl from "./dsl";
 import ExpensiveView from "./ExpensiveView";
 import { CountContext, normalPanel, PanelContext } from "./panel/PanelContext";
 import usePanel from "./panel/usePanel";
+import vote from "./vote";
 
 
 export default function FirstPage() {
@@ -36,9 +37,18 @@ export default function FirstPage() {
               useContent("进入ExpansiveView")
             }
           })
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              vote(operate)
+            },
+            children() {
+              useContent("vote")
+            }
+          })
           Demo()
 
-          console.log("在这里")
+          //console.log("在这里")
 
           const value = CountContext.useConsumer()
           useContent(`在这里${value}`)
