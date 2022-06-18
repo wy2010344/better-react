@@ -5,6 +5,7 @@ import useResize from "./useResize"
 
 
 export type PanelParams = {
+  portalTarget?(): Node
   initWidth?: number
   initHeight?: number
   initTop?: number
@@ -34,7 +35,8 @@ export default ({
   bodyCss,
   children,
   close,
-  moveFirst
+  moveFirst,
+  portalTarget
 }: PanelParams) => {
 
   const [top, setTop] = useState(initTop)
@@ -67,7 +69,8 @@ export default ({
 
   const titleHeight = 32
 
-  useDom("div", {
+  return useDom("div", {
+    portalTarget,
     style: {
       left: `${left}px`,
       top: `${top}px`

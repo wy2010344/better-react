@@ -1,6 +1,9 @@
-import { flushSync, useFragment, useMap, useMemo, useState } from "better-react";
+import { flushSync, useFragment, useIf, useMap, useMemo, useState } from "better-react";
 import { DomElements, React, useContent, useDom } from "better-react-dom";
 import { useRef, useRefValue } from "better-react-helper";
+import { usePortalPanel } from "../panel/PanelContext";
+import { useDynamicPanel } from "../panel/useDynamicPanel";
+import usePanel from "../panel/usePanel";
 
 export default function index() {
   useContent("1")
@@ -20,12 +23,55 @@ export default function index() {
   MapList()
 
   testFlushSync()
+
+  testPortalPanel()
 }
 
+function testPortalPanel() {
+  const [showRoot, setShowRoot] = useState(false)
+  useDom("button", {
+    onClick() {
+      setShowRoot(true)
+    },
+    children() {
+      useContent("进入portal")
+    }
+  })
+  useIf(showRoot, () => {
+    usePortalPanel({
+      close() {
+        setShowRoot(false)
+      },
+      children() {
+        useContent("这是window级的portal")
+
+        testPortalPanel()
+        testChangeValue()
+      }
+    })
+  })
+}
+
+function testChangeValue() {
+  const [value, setValue] = useState<keyof DomElements>("div")
+
+  useDom(value, {
+    children() {
+      useDom("button", {
+        onClick() {
+          setValue(value == "div" ? "pre" : "div")
+        },
+        children() {
+          useContent("点击切换")
+        }
+      })
+    }
+  })
+}
 
 function testFlushSync() {
   const [value, setValue] = useState(1)
-  const input = useRef<HTMLInputElement | null>(null)
+  const input = useRef<HTMLInputElement | undefined>(undefined)
   useDom("div", {
     children() {
       useDom("input", {

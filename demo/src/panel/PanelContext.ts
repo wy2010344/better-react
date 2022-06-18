@@ -69,3 +69,19 @@ export function normalPanel(
 
 
 export const CountContext = createContext(0)
+
+
+
+
+
+export function usePortalPanel(args: Omit<PanelParams, "portalTarget" | "moveFirst">) {
+  const fiber = usePanel({
+    ...args,
+    portalTarget() {
+      return document.body
+    },
+    moveFirst() {
+      document.body.appendChild(fiber.dom.node!)
+    }
+  })
+}
