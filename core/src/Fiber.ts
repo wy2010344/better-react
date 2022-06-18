@@ -66,8 +66,8 @@ export function fiberDataClone<T>(v: FiberData<T>): FiberData<T> {
  * 
  * 将自身地址作为ID,这个地址下有两条记录
  */
-export type Fiber<T = Props> = WithDraftFiber<T> | {
-  parent?: Fiber<any>
+export type Fiber<T = any> = WithDraftFiber<T> | {
+  parent?: Fiber
   dom?: VirtaulDomNode<T>
   contextProvider?: Map<any, {
     changeValue(v: any): void
@@ -75,7 +75,7 @@ export type Fiber<T = Props> = WithDraftFiber<T> | {
   current: Readonly<FiberData<T>>
 }
 export type PlacementFiber<T> = {
-  parent?: Fiber<any>
+  parent?: Fiber
   dom?: VirtaulDomNode<T>
   contextProvider?: Map<any, {
     changeValue(v: any): void
@@ -85,7 +85,7 @@ export type PlacementFiber<T> = {
   draft: FiberData<T>
 }
 export type UpdateFiber<T> = {
-  parent?: Fiber<any>
+  parent?: Fiber
   dom?: VirtaulDomNode<T>
   contextProvider?: Map<any, {
     changeValue(v: any): void
@@ -121,12 +121,14 @@ export type VirtaulDomNode<T = Props> = {
   update(props: T): void
   //只第一次更新,在create之后,即不权updateProps,还准备好了子节点
   init(): void
+  //在update之前,所以要更新props
+  isPortal(props: T): boolean
 
-  isPortal(): boolean
   appendAsPortal(): void
-
   appendAfter(value: FindParentAndBefore): void
+  //只对部分元素执行删除
   removeFromParent(): void
+  //所有都会执行
   destroy(): void
 }
 export type FindParentAndBefore = [VirtaulDomNode, VirtaulDomNode | null] | [VirtaulDomNode | null, VirtaulDomNode] | null
@@ -141,24 +143,27 @@ export type StoreValue<T> = {
 }
 export type Props = { [key: string]: any }
 
-export function findParentAndBefore<T>(dom: VirtaulDomNode<T>, fiber: Fiber<T>) {
-  if (dom.isPortal()) {
-    addAppendAsPortal(dom)
-  } else {
-    const prevData = getData(fiber).prev
-    const parentBefore = prevData
-      ? getCurrentBefore(prevData)
-      : findParentBefore(fiber)
-    if (parentBefore) {
-      addAppends(dom, parentBefore)
+export function findParentAndBefore<T>(fiber: Fiber<T>) {
+  const dom = fiber.dom
+  if (dom) {
+    if (dom.isPortal(getData(fiber).props)) {
+      addAppendAsPortal(dom)
     } else {
-      console.error("未找到", fiber.dom)
+      const prevData = getData(fiber).prev
+      const parentBefore = prevData
+        ? getCurrentBefore(prevData)
+        : findParentBefore(fiber)
+      if (parentBefore) {
+        addAppends(dom, parentBefore)
+      } else {
+        console.error("未找到", fiber.dom)
+      }
     }
   }
 }
 
 function getCurrentBefore(fiber: Fiber): FindParentAndBefore {
-  if (fiber.dom?.isPortal()) {
+  if (fiber.dom?.isPortal(getData(fiber).props)) {
     const prev = getData(fiber).prev
     if (prev) {
       return getCurrentBefore(prev)

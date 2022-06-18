@@ -36,15 +36,15 @@ export default normalPanel(function (operate, id) {
               setTransition(input.checked)
             }
           })
-          useDom("input", {
+          const rangeFiber = useDom("input", {
             type: "range",
             min: 0,
             max: 600,
             step: 1,
             value,
             onChange(e) {
+              console.log(rangeFiber.dom.node!.value)
               const input = e.target as HTMLInputElement
-              console.log("ev", input.value)
             },
             onInput(e) {
               const v = (e.target as any).value!

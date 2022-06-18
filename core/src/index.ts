@@ -5,39 +5,21 @@ import { AskNextTimeWork, setRootFiber } from "./reconcile"
 export { flushSync, startTransition } from './reconcile'
 export type { REAL_WORK } from './reconcile'
 export { useState, useEffect, storeRef, useMemo, createContext, useFiber, arrayEqual, arrayNotEqual, simpleEqual, simpleNotEqual } from './fc'
-export type { Fiber, Props, VirtaulDomNode, WithDraftFiber, PlacementFiber } from './Fiber'
-export type { FindParentAndBefore } from './commitWork'
+export type { Fiber, Props, VirtaulDomNode, WithDraftFiber, PlacementFiber, FindParentAndBefore } from './Fiber'
 export type { AskNextTimeWork }
-export { findParentAndBefore } from './Fiber'
 
-function RootFiberFun(fiber: WithDraftFiber<RootProps>) {
-  const { dom, render } = fiber.draft.props
-  if (!fiber.dom) {
-    fiber.dom = dom
-  }
-  render()
-}
-type RootProps = {
-  dom: VirtaulDomNode
-  render(): void
-}
-function RootShouldUpdate(a: RootProps, b: RootProps) {
-  return a.dom != b.dom || a.render != b.render
-}
-export function render(
-  element: () => void,
-  container: VirtaulDomNode,
+export function render<T>(
+  render: (v: WithDraftFiber<T>) => void,
+  props: T,
+  shouldUpdate: (a: T, b: T) => boolean,
   ask: AskNextTimeWork
 ) {
-  const rootFiber: Fiber<RootProps> = {
+  const rootFiber: Fiber<T> = {
     effectTag: "PLACEMENT",
     draft: {
-      render: RootFiberFun,
-      shouldUpdate: RootShouldUpdate,
-      props: {
-        dom: container,
-        render: element
-      }
+      render,
+      shouldUpdate,
+      props
     }
   } as const
   return setRootFiber(rootFiber, ask)
@@ -51,7 +33,7 @@ type KeepFun<T> = {
 }
 
 
-function simpleUpdate(fiber: Fiber<any>, props: any) {
+function simpleUpdate(fiber: Fiber, props: any) {
   if (isWithDraftFiber(fiber)) {
     fiber.draft.props = props
 
@@ -75,7 +57,7 @@ export function useMap<T>(
   getKey: (v: T) => any,
   render: (v: T, i: number) => void
 ) {
-  useFiber(MapFiber, { vs, getKey, render }, shouldMapFiberUpdate)
+  return useFiber(MapFiber, { vs, getKey, render }, shouldMapFiberUpdate)
 }
 type MapFiberProps<T> = {
   vs: T[],
@@ -128,7 +110,7 @@ function MapFiber<T>(fiber: WithDraftFiber<MapFiberProps<T>>) {
       addUpdate(oldFiber)
       oldFibers?.shift()
     } else {
-      const tempFiber: PlacementFiber<any> = {
+      const tempFiber: PlacementFiber<RenderRowProps<T>> = {
         effectTag: "PLACEMENT",
         parent: fiber,
         draft: {
@@ -194,7 +176,7 @@ function getGuardFiber<A, T>(shouldDo: (a: A, v: T) => boolean) {
     const cache = useMemo(() => {
       return {
         index: -1,
-        fiber: fiber as Fiber<any>
+        fiber: fiber as Fiber
       }
     }, [])
     const { v, matches } = fiber.draft.props
@@ -220,7 +202,7 @@ function getGuardFiber<A, T>(shouldDo: (a: A, v: T) => boolean) {
           if (cache.index > -1) {
             addDelect(cache.fiber)
           }
-          const plaFiber: PlacementFiber<any> = {
+          const plaFiber: PlacementFiber<CacheNodeProps<T>> = {
             effectTag: "PLACEMENT",
             parent: fiber,
             draft: {
@@ -267,7 +249,7 @@ function isGuardMatch<T>(fun: (v: T) => boolean, v: T) {
 }
 const guardFiber = getGuardFiber(isGuardMatch)
 export function useGuard<T>(v: T, ...matches: GuardMatchType<T>[]) {
-  useFiber(guardFiber, { v, matches }, shouldGuardUpdate)
+  return useFiber(guardFiber, { v, matches }, shouldGuardUpdate)
 }
 type CacheNodeProps<T> = {
   value: T,
@@ -300,7 +282,7 @@ export function useIf(
       whenFalse
     ])
   }
-  useFiber(guardFiber, { v, matches }, shouldGuardUpdate)
+  return useFiber(guardFiber, { v, matches }, shouldGuardUpdate)
 }
 function quote<T>(v: T) { return v }
 function toOppsite(v: boolean) { return !v }
@@ -311,7 +293,7 @@ function isSwitch<T>(a: T, v: T) {
 }
 const switchFiber = getGuardFiber(isSwitch)
 export function useSwitch<T>(v: T, ...matches: GuardSwitchType<T>[]) {
-  useFiber(switchFiber, {
+  return useFiber(switchFiber, {
     v,
     matches
   }, shouldGuardUpdate)
@@ -365,7 +347,7 @@ const guardConfig: KeepFun<{
           if (cache.fiber != fiber) {
             addDelect(cache.fiber)
           }
-          const draftFiber: PlacementFiber<any> = {
+          const draftFiber: PlacementFiber<CacheNodeProps<string>> = {
             effectTag: "PLACEMENT",
             parent: fiber,
             draft: {
@@ -400,10 +382,10 @@ const guardConfig: KeepFun<{
   }
 }
 ////////****类似函数式组件****////////////////////////////////////////////////////////////////////////////////////////////////////////////
-export function useFragment(fun: () => void): void
-export function useFragment<T>(fun: (v: T) => void, v: T): void;
-export function useFragment<T>(fun: (v?: T) => void, v?: T): void {
-  useFiber<FragmentProps<T>>(Fragment, { call: fun, args: v }, fragmentShouldUpdate)
+export function useFragment(fun: () => void): Fiber<FragmentProps<void>>
+export function useFragment<T>(fun: (v: T) => void, v: T): Fiber<FragmentProps<T>>;
+export function useFragment<T>(fun: (v?: T) => void, v?: T): Fiber<FragmentProps<T>> {
+  return useFiber<FragmentProps<T>>(Fragment, { call: fun, args: v }, fragmentShouldUpdate)
 }
 type FragmentProps<T> = {
   call(v?: T): void

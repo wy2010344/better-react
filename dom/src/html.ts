@@ -33,7 +33,7 @@ interface DocumentFragment { }
 
 
 
-interface HTMLWebViewElement extends HTMLElement { }
+export interface HTMLWebViewElement extends HTMLElement { }
 /*
 interface Element { }
 //58个
@@ -1110,7 +1110,7 @@ export namespace React {
     zoomAndPan?: string | undefined;
   }
   interface ClassAttributes<T> {
-    ref?(v: T): void
+    ref?(v?: T): void
   }
   export interface SVGProps<T> extends SVGAttributes<T>, ClassAttributes<T> {
   }

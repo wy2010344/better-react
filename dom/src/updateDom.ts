@@ -26,7 +26,7 @@ interface FiberAbsNode<T = any> extends VirtaulDomNode<T> {
   node: Node
 }
 const INPUTS = ["input", "textarea", "select"]
-export class FiberNode implements FiberAbsNode<Props> {
+export class FiberNode<F> implements FiberAbsNode<F> {
   public node: Node = undefined as unknown as Node
   init() {
     if (this.props?.ref) {
@@ -35,9 +35,14 @@ export class FiberNode implements FiberAbsNode<Props> {
   }
   private constructor(
     private initNode: () => Node,
-    private outReconcile: (fn: FiberNode) => void,
+    private getProps: (v: F) => Props,
+    private outReconcile: (fn: FiberNode<F>) => void,
     private _updateProp: (node: Node, key: string, value: any) => void,
   ) { }
+  create(props: F): void {
+    this.node = this.initNode()
+    this.update(props)
+  }
   private props: Props = {}
   private createStyle: CreateStyleNode = DefaultStyleCreater
   reconcile(): void {
@@ -47,15 +52,21 @@ export class FiberNode implements FiberAbsNode<Props> {
   private findStyleCreate() {
     return StyleContext.useConsumer()
   }
-  static create(
+  static create<F>(
     createNode: () => Node,
-    outReconcile: (props: FiberNode) => void = emptyFun,
+    getProps: (v: F) => Props,
+    outReconcile: (props: FiberNode<F>) => void = emptyFun,
     updateProps: (node: Node, key: string, value: any) => void = updatePorps
   ) {
-    return new FiberNode(createNode, outReconcile, updateProps)
+    return new FiberNode(
+      createNode,
+      getProps,
+      outReconcile,
+      updateProps
+    )
   }
-  static createDom(type: string) {
-    const outReconcile = INPUTS.includes(type) ? (that: FiberNode) => {
+  static createDom<F>(type: string, getProps: (v: F) => Props) {
+    const outReconcile = INPUTS.includes(type) ? (that: FiberNode<F>) => {
       useEffect(() => {
         //事后修改.感觉不是很科学,因为别的useEffect里访问到ref的值不一致?
         const node = that.node as HTMLInputElement
@@ -68,34 +79,34 @@ export class FiberNode implements FiberAbsNode<Props> {
     return function () {
       return new FiberNode(
         create,
+        getProps,
         outReconcile,
         updatePorps
       )
     }
   }
-  static createSvg(type: string) {
+  static createSvg<T>(type: string, getProps: (v: T) => Props) {
     const create = () => document.createElementNS("http://www.w3.org/2000/svg", type)
     return function () {
       return new FiberNode(
         create,
+        getProps,
         emptyFun,
         updateSVGProps
       )
     }
   }
-  isPortal(): boolean {
-    return this.props.portalTarget
+  isPortal(props: F): boolean {
+    return this.getProps(props).portalTarget
   }
   appendAsPortal(): void {
-    if (this.isPortal()) {
-      const parent = this.props.portalTarget()
-      if (parent) {
-        if (parent != this.node.parentNode) {
-          parent.appendChild(this.node)
-        }
-      } else {
-        console.warn('no parent get', this.props)
+    const parent = this.props.portalTarget()
+    if (parent) {
+      if (parent != this.node.parentNode) {
+        parent.appendChild(this.node)
       }
+    } else {
+      console.warn('no parent get', this.props)
     }
   }
   appendAfter(value?: FindParentAndBefore): void {
@@ -107,28 +118,22 @@ export class FiberNode implements FiberAbsNode<Props> {
     }
   }
   /**
-   * 创建元素
-   * @param props 
-   */
-  create(props: Props) {
-    this.node = this.initNode()
-    this.update(props)
-  }
-  /**
    * 属性更新
    * @param props 
    */
-  update(props: Props) {
+  update(v: F) {
+    const newProps = this.getProps(v)
     updateDom(this,
-      props,
+      newProps,
       this.props,
       this.createStyle
     )
-    this.props = props
+    this.props = newProps
   }
   private realRemove() {
     this.node.parentElement?.removeChild(this.node)
   }
+
   removeFromParent() {
     if (this.props?.exit) {
       const that = this
@@ -202,8 +207,8 @@ function underline(str: string) {
  * @param oldProps 
  * @param props 
  */
-function updateDom(
-  dom: FiberNode,
+function updateDom<F>(
+  dom: FiberNode<F>,
   props: Props = emptyProps,
   oldProps: Props = emptyProps,
   styleCreater?: () => StyleNode

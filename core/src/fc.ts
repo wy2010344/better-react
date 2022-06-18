@@ -1,5 +1,5 @@
 import { addAdd, addDraftConsumer, addUpdate, updateEffect } from "./commitWork";
-import { Fiber, fiberDataClone, getData, getEditData, HookContextCosumer, HookEffect, HookMemo, HookValue, HookValueSet, isWithDraftFiber, PlacementFiber, StoreRef, WithDraftFiber } from "./Fiber";
+import { Fiber, fiberDataClone, findParentAndBefore, getData, getEditData, HookContextCosumer, HookEffect, HookMemo, HookValue, HookValueSet, isWithDraftFiber, PlacementFiber, StoreRef, VirtaulDomNode, WithDraftFiber } from "./Fiber";
 import { reconcile } from "./reconcile";
 
 
@@ -24,6 +24,7 @@ export function updateFunctionComponent(fiber: WithDraftFiber) {
 
   hookIndex.cusomer = 0
   fiber.draft.render(fiber)
+  findParentAndBefore(fiber)
   wipFiber = undefined
 }
 
@@ -76,7 +77,7 @@ export function useState<T>(init: T | (() => T)): [T, HookValueSet<T>] {
  * 用表的思维去思考,特别是provider和consumer.添加了,但其标记还是draft.
  * 只添加记录操作方式而不具体操作,在提交时统一操作.
  */
-function buildSetValue<T>(index: number, fiber: Fiber<any>) {
+function buildSetValue<T>(index: number, fiber: Fiber) {
   return function set(temp: T | ((v: T) => T), after?: () => void) {
     reconcile({
       beforeLoop() {
@@ -223,13 +224,13 @@ export function useMemo<T>(effect: () => T, deps: readonly any[]): T {
 }
 
 function defaultShouldUpdate<T>(a: T, b: T) {
-  return a != b
+  return true
 }
 export function useFiber<T>(
   render: (fiber: WithDraftFiber<T>) => void,
   props: T,
   shouldUpdate: (a: T, b: T) => boolean = defaultShouldUpdate
-) {
+): Fiber<T> {
   const currentFiber = wipFiber!
   if (currentFiber.effectTag == 'PLACEMENT') {
     //新增
@@ -255,9 +256,10 @@ export function useFiber<T>(
     getEditData(currentFiber).lastChild = hook
 
     hookIndex.beforeFiber = hook
+    return hook
   } else {
     //修改
-    let oldFiber: Fiber<any> | undefined
+    let oldFiber: Fiber | undefined
     if (hookIndex.beforeFiber) {
       oldFiber = getData(hookIndex.beforeFiber).sibling
     }
@@ -275,9 +277,10 @@ export function useFiber<T>(
       oldFiber.draft.shouldUpdate = shouldUpdate
       addUpdate(oldFiber)
     } else {
+      const oldProps = oldFiber.current.props
       if (oldFiber.current.render != render
         || oldFiber.current.shouldUpdate != shouldUpdate
-        || oldFiber.current.shouldUpdate(props, oldFiber.current.props)
+        || (props != oldProps && oldFiber.current.shouldUpdate(props, oldProps))
       ) {
         //检查出来需要更新
         const draft = fiberDataClone(oldFiber.current)
@@ -290,6 +293,7 @@ export function useFiber<T>(
         addUpdate(oldFiber)
       }
     }
+    return oldFiber
   }
 }
 
@@ -419,6 +423,3 @@ class ContextListener<T>{
     this.context.off(this)
   }
 }
-
-
-

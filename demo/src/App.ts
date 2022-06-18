@@ -4,6 +4,7 @@ import dsl from "./dsl";
 import ExpensiveView from "./ExpensiveView";
 import { CountContext, normalPanel, PanelContext } from "./panel/PanelContext";
 import usePanel from "./panel/usePanel";
+import todoList from "./todoList";
 import vote from "./vote";
 
 
@@ -44,6 +45,15 @@ export default function FirstPage() {
             },
             children() {
               useContent("vote")
+            }
+          })
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              todoList(operate)
+            },
+            children() {
+              useContent("todoList")
             }
           })
           Demo()
@@ -210,7 +220,7 @@ function Demo() {
     }
   })
   //MapList()
-  console.log("render--根")
+  //console.log("render--根")
   useFragment(Count)
   useDom("div", {
     children() {

@@ -1,6 +1,6 @@
 import App from "./App";
 import { render, useFragment, useGuard, useGuardString, useIf, useMap, useEffect, useMemo, useState } from "better-react";
-import { useContent, useDom, scheduleAskTime, FiberNode, StyleContext } from "better-react-dom";
+import { useContent, useDom, scheduleAskTime, FiberNode, StyleContext, createRoot } from "better-react-dom";
 import dsl from "./dsl";
 import { CountContext, PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
 import usePanel from "./panel/usePanel";
@@ -9,8 +9,9 @@ import { StylisCreater } from "stylis-creater";
 
 import test from './test'
 
-const node = FiberNode.create(() => document.getElementById("app")!)
-const destroy = render(
+//const node = FiberNode.create(() => document.getElementById("app")!)
+const destroy = createRoot(
+  document.getElementById("app")!,
   function () {
     StyleContext.useProvider(StylisCreater)
     useDom("button", {
@@ -71,7 +72,6 @@ const destroy = render(
     useFragment(App)
     useFragment(RenderHost, panels)
   },
-  node,
   //askTimeWork,
   //askIdleTimeWork,
   scheduleAskTime

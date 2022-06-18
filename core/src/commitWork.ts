@@ -14,7 +14,7 @@ export function addUpdate(fiber: Fiber) {
   updates.push(fiber)
 }
 const addes: Fiber[] = []
-export function addAdd(fiber: Fiber) {
+export function addAdd<T>(fiber: Fiber<T>) {
   addes.push(fiber)
 }
 export type UpdateEffect = () => void
@@ -24,11 +24,11 @@ export function updateEffect(set: UpdateEffect) {
 }
 
 const appends: [VirtaulDomNode, FindParentAndBefore][] = []
-export function addAppends(dom: VirtaulDomNode, pb: FindParentAndBefore) {
+export function addAppends(dom: VirtaulDomNode<any>, pb: FindParentAndBefore) {
   appends.push([dom, pb])
 }
-const appendAsPortals: VirtaulDomNode[] = []
-export function addAppendAsPortal(dom: VirtaulDomNode) {
+const appendAsPortals: VirtaulDomNode<any>[] = []
+export function addAppendAsPortal<T>(dom: VirtaulDomNode<T>) {
   appendAsPortals.push(dom)
 }
 
@@ -46,14 +46,14 @@ export function rollback() {
   appends.length = 0
   appendAsPortals.length = 0
 }
-function rollbackTag(v: Fiber<any>) {
+function rollbackTag(v: Fiber) {
   const mv = v as any
   if (mv.draft) {
     mv.draft = undefined
     mv.effectTag = undefined
   }
 }
-function clearEffectTag(v: Fiber<any>) {
+function clearEffectTag(v: Fiber) {
   const mv = v as any
   if (mv.draft) {
     mv.effectTag = undefined
@@ -153,7 +153,7 @@ function circleCommitDelection(fiber: Fiber | undefined) {
 }
 
 function removeFromDom(fiber: Fiber) {
-  if (fiber.dom?.isPortal()) {
+  if (fiber.dom?.isPortal(getEditData(fiber).props)) {
     return
   }
   fiber.dom?.removeFromParent()
@@ -182,7 +182,7 @@ function destroyFiber(fiber: Fiber) {
     listener.destroy()
   })
   if (fiber.dom) {
-    if (fiber.dom.isPortal()) {
+    if (fiber.dom.isPortal(getEditData(fiber).props)) {
       fiber.dom.removeFromParent()
     }
     fiber.dom.destroy()
