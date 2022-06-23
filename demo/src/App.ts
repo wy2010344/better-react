@@ -19,7 +19,7 @@ export default function FirstPage() {
         },
         children() {
           useContent("root")
-          TestButtonPage()
+          useFragment(TestButtonPage)
           useDom("button", {
             onClick(e) {
               e.stopPropagation()
@@ -77,6 +77,7 @@ export default function FirstPage() {
 function TestButtonPage() {
   const operate = PanelContext.useConsumer()
   const [thisId, setThisId] = useState(-1)
+  console.log("renderId", thisId)
   useDom("button", {
     onClick(e) {
       e.stopPropagation()
@@ -87,7 +88,7 @@ function TestButtonPage() {
               operate.close(id)
             },
             children() {
-              TestButtonPage()
+              useFragment(TestButtonPage)
             },
             moveFirst() {
               operate.moveToFirst(id)

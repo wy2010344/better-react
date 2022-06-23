@@ -171,7 +171,6 @@ function testcIncrease() {
   })
 }
 
-
 function MapList() {
 
   const [list, setList] = useState<{

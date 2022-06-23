@@ -8,8 +8,6 @@ import { useStoreTriggerRender, ValueCenter } from "better-react-helper";
 import { StylisCreater } from "stylis-creater";
 
 import test from './test'
-
-//const node = FiberNode.create(() => document.getElementById("app")!)
 const destroy = createRoot(
   document.getElementById("app")!,
   function () {
@@ -22,7 +20,7 @@ const destroy = createRoot(
         useContent("销毁所有")
       }
     })
-    //console.log("正在render")
+    console.log("正在render")
 
 
     const [count, setCount] = useState(0)
