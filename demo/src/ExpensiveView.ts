@@ -10,7 +10,7 @@ export default normalPanel(function (operate, id) {
 
   const [transition, setTransition] = useState(false)
   const thisRenderTime = performance.now()
-  console.log("render-", thisRenderTime - lastRenderTime)
+  //console.log("render-", thisRenderTime - lastRenderTime)
   lastRenderTime = thisRenderTime
 
   const view = useMemo(() => {
@@ -28,22 +28,25 @@ export default normalPanel(function (operate, id) {
     children() {
       useDom("div", {
         children() {
-          useDom("input", {
+          const checkbox = useDom("input", {
             type: "checkbox",
-            checked: transition,
             onInput(e) {
               const input = e.target as HTMLInputElement
               setTransition(input.checked)
             }
           })
-          const rangeFiber = useDom("input", {
+          console.log("reco...", checkbox.checked)
+          useEffect(() => {
+            checkbox.checked = transition
+            console.log(checkbox.checked, transition)
+          }, [transition])
+          const range = useDom("input", {
             type: "range",
             min: 0,
             max: 600,
             step: 1,
-            value,
             onChange(e) {
-              console.log(rangeFiber.dom.node!.value)
+              console.log(range.value)
               const input = e.target as HTMLInputElement
             },
             onInput(e) {
@@ -61,9 +64,11 @@ export default normalPanel(function (operate, id) {
               e.preventDefault()
             }
           })
+          useEffect(() => {
+            range.value = "" + value
+          }, [value])
           useContent(`${value}`)
-          useDom("select", {
-            value: 7,
+          const select = useDom("select", {
             children() {
               useDom("option", {
                 value: 9,
@@ -85,6 +90,9 @@ export default normalPanel(function (operate, id) {
               })
             }
           })
+          useEffect(() => {
+            select.value = "7"
+          }, [])
         }
       })
       useDom("hr", {})
@@ -105,16 +113,12 @@ function ExpensiveView(count: number) {
 
   console.log("render-内部-ExpensiveView")
   const length = count * 20 + 1000;
-  const ref = useRef<HTMLDivElement | null>(null)
-  useDom("div", {
-    ref(e) {
-      ref.set(e as any)
-    },
+  const div = useDom("div", {
     children() {
       useDom("button", {
         onClick(e) {
           e.stopPropagation()
-          console.log(ref.get()?.childNodes.length)
+          console.log(div.childNodes.length)
         },
         children() {
           useContent(`内容 ${length}`)

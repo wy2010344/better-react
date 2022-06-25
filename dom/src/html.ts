@@ -1110,16 +1110,16 @@ export namespace React {
     zoomAndPan?: string | undefined;
   }
   interface ClassAttributes<T> {
-    ref?(v?: T): void
+    //ref?(v?: T): void
   }
   export interface SVGProps<T> extends SVGAttributes<T>, ClassAttributes<T> {
   }
   export interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
     // React-specific Attributes
-    defaultChecked?: boolean | undefined;
-    defaultValue?: string | number | ReadonlyArray<string> | undefined;
-    suppressContentEditableWarning?: boolean | undefined;
-    suppressHydrationWarning?: boolean | undefined;
+    // defaultChecked?: boolean | undefined;
+    // defaultValue?: string | number | ReadonlyArray<string> | undefined;
+    // suppressContentEditableWarning?: boolean | undefined;
+    // suppressHydrationWarning?: boolean | undefined;
 
     // Standard HTML Attributes
     accessKey?: string | undefined;
@@ -1367,7 +1367,7 @@ export namespace React {
     autoComplete?: string | undefined;
     autoFocus?: boolean | undefined;
     capture?: boolean | 'user' | 'environment' | undefined; // https://www.w3.org/TR/html-media-capture/#the-capture-attribute
-    checked?: boolean | undefined;
+    //checked?: boolean | undefined;
     crossOrigin?: string | undefined;
     disabled?: boolean | undefined;
     enterKeyHint?: 'enter' | 'done' | 'go' | 'next' | 'previous' | 'search' | 'send' | undefined;
@@ -1393,7 +1393,7 @@ export namespace React {
     src?: string | undefined;
     step?: number | string | undefined;
     type?: HTMLInputTypeAttribute | undefined;
-    value?: string | ReadonlyArray<string> | number | undefined;
+    //value?: string | ReadonlyArray<string> | number | undefined;
     width?: number | string | undefined;
 
     onChange?: ChangeEventHandler<T> | undefined;
@@ -1548,7 +1548,7 @@ export namespace React {
     name?: string | undefined;
     required?: boolean | undefined;
     size?: number | undefined;
-    value?: string | ReadonlyArray<string> | number | undefined;
+    //value?: string | ReadonlyArray<string> | number | undefined;
     onChange?: ChangeEventHandler<T> | undefined;
   }
 
@@ -1590,7 +1590,7 @@ export namespace React {
     readOnly?: boolean | undefined;
     required?: boolean | undefined;
     rows?: number | undefined;
-    value?: string | ReadonlyArray<string> | number | undefined;
+    //value?: string | ReadonlyArray<string> | number | undefined;
     wrap?: string | undefined;
 
     onChange?: ChangeEventHandler<T> | undefined;

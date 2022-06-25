@@ -25,62 +25,47 @@ export const StyleContext = createContext<CreateStyleNode>(DefaultStyleCreater)
 interface FiberAbsNode<T = any> extends VirtaulDomNode<T> {
   node: Node
 }
-const INPUTS = ["input", "textarea", "select"]
+// const INPUTS = ["input", "textarea", "select"]
 export class FiberNode<F> implements FiberAbsNode<F> {
-  public node: Node = undefined as unknown as Node
   init() {
-    if (this.props?.ref) {
-      this.props.ref(this.node)
-    }
+    // if (this.props?.ref) {
+    //   this.props.ref(this.node)
+    // }
   }
   private constructor(
-    private initNode: () => Node,
+    public node: Node,
     private getProps: (v: F) => Props,
-    private outReconcile: (fn: FiberNode<F>) => void,
     private _updateProp: (node: Node, key: string, value: any) => void,
   ) { }
   create(props: F): void {
-    this.node = this.initNode()
     this.update(props)
   }
   private props: Props = {}
   private createStyle: CreateStyleNode = DefaultStyleCreater
   reconcile(): void {
     this.createStyle = this.findStyleCreate()
-    this.outReconcile(this)
   }
   private findStyleCreate() {
     return StyleContext.useConsumer()
   }
   static create<F>(
-    createNode: () => Node,
+    node: Node,
     getProps: (v: F) => Props,
     outReconcile: (props: FiberNode<F>) => void = emptyFun,
     updateProps: (node: Node, key: string, value: any) => void = updatePorps
   ) {
     return new FiberNode(
-      createNode,
+      node,
       getProps,
-      outReconcile,
       updateProps
     )
   }
   static createDom<F>(type: string, getProps: (v: F) => Props) {
-    const outReconcile = INPUTS.includes(type) ? (that: FiberNode<F>) => {
-      useEffect(() => {
-        //事后修改.感觉不是很科学,因为别的useEffect里访问到ref的值不一致?
-        const node = that.node as HTMLInputElement
-        if ('value' in that.props) {
-          node.value = that.props.value
-        }
-      })
-    } : emptyFun
     const create = () => document.createElement(type)
     return function () {
       return new FiberNode(
-        create,
+        create(),
         getProps,
-        outReconcile,
         updatePorps
       )
     }
@@ -89,9 +74,8 @@ export class FiberNode<F> implements FiberAbsNode<F> {
     const create = () => document.createElementNS("http://www.w3.org/2000/svg", type)
     return function () {
       return new FiberNode(
-        create,
+        create(),
         getProps,
-        emptyFun,
         updateSVGProps
       )
     }
@@ -143,9 +127,6 @@ export class FiberNode<F> implements FiberAbsNode<F> {
     } else {
       this.realRemove()
     }
-    if (this.props?.ref) {
-      this.props.ref(null)
-    }
   }
   style?: StyleNode
 
@@ -156,13 +137,12 @@ export class FiberNode<F> implements FiberAbsNode<F> {
 
 
 export class FiberText implements FiberAbsNode<string>{
-  public node: Node = undefined as unknown as Node
+  public node: Node = document.createTextNode("")
   static create() {
     return new FiberText()
   }
   private content: string = ""
   create(props: string): void {
-    this.node = document.createTextNode("")
     this.update(props)
   }
   update(props: string): void {
@@ -315,7 +295,7 @@ function isEvent(key: string) {
  * @returns 
  */
 function isProperty(key: string) {
-  return key != 'children' && key != 'css' && key != 'ref' && key != 'exit' && !isEvent(key)
+  return key != 'children' && key != 'css' && key != 'exit' && !isEvent(key)
 }
 /**
  * 属性发生变更

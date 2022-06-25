@@ -74,12 +74,8 @@ function testFlushSync() {
   const input = useRef<HTMLInputElement | undefined>(undefined)
   useDom("div", {
     children() {
-      useDom("input", {
-        value,
+      const input = useDom("input", {
         type: "number",
-        ref(e) {
-          input.set(e)
-        },
         onInput(e) {
           const input = e.target as HTMLInputElement
           setValue(Number(input.value))
@@ -90,7 +86,7 @@ function testFlushSync() {
           flushSync(() => {
             setValue(v => v + 1)
           })
-          console.log(input.get()?.value)
+          console.log(input.value)
         },
         children() {
           useContent("设置值")

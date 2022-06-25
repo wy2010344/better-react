@@ -359,11 +359,10 @@ export default function useCodeJar({
   }))
   const recording = useRefValue(() => false)
   const focus = useRefValue(() => false)
-  const editor = useRefValue(() => document.body)
   function rememberHistory() {
     if (focus.get()) {
-      const text = editor.get().textContent || ''
-      const pos = mb.DOM.getSelectionRange(editor.get())
+      const text = editor.textContent || ''
+      const pos = mb.DOM.getSelectionRange(editor)
 
       const lastRecord = history.current()
       if (lastRecord
@@ -380,21 +379,20 @@ export default function useCodeJar({
   useEffect(() => {
     const record = history.current()
     if (record) {
-      mb.DOM.setSelectionRange(editor.get(), record.pos)
+      mb.DOM.setSelectionRange(editor, record.pos)
     }
   }, [content])
 
-  return useDom("div", {
+  const editor = useDom("div", {
     ...options,
-    ref: editor.set,
     onKeyDown(e) {
       if (e.defaultPrevented) return
       if (mb.DOM.keyCode.ENTER(e)) {
         //换行
-        handleNewLine(editor.get(), indentOn, tab, e)
+        handleNewLine(editor, indentOn, tab, e)
       } else if (mb.DOM.keyCode.TAB(e)) {
         //缩进与反缩进
-        handleTabCharacters(editor.get(), tab, e)
+        handleTabCharacters(editor, tab, e)
       } else if (isUndo(e)) {
         //撤销
         mb.DOM.preventDefault(e)
@@ -405,7 +403,7 @@ export default function useCodeJar({
         history.redo()
       } else if (!noClosing) {
         //补全括号
-        handleSelfClosingCharacters(editor.get(), e, closePair)
+        handleSelfClosingCharacters(editor, e, closePair)
       }
       if (shouldRecord(e) && !recording.get()) {
         rememberHistory()
@@ -431,9 +429,9 @@ export default function useCodeJar({
       rememberHistory()
       mb.DOM.preventDefault(e)
       const text = ((e as any).originalEvent || e).clipboardData.getData("text/plain") as string
-      const pos = mb.DOM.getSelectionRange(editor.get())
+      const pos = mb.DOM.getSelectionRange(editor)
       insert(text)
-      mb.DOM.setSelectionRange(editor.get(), {
+      mb.DOM.setSelectionRange(editor, {
         start: pos.start + text.length,
         end: pos.start + text.length
       })
@@ -445,7 +443,7 @@ export default function useCodeJar({
     async exit(e) {
       const record = history.current()
       if (record) {
-        record.pos = mb.DOM.getSelectionRange(editor.get())
+        record.pos = mb.DOM.getSelectionRange(editor)
       }
       return options.exit?.(e)
     },
@@ -460,4 +458,5 @@ export default function useCodeJar({
       textAlign: "left"
     }
   })
+  return editor
 }

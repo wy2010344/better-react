@@ -10,8 +10,7 @@ export default normalPanel(function (operate, id) {
   const topic = useTopic()
   useDom("div", {
     children() {
-      const area = useRef<HTMLTextAreaElement | undefined>(undefined)
-      useDom("textarea", {
+      const textarea = useDom("textarea", {
         css: `
         width:100%;
         min-height:1rem;
@@ -20,17 +19,12 @@ export default normalPanel(function (operate, id) {
         resize:none;
         `,
         onInput(e) {
-          const text = area.get()
-          if (text) {
-            text.style.height = text.scrollHeight + 'px'
-          }
-        },
-        ref: area.set
+          textarea.style.height = textarea.scrollHeight + 'px'
+        }
       })
       useDom("button", {
         onClick(e) {
           e.stopPropagation()
-          const textarea = area.get()
           const value = textarea?.value.trim()
           if (value && textarea) {
             const error = topic.add(value)

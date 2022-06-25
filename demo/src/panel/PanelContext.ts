@@ -81,7 +81,7 @@ export function usePortalPanel(args: Omit<PanelParams, "portalTarget" | "moveFir
       return document.body
     },
     moveFirst() {
-      document.body.appendChild(fiber.dom.node!)
+      document.body.appendChild(fiber)
     }
   })
 }
