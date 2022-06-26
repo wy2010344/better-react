@@ -1,8 +1,8 @@
-import { addAppendAsPortal, addAppends } from "./commitWork"
+import { addAppendAsPortal, addAppends, ChangeAtomValue } from "./commitWork"
 
 export type HookValueSet<T> = (v: T | ((v: T) => T), after?: () => void) => void
 export type HookValue<T> = {
-  value: T
+  value: ChangeAtomValue<T>
   readonly set: HookValueSet<T>
 }
 export type HookMemo<T> = {
@@ -13,8 +13,9 @@ export type HookEffect = {
   deps?: readonly any[]
   destroy?: void | (() => void)
 }
-export type HookContextCosumer = {
-  getValue(): any
+export type HookContextCosumer<T, M> = {
+  getValue(): M
+  select(v: T): M
   destroy(): void
 }
 export type FiberData<T> = {
@@ -29,36 +30,25 @@ export type FiberData<T> = {
   lastChild?: Fiber
   /**前一个节点 */
   prev?: Fiber
-
-  hookValue?: HookValue<any>[]
-  hookEffect?: HookEffect[]
-  hookMemo?: HookMemo<any>[]
-  hookContextCosumer?: HookContextCosumer[]
 }
 
+//一定要克隆,克隆后还要加工
 export function fiberDataClone<T>(v: FiberData<T>): FiberData<T> {
   return {
-    ...v,
-    hookValue: v.hookValue?.map(x => {
-      return {
-        value: x.value,
-        set: x.set
-      }
-    }),
-    hookEffect: v.hookEffect?.map(x => {
-      return {
-        deps: x.deps,
-        destroy: x.destroy
-      }
-    }),
-    hookMemo: v.hookMemo?.map(x => {
-      return {
-        value: x.value,
-        deps: x.deps
-      }
-    }),
-    hookContextCosumer: v.hookContextCosumer?.map(x => x)
+    ...v
   }
+}
+
+type BaseFiber<T> = {
+  parent?: Fiber
+  dom?: VirtaulDomNode<T>
+  contextProvider?: Map<any, {
+    changeValue(v: any): void
+  }>
+  hookValue?: HookValue<any>[]
+  hookEffect?: ChangeAtomValue<HookEffect>[]
+  hookMemo?: ChangeAtomValue<HookMemo<any>>[]
+  hookContextCosumer?: HookContextCosumer<any, any>[]
 }
 /**
  * 并不需要新旧diff,所以不需要alter
@@ -66,36 +56,21 @@ export function fiberDataClone<T>(v: FiberData<T>): FiberData<T> {
  * 
  * 将自身地址作为ID,这个地址下有两条记录
  */
-export type Fiber<T = any> = WithDraftFiber<T> | {
-  parent?: Fiber
-  dom?: VirtaulDomNode<T>
-  contextProvider?: Map<any, {
-    changeValue(v: any): void
-  }>
+export type Fiber<T = any> = WithDraftFiber<T> | ({
   current: Readonly<FiberData<T>>
-}
+} & BaseFiber<T>)
 export type PlacementFiber<T> = {
-  parent?: Fiber
-  dom?: VirtaulDomNode<T>
-  contextProvider?: Map<any, {
-    changeValue(v: any): void
-  }>
-
   effectTag: "PLACEMENT"
   draft: FiberData<T>
-}
+} & BaseFiber<T>
 export type UpdateFiber<T> = {
-  parent?: Fiber
-  dom?: VirtaulDomNode<T>
-  contextProvider?: Map<any, {
-    changeValue(v: any): void
-  }>
-
   effectTag: "UPDATE"
   current: Readonly<FiberData<T>>
   draft: FiberData<T>
-}
+} & BaseFiber<T>
 export type WithDraftFiber<T = Props> = PlacementFiber<T> | UpdateFiber<T>
+
+
 export function isWithDraftFiber<V>(v: Fiber<V>): v is WithDraftFiber<V> {
   return !!(v as any).effectTag
 }

@@ -4,6 +4,7 @@ import dsl from "./dsl";
 import ExpensiveView from "./ExpensiveView";
 import { CountContext, normalPanel, PanelContext } from "./panel/PanelContext";
 import usePanel from "./panel/usePanel";
+import dragDemo from "./test/dragDemo";
 import todoList from "./todoList";
 import vote from "./vote";
 
@@ -62,6 +63,17 @@ export default function FirstPage() {
 
           const value = CountContext.useConsumer()
           useContent(`在这里${value}`)
+
+
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              dragDemo(operate)
+            },
+            children() {
+              useContent("drag-demo")
+            }
+          })
         },
         moveFirst() {
           operate.moveToFirst(id)

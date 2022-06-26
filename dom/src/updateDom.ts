@@ -51,7 +51,6 @@ export class FiberNode<F> implements FiberAbsNode<F> {
   static create<F>(
     node: Node,
     getProps: (v: F) => Props,
-    outReconcile: (props: FiberNode<F>) => void = emptyFun,
     updateProps: (node: Node, key: string, value: any) => void = updatePorps
   ) {
     return new FiberNode(

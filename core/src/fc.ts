@@ -1,5 +1,5 @@
-import { addAdd, addDraftConsumer, addUpdate, updateEffect } from "./commitWork";
-import { Fiber, fiberDataClone, findParentAndBefore, getData, getEditData, HookContextCosumer, HookEffect, HookMemo, HookValue, HookValueSet, isWithDraftFiber, PlacementFiber, StoreRef, VirtaulDomNode, WithDraftFiber } from "./Fiber";
+import { addAdd, addDraftConsumer, addUpdate, ChangeAtomValue, createChangeAtom, updateEffect } from "./commitWork";
+import { Fiber, fiberDataClone, findParentAndBefore, getData, getEditData, HookContextCosumer, HookEffect, HookValue, HookValueSet, isWithDraftFiber, StoreRef, WithDraftFiber } from "./Fiber";
 import { reconcile } from "./reconcile";
 
 
@@ -40,28 +40,27 @@ export function useState<T>(init: T | (() => T)): [T, HookValueSet<T>] {
   const currentFiber = wipFiber!
   if (currentFiber.effectTag == 'PLACEMENT') {
     //新增
-    const hookValues = currentFiber.draft.hookValue || []
-    currentFiber.draft.hookValue = hookValues
-
-    const index = hookValues.length
+    const hookValues = currentFiber.hookValue || []
+    currentFiber.hookValue = hookValues
+    const value = createChangeAtom(getInit(init))
     const hook: HookValue<T> = {
-      value: getInit(init),
-      set: buildSetValue(index, currentFiber)
+      value,
+      set: buildSetValue(value, currentFiber)
     }
     hookValues.push(hook)
-    return [hook.value, hook.set]
+    return [value.get(), hook.set]
   } else {
     //修改
-    const hookValues = currentFiber.draft.hookValue
+    const hookValues = currentFiber.hookValue
     if (!hookValues) {
       throw new Error("原组件上不存在state")
     }
-    const hook = hookValues[hookIndex.state] as HookValue<T>
+    const hook = hookValues[hookIndex.state]
     if (!hook) {
       throw new Error("出现了更多的state")
     }
     hookIndex.state++
-    return [hook.value, hook.set]
+    return [hook.value.get(), hook.set]
   }
 }
 /**
@@ -77,17 +76,19 @@ export function useState<T>(init: T | (() => T)): [T, HookValueSet<T>] {
  * 用表的思维去思考,特别是provider和consumer.添加了,但其标记还是draft.
  * 只添加记录操作方式而不具体操作,在提交时统一操作.
  */
-function buildSetValue<T>(index: number, fiber: Fiber) {
-  return function set(temp: T | ((v: T) => T), after?: () => void) {
+function buildSetValue<T>(atom: ChangeAtomValue<T>, fiber: Fiber) {
+  return function set(temp: T | ((v: T) => T), after?: (v: T) => void) {
     reconcile({
       beforeLoop() {
-        const nFiber = toWithDraftFiber(fiber)
-        const hookValues = nFiber.draft.hookValue! //这里如果多次设置值,则会改动多次,依前一次结果累积.
-        const oldValue = hookValues[index]
-        const newValue = typeof (temp) == 'function' ? (temp as any)(oldValue.value) : temp as T
-        oldValue.value = newValue
+        toWithDraftFiber(fiber)
+        //这里如果多次设置值,则会改动多次,依前一次结果累积.
+        const oldValue = atom.get()
+        const newValue = typeof (temp) == 'function' ? (temp as any)(oldValue) : temp as T
+        atom.set(newValue)
       },
-      afterLoop: after
+      afterLoop: after ? () => {
+        after(atom.get())
+      } : undefined
     })
   }
 }
@@ -139,7 +140,7 @@ export function arrayNotEqual<T>(a1: readonly T[], a2: readonly T[], notEqual: (
   const len = a1.length
   if (a2.length == len) {
     for (let i = 0; i < len; i++) {
-      if (!notEqual(a1[i], a2[i])) {
+      if (notEqual(a1[i], a2[i])) {
         return true
       }
     }
@@ -151,39 +152,42 @@ export function useEffect(effect: () => (void | (() => void)), deps?: readonly a
   const currentFiber = wipFiber!
   if (currentFiber.effectTag == 'PLACEMENT') {
     //新增
-    const hookEffects = currentFiber.draft.hookEffect || []
-    currentFiber.draft.hookEffect = hookEffects
-
-    const hookEffect: HookEffect = {
+    const hookEffects = currentFiber.hookEffect || []
+    currentFiber.hookEffect = hookEffects
+    const state: HookEffect = {
       deps
     }
+    const hookEffect = createChangeAtom(state)
     hookEffects.push(hookEffect)
     updateEffect(() => {
-      hookEffect.destroy = effect()
+      state.destroy = effect()
     })
   } else {
-    const hookEffects = currentFiber.draft.hookEffect
+    const hookEffects = currentFiber.hookEffect
     if (!hookEffects) {
       throw new Error("原组件上不存在hookEffects")
     }
     const index = hookIndex.effect
-    const hookEffect = hookEffects[index] as HookEffect
+    const hookEffect = hookEffects[index]
     if (!hookEffect) {
       throw new Error("出现了更多的effect")
     }
-
+    const state = hookEffect.get()
     hookIndex.effect = index + 1
-    if (Array.isArray(hookEffect.deps)
+    if (Array.isArray(state.deps)
       && Array.isArray(deps)
-      && arrayEqual(hookEffect.deps, deps, simpleEqual)) {
+      && arrayEqual(state.deps, deps, simpleEqual)) {
       //不处理
     } else {
-      hookEffect.deps = deps
+      const newState: HookEffect = {
+        deps
+      }
+      hookEffect.set(newState)
       updateEffect(() => {
-        if (hookEffect.destroy) {
-          hookEffect.destroy()
+        if (state.destroy) {
+          state.destroy()
         }
-        hookEffect.destroy = effect()
+        newState.destroy = effect()
       })
     }
   }
@@ -192,17 +196,17 @@ export function useEffect(effect: () => (void | (() => void)), deps?: readonly a
 export function useMemo<T>(effect: () => T, deps: readonly any[]): T {
   const currentFiber = wipFiber!
   if (currentFiber.effectTag == "PLACEMENT") {
-    const hookMemos = currentFiber.draft.hookMemo || []
-    currentFiber.draft.hookMemo = hookMemos
-
-    const hook: HookMemo<T> = {
+    const hookMemos = currentFiber.hookMemo || []
+    currentFiber.hookMemo = hookMemos
+    const state = {
       value: effect(),
       deps
     }
+    const hook = createChangeAtom(state)
     hookMemos.push(hook)
-    return hook.value
+    return state.value
   } else {
-    const hookMemos = currentFiber.draft.hookMemo
+    const hookMemos = currentFiber.hookMemo
     if (!hookMemos) {
       throw new Error("原组件上不存在memos")
     }
@@ -212,13 +216,17 @@ export function useMemo<T>(effect: () => T, deps: readonly any[]): T {
       throw new Error("出现了更多的memo")
     }
     hookIndex.memo = index + 1
-    if (arrayEqual(hook.deps, deps, simpleEqual)) {
+    const state = hook.get()
+    if (arrayEqual(state.deps, deps, simpleEqual)) {
       //不处理
-      return hook.value
+      return state.value
     } else {
-      hook.value = effect()
-      hook.deps = deps
-      return hook.value
+      const newState = {
+        value: effect(),
+        deps
+      }
+      hook.set(newState)
+      return newState.value
     }
   }
 }
@@ -299,8 +307,10 @@ export function useFiber<T>(
 
 export interface Context<T> {
   useProvider(v: T): void
+  useSelector<M>(getValue: (v: T) => M): M
   useConsumer(): T
 }
+function quote<T>(v: T) { return v }
 export function createContext<T>(v: T): Context<T> {
   return new ContextFactory(v)
 }
@@ -317,8 +327,8 @@ class ContextFactory<T> implements Context<T>{
   private createProvider(value: T): ContextProvider<T> {
     return new ContextProvider(value, this)
   }
-  private createConsumer(fiber: Fiber): ContextListener<T> {
-    return new ContextListener(this.findProvider(fiber), fiber)
+  private createConsumer<M>(fiber: Fiber, getValue: (v: T) => M): ContextListener<T, M> {
+    return new ContextListener(this.findProvider(fiber), fiber, getValue)
   }
   useProvider(v: T) {
     let map: Map<any, {
@@ -338,19 +348,19 @@ class ContextFactory<T> implements Context<T>{
     }
     hook.changeValue(v)
   }
-  useConsumer() {
+  useSelector<M>(getValue: (v: T) => M): M {
     const currentFiber = wipFiber!
     if (currentFiber.effectTag == "PLACEMENT") {
-      const hookConsumers = currentFiber.draft.hookContextCosumer || []
-      currentFiber.draft.hookContextCosumer = hookConsumers
+      const hookConsumers = currentFiber.hookContextCosumer || []
+      currentFiber.hookContextCosumer = hookConsumers
 
-      const hook: HookContextCosumer = this.createConsumer(currentFiber)
+      const hook: HookContextCosumer<T, M> = this.createConsumer(currentFiber, getValue)
       hookConsumers.push(hook)
       addDraftConsumer(hook)
       //如果draft废弃,需要移除该hook
       return hook.getValue()
     } else {
-      const hookConsumers = currentFiber.draft.hookContextCosumer
+      const hookConsumers = currentFiber.hookContextCosumer
       if (!hookConsumers) {
         throw new Error("原组件上不存在hookConsumers")
       }
@@ -359,9 +369,13 @@ class ContextFactory<T> implements Context<T>{
       if (!hook) {
         throw new Error("没有出现更多consumes")
       }
+      hook.select = getValue
       hookIndex.cusomer = index + 1
       return hook.getValue()
     }
+  }
+  useConsumer() {
+    return this.useSelector(quote)
   }
   private findProvider(_fiber: Fiber) {
     let fiber = _fiber as Fiber | undefined
@@ -391,33 +405,39 @@ class ContextProvider<T>{
   notify() {
     this.list.forEach(row => row.change())
   }
-  private list = new Set<ContextListener<T>>()
-  on(fun: ContextListener<T>) {
+  private list = new Set<ContextListener<T, any>>()
+  on(fun: ContextListener<T, any>) {
     if (this.list.has(fun)) {
       console.warn("已经存在相应函数", fun)
     } else {
       this.list.add(fun)
     }
   }
-  off(fun: ContextListener<T>) {
+  off(fun: ContextListener<T, any>) {
     if (!this.list.delete(fun)) {
       console.warn("重复删除context", fun)
     }
   }
 }
 
-class ContextListener<T>{
+class ContextListener<T, M>{
   constructor(
     public context: ContextProvider<T>,
     private fiber: Fiber,
+    public select: (v: T) => M
   ) {
     this.context.on(this)
   }
+  public atom = createChangeAtom(this.select(this.context.value))
   getValue() {
-    return this.context.value
+    return this.atom.get()
   }
   change() {
-    toWithDraftFiber(this.fiber)
+    const newValue = this.select(this.context.value)
+    if (newValue != this.atom.get()) {
+      this.atom.set(newValue)
+      toWithDraftFiber(this.fiber)
+    }
   }
   destroy() {
     this.context.off(this)

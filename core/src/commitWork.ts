@@ -1,7 +1,7 @@
 import { Fiber, FiberData, HookContextCosumer, VirtaulDomNode, WithDraftFiber } from "./Fiber"
 
-const draftConsumer: HookContextCosumer[] = []
-export function addDraftConsumer(v: HookContextCosumer) {
+const draftConsumer: HookContextCosumer<any, any>[] = []
+export function addDraftConsumer(v: HookContextCosumer<any, any>) {
   draftConsumer.push(v)
 }
 //等待删除的fiber
@@ -32,7 +32,51 @@ export function addAppendAsPortal<T>(dom: VirtaulDomNode<T>) {
   appendAsPortals.push(dom)
 }
 
+const changeAtoms: ChangeAtom<any>[] = []
+export type ChangeAtomValue<T> = {
+  set(v: T): void
+  get(): T
+}
+function defaultDidCommit<T>(v: T) { }
+export function createChangeAtom<T>(
+  value: T,
+  didCommit?: (v: T) => void
+): ChangeAtomValue<T> {
+  return new ChangeAtom(value, didCommit || defaultDidCommit)
+}
+class ChangeAtom<T> implements ChangeAtomValue<T>{
+  constructor(
+    private value: T,
+    private didCommit: (v: T) => void
+  ) { }
+  dirty = false
+  draftValue!: T
+  set(v: T) {
+    if (!this.dirty) {
+      this.dirty = true
+      changeAtoms.push(this)
+    }
+    this.draftValue = v
+  }
+  get() {
+    if (this.dirty) {
+      return this.draftValue
+    }
+    return this.value
+  }
+  commit() {
+    this.dirty = false
+    this.value = this.draftValue
+    this.didCommit(this.draftValue)
+  }
+  rollback() {
+    this.dirty = false
+  }
+}
+
 export function rollback() {
+  changeAtoms.forEach(atom => atom.rollback())
+  changeAtoms.length = 0
   addes.forEach(rollbackTag)
   updates.forEach(rollbackTag)
   deletions.forEach(rollbackTag)
@@ -72,6 +116,8 @@ function getEditData(v: Fiber): FiberData<any> {
  * 找到最顶层dirty节点->计算出新的节点替换当前->对比标记新节点->更新
  */
 export function commitRoot() {
+  changeAtoms.forEach(atom => atom.commit())
+  changeAtoms.length = 0
   //将所有缓存提交
   addes.forEach(clearEffectTag)
   updates.forEach(clearEffectTag)
@@ -170,14 +216,14 @@ function notifyDel(fiber: Fiber) {
   }
 }
 function destroyFiber(fiber: Fiber) {
-  const effects = getEditData(fiber).hookEffect
+  const effects = fiber.hookEffect
   effects?.forEach(effect => {
-    const destroy = effect.destroy
+    const destroy = effect.get().destroy
     if (destroy) {
       destroy()
     }
   })
-  const listeners = getEditData(fiber).hookContextCosumer
+  const listeners = fiber.hookContextCosumer
   listeners?.forEach(listener => {
     listener.destroy()
   })

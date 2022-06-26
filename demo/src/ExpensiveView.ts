@@ -1,6 +1,6 @@
 import { useFragment, useMap, useMemo, useState, startTransition, useEffect } from "better-react";
 import { React, useContent, useDom } from "better-react-dom";
-import { useRef } from "better-react-helper";
+import { useEvent, useRef } from "better-react-helper";
 import { normalPanel } from "./panel/PanelContext";
 
 let lastRenderTime = performance.now()
@@ -8,10 +8,25 @@ export default normalPanel(function (operate, id) {
   const [value, setValue] = useState(0);
   const [renderValue, setRenderValue] = useState(0);
 
+
+  const [onTrans, setOnTrans] = useState(false)
+  //const testValue = useSyncExternalStore(testStore.subscribe, testStore.get)
+  const abcValue = useMyExternal(abcStore.subscribe, abcStore.get)
+  useMemo(() => {
+    console.log("改变了trans", onTrans, "----abc---", abcValue, abcStore.get())
+    return Date.now()
+  }, [onTrans])
+
+
   const [transition, setTransition] = useState(false)
   const thisRenderTime = performance.now()
   //console.log("render-", thisRenderTime - lastRenderTime)
   lastRenderTime = thisRenderTime
+
+  const [avCount, setAvCount] = useState(9)
+  useEffect(() => {
+    setAvCount(v => v + 1)
+  }, [onTrans])
 
   const view = useMemo(() => {
     return () => {
@@ -35,10 +50,10 @@ export default normalPanel(function (operate, id) {
               setTransition(input.checked)
             }
           })
-          console.log("reco...", checkbox.checked)
+          //console.log("reco...", checkbox.checked)
           useEffect(() => {
             checkbox.checked = transition
-            console.log(checkbox.checked, transition)
+            //console.log(checkbox.checked, transition)
           }, [transition])
           const range = useDom("input", {
             type: "range",
@@ -46,7 +61,7 @@ export default normalPanel(function (operate, id) {
             max: 600,
             step: 1,
             onChange(e) {
-              console.log(range.value)
+              //console.log(range.value)
               const input = e.target as HTMLInputElement
             },
             onInput(e) {
@@ -57,6 +72,9 @@ export default normalPanel(function (operate, id) {
               if (transition) {
                 startTransition(() => {
                   setRenderValue(value)
+                  setOnTrans(v => !v)
+                  abcStore.set(abcValue + 1)
+                  //testStore.set(testValue + 1)
                 })
               } else {
                 setRenderValue(value)
@@ -93,6 +111,7 @@ export default normalPanel(function (operate, id) {
           useEffect(() => {
             select.value = "7"
           }, [])
+          useContent(`改变内部值${onTrans ? "A" : "B"}外部存储值${avCount}---abc---${abcValue}`)
         }
       })
       useDom("hr", {})
@@ -111,7 +130,7 @@ export default normalPanel(function (operate, id) {
 
 function ExpensiveView(count: number) {
 
-  console.log("render-内部-ExpensiveView")
+  //console.log("render-内部-ExpensiveView")
   const length = count * 20 + 1000;
   const div = useDom("div", {
     children() {
@@ -124,8 +143,10 @@ function ExpensiveView(count: number) {
           useContent(`内容 ${length}`)
         }
       })
+
+      useFragment(PartView)
       useDom("hr")
-      console.log("render-mvvvv")
+      //console.log("render-mvvvv")
       useMap(
         Array.from(Array(length).keys()).reverse(),
         v => v,
@@ -148,4 +169,50 @@ function ExpensiveView(count: number) {
         })
     }
   })
+}
+
+function PartView() {
+  //const testValue = useSyncExternalStore(testStore.subscribe, testStore.get)
+  const vvValue = useMyExternal(abcStore.subscribe, abcStore.get)
+  useDom("div", {
+    children() {
+      useContent(`内部读取{ testValue } --- abc-- - ${vvValue}`)
+    }
+  })
+}
+
+function createTestStore() {
+  const pool = new Set<() => void>()
+  let value = 9
+  return {
+    get() {
+      return value
+    },
+    set(v: number) {
+      value = v
+      pool.forEach(run => run())
+    },
+    subscribe(run: () => void) {
+      pool.add(run)
+      return () => {
+        pool.delete(run)
+      }
+    }
+  }
+}
+const testStore = createTestStore()
+const abcStore = createTestStore()
+
+function useMyExternal<T>(subscribe: (fun: () => void) => () => void, getValue: () => T): T {
+  const [value, setValue] = useState<T>(getValue())
+  const notify = useEvent(() => {
+    const v = getValue()
+    if (v != value) {
+      setValue(v)
+    }
+  })
+  useEffect(() => {
+    return subscribe(notify)
+  }, [])
+  return value
 }

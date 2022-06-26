@@ -49,7 +49,12 @@ export default normalPanel(function (operate, id) {
       `,
       onClick(e) {
         e.stopPropagation()
-        topicPanel(operate, v)
+        topicPanel(operate, {
+          topic: v,
+          setTopic(v) {
+            topic.update(v, i)
+          }
+        })
       },
       children() {
         useContent(v.description)

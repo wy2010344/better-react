@@ -1,4 +1,4 @@
-import { addAdd, addDelect, addUpdate } from "./commitWork"
+import { addAdd, addDelect, addUpdate, } from "./commitWork"
 import { arrayNotEqual, simpleNotEqual, storeRef, toWithDraftFiber, useEffect, useFiber, useMemo } from "./fc"
 import { Fiber, fiberDataClone, getEditData, isWithDraftFiber, PlacementFiber, VirtaulDomNode, WithDraftFiber } from "./Fiber"
 import { AskNextTimeWork, setRootFiber } from "./reconcile"
@@ -7,6 +7,7 @@ export type { REAL_WORK } from './reconcile'
 export { useState, useEffect, storeRef, useMemo, createContext, useFiber, arrayEqual, arrayNotEqual, simpleEqual, simpleNotEqual } from './fc'
 export type { Fiber, Props, VirtaulDomNode, WithDraftFiber, PlacementFiber, FindParentAndBefore } from './Fiber'
 export type { AskNextTimeWork }
+export { createChangeAtom, ChangeAtomValue } from './commitWork'
 
 export function render<T>(
   render: (v: WithDraftFiber<T>) => void,

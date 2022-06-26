@@ -1,3 +1,4 @@
+import { useMap } from "better-react";
 import { useContent, useDom } from "better-react-dom";
 import { useRef } from "better-react-helper";
 import { useUser } from "../dbStore";
@@ -20,6 +21,18 @@ export default normalPanel(function (operate, id) {
         children() {
           useContent("增加人物")
         }
+      })
+    }
+  })
+  useDom("div", {
+    children() {
+      const { users } = useUser()
+      useMap(users, v => v.name, user => {
+        useDom("div", {
+          children() {
+            useContent(user.name)
+          }
+        })
       })
     }
   })
