@@ -16,6 +16,7 @@ export type HookEffect = {
 export type HookContextCosumer<T, M> = {
   getValue(): M
   select(v: T): M
+  shouldUpdate?(a: M, b: M): boolean
   destroy(): void
 }
 export type FiberData<T> = {

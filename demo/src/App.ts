@@ -2,6 +2,7 @@ import { useEffect, useFragment, useGuard, useGuardString, useMap, useState } fr
 import { useContent, useDom } from "better-react-dom";
 import dsl from "./dsl";
 import ExpensiveView from "./ExpensiveView";
+import motionOne from "./motion-one";
 import { CountContext, normalPanel, PanelContext } from "./panel/PanelContext";
 import usePanel from "./panel/usePanel";
 import dragDemo from "./test/dragDemo";
@@ -55,6 +56,15 @@ export default function FirstPage() {
             },
             children() {
               useContent("todoList")
+            }
+          })
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              motionOne(operate)
+            },
+            children() {
+              useContent("motion-one")
             }
           })
           Demo()

@@ -307,7 +307,7 @@ export function useFiber<T>(
 
 export interface Context<T> {
   useProvider(v: T): void
-  useSelector<M>(getValue: (v: T) => M): M
+  useSelector<M>(getValue: (v: T) => M, shouldUpdate?: (a: M, b: M) => boolean): M
   useConsumer(): T
 }
 function quote<T>(v: T) { return v }
@@ -327,8 +327,8 @@ class ContextFactory<T> implements Context<T>{
   private createProvider(value: T): ContextProvider<T> {
     return new ContextProvider(value, this)
   }
-  private createConsumer<M>(fiber: Fiber, getValue: (v: T) => M): ContextListener<T, M> {
-    return new ContextListener(this.findProvider(fiber), fiber, getValue)
+  private createConsumer<M>(fiber: Fiber, getValue: (v: T) => M, shouldUpdate?: (a: M, b: M) => boolean): ContextListener<T, M> {
+    return new ContextListener(this.findProvider(fiber), fiber, getValue, shouldUpdate)
   }
   useProvider(v: T) {
     let map: Map<any, {
@@ -348,13 +348,13 @@ class ContextFactory<T> implements Context<T>{
     }
     hook.changeValue(v)
   }
-  useSelector<M>(getValue: (v: T) => M): M {
+  useSelector<M>(getValue: (v: T) => M, shouldUpdate?: (a: M, b: M) => boolean): M {
     const currentFiber = wipFiber!
     if (currentFiber.effectTag == "PLACEMENT") {
       const hookConsumers = currentFiber.hookContextCosumer || []
       currentFiber.hookContextCosumer = hookConsumers
 
-      const hook: HookContextCosumer<T, M> = this.createConsumer(currentFiber, getValue)
+      const hook: HookContextCosumer<T, M> = this.createConsumer(currentFiber, getValue, shouldUpdate)
       hookConsumers.push(hook)
       addDraftConsumer(hook)
       //如果draft废弃,需要移除该hook
@@ -370,6 +370,7 @@ class ContextFactory<T> implements Context<T>{
         throw new Error("没有出现更多consumes")
       }
       hook.select = getValue
+      hook.shouldUpdate = shouldUpdate
       hookIndex.cusomer = index + 1
       return hook.getValue()
     }
@@ -424,7 +425,8 @@ class ContextListener<T, M>{
   constructor(
     public context: ContextProvider<T>,
     private fiber: Fiber,
-    public select: (v: T) => M
+    public select: (v: T) => M,
+    public shouldUpdate?: (a: M, b: M) => boolean
   ) {
     this.context.on(this)
   }
@@ -434,9 +436,17 @@ class ContextListener<T, M>{
   }
   change() {
     const newValue = this.select(this.context.value)
-    if (newValue != this.atom.get()) {
+    const oldValue = this.atom.get()
+    if (newValue != oldValue && this.didShouldUpdate(newValue, oldValue)) {
       this.atom.set(newValue)
       toWithDraftFiber(this.fiber)
+    }
+  }
+  didShouldUpdate(a: M, b: M) {
+    if (this.shouldUpdate) {
+      return this.shouldUpdate(a, b)
+    } else {
+      return true
     }
   }
   destroy() {
