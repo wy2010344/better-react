@@ -1,17 +1,29 @@
+import { useEffect } from "better-react";
 import { useDom, React } from "better-react-dom";
-import { Direction } from "./drag";
+import { Direction, initDrag, ResizeHelper } from "./drag";
 
 
-export default function useResize(resize: (e: React.MouseEvent, dir: Direction) => void) {
-
-  function makeResize(dir: Direction) {
-    return function (e: React.MouseEvent) {
-      e = e || window.event as MouseEvent;
-      resize(e, dir);
-    };
-  };
-
-  useDom("div", {
+export default function useResize(resize: ResizeHelper) {
+  function makeDrag(dom: HTMLElement, dir: Direction) {
+    useEffect(() => {
+      return initDrag(dom, {
+        // start(e) {
+        //   e.preventDefault()
+        //   e.stopPropagation()
+        // },
+        move(e) {
+          e.preventDefault()
+          e.stopPropagation()
+        },
+        // end(e) {
+        //   e.preventDefault()
+        //   e.stopPropagation()
+        // },
+        diff: resize(dir),
+      })
+    }, [])
+  }
+  makeDrag(useDom("div", {
     style: {
       width: "100%",
       height: "7px",
@@ -19,10 +31,9 @@ export default function useResize(resize: (e: React.MouseEvent, dir: Direction) 
       top: "-3px",
       left: "0",
       cursor: "n-resize"
-    },
-    onMouseDown: makeResize({ t: true })
-  })
-  useDom("div", {
+    }
+  }), { t: true })
+  makeDrag(useDom("div", {
     style: {
       width: "7px",
       height: "100%",
@@ -31,20 +42,8 @@ export default function useResize(resize: (e: React.MouseEvent, dir: Direction) 
       top: "0",
       cursor: "e-resize"
     },
-    onMouseDown: makeResize({ r: true })
-  })
-  useDom("div", {
-    style: {
-      width: "100%",
-      height: "7px",
-      position: "absolute",
-      top: "-3px",
-      left: "0",
-      cursor: "n-resize"
-    },
-    onMouseDown: makeResize({ t: true })
-  })
-  useDom("div", {
+  }), { r: true })
+  makeDrag(useDom("div", {
     style: {
       width: "7px",
       height: "100%",
@@ -52,10 +51,9 @@ export default function useResize(resize: (e: React.MouseEvent, dir: Direction) 
       left: "-3px",
       top: "0",
       cursor: "w-resize"
-    },
-    onMouseDown: makeResize({ l: true })
-  })
-  useDom("div", {
+    }
+  }), { l: true })
+  makeDrag(useDom("div", {
     style: {
       width: "100%",
       height: "7px",
@@ -64,9 +62,8 @@ export default function useResize(resize: (e: React.MouseEvent, dir: Direction) 
       left: "0",
       cursor: "s-resize"
     },
-    onMouseDown: makeResize({ b: true })
-  })
-  useDom("div", {
+  }), { b: true })
+  makeDrag(useDom("div", {
     style: {
       width: "15px",
       height: "15px",
@@ -75,9 +72,8 @@ export default function useResize(resize: (e: React.MouseEvent, dir: Direction) 
       left: "-7px",
       cursor: "nw-resize"
     },
-    onMouseDown: makeResize({ t: true, l: true })
-  })
-  useDom("div", {
+  }), { t: true, l: true })
+  makeDrag(useDom("div", {
     style: {
       width: "15px",
       height: "15px",
@@ -86,9 +82,8 @@ export default function useResize(resize: (e: React.MouseEvent, dir: Direction) 
       right: "-7px",
       cursor: "ne-resize"
     },
-    onMouseDown: makeResize({ t: true, r: true })
-  })
-  useDom("div", {
+  }), { t: true, r: true })
+  makeDrag(useDom("div", {
     style: {
       width: "15px",
       height: "15px",
@@ -97,9 +92,8 @@ export default function useResize(resize: (e: React.MouseEvent, dir: Direction) 
       left: "-7px",
       cursor: "sw-resize"
     },
-    onMouseDown: makeResize({ b: true, l: true })
-  })
-  useDom("div", {
+  }), { b: true, l: true })
+  makeDrag(useDom("div", {
     style: {
       width: "15px",
       height: "15px",
@@ -107,7 +101,6 @@ export default function useResize(resize: (e: React.MouseEvent, dir: Direction) 
       bottom: "-7px",
       right: "-7px",
       cursor: "se-resize"
-    },
-    onMouseDown: makeResize({ b: true, r: true })
-  })
+    }
+  }), { b: true, r: true })
 }

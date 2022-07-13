@@ -25,6 +25,16 @@ export default normalPanel(function (operate, id) {
       useContent("增加要素")
     }
   })
+  useDom("div", {
+    id: "abcd",
+    style: {
+      position: 'absolute', right: "10px", bottom: "20px",
+      width: "10px",
+      height: "10px",
+      borderRadius: '50%',
+      backgroundColor: "gray"
+    }
+  })
   const boxProps: MotionProps = useMemo(() => {
     return {
       enter: {
@@ -35,18 +45,29 @@ export default normalPanel(function (operate, id) {
       }
     }
   }, [length])
+  // useIf(open, () => {
+  //   const div = useMotionDom("div", boxProps, {
+  //     className: box,
+  //     style: {
+  //       height: '0px'
+  //     },
+  //     onClick() {
+  //       animate(div, {
+  //         transform: "rotate(45deg)"
+  //       }, {
+  //         duration: 0.5
+  //       })
+  //     }
+  //   })
+  // })
+
+
   useIf(open, () => {
-    const div = useMotionDom("div", boxProps, {
-      className: box,
+    useMotionDom("div", { layoutID: "abcd" }, {
       style: {
-        height: '0px'
-      },
-      onClick() {
-        animate(div, {
-          transform: "rotate(45deg)"
-        }, {
-          duration: 0.5
-        })
+        width: "100px",
+        height: "100px",
+        background: "green"
       }
     })
   })

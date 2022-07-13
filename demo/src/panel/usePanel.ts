@@ -1,6 +1,6 @@
-import { useFragment, useMemo, useState } from "better-react"
+import { useEffect, useMemo, useState } from "better-react"
 import { useDom, useSvg } from "better-react-dom"
-import { dragMoveHelper, dragResizeHelper } from "./drag"
+import { initDrag, resizeHelper } from "./drag"
 import useResize from "./useResize"
 
 
@@ -43,16 +43,7 @@ export default ({
   const [left, setLeft] = useState(initLeft)
   const [width, setWidth] = useState(initWidth)
   const [height, setHeight] = useState(initHeight)
-  const mouseMove = useMemo(() => dragMoveHelper({
-    diffX(x) {
-      setLeft(v => v + x)
-    },
-    diffY(y) {
-      setTop(v => v + y)
-    }
-  }), [])
-
-  const dragResize = useMemo(() => dragResizeHelper({
+  const dragResize = useMemo(() => resizeHelper({
     addWidth(w) {
       setWidth(v => v + w)
     },
@@ -86,8 +77,23 @@ export default ({
     onClick: moveFirst,
     children() {
       useResize(dragResize)
-      useDom("div", {
-        onMouseDown: mouseMove,
+
+      useEffect(() => {
+        return initDrag(container, {
+          move(e) {
+            e.preventDefault()
+            e.stopPropagation()
+          },
+          diffX(x) {
+            setLeft(v => v + x)
+          },
+          diffY(y) {
+            setTop(v => v + y)
+          }
+        })
+      }, [])
+
+      const container = useDom("div", {
         css: `
           height:${titleHeight}px;
           cursor:move;

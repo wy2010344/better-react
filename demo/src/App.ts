@@ -5,6 +5,7 @@ import ExpensiveView from "./ExpensiveView";
 import motionOne from "./motion-one";
 import { CountContext, normalPanel, PanelContext } from "./panel/PanelContext";
 import usePanel from "./panel/usePanel";
+import scrollPage from "./scrollPage";
 import dragDemo from "./test/dragDemo";
 import todoList from "./todoList";
 import vote from "./vote";
@@ -65,6 +66,15 @@ export default function FirstPage() {
             },
             children() {
               useContent("motion-one")
+            }
+          })
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              scrollPage(operate)
+            },
+            children() {
+              useContent("scroll-page")
             }
           })
           Demo()
