@@ -25,16 +25,6 @@ export default normalPanel(function (operate, id) {
       useContent("增加要素")
     }
   })
-  useDom("div", {
-    id: "abcd",
-    style: {
-      position: 'absolute', right: "10px", bottom: "20px",
-      width: "10px",
-      height: "10px",
-      borderRadius: '50%',
-      backgroundColor: "gray"
-    }
-  })
   const boxProps: MotionProps = useMemo(() => {
     return {
       enter: {
@@ -63,11 +53,30 @@ export default normalPanel(function (operate, id) {
 
 
   useIf(open, () => {
-    useMotionDom("div", { layoutID: "abcd" }, {
+    useMotionDom("div", {
+      layoutID: "abcd",
+      enter: {
+        x: '50%',
+        y: 0
+      },
+      enterOption: {
+        duration: 2
+      }
+    }, {
       style: {
         width: "100px",
         height: "100px",
         background: "green"
+      }
+    })
+  }, () => {
+    useMotionDom("div", { layoutID: "abcd" }, {
+      style: {
+        position: 'absolute', right: "10px", bottom: "20px",
+        width: "10px",
+        height: "10px",
+        borderRadius: '50%',
+        backgroundColor: "gray"
       }
     })
   })

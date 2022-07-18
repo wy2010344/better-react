@@ -2,7 +2,7 @@ import { DomElements, React, SvgElements, useDom, useSvg } from "better-react-do
 
 import { MotionKeyframesDefinition, AnimationOptionsWithOverrides } from "@motionone/dom"
 import { useEffect } from "better-react";
-import { animate } from 'motion'
+import { animate, UnresolvedValueKeyframe } from 'motion'
 export type MotionProps = {
   layoutID?: string
   enter?: MotionKeyframesDefinition
@@ -22,19 +22,60 @@ export function useMotionDom<T extends keyof DomElements>(
   const newProps = (props || {}) as DomElements[T]
   if (option.exit) {
     newProps.exit = async () => {
+      const thisExit = option.layoutID
+        ? () => {
+          layoutPool.set(option.layoutID!, getLayoutParam(dom as any))
+          option.onExit?.()
+        }
+        : option.onExit
+
       if (option.exit) {
         const exit = animate(dom as any, option.exit, option.exitOption || option.option)
-        if (option.onExit) {
-          return exit.finished.then(option.onExit)
+        if (thisExit) {
+          return exit.finished.then(thisExit)
         }
         return exit.finished
       }
-      return option.onExit?.()
+      return thisExit?.()
+    }
+  } else if (option.layoutID) {
+    newProps.exit = async () => {
+      layoutPool.set(option.layoutID!, getLayoutParam(dom as any))
     }
   }
   const dom = useDom(type, newProps)
   useEffect(() => {
-    if (option.enter) {
+    if (option.layoutID) {
+      const oldStyle = layoutPool.get(option.layoutID)
+      if (oldStyle) {
+        const map = {
+          ...option.enter
+        }
+        const vdom = dom as any
+        const newStyle = getLayoutParam(vdom)
+
+        const diffX = oldStyle.rect.left - newStyle.rect.left
+        const diffY = oldStyle.rect.top - newStyle.rect.top
+        const scaleWidth = oldStyle.rect.width / newStyle.rect.width
+        const scaleHeight = oldStyle.rect.height / newStyle.rect.height
+
+        map.x = toNew(diffX, map.x || 0)
+        map.y = toNew(diffY, map.y || 0)
+        map.scaleX = toNew(scaleWidth, map.scaleX || 1)
+        map.scaleY = toNew(scaleHeight, map.scaleY || 1)
+        map.background = toNew(oldStyle.background, map.background || newStyle.background)
+        map.color == toNew(oldStyle.color, map.color || newStyle.color)
+        map.borderRadius = toNew(oldStyle.borderRadius, map.borderRadius || newStyle.borderRadius)
+
+        const transformOrigin = vdom.style.transformOrigin
+        vdom.style.transformOrigin = '0 0'
+        //vdom.style.transform = transaction
+        animate(vdom, map, option.enterOption || option.option).finished.then(() => {
+          vdom.style.transformOrigin = transformOrigin
+          layoutPool.delete(option.layoutID!)
+        })
+      }
+    } else if (option.enter) {
       const a = animate(dom as any, option.enter, option.enterOption || option.option)
       if (option.onFinished) {
         a.finished.then(option.onFinished)
@@ -42,37 +83,33 @@ export function useMotionDom<T extends keyof DomElements>(
     }
   }, [])
 
-  useEffect(() => {
-    if (option.layoutID) {
-      const oldDiv = document.getElementById(option.layoutID)
-      if (oldDiv) {
-        const vdom = dom as any
-        const oldRect = oldDiv.getBoundingClientRect()
-        const newRect = vdom.getBoundingClientRect() as DOMRect
-        const diffX = oldRect.left - newRect.left
-        const diffY = oldRect.top - newRect.top
-        const scaleWidth = oldRect.width / newRect.width
-        const scaleHeight = oldRect.height / newRect.height
-        //const transaction = ` translate(${diffX}px,${diffY}px) scaleX(${scaleWidth}) scaleY(${scaleHeight}) `
-        //console.log(transaction)
-        const transformOrigin = vdom.style.transformOrigin
-        vdom.style.transformOrigin = '0 0'
-        //vdom.style.transform = transaction
-        animate(vdom, {
-          x: [diffX, 0],
-          y: [diffY, 0],
-          scaleX: [scaleWidth, 1],
-          scaleY: [scaleHeight, 1],
-        }, option.enterOption || option.exitOption).finished.then(() => {
-          vdom.style.transformOrigin = transformOrigin
-        })
-      }
-    }
-  }, [option.layoutID, option.enterOption || option.option])
-
-
   return dom
 }
+
+function toNew<T>(v: T, vs: T | T[]) {
+  if (Array.isArray(vs)) {
+    return [v, ...vs]
+  }
+  return [v, vs]
+}
+
+function getLayoutParam(node: HTMLElement): LayoutParam {
+  const style = getComputedStyle(node)
+  return {
+    rect: node.getBoundingClientRect(),
+    background: style.background,
+    color: style.color,
+    borderRadius: style.borderRadius
+  }
+}
+type LayoutParam = {
+  rect: DOMRect
+  background: string
+  color: string
+  borderRadius: string
+}
+const layoutPool = new Map<string, LayoutParam>()
+
 export function useMotionSvg<T extends keyof SvgElements>(
   type: T,
   option: MotionProps,
