@@ -15,9 +15,9 @@ export function useEvent<T extends (...vs: any[]) => any>(fun: T): T {
 
 function delegateFun<T extends (...vs: any[]) => any>() {
   let current: T
-  const run: T = function () {
-    return current.apply(null, arguments as any)
-  } as T
+  const run = (...vs: any[]) => {
+    return current(...vs)
+  }
   return {
     setCurrent(f: T) {
       current = f

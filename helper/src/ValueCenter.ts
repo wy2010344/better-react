@@ -15,8 +15,10 @@ export class ValueCenter<T>{
     return this.value
   }
   set(value: T) {
-    this.value = value
-    this.pool.forEach(notify => notify(value))
+    if (value != this.value) {
+      this.value = value
+      this.pool.forEach(notify => notify(value))
+    }
   }
   add(notify: NotifyHandler<T>, call?: boolean) {
     if (!this.pool.has(notify)) {
@@ -37,7 +39,7 @@ export class ValueCenter<T>{
  * @param store 
  */
 export function useStoreTriggerRender<T>(store: ValueCenter<T>) {
-  const [state, setState] = useState<T>(store.get())
+  const [state, setState] = useState<T>(() => store.get())
   useEffect(function () {
     store.add(setState, true)
     return function () {

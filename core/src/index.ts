@@ -162,7 +162,67 @@ function renderRow<T>(fiber: WithDraftFiber<RenderRowProps<T>>) {
   const { row, index, callback } = fiber.draft.props
   callback(row, index)
 }
+////////****single****////////////////////////////////////////////////////////////////////////////////////////////////////////////
+export function useOne<T>(v: T, getKey: (v: T) => any, render: (v: T) => void) {
+  return useFiber(OneFiber, { v, getKey, render }, shouldOneFiberUpdate)
+}
+type OneFiberProps<T> = {
+  v: T,
+  getKey: (v: T) => any,
+  render: (v: T) => void
+}
+function shouldOneFiberUpdate<T>(newP: OneFiberProps<T>, oldP: OneFiberProps<T>) {
+  return oldP.v != newP.v || newP.getKey != oldP.getKey || newP.render != oldP.render
+}
+function OneFiber<T>(fiber: WithDraftFiber<OneFiberProps<T>>) {
+  const { v, getKey, render } = fiber.draft.props
 
+  const cache = useMemo(() => {
+    return {
+      key: null,
+      //使用父节点做锚点
+      fiber: fiber as Fiber
+    }
+  }, [])
+  let commitWork: (() => void) | void = undefined
+  useEffect(() => {
+    if (commitWork) {
+      commitWork()
+    }
+  })
+  const props = {
+    value: v,
+    callback: render
+  }
+  const newKey = getKey(v)
+  if (cache.key == newKey && cache.fiber != fiber) {
+    //复用
+    simpleUpdate(cache.fiber, props)
+  } else {
+    //删旧增新
+    if (cache.fiber != fiber) {
+      addDelect(cache.fiber)
+    }
+    const plaFiber: PlacementFiber<CacheNodeProps<T>> = {
+      effectTag: "PLACEMENT",
+      parent: fiber,
+      draft: {
+        render: cacheNode,
+        shouldUpdate: shouldCacheNodeUpdate,
+        props,
+      }
+    }
+    commitWork = () => {
+      cache.key = newKey
+      cache.fiber = plaFiber
+    }
+    //只有一个节点,故是同一个
+    fiber.draft.lastChild = plaFiber
+    fiber.draft.child = plaFiber
+
+    addAdd(plaFiber)
+  }
+}
 ////////****guard****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type GuardBaseFiber<A, T> = (readonly [
   A,
