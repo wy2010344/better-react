@@ -360,13 +360,13 @@ export function useSwitch<T>(v: T, ...matches: GuardSwitchType<T>[]) {
   }, shouldGuardUpdate)
 }
 ////////****useGuardString****////////////////////////////////////////////////////////////////////////////////////////////////////////////
-export function useGuardString(
-  value: string,
+export function useGuardString<T extends string>(
+  value: T,
   map: {
-    [key: string]: (k: string) => void
+    [key in T]?: (k: string) => void
   }
 ) {
-  return useFiber(guardConfig.call, { value, map }, guardConfig.shouldUpdate)
+  return useFiber(guardConfig.call, { value, map: map as any }, guardConfig.shouldUpdate)
 }
 const guardConfig: KeepFun<{
   value: string
