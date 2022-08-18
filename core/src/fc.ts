@@ -35,15 +35,17 @@ function getInit<T>(init: T | (() => T)) {
     return init
   }
 }
-
-export function useState<T>(init: T | (() => T)): [T, HookValueSet<T>] {
+export function useState<S = undefined>(): [S | undefined, HookValueSet<S | undefined>];
+export function useState<T>(init: T | (() => T)): [T, HookValueSet<T>];
+export function useState() {
+  const init = arguments[0]
   const currentFiber = wipFiber!
   if (currentFiber.effectTag == 'PLACEMENT') {
     //新增
     const hookValues = currentFiber.hookValue || []
     currentFiber.hookValue = hookValues
     const value = createChangeAtom(getInit(init))
-    const hook: HookValue<T> = {
+    const hook: HookValue<any> = {
       value,
       set: buildSetValue(value, currentFiber)
     }
