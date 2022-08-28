@@ -5,8 +5,10 @@ import ExpensiveView from "./ExpensiveView";
 import motionOne from "./motion-one";
 import { CountContext, normalPanel, PanelContext } from "./panel/PanelContext";
 import usePanel from "./panel/usePanel";
+import popup from "./popup";
 import scrollPage from "./scrollPage";
 import dragDemo from "./test/dragDemo";
+import 测试useOne from "./test/测试useOne";
 import todoList from "./todoList";
 import vote from "./vote";
 
@@ -75,6 +77,25 @@ export default function FirstPage() {
             },
             children() {
               useContent("scroll-page")
+            }
+          })
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              popup(operate)
+            },
+            children() {
+              useContent("popup")
+            }
+          })
+
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              测试useOne(operate)
+            },
+            children() {
+              useContent("测试useOne")
             }
           })
           Demo()

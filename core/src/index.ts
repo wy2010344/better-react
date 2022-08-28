@@ -27,13 +27,6 @@ export function render<T>(
 }
 
 
-
-type KeepFun<T> = {
-  shouldUpdate(newP: T, oldP: T): boolean
-  call(fiber: WithDraftFiber<T>): void
-}
-
-
 function simpleUpdate(fiber: Fiber, props: any) {
   if (isWithDraftFiber(fiber)) {
     fiber.draft.props = props
@@ -56,17 +49,25 @@ function simpleUpdate(fiber: Fiber, props: any) {
 export function useMap<T>(
   vs: T[],
   getKey: (v: T) => any,
-  render: (v: T, i: number) => void
+  render: (v: T, i: number) => void,
+  shouldUpdate?: (newV: T, oldV: T) => boolean
 ) {
-  return useFiber(MapFiber, { vs, getKey, render }, shouldMapFiberUpdate)
+  return useFiber(MapFiber, { vs, getKey, render, shouldUpdate }, shouldMapFiberUpdate)
 }
 type MapFiberProps<T> = {
   vs: T[],
   getKey: (v: T) => any,
   render: (v: T, i: number) => void
+  shouldUpdate?: (newV: T, oldV: T) => boolean
 }
 function shouldMapFiberUpdate<T>(newP: MapFiberProps<T>, oldP: MapFiberProps<T>) {
-  return arrayNotEqual(newP.vs, oldP.vs, simpleNotEqual) || newP.getKey != oldP.getKey || newP.render != oldP.render
+  if (newP.getKey != oldP.getKey || newP.render != oldP.render || newP.shouldUpdate != oldP.shouldUpdate) {
+    return true
+  }
+  if (newP.shouldUpdate) {
+    return arrayNotEqual(newP.vs, oldP.vs, newP.shouldUpdate)
+  }
+  return arrayNotEqual(newP.vs, oldP.vs, simpleNotEqual)
 }
 
 function cloneMap<T>(map: Map<any, T[]>) {
@@ -97,7 +98,7 @@ function MapFiber<T>(fiber: WithDraftFiber<MapFiberProps<T>>) {
     const key = getKey(v)
     const oldFibers = oldMap.get(key)
     let oldFiber = oldFibers?.[0]
-    const props = {
+    const props: RenderRowProps<T> = {
       callback: render,
       row: v,
       index: i
@@ -116,7 +117,8 @@ function MapFiber<T>(fiber: WithDraftFiber<MapFiberProps<T>>) {
         parent: fiber,
         draft: {
           render: renderRow,
-          shouldUpdate: shouldRenderRow as any,
+          //这里是没有意义的,只是强制需要一个点位
+          shouldUpdate: shouldRenderRow,
           props,
           prev: beforeFiber
         }
@@ -156,23 +158,41 @@ type RenderRowProps<T> = {
   callback(row: T, index: number): void
 }
 function shouldRenderRow<T>(newP: RenderRowProps<T>, oldP: RenderRowProps<T>) {
-  return newP.row != oldP.row || newP.index != oldP.index || newP.callback != oldP.callback
+  return true
 }
 function renderRow<T>(fiber: WithDraftFiber<RenderRowProps<T>>) {
   const { row, index, callback } = fiber.draft.props
   callback(row, index)
 }
 ////////****single****////////////////////////////////////////////////////////////////////////////////////////////////////////////
-export function useOne<T>(v: T, getKey: (v: T) => any, render: (v: T) => void) {
-  return useFiber(OneFiber, { v, getKey, render }, shouldOneFiberUpdate)
+type CacheNodeProps<T> = {
+  value: T,
+  callback(v: T): void
+}
+function shouldCacheNodeUpdate<T>(newP: CacheNodeProps<T>, oldP: CacheNodeProps<T>) {
+  return newP.value != oldP.value || newP.callback != oldP.callback
+}
+function cacheNode<T>(fiber: WithDraftFiber<CacheNodeProps<T>>) {
+  const { value, callback } = fiber.draft.props
+  callback(value)
+}
+export function useOne<T>(v: T, getKey: (v: T) => any, render: (v: T) => void, shouldUpdate?: (newV: T, oldV: T) => boolean) {
+  return useFiber(OneFiber, { v, getKey, render, shouldUpdate }, shouldOneFiberUpdate)
 }
 type OneFiberProps<T> = {
   v: T,
+  shouldUpdate?: (a: T, b: T) => boolean
   getKey: (v: T) => any,
   render: (v: T) => void
 }
 function shouldOneFiberUpdate<T>(newP: OneFiberProps<T>, oldP: OneFiberProps<T>) {
-  return oldP.v != newP.v || newP.getKey != oldP.getKey || newP.render != oldP.render
+  if (newP.getKey != oldP.getKey || newP.render != oldP.render || newP.shouldUpdate != oldP.shouldUpdate) {
+    return true
+  }
+  if (newP.shouldUpdate) {
+    return newP.shouldUpdate(newP.v, oldP.v)
+  }
+  return oldP.v != newP.v
 }
 function OneFiber<T>(fiber: WithDraftFiber<OneFiberProps<T>>) {
   const { v, getKey, render } = fiber.draft.props
@@ -228,104 +248,72 @@ type GuardBaseFiber<A, T> = (readonly [
   A,
   (v: T) => void
 ])
-type GuardBaseFiberProps<A, T> = {
-  v: T
-  matches: GuardBaseFiber<A, T>[]
-}
-function getGuardFiber<A, T>(shouldDo: (a: A, v: T) => boolean) {
-  return function (fiber: WithDraftFiber<GuardBaseFiberProps<A, T>>) {
-    const cache = useMemo(() => {
+function findFirst<A, T>(
+  matches: GuardBaseFiber<A, T>[],
+  value: T,
+  equal: (a: A, v: T) => boolean,
+  shouldUpdate?: (a: T, b: T) => boolean
+) {
+  for (let i = 0; i < matches.length; i++) {
+    const match = matches[i]
+    if (equal(match[0], value)) {
       return {
-        index: -1,
-        fiber: fiber as Fiber
+        index: i,
+        value,
+        match,
+        shouldUpdate
       }
-    }, [])
-    const { v, matches } = fiber.draft.props
-    let commitWork: (() => void) | void = undefined
-    useEffect(() => {
-      if (commitWork) {
-        commitWork()
-      }
-    })
-    let noStop = true
-    for (let i = 0; (i < matches.length) && noStop; i++) {
-      const match = matches[i]
-      if (shouldDo(match[0], v)) {
-        const props = {
-          value: v,
-          callback: match[1]
-        }
-        if (cache.index == i) {
-          //复用
-          simpleUpdate(cache.fiber, props)
-        } else {
-          //删旧增新
-          if (cache.index > -1) {
-            addDelect(cache.fiber)
-          }
-          const plaFiber: PlacementFiber<CacheNodeProps<T>> = {
-            effectTag: "PLACEMENT",
-            parent: fiber,
-            draft: {
-              render: cacheNode,
-              shouldUpdate: shouldCacheNodeUpdate,
-              props,
-            }
-          }
-          commitWork = () => {
-            cache.index = i
-            cache.fiber = plaFiber
-          }
-
-          //只有一个节点,故是同一个
-          fiber.draft.lastChild = plaFiber
-          fiber.draft.child = plaFiber
-
-          addAdd(plaFiber)
-        }
-        noStop = false
-      }
-    }
-    if (noStop && cache.index > -1) {
-      addDelect(cache.fiber)
-      commitWork = () => {
-        cache.index = -1
-        cache.fiber = fiber
-      }
-      //
-      fiber.draft.lastChild = undefined
-      fiber.draft.child = undefined
     }
   }
 }
-function shouldGuardUpdate<A, T>(newP: GuardBaseFiberProps<A, T>, oldP: GuardBaseFiberProps<A, T>) {
-  return newP.v != oldP.v || arrayNotEqual(newP.matches, oldP.matches, (x, y) => {
-    return x[0] != y[0] || x[1] != y[1]
-  })
+type MatchOne<A, T> = {
+  index: number
+  value: T
+  match: GuardBaseFiber<A, T>
+  shouldUpdate?: (a: T, b: T) => boolean
+}
+function getMatchOneIndex(v?: MatchOne<any, any>) {
+  if (v) {
+    return v.index
+  } else {
+    return -1
+  }
+}
+function renderMatchOne<T>(v?: MatchOne<any, T>) {
+  if (v) {
+    return v.match[1](v.value)
+  }
+}
+function shoudMatchOneUpdate<A, T>(a: MatchOne<A, T> | undefined, b: MatchOne<A, T> | undefined) {
+  if (a == b) {
+    return false
+  }
+  if (a && b) {
+    if (a.match != b.match || a.shouldUpdate != b.shouldUpdate) {
+      return true
+    }
+    if (a.shouldUpdate) {
+      return a.shouldUpdate(a.value, b.value)
+    }
+    return a.value != b.value
+  }
+  return true
 }
 ////////****guard****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type GuardMatchType<T> = GuardBaseFiber<(v: T) => boolean, T>
-function isGuardMatch<T>(fun: (v: T) => boolean, v: T) {
-  return fun(v)
+function guardMatchEqual<T>(a: (v: T) => boolean, v: T) {
+  return a(v)
 }
-const guardFiber = getGuardFiber(isGuardMatch)
+export function useBaseGuard<T>(v: T, matches: GuardMatchType<T>[], shouldUpdate?: (a: T, b: T) => boolean) {
+  const match = findFirst(matches, v, guardMatchEqual, shouldUpdate)
+  return useOne(match, getMatchOneIndex, renderMatchOne, shoudMatchOneUpdate)
+}
 export function useGuard<T>(v: T, ...matches: GuardMatchType<T>[]) {
-  return useFiber(guardFiber, { v, matches }, shouldGuardUpdate)
+  useBaseGuard(v, matches)
 }
-type CacheNodeProps<T> = {
-  value: T,
-  callback(v: T): void
-}
-function shouldCacheNodeUpdate<T>(newP: CacheNodeProps<T>, oldP: CacheNodeProps<T>) {
-  return newP.value != oldP.value || newP.callback != oldP.callback
-}
-function cacheNode<T>(fiber: WithDraftFiber<CacheNodeProps<T>>) {
-  const { value, callback } = fiber.draft.props
-  callback(value)
-}
-
-
 ////////****useIf****////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function quote<T>(v: T) { return v }
+function toOppsite(v: boolean) { return !v }
 export function useIf(
   v: boolean,
   whenTrue: () => void,
@@ -343,104 +331,68 @@ export function useIf(
       whenFalse
     ])
   }
-  return useFiber(guardFiber, { v, matches }, shouldGuardUpdate)
+  useBaseGuard(v, matches)
+  // return useFiber(guardFiber, { v, matches }, shouldGuardUpdate)
 }
-function quote<T>(v: T) { return v }
-function toOppsite(v: boolean) { return !v }
 ////////****useSwitch****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type GuardSwitchType<T> = GuardBaseFiber<T, T>
 function isSwitch<T>(a: T, v: T) {
   return a == v
 }
-const switchFiber = getGuardFiber(isSwitch)
 export function useSwitch<T>(v: T, ...matches: GuardSwitchType<T>[]) {
-  return useFiber(switchFiber, {
-    v,
-    matches
-  }, shouldGuardUpdate)
+  const match = findFirst(matches, v, isSwitch)
+  return useOne(match, getMatchOneIndex, renderMatchOne, shoudMatchOneUpdate)
 }
 ////////****useGuardString****////////////////////////////////////////////////////////////////////////////////////////////////////////////
+type MatchStringOne = {
+  key: string
+  match(v: string): void
+}
+function getMatchStringOneIndex(v?: MatchStringOne) {
+  if (v) {
+    return v.key
+  }
+}
+function renderMatchStringOne<T>(v?: MatchStringOne) {
+  if (v) {
+    return v.match(v.key)
+  }
+}
+function findMatchString<T extends string>(value: T, map: {
+  [key in T]?: (k: string) => void
+}) {
+  for (let key in map) {
+    if (key == value) {
+      const match = map[key]
+      if (match) {
+        return {
+          key,
+          match
+        } as MatchStringOne
+      }
+    }
+  }
+}
+function shoudMatchStringOneUpdate(a: MatchStringOne | undefined, b: MatchStringOne | undefined) {
+  if (a == b) {
+    return false
+  }
+  if (a && b) {
+    if (a.match == b.match) {
+      return false
+    }
+    //key已经作为对比了
+  }
+  return true
+}
 export function useGuardString<T extends string>(
   value: T,
   map: {
     [key in T]?: (k: string) => void
   }
 ) {
-  return useFiber(guardConfig.call, { value, map: map as any }, guardConfig.shouldUpdate)
-}
-const guardConfig: KeepFun<{
-  value: string
-  map: {
-    [key: string]: (k: string) => void
-  }
-}> = {
-  shouldUpdate(newP, oldP) {
-    return newP.value != oldP.value || newP.map != oldP.map
-  },
-  call(fiber) {
-    const { value, map } = fiber.draft.props
-    const cache = useMemo(() => {
-      return {
-        key: "",
-        fiber: fiber as any
-      }
-    }, [])
-    let commitWork: (() => void) | void = undefined
-    useEffect(() => {
-      if (commitWork) {
-        commitWork()
-      }
-    })
-    let noStop = true
-    const entitys = Object.entries(map)
-    for (let i = 0; i < entitys.length && noStop; i++) {
-      const [key, callback] = entitys[i]
-      if (value == key) {
-        const props = {
-          value: key,
-          callback
-        }
-        if (cache.key == key) {
-          //复用
-          simpleUpdate(cache.fiber, props)
-        } else {
-          //删旧增新
-          if (cache.fiber != fiber) {
-            addDelect(cache.fiber)
-          }
-          const draftFiber: PlacementFiber<CacheNodeProps<string>> = {
-            effectTag: "PLACEMENT",
-            parent: fiber,
-            draft: {
-              render: cacheNode,
-              shouldUpdate: shouldCacheNodeUpdate,
-              props
-            }
-          }
-          commitWork = () => {
-            cache.key = key
-            cache.fiber = draftFiber
-          }
-          //只有一个节点,故是同一个
-          fiber.draft.child = draftFiber
-          fiber.draft.lastChild = draftFiber
-
-          addAdd(draftFiber)
-        }
-        noStop = false
-      }
-    }
-    if (noStop && cache.fiber != fiber) {
-      addDelect(cache.fiber)
-      commitWork = (() => {
-        cache.key = ""
-        cache.fiber = fiber
-      })
-      //置空
-      fiber.draft.lastChild = undefined
-      fiber.draft.child = undefined
-    }
-  }
+  const matches = findMatchString(value, map)
+  return useOne(matches, getMatchStringOneIndex, renderMatchStringOne, shoudMatchStringOneUpdate)
 }
 ////////****类似函数式组件****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 export function useFragment(fun: () => void): Fiber<FragmentProps<void>>
