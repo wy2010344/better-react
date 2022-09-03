@@ -1,7 +1,5 @@
 
-type MEMONode = {
-  (): void
-}
+type MEMONode = () => void
 /*
 React projects that don't include the DOM library need these interfaces to compile.
 React Native applications use React, but there is no DOM available. The JavaScript runtime
@@ -628,11 +626,7 @@ export namespace React {
   type AnimationEventHandler<T = Element> = EventHandler<AnimationEvent<T>>;
   type TransitionEventHandler<T = Element> = EventHandler<TransitionEvent<T>>;
 
-  interface DOMAttributes<T> {
-    children?: MEMONode | undefined;
-    innerHTML?: string
-    textContent?: string
-
+  type DOMAttributes<T> = {
     // Clipboard Events
     onCopy?: ClipboardEventHandler<T> | undefined;
     onCopyCapture?: ClipboardEventHandler<T> | undefined;
@@ -656,8 +650,8 @@ export namespace React {
     onBlurCapture?: FocusEventHandler<T> | undefined;
 
     // Form Events
-    onChange?: FormEventHandler<T> | undefined;
-    onChangeCapture?: FormEventHandler<T> | undefined;
+    // onChange?: FormEventHandler<T> | undefined;
+    // onChangeCapture?: FormEventHandler<T> | undefined;
     onBeforeInput?: FormEventHandler<T> | undefined;
     onBeforeInputCapture?: FormEventHandler<T> | undefined;
     onInput?: FormEventHandler<T> | undefined;
@@ -831,7 +825,32 @@ export namespace React {
     exit?(e: T): Promise<void>
   }
 
-  export type DetailedHTMLProps<E extends HTMLAttributes<T>, T> = ClassAttributes<T> & E;
+  export type DetailedHTMLProps<E extends HTMLAttributes<T>, T> = E & ({
+    children: MEMONode;
+    innerHTML?: never
+    textContent?: never
+    contentEditable?: never
+  } | {
+    children?: never
+    innerHTML: string
+    textContent?: never
+    contentEditable?: never
+  } | {
+    children?: never
+    innerHTML?: never
+    textContent: string
+    contentEditable?: never
+  } | {
+    children?: never
+    innerHTML?: never
+    textContent?: never
+    contentEditable: Booleanish | "inherit" | "plaintext-only";
+  } | {
+    children?: never
+    innerHTML?: never
+    textContent?: never
+    contentEditable?: never
+  })
 
   // this list is "complete" in that it contains every SVG attribute
   // that React supports, but the types can be improved.
@@ -841,7 +860,7 @@ export namespace React {
   //   - "number | string"
   //   - "string"
   //   - union of string literals
-  interface SVGAttributes<T> extends AriaAttributes, DOMAttributes<T> {
+  export type SVGAttributes<T> = AriaAttributes & DOMAttributes<T> & {
     // Attributes which also defined in HTMLAttributes
     // See comment in SVGDOMPropertyConfig.js
     className?: string | undefined;
@@ -1109,11 +1128,17 @@ export namespace React {
     z?: number | string | undefined;
     zoomAndPan?: string | undefined;
   }
-  interface ClassAttributes<T> {
-    //ref?(v?: T): void
-  }
-  export interface SVGProps<T> extends SVGAttributes<T>, ClassAttributes<T> {
-  }
+  export type SVGPureProps<T> = SVGAttributes<T>
+  export type SVGProps<T> = SVGAttributes<T> & ({
+    children: MEMONode;
+    innerHTML?: never
+  } | {
+    children?: never
+    innerHTML: string
+  } | {
+    children?: never
+    innerHTML?: never
+  })
   export interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
     // React-specific Attributes
     // defaultChecked?: boolean | undefined;
@@ -1792,11 +1817,11 @@ export type SvgElements = {
   animate: React.SVGProps<SVGElement>; // TODO: It is SVGAnimateElement but is not in TypeScript's lib.dom.d.ts for now.
   animateMotion: React.SVGProps<SVGElement>;
   animateTransform: React.SVGProps<SVGElement>; // TODO: It is SVGAnimateTransformElement but is not in TypeScript's lib.dom.d.ts for now.
-  circle: React.SVGProps<SVGCircleElement>;
+  circle: React.SVGPureProps<SVGCircleElement>;
   clipPath: React.SVGProps<SVGClipPathElement>;
   defs: React.SVGProps<SVGDefsElement>;
   desc: React.SVGProps<SVGDescElement>;
-  ellipse: React.SVGProps<SVGEllipseElement>;
+  ellipse: React.SVGPureProps<SVGEllipseElement>;
   feBlend: React.SVGProps<SVGFEBlendElement>;
   feColorMatrix: React.SVGProps<SVGFEColorMatrixElement>;
   feComponentTransfer: React.SVGProps<SVGFEComponentTransferElement>;
@@ -1825,23 +1850,25 @@ export type SvgElements = {
   filter: React.SVGProps<SVGFilterElement>;
   foreignObject: React.SVGProps<SVGForeignObjectElement>;
   g: React.SVGProps<SVGGElement>;
-  image: React.SVGProps<SVGImageElement>;
-  line: React.SVGProps<SVGLineElement>;
+  image: React.SVGPureProps<SVGImageElement>;
+  line: React.SVGPureProps<SVGLineElement>;
   linearGradient: React.SVGProps<SVGLinearGradientElement>;
   marker: React.SVGProps<SVGMarkerElement>;
   mask: React.SVGProps<SVGMaskElement>;
   metadata: React.SVGProps<SVGMetadataElement>;
   mpath: React.SVGProps<SVGElement>;
-  path: React.SVGProps<SVGPathElement>;
+  path: React.SVGPureProps<SVGPathElement>;
   pattern: React.SVGProps<SVGPatternElement>;
   polygon: React.SVGProps<SVGPolygonElement>;
   polyline: React.SVGProps<SVGPolylineElement>;
   radialGradient: React.SVGProps<SVGRadialGradientElement>;
-  rect: React.SVGProps<SVGRectElement>;
+  rect: React.SVGPureProps<SVGRectElement>;
   stop: React.SVGProps<SVGStopElement>;
   switch: React.SVGProps<SVGSwitchElement>;
   symbol: React.SVGProps<SVGSymbolElement>;
-  text: React.SVGProps<SVGTextElement>;
+  text: React.SVGAttributes<SVGTextElement> & {
+    textContent?: string
+  };
   textPath: React.SVGProps<SVGTextPathElement>;
   tspan: React.SVGProps<SVGTSpanElement>;
   use: React.SVGProps<SVGUseElement>;

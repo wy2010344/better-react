@@ -2,6 +2,7 @@ import { useFragment, useMap, useMemo, useState, startTransition, useEffect } fr
 import { React, useContent, useDom } from "better-react-dom";
 import { useEvent, useRef } from "better-react-helper";
 import { normalPanel } from "./panel/PanelContext";
+import useInput from "./useInput";
 
 let lastRenderTime = performance.now()
 export default normalPanel(function (operate, id) {
@@ -55,6 +56,20 @@ export default normalPanel(function (operate, id) {
             checkbox.checked = transition
             //console.log(checkbox.checked, transition)
           }, [transition])
+          function changeValue(v: string) {
+            const value = Number(v)
+            setValue(value);
+            if (transition) {
+              startTransition(() => {
+                setRenderValue(value)
+                setOnTrans(v => !v)
+                abcStore.set(abcValue + 1)
+                //testStore.set(testValue + 1)
+              })
+            } else {
+              setRenderValue(value)
+            }
+          }
           const range = useDom("input", {
             type: "range",
             min: 0,
@@ -67,24 +82,23 @@ export default normalPanel(function (operate, id) {
             onInput(e) {
               const v = (e.target as any).value!
               //console.log("change", v)
-              const value = Number(v)
-              setValue(value);
-              if (transition) {
-                startTransition(() => {
-                  setRenderValue(value)
-                  setOnTrans(v => !v)
-                  abcStore.set(abcValue + 1)
-                  //testStore.set(testValue + 1)
-                })
-              } else {
-                setRenderValue(value)
-              }
+              changeValue(v)
               e.preventDefault()
             }
           })
           useEffect(() => {
             range.value = "" + value
           }, [value])
+          useInput("input", {
+            type: "range",
+            min: 0,
+            max: 600,
+            step: 1,
+            value: value + '',
+            onValueChange(v) {
+              changeValue(v)
+            }
+          })
           useContent(`${value}`)
           const select = useDom("select", {
             children() {

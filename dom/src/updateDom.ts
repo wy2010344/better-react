@@ -323,10 +323,14 @@ export function updatePorps(node: any, key: string, value: any) {
   node[key] = value
 }
 export function updateSVGProps(node: any, key: string, value: any) {
-  if (value) {
-    node.setAttribute(key, value)
+  if (key == 'innerHTML' || key == 'textContent') {
+    updatePorps(node, key, value)
   } else {
-    node.removeAttribute(key)
+    if (value) {
+      node.setAttribute(key, value)
+    } else {
+      node.removeAttribute(key)
+    }
   }
 }
 /**

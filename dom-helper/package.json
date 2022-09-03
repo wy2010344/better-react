@@ -31,8 +31,8 @@
     "trailingComma": "es5"
   },
   "peerDependencies": {
-    "better-react": "^0.0.8",
-    "better-react-dom": "^0.0.8",
+    "better-react": "^1.0.4",
+    "better-react-dom": "^1.0.4",
     "better-react-helper": "^1.0.1"
   },
   "name": "better-react-dom-helper",
@@ -50,9 +50,9 @@
   ],
   "devDependencies": {
     "@size-limit/preset-small-lib": "^7.0.8",
-    "better-react": "^0.0.8",
-    "better-react-dom": "^0.0.8",
-    "better-react-helper": "^0.0.4",
+    "better-react": "^1.0.4",
+    "better-react-dom": "^1.0.4",
+    "better-react-helper": "^1.0.1",
     "husky": "^7.0.4",
     "size-limit": "^7.0.8",
     "tsdx": "^0.14.1",

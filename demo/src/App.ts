@@ -9,6 +9,7 @@ import popup from "./popup";
 import scrollPage from "./scrollPage";
 import dragDemo from "./test/dragDemo";
 import 测试useOne from "./test/测试useOne";
+import 测试其它 from "./test/测试其它";
 import todoList from "./todoList";
 import vote from "./vote";
 
@@ -42,6 +43,13 @@ export default function FirstPage() {
             children() {
               useContent("进入ExpansiveView")
             }
+          })
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              测试其它(operate)
+            },
+            textContent: "测试其它"
           })
           useDom("button", {
             onClick(e) {

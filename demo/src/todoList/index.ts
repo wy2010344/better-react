@@ -13,9 +13,7 @@ export default normalPanel(function (operate, id) {
             name: "jvdd"
           })
         },
-        children() {
-          useContent("增加")
-        }
+        textContent: "增加",
       })
       useDom("button", {
         onClick() {
