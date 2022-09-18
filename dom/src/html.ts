@@ -265,7 +265,7 @@ export namespace React {
     timeStamp: number;
     type: string;
   }
-  interface CSSProperties extends CSS.Properties<string | number> {
+  export interface CSSProperties extends CSS.Properties<string | number> {
     /**
      * The index signature was removed to enable closed typing for style
      * using CSSType. You're able to use type assertion or module augmentation
@@ -1690,6 +1690,8 @@ export namespace React {
     webpreferences?: string | undefined;
   }
 }
+
+export type CSSProperties = React.CSSProperties
 //117个
 export type DomElements = {
   a: React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement>;
@@ -1811,6 +1813,10 @@ export type DomElements = {
   webview: React.DetailedHTMLProps<React.WebViewHTMLAttributes<HTMLWebViewElement>, HTMLWebViewElement>;
 }
 
+export type DomElementType = keyof DomElements
+export type DomAttribute<T extends DomElementType> = DomElements[T]
+export type DomElement<T extends DomElementType> = DomElements[T] extends React.DetailedHTMLProps<infer _, infer M> ? M : never
+
 //58个svg
 export type SvgElements = {
   svg: React.SVGProps<SVGSVGElement>;
@@ -1874,3 +1880,7 @@ export type SvgElements = {
   use: React.SVGProps<SVGUseElement>;
   view: React.SVGProps<SVGViewElement>;
 }
+
+export type SvgElementType = keyof SvgElements
+export type SvgAttribute<T extends SvgElementType> = SvgElements[T]
+export type SvgElement<T extends SvgElementType> = SvgElements[T] extends React.SVGProps<infer M> ? M : never

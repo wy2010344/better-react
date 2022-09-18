@@ -13,7 +13,13 @@ export type MotionProps = {
   onExit?(): void
   onFinished?(): void
 }
-
+/**
+ * 动画未完成时如果被新动画加入,则立即进行到结束状态开始新动画.
+ * @param create 
+ * @param option 
+ * @param props 
+ * @returns 
+ */
 function useBaseMotionDom<T extends {
   exit?(e: any): Promise<void>
 }>(create: (props: T) => Node, option: MotionProps, props: T) {

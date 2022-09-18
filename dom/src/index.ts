@@ -4,7 +4,12 @@ import { FiberNode, FiberText } from "./updateDom";
 export { scheduleAskTime } from './schedule'
 export { StyleNode, isSVG, FiberNode, FiberText, StyleContext } from './updateDom'
 export * from './html'
-
+/***
+ * 先声明dom节点再装入use配置参数,以实现dom节点复用?
+ * 目前无需求.
+ * 比如移动,其实一些dom状态会丢失,如scrollTop
+ * 可能有一些三方组件的封装,配置参数却需要自定义,而不是dom参数
+ */
 
 function RootShouldUpdate(a: RootProps, b: RootProps) {
   return a.node != b.node || a.props != b.props || a.reconcile != b.reconcile
@@ -105,14 +110,3 @@ export function useSvg<T extends keyof SvgElements>(type: T, props?: SvgElements
   }
   return (fiber.dom as FiberNode<any>).node as SvgElements[T] extends React.SVGProps<infer F> ? F : never
 }
-// type FiberWithDom<T extends keyof DomElements> = Omit<Fiber<DomElements[T]>, "dom"> & {
-//   dom: Omit<FiberNode<DomElements[T]>, "node"> & {
-//     node: DomElements[T] extends React.DetailedHTMLProps<infer A, infer F> ? F : never
-//   }
-// }
-
-// type FiberWithSvg<T extends keyof SvgElements> = Omit<Fiber<SvgElements[T]>, "dom"> & {
-//   dom: Omit<FiberNode<SvgElements[T]>, "node"> & {
-//     node: SvgElements[T] extends React.SVGProps<infer F> ? F : never
-//   }
-// }

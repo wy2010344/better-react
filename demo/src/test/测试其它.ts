@@ -1,3 +1,4 @@
+import { useState } from "better-react";
 import { useContent, useDom, useSvg } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
 
@@ -57,4 +58,38 @@ export default normalPanel(function (operate, id) {
       console.log("change-input")
     },
   })
+
+  测试css动画()
 })
+
+
+
+function 测试css动画() {
+  useDom("div", {
+    children() {
+
+      const [width, setWidth] = useState(300)
+      const [scaleY, setScaleY] = useState(0)
+      useDom("button", {
+        textContent: "添加动画",
+        onClick() {
+          setWidth(w => w - 20)
+          setScaleY(v => v == 0 ? 1 : 0)
+        }
+      })
+
+      useDom("div", {
+        onTransitionEnd(event) {
+          console.log("end--", width)
+        },
+        style: {
+          width: width + 'px',
+          height: width + 'px',
+          background: "green",
+          // transform: `scaleY(${scaleY})`,
+          transition: 'all ease 2s'
+        }
+      })
+    },
+  })
+}
