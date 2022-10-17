@@ -1,7 +1,8 @@
 
 import { useEffect } from "better-react"
 import { useOnlyId } from "./useOnlyId"
-import { ValueCenter, useStoreTriggerRender } from "./ValueCenter"
+import { useStoreTriggerRender } from "./useRefState"
+import { useValueCenterWith } from "./ValueCenter"
 
 
 export interface XElement {
@@ -10,13 +11,12 @@ export interface XElement {
   }
 }
 export function createSharePortal() {
-  const portals = ValueCenter.of<XElement[]>([])
+  const portals = useValueCenterWith<XElement[]>([])
 
   function buildDestroy(id: string, p: XElement) {
     useEffect(() => {
       const ps = portals.get()
       const idx = ps.findIndex(v => v.props?.key == id)
-      console.log("更新portals", ps, id, p)
       if (idx < 0) {
         portals.set(ps.concat(p))
       } else {

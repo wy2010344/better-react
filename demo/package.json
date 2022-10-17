@@ -13,9 +13,9 @@
     "vite": "^2.9.9"
   },
   "dependencies": {
-    "better-react": "^1.0.3",
-    "better-react-dom": "^1.0.4",
-    "better-react-helper": "^1.0.1",
+    "better-react": "^1.0.5",
+    "better-react-dom": "^1.0.5",
+    "better-react-helper": "^1.0.6",
     "motion": "^10.11.0",
     "stylis-creater": "^1.0.0"
   }

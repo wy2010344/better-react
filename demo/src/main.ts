@@ -4,7 +4,7 @@ import { useContent, useDom, scheduleAskTime, FiberNode, StyleContext, createRoo
 import dsl from "./dsl";
 import { CountContext, PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
 import usePanel from "./panel/usePanel";
-import { useStoreTriggerRender, ValueCenter } from "better-react-helper";
+import { useStoreTriggerRender, useValueCenterWith, ValueCenter } from "better-react-helper";
 import { StylisCreater } from "stylis-creater";
 
 import test from './test'
@@ -37,7 +37,7 @@ const destroy = createRoot(
 
     test()
     const { panels, operate } = useMemo(() => {
-      const panels = ValueCenter.of<PanelCollection>([])
+      const panels = useValueCenterWith<PanelCollection>([])
       let uid = 0
       const operate: PanelOperate = {
         push(callback) {
