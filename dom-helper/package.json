@@ -50,9 +50,9 @@
   ],
   "devDependencies": {
     "@size-limit/preset-small-lib": "^7.0.8",
-    "better-react": "^1.0.4",
-    "better-react-dom": "^1.0.4",
-    "better-react-helper": "^1.0.1",
+    "better-react": "^1.0.5",
+    "better-react-dom": "^1.0.5",
+    "better-react-helper": "^1.0.7",
     "husky": "^7.0.4",
     "size-limit": "^7.0.8",
     "tsdx": "^0.14.1",

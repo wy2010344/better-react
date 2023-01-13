@@ -1,5 +1,5 @@
 import { useEffect, useState } from "better-react"
-import { useDom, DomElements, React } from "better-react-dom"
+import { useDom, React } from "better-react-dom"
 import { } from "better-react-dom"
 import { useConstRefValue, useRefValue } from "better-react-helper"
 import mb, { contentEditable, MbRange } from "./mb"

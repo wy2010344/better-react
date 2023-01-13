@@ -2,7 +2,7 @@ import { useFragment, useMap, useMemo, useState, startTransition, useEffect } fr
 import { React, useContent, useDom } from "better-react-dom";
 import { useEvent, useRef } from "better-react-helper";
 import { normalPanel } from "./panel/PanelContext";
-import useInput from "./useInput";
+import { useInput } from "better-react-dom-helper";
 
 let lastRenderTime = performance.now()
 export default normalPanel(function (operate, id) {

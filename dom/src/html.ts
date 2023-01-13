@@ -826,7 +826,7 @@ export namespace React {
   }
 
   export type DetailedHTMLProps<E extends HTMLAttributes<T>, T> = E & ({
-    children: MEMONode;
+    children?: MEMONode;
     innerHTML?: never
     textContent?: never
     contentEditable?: never

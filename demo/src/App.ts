@@ -12,7 +12,9 @@ import dragDemo from "./test/dragDemo";
 import 测试useOne from "./test/测试useOne";
 import 测试其它 from "./test/测试其它";
 import todoList from "./todoList";
+import typeSystem from "./typeSystem";
 import vote from "./vote";
+import 设计系统 from "./设计系统";
 
 
 export default function FirstPage() {
@@ -69,6 +71,20 @@ export default function FirstPage() {
             children() {
               useContent("vote")
             }
+          })
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              typeSystem(operate)
+            },
+            textContent: "typeSystem"
+          })
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              设计系统(operate)
+            },
+            textContent: "设计系统"
           })
           useDom("button", {
             onClick(e) {

@@ -1,5 +1,6 @@
 import { useIf, useMap, useState } from "better-react";
 import { useContent, useDom } from "better-react-dom";
+import { getTextColor } from "../colorUtil";
 import { TopicModel, useUser } from "../dbStore";
 import { panelWith } from "../panel/PanelContext";
 import person from "./person";
@@ -51,10 +52,13 @@ export default panelWith({
                       }
                     })
                     useMap(topic.votes, v => v.description, vote => {
+                      const user = vote.creater ? users.find(v => v.name == vote.creater) : undefined
                       useDom("th", {
-                        children() {
-                          useContent(vote.description)
-                        }
+                        style: user ? {
+                          backgroundColor: user.color,
+                          color: getTextColor((user.color || "#000000").slice(1))
+                        } : undefined,
+                        textContent: vote.description
                       })
                     })
                   }
@@ -67,9 +71,11 @@ export default panelWith({
                   useDom("tr", {
                     children() {
                       useDom("td", {
-                        children() {
-                          useContent(user.name)
-                        }
+                        style: {
+                          backgroundColor: user.color,
+                          color: getTextColor((user.color || "#000000").slice(1))
+                        },
+                        textContent: user.name
                       })
                       useDom("td", {
                         children() {
@@ -78,9 +84,11 @@ export default panelWith({
                             !!vote,
                             () => {
                               useDom("div", {
-                                children() {
-                                  useContent(vote!.description)
-                                }
+                                style: {
+                                  backgroundColor: user.color,
+                                  color: getTextColor((user.color || "#000000").slice(1))
+                                },
+                                textContent: vote!.description
                               })
                             },
                             () => {

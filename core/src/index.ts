@@ -314,6 +314,13 @@ export function useGuard<T>(v: T, ...matches: GuardMatchType<T>[]) {
 ////////****useIf****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function quote<T>(v: T) { return v }
 function toOppsite(v: boolean) { return !v }
+/**
+ * 虽然返回filter,是否返回自定义hook内部返回的变量呢?render是条件才触发,跟useXXX是不同的.
+ * @param v 
+ * @param whenTrue 
+ * @param whenFalse 
+ * @returns 
+ */
 export function useIf(
   v: boolean,
   whenTrue: () => void,
@@ -331,7 +338,7 @@ export function useIf(
       whenFalse
     ])
   }
-  useBaseGuard(v, matches)
+  return useBaseGuard(v, matches)
   // return useFiber(guardFiber, { v, matches }, shouldGuardUpdate)
 }
 ////////****useSwitch****////////////////////////////////////////////////////////////////////////////////////////////////////////////

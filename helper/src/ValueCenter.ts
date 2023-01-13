@@ -33,7 +33,8 @@ export function toReduceState<T>(set: (v: T) => void, get: () => T,) {
     }
   }
 }
-export type ReduceState<T> = (v: T | ((v: T) => T)) => void
+export type SetStateAction<T> = T | ((v: T) => T)
+export type ReduceState<T> = (v: SetStateAction<T>) => void
 export interface ValueCenter<T> {
   get(): T
   set: ReduceState<T>

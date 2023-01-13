@@ -15,7 +15,8 @@
   "dependencies": {
     "better-react": "^1.0.5",
     "better-react-dom": "^1.0.5",
-    "better-react-helper": "^1.0.6",
+    "better-react-dom-helper": "file:.yalc/better-react-dom-helper",
+    "better-react-helper": "file:.yalc/better-react-helper",
     "motion": "^10.11.0",
     "stylis-creater": "^1.0.0"
   }

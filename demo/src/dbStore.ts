@@ -1,8 +1,10 @@
 import { ChangeAtomValue, createChangeAtom, createContext, useEffect, useMemo, useState } from "better-react"
 import { useEvent } from "better-react-helper"
+import { TypeSystemModel } from "./typeSystem/model"
 
 export type UserModel = {
   name: string
+  color?: string
 }
 export type TopicModel = {
   date: number
@@ -18,6 +20,7 @@ export type Vote = {
 export type DBStore = {
   user: UserModel[]
   vote: TopicModel[]
+  typeSystem: TypeSystemModel[]
 }
 
 type DBStoreKEY = keyof DBStore
@@ -61,7 +64,7 @@ function getNotify<K extends DBStoreKEY>(key: K, defaultValue: DBStore[K]) {
   return center
 }
 
-function useStore<K extends DBStoreKEY>(key: K, defaultValue: DBStore[K]) {
+export function useStore<K extends DBStoreKEY>(key: K, defaultValue: DBStore[K]) {
   const notify = useMemo(() => getNotify(key, defaultValue), [])
   return {
     notify,
@@ -105,15 +108,13 @@ export function useTopic() {
     }
   }
 }
-function getUserNotify() {
-  return useStore("user", [
+
+export function useUser() {
+  const { notify, useValue } = useStore("user", [
     {
       name: defaultUSER
     }
   ])
-}
-export function useUser() {
-  const { notify, useValue } = getUserNotify()
   const users = useValue()
   return {
     users,
@@ -127,6 +128,17 @@ export function useUser() {
         },
         ...users
       ])
+    },
+    update(name: string, option: Partial<UserModel>) {
+      notify.set(users.map(user => {
+        if (user.name == name) {
+          return {
+            ...user,
+            ...option
+          }
+        }
+        return user
+      }))
     }
   }
 }
