@@ -7,7 +7,7 @@ function defaultIsChange<T>(a: T, b: T) {
 
 type RefState<T> = [T, ReduceState<T>, () => T]
 export function useRefState<T>(): RefState<T | undefined>
-export function useRefState<T>(init: T, arg?: {
+export function useRefState<T>(init: T | (() => T), arg?: {
   /**是否改变 */
   isChange?(a: T, b: T): boolean
   /**内容改变 */
