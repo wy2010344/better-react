@@ -10,13 +10,14 @@ export type MathRule = {
 }
 
 /**
- * 简单的以/分割
- * @param path 
+ * 转化成绝对路径
+ * @param nodes 
  * @returns 
  */
-export function simplePathNameToNodes(path: string) {
-  return path.split('/').filter(v => v)
+export function toAbsolutePath(nodes: string[]) {
+  return '/' + nodes.join('/')
 }
+
 
 type MatchNode = (node: string, scope: Scope) => Scope | void
 function equalMatch(path: string): MatchNode {

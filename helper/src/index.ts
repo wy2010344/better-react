@@ -11,8 +11,8 @@ export * from './useEvent'
 export * from './useRefState'
 export * from './autoLoadMore'
 export * from './memo'
-export { compileSimpleRule, createMatch, pathExactly, pathStartWith, simplePathNameToNodes } from "./routes/util"
-export { useHistory, RouteContext, routeMatch, routeMathWithOther } from "./routes"
+export { compileSimpleRule, createMatch, pathExactly, pathStartWith, toAbsolutePath } from "./routes/util"
+export { RouteContext, routeMatch, routeMathWithOther } from "./routes"
 
 
 /**

@@ -1,0 +1,10 @@
+{
+  "version": "v1",
+  "packages": {
+    "better-react-helper": {
+      "signature": "6c1d6fbb2e37548c1223a4f8bc760261",
+      "file": true,
+      "replaced": "^1.0.7"
+    }
+  }
+}
