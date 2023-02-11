@@ -1,17 +1,17 @@
 import App from "./App";
-import { render, useFragment, useGuard, useGuardString, useIf, useMap, useEffect, useMemo, useState } from "better-react";
-import { useContent, useDom, scheduleAskTime, FiberNode, StyleContext, createRoot } from "better-react-dom";
-import dsl from "./dsl";
+import { useMap, useMemo, useState } from "better-react";
+import { useContent, useDom, scheduleAskTime, StyleContext, createRoot } from "better-react-dom";
 import { CountContext, PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
-import usePanel from "./panel/usePanel";
-import { useStoreTriggerRender, useValueCenterWith, ValueCenter } from "better-react-helper";
+import { useStoreTriggerRender, useValueCenterWith, ValueCenter, useFragment } from "better-react-helper";
 import { StylisCreater } from "stylis-creater";
 
 import test from './test'
+import { useBrowserRouter } from "better-react-dom-helper";
 const destroy = createRoot(
   document.getElementById("app")!,
   function () {
     StyleContext.useProvider(StylisCreater)
+    useBrowserRouter()
     useDom("button", {
       onClick() {
         destroy()

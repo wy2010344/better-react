@@ -1,43 +1,54 @@
 import { Fiber, FiberData, HookContextCosumer, VirtaulDomNode, WithDraftFiber } from "./Fiber"
 
+/**本次新注册的监听者*/
 const draftConsumer: HookContextCosumer<any, any>[] = []
 export function addDraftConsumer(v: HookContextCosumer<any, any>) {
   draftConsumer.push(v)
 }
-//等待删除的fiber
+/**本次等待删除的fiber*/
 const deletions: Fiber[] = []
 export function addDelect(fiber: Fiber) {
   deletions.push(fiber)
 }
+/**本次需要更新的fiber */
 const updates: Fiber[] = []
 export function addUpdate(fiber: Fiber) {
   updates.push(fiber)
 }
+/**本次新添加的fiber */
 const addes: Fiber[] = []
 export function addAdd<T>(fiber: Fiber<T>) {
   addes.push(fiber)
 }
 export type UpdateEffect = () => void
+/**本次所有需要执行的effects */
 const updateEffects: UpdateEffect[] = []
 export function updateEffect(set: UpdateEffect) {
   updateEffects.push(set)
 }
-
+/**计算出需要appends的节点 */
 const appends: [VirtaulDomNode, FindParentAndBefore][] = []
 export function addAppends(dom: VirtaulDomNode<any>, pb: FindParentAndBefore) {
   appends.push([dom, pb])
 }
+/**计算出需要appends的Portal节点*/
 const appendAsPortals: VirtaulDomNode<any>[] = []
 export function addAppendAsPortal<T>(dom: VirtaulDomNode<T>) {
   appendAsPortals.push(dom)
 }
-
+/**批量提交需要最终确认的atoms */
 const changeAtoms: ChangeAtom<any>[] = []
 export type ChangeAtomValue<T> = {
   set(v: T): void
   get(): T
 }
 function defaultDidCommit<T>(v: T) { }
+/**
+ * 在commit期间修改后,都是最新值,直到commit前,都可以回滚
+ * @param value 
+ * @param didCommit 
+ * @returns 
+ */
 export function createChangeAtom<T>(
   value: T,
   didCommit?: (v: T) => void
@@ -82,11 +93,11 @@ export function rollback() {
   deletions.forEach(rollbackTag)
 
   draftConsumer.forEach(draft => draft.destroy())
+  draftConsumer.length = 0
   addes.length = 0
   updates.length = 0
   deletions.length = 0
   updateEffects.length = 0
-  draftConsumer.length = 0
   appends.length = 0
   appendAsPortals.length = 0
 }

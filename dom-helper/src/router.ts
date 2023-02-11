@@ -25,7 +25,7 @@ const NavigateContext = createContext<{
 
 function getRouter(
   init: () => string,
-  toAbsoluteUrl: (path: string) => string,
+  gotoPath: (path: string, replace?: boolean) => void,
   addReload: (
     reload: () => void
   ) => () => void
@@ -47,12 +47,7 @@ function getRouter(
           history.go(path)
         }
       } else {
-        const absoluteUrl = toAbsoluteUrl(path)
-        if (arg?.replace) {
-          history.replaceState(null, '', absoluteUrl)
-        } else {
-          history.pushState(null, '', absoluteUrl)
-        }
+        gotoPath(path, arg?.replace)
         setUrl(init)
       }
     }
@@ -83,7 +78,13 @@ export function useNavigate() {
 
 export const useBrowserRouter = getRouter(
   () => location.href,
-  path => path,
+  (path, replace) => {
+    if (replace) {
+      history.replaceState(null, '', path)
+    } else {
+      history.pushState(null, '', path)
+    }
+  },
   reload => {
     window.addEventListener("popstate", reload)
     return () => {
@@ -93,7 +94,13 @@ export const useBrowserRouter = getRouter(
 )
 export const useHashRouter = getRouter(
   () => location.origin + "/" + location.hash.slice(1),
-  path => location.pathname + "#" + path,
+  (path, replace) => {
+    const absolutePath = location.pathname + "#" + path
+    if (replace) {
+      history.go(-1)
+    }
+    location.href = absolutePath
+  },
   reload => {
     window.addEventListener("hashchange", reload)
     return () => {

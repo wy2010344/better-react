@@ -137,7 +137,7 @@ const mb = {
       var current = 0;
       visit(editor, function (el) {
         if (el.nodeType != Node.TEXT_NODE)
-          return;
+          return false;
         var len = (el.nodeValue || "").length;
         if (current + len >= start) {
           if (!startNode) {
@@ -151,6 +151,7 @@ const mb = {
           }
         }
         current += len;
+        return false
       });
       if (!startNode) {
         startNode = editor;

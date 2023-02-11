@@ -1,8 +1,9 @@
-import { useIf, useMap, useState } from "better-react";
+import { useMap, useState } from "better-react";
 import { useContent, useDom } from "better-react-dom";
 import { getTextColor } from "../colorUtil";
 import { TopicModel, useUser } from "../dbStore";
 import { panelWith } from "../panel/PanelContext";
+import { useIf } from "better-react-helper"
 import person from "./person";
 
 

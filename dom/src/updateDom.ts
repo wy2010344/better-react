@@ -1,6 +1,6 @@
 import {
   FindParentAndBefore,
-  Props, VirtaulDomNode, createContext, useEffect
+  Props, VirtaulDomNode, createContext
 } from "better-react"
 
 export type StyleNode = {

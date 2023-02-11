@@ -2,7 +2,8 @@ import { useContent, useDom } from "better-react-dom";
 import { css } from "stylis-creater";
 import { normalPanel } from "../panel/PanelContext";
 import { animate } from 'motion'
-import { useIf, useMemo, useState } from "better-react";
+import { useIf } from "better-react-helper"
+import { useMemo, useState } from "better-react";
 import { MotionProps, useMotionDom } from "./MotionDOM";
 
 

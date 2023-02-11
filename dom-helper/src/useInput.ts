@@ -19,6 +19,7 @@ export function useInput(type: InputType, {
   const input = useDom(type, {
     onInput(e: any) {
       const newValue = input.value
+      input.type == ""
       selectRef.set({
         start: input.selectionStart,
         end: input.selectionEnd
@@ -34,8 +35,12 @@ export function useInput(type: InputType, {
     const select = selectRef.get()
     if (select) {
       selectRef.set(null)
-      input.selectionStart = select.start
-      input.selectionEnd = select.end
+      if (select.start != input.selectionStart) {
+        input.selectionStart = select.start
+      }
+      if (select.end != input.selectionEnd) {
+        input.selectionEnd = select.end
+      }
     }
   }, [value])
   return input

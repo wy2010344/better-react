@@ -1,6 +1,7 @@
-import { render, useBaseGuard, useGuardString, useMap, useOne, useState } from "better-react";
+import { render, useMap, useOne, useState } from "better-react";
 import { useDom } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
+import { useBaseGuard, useGuardString } from "better-react-helper"
 
 export default normalPanel(function (operate, id) {
 

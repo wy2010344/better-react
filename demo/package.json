@@ -3,7 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite",
+    "ts": "tsc --noEmit --incremental",
+    "ts:watch": "yarn ts --watch",
+    "dev": "yarn ts:watch & vite --force",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
@@ -13,7 +15,7 @@
     "vite": "^2.9.9"
   },
   "dependencies": {
-    "better-react": "^1.0.5",
+    "better-react": "^1.0.7",
     "better-react-dom": "^1.0.5",
     "better-react-dom-helper": "file:.yalc/better-react-dom-helper",
     "better-react-helper": "file:.yalc/better-react-helper",

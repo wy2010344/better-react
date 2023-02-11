@@ -1,10 +1,11 @@
-import { useFragment, useMap, useMemo, useState, startTransition, useEffect } from "better-react";
-import { React, useContent, useDom } from "better-react-dom";
-import { useEvent, useRef } from "better-react-helper";
+import { useMap, useMemo, useState, startTransition, useEffect } from "better-react";
+import { useContent, useDom } from "better-react-dom";
+import { useEvent, useFragment } from "better-react-helper";
 import { normalPanel } from "./panel/PanelContext";
 import { useInput } from "better-react-dom-helper";
 
 let lastRenderTime = performance.now()
+
 export default normalPanel(function (operate, id) {
   const [value, setValue] = useState(0);
   const [renderValue, setRenderValue] = useState(0);
@@ -19,6 +20,7 @@ export default normalPanel(function (operate, id) {
   }, [onTrans])
 
 
+  const [isPending, startTransition] = useTransition()
   const [transition, setTransition] = useState(false)
   const thisRenderTime = performance.now()
   //console.log("render-", thisRenderTime - lastRenderTime)
@@ -128,6 +130,9 @@ export default normalPanel(function (operate, id) {
           useContent(`改变内部值${onTrans ? "A" : "B"}外部存储值${avCount}---abc---${abcValue}`)
         }
       })
+      useDom("div", {
+        textContent: isPending ? `正在进行中...` : ''
+      })
       useDom("hr", {})
       useDom("div", {
         style: {
@@ -183,6 +188,18 @@ function ExpensiveView(count: number) {
         })
     }
   })
+}
+
+export function useTransition() {
+  const [isPending, setIsPending] = useState(false)
+
+  return [isPending, function (fun: () => void) {
+    setIsPending(true)
+    startTransition(function () {
+      fun()
+      setIsPending(false)
+    })
+  }] as const
 }
 
 function PartView() {
