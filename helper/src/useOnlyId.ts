@@ -10,3 +10,10 @@ export function useOnlyId(prefix?: string) {
     id: (prefix || "") + ref
   }
 }
+export function getOnlyId(prefix?: string) {
+  const state = id++
+  return {
+    state,
+    id: (prefix || "") + state
+  }
+}

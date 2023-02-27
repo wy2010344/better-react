@@ -1,23 +1,28 @@
 import { useEffect, useMemo, useState } from 'better-react'
-import { useRef } from './useRef'
+import { useRef, useRefValue } from './useRef'
 import { ReduceState, toReduceState, ValueCenter } from './ValueCenter'
 function defaultIsChange<T>(a: T, b: T) {
   return a != b
 }
 
-type RefState<T> = [T, ReduceState<T>, () => T]
-export function useRefState<T>(): RefState<T | undefined>
-export function useRefState<T>(init: T | (() => T), arg?: {
+
+type RefStateProps<T> = {
   /**是否改变 */
   isChange?(a: T, b: T): boolean
   /**内容改变 */
   onChange?(v: T): void
   /**任何调用 */
   onSet?(v: T): void
-}): RefState<T>
+}
+/**
+ * 最后一个是version
+ */
+type RefState<T> = [T, ReduceState<T>, () => T]
+export function useRefState<T>(): RefState<T | undefined>
+export function useRefState<T>(init: T | (() => T), arg?: RefStateProps<T>): RefState<T>
 export function useRefState<T>() {
   const [init, arg] = arguments
-  const [state, setState] = useState(init)
+  const [state, setState] = useState<T>(init)
   const ref = useRef(state)
   const get = ref.get
   const set = useMemo(() => {
@@ -31,19 +36,21 @@ export function useRefState<T>() {
       }
       //都需要在内容生效后调用
       arg?.onSet?.(value)
-    }, get)
+    }, ref.get)
   }, [arg?.isChange, arg?.onChange, arg?.onSet])
   return [state, set, get] as const
 }
 
 
 
-export function useStoreTriggerRender<T>(store: ValueCenter<T>, isChange?: (a: T, b: T) => boolean) {
-  const [state, setState] = useRefState<T>(store.get(), {
-    isChange
-  })
+export function useStoreTriggerRender<T>(store: ValueCenter<T>, arg?: RefStateProps<T>) {
+  const [state, setState] = useRefState<T>(store.get(), arg)
   useEffect(function () {
-    setState(store.get())
+    const newState = store.get()
+    const isChange = arg?.isChange || defaultIsChange
+    if (isChange(newState, state)) {
+      setState(store.get())
+    }
     return store.subscribe(setState)
   }, [store])
   return state

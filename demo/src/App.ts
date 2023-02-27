@@ -16,6 +16,7 @@ import todoList from "./todoList";
 import typeSystem from "./typeSystem";
 import vote from "./vote";
 import 设计系统 from "./设计系统";
+import figmaClone from "./figmaClone";
 
 
 export default function FirstPage() {
@@ -79,6 +80,13 @@ export default function FirstPage() {
               typeSystem(operate)
             },
             textContent: "typeSystem"
+          })
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              figmaClone(operate)
+            },
+            textContent: "figmaClone"
           })
           useDom("button", {
             onClick(e) {
