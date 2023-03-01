@@ -1,26 +1,20 @@
-import { useMap, useOne } from "better-react";
+import { useOne } from "better-react";
 import { useIf } from "./useGuard";
-import { useOnlyId } from "./useOnlyId";
 import { useStoreTriggerRender } from "./useRefState";
-import { useValueCenter, useValueCenterWith, ValueCenter, valueCenterOf } from "./ValueCenter";
-
-
-
-
-
-type FunElement<T extends (...vs: any[]) => void> = [T, ...(Parameters<T>)]
-
-
-function getId(v: FunElement<any>) {
-  return v[0]
+import { valueCenterOf } from "./ValueCenter";
+type FunElement = {
+  render(): void
+  id: any
 }
-function renderContent(v: FunElement<any>) {
-  const [fun, ...args] = v
-  fun(...args)
+function getId(v: FunElement) {
+  return v.id
+}
+function renderContent(v: FunElement) {
+  v.render()
 }
 
 function initSharePop(): {
-  stacks: ValueCenter<FunElement<any>>[]
+  stacks: FunElement[]
   index: number
 } {
   return {
@@ -44,44 +38,43 @@ export function createSharePop() {
       const { stacks, index } = useStoreTriggerRender(popCenter)
       const currentPop = stacks[index]
       useIf(currentPop, function () {
-        const element = useStoreTriggerRender(currentPop)
-        useOne(element, getId, renderContent)
+        useOne(currentPop, getId, renderContent)
       })
     },
-    useContent(...vs: FunElement<any>) {
-      const store = useValueCenterWith(vs)
-      store.set(vs)
-      return {
-        push() {
-          const { stacks, index } = popCenter.get()
-          const newIndex = index + 1
-          popCenter.set({
-            stacks: stacks.slice(0, index).concat(store),
-            index: newIndex
-          })
-        },
-        replace() {
-          const { stacks, index } = popCenter.get()
-          popCenter.set({
-            stacks: stacks.slice(0, index - 1).concat(store),
-            index
-          })
-        },
-        go(n: number) {
-          if (n != 0) {
-            const { stacks, index } = popCenter.get()
-            let newIndex = index + n
-            if (newIndex < 0) {
-              newIndex = 0
-            } else if (newIndex >= stacks.length) {
-              newIndex = stacks.length - 1
-            }
-            popCenter.set({
-              index: newIndex,
-              stacks
-            })
-          }
+    push(render: () => void, id: any = render) {
+      const { stacks, index } = popCenter.get()
+      const newIndex = index + 1
+      popCenter.set({
+        stacks: stacks.slice(0, index).concat({
+          render,
+          id
+        }),
+        index: newIndex
+      })
+    },
+    replace(render: () => void, id: any = render) {
+      const { stacks, index } = popCenter.get()
+      popCenter.set({
+        stacks: stacks.slice(0, index - 1).concat({
+          render,
+          id
+        }),
+        index
+      })
+    },
+    go(n: number) {
+      if (n != 0) {
+        const { stacks, index } = popCenter.get()
+        let newIndex = index + n
+        if (newIndex < 0) {
+          newIndex = 0
+        } else if (newIndex >= stacks.length) {
+          newIndex = stacks.length - 1
         }
+        popCenter.set({
+          index: newIndex,
+          stacks
+        })
       }
     }
   }

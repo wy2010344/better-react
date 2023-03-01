@@ -1,5 +1,4 @@
-import { createContext, useEffect, useMemo, useState } from "better-react"
-import { RouteContext } from "better-react-helper"
+import { useEffect, useMemo, useState } from "better-react"
 
 /**
  * 简单的以/分割
@@ -9,20 +8,14 @@ import { RouteContext } from "better-react-helper"
 function simplePathNameToNodes(path: string) {
   return path.split('/').filter(v => v)
 }
-export type Navigate = {
+export type Navigate<T extends string = string> = {
   (n: number): void
-  (path: string, arg?: {
+  (path: T, arg?: {
     replace?: boolean
   }): void
 }
 
 export type ReadonlyURLSearchParams = Omit<URLSearchParams, 'append' | 'delete' | 'sort' | 'set'>
-const NavigateContext = createContext<{
-  navigate: Navigate
-  searchParams: ReadonlyURLSearchParams
-  hash: string
-}>(null as any)
-
 function getRouter(
   init: () => string,
   gotoPath: (path: string, replace?: boolean) => void,
@@ -51,30 +44,15 @@ function getRouter(
         setUrl(init)
       }
     }
-    NavigateContext.useProvider({
-      navigate,
-      searchParams: urlModel.searchParams,
-      hash: urlModel.hash
-    })
-    RouteContext.useProvider({
-      paths,
-      getPrefix() {
-        return []
-      },
-    })
     return {
       searchParams: urlModel.searchParams,
       hash: urlModel.hash,
       navigate,
       paths
     }
-
   }
 }
 
-export function useNavigate() {
-  return NavigateContext.useConsumer()
-}
 
 export const useBrowserRouter = getRouter(
   () => location.href,

@@ -4,16 +4,8 @@ import { useConstRefValue, useRefValue } from "./useRef"
 
 let id = 0
 export function useOnlyId(prefix?: string) {
-  const ref = useConstRefValue(() => id++)
-  return {
-    state: ref,
-    id: (prefix || "") + ref
-  }
+  return useConstRefValue(() => id++)
 }
-export function getOnlyId(prefix?: string) {
-  const state = id++
-  return {
-    state,
-    id: (prefix || "") + state
-  }
+export function getOnlyId() {
+  return id++
 }
