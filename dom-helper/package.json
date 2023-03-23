@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "1.0.7",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -31,9 +31,9 @@
     "trailingComma": "es5"
   },
   "peerDependencies": {
-    "better-react": "^1.0.4",
-    "better-react-dom": "^1.0.4",
-    "better-react-helper": "^1.0.1"
+    "better-react": "^1.0.7",
+    "better-react-dom": "^1.0.7",
+    "better-react-helper": "^1.0.8"
   },
   "name": "better-react-dom-helper",
   "author": "wangyang2010344",
@@ -50,9 +50,9 @@
   ],
   "devDependencies": {
     "@size-limit/preset-small-lib": "^7.0.8",
-    "better-react": "^1.0.5",
-    "better-react-dom": "^1.0.5",
-    "better-react-helper": "file:.yalc/better-react-helper",
+    "better-react": "^1.0.7",
+    "better-react-dom": "^1.0.7",
+    "better-react-helper": "^1.0.8",
     "husky": "^7.0.4",
     "size-limit": "^7.0.8",
     "tsdx": "^0.14.1",

@@ -3,7 +3,6 @@ import { ReduceState, SetStateAction } from './ValueCenter'
 
 export * from './useFragment'
 export * from './useGuard'
-export * from './SharePortal'
 export * from './useOnlyId'
 export * from './useRef'
 export * from './ValueCenter'

@@ -26,7 +26,7 @@ function getRouter(
   return function () {
     const [url, setUrl] = useState(init)
     const urlModel = useMemo(() => new URL(url), [url])
-    const paths = useMemo(() => simplePathNameToNodes(urlModel.pathname), [urlModel.pathname])
+    const paths = useMemo(() => simplePathNameToNodes(decodeURI(urlModel.pathname)), [urlModel.pathname])
     useEffect(() => {
       function reload() {
         setUrl(init())

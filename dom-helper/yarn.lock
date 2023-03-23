@@ -1838,22 +1838,20 @@ bcrypt-pbkdf@^1.0.0:
   dependencies:
     tweetnacl "^0.14.3"
 
-better-react-dom@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/better-react-dom/-/better-react-dom-1.0.4.tgz#45bd3c25e61866d16f9e49b38457269dc8bc453e"
-  integrity sha512-4wDk1e3HP9jkCl6+Qlqz/cufnWY/rC7ywsXb7peuM+Qx7pq1/fiZGq7IlSuRbCgaJmE7zKEGRJrm0HZGkWnumg==
+better-react-dom@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/better-react-dom/-/better-react-dom-1.0.5.tgz#ad5db0083cfdf1330d499a66a9829e4a9eedf8c0"
+  integrity sha512-vDpjfXxx1y0H+gpI4fy3exSdIegWoOa1cw+DO3hAv2k0gMMSDJGbHddx2z7rfxP+Nj8uDYScXWZ1aSaflxn5fQ==
   dependencies:
     csstype "^3.1.0"
 
-better-react-helper@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/better-react-helper/-/better-react-helper-1.0.1.tgz#7d6e02e57a343637bc7f053d7feae54bd088746a"
-  integrity sha512-7uiW2VrHadyzPmbhM9PiPUCU1ll9Z1/hnfvm7i+SOQgj1I6m2RFlB6wxQHUXuXSDB2G61JBQqrbYFwUgbFDUhA==
+"better-react-helper@file:.yalc/better-react-helper":
+  version "1.0.7"
 
-better-react@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.0.4.tgz#8fd3b2fbb21e6278247aabce96308986da88de2c"
-  integrity sha512-vCsLKf2/dbOgqRfq/cI4/inyX8tzxHQLyHSS3/usQbvQHyXryX26rxN3syddZKqVl3m2ZBxooYBnnpxdulUGzw==
+better-react@^1.0.5:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.0.7.tgz#4cda83e90674abf2d4eba61315a9c8fd0bd2a3b6"
+  integrity sha512-9cpyfR/qLFz0H/lxrUswRRyHV89k/8UM7AsObnYL9YNUpY0b3OXu9fAwRYB9jCmBsytKYgEIjEeT3ejQUfTPEQ==
 
 binary-extensions@^2.0.0:
   version "2.2.0"
