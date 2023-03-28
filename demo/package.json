@@ -16,10 +16,10 @@
   },
   "dependencies": {
     "better-react": "^1.0.7",
-    "better-react-dom": "^1.0.5",
-    "better-react-dom-helper": "file:.yalc/better-react-dom-helper",
-    "better-react-helper": "file:.yalc/better-react-helper",
+    "better-react-dom": "^1.0.7",
+    "better-react-dom-helper": "^1.0.7",
+    "better-react-helper": "^1.0.8",
     "motion": "^10.11.0",
-    "stylis-creater": "^1.0.0"
+    "stylis-creater": "^1.0.5"
   }
 }

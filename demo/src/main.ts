@@ -6,12 +6,11 @@ import { useStoreTriggerRender, useValueCenterWith, ValueCenter, useFragment } f
 import { StylisCreater } from "stylis-creater";
 
 import test from './test'
-import { useBrowserRouter } from "better-react-dom-helper";
+import sReact from "./s-react";
 const destroy = createRoot(
   document.getElementById("app")!,
   function () {
     StyleContext.useProvider(StylisCreater)
-    useBrowserRouter()
     useDom("button", {
       onClick() {
         destroy()
@@ -21,8 +20,6 @@ const destroy = createRoot(
       }
     })
     console.log("正在render")
-
-
     const [count, setCount] = useState(0)
     useDom("button", {
       onClick() {

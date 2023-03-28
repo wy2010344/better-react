@@ -17,6 +17,7 @@ import typeSystem from "./typeSystem";
 import vote from "./vote";
 import 设计系统 from "./设计系统";
 import figmaClone from "./figmaClone";
+import sReact from "./s-react";
 
 
 export default function FirstPage() {
@@ -57,6 +58,13 @@ export default function FirstPage() {
             children() {
               useContent("FlexAbc")
             }
+          })
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              sReact(operate)
+            },
+            textContent: "s-react"
           })
           useDom("button", {
             onClick(e) {

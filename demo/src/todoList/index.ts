@@ -1,6 +1,10 @@
 import { useContent, useDom } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
 
+let db: IDBDatabase
+createDB("todo", 1)
+  .then(v => db = v)
+  .catch(err => console.error(err))
 export default normalPanel(function (operate, id) {
 
   useDom("div", {
@@ -70,8 +74,6 @@ export default normalPanel(function (operate, id) {
     }
   })
 })
-
-const db = await createDB("todo", 1)
 function createDB(name: string, version = 1) {
   return new Promise<IDBDatabase>((resolve, reject) => {
     indexedDB.deleteDatabase(name)
