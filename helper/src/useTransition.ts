@@ -1,11 +1,7 @@
-import { startTransition, useState } from "better-react";
-
-
-
-
+import { startTransition } from "better-react";
+import { useChangeWith } from "./useState";
 export function useTransition() {
-  const [isPending, setIsPending] = useState(false)
-
+  const [isPending, setIsPending] = useChangeWith(false)
   return [isPending, function (fun: () => void) {
     setIsPending(true)
     startTransition(function () {

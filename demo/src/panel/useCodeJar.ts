@@ -1,7 +1,6 @@
-import { useEffect, useState } from "better-react"
+import { useEffect } from "better-react"
 import { useDom, React } from "better-react-dom"
-import { } from "better-react-dom"
-import { useConstRefValue, useRefValue } from "better-react-helper"
+import { useConstRefValue, useRefValue, useState } from "better-react-helper"
 import mb, { contentEditable, MbRange } from "./mb"
 
 function shouldRecord(e: React.KeyboardEvent) {

@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "better-react"
-import { useRefValue } from "./useRef"
+import { useMemo } from "better-react"
 
 type EventHandler<T> = (v: T) => void
 export interface VirtualEventCenter<T> {

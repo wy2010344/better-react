@@ -5,7 +5,7 @@ base:
 * render
 
 hooks
-*  useState
+*  useReducer
 *  useEffect
 *  useMemo
 *  createContext

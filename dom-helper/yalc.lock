@@ -2,7 +2,17 @@
   "version": "v1",
   "packages": {
     "better-react-helper": {
-      "signature": "6c1d6fbb2e37548c1223a4f8bc760261",
+      "signature": "fc718dad42433b2721f9913d953689a8",
+      "file": true,
+      "replaced": "^1.0.8"
+    },
+    "better-react": {
+      "signature": "9c5f371032557faa731909f76c84b95c",
+      "file": true,
+      "replaced": "^1.0.7"
+    },
+    "better-react-dom": {
+      "signature": "d6a1e749504e1a605228be77fa465547",
       "file": true,
       "replaced": "^1.0.7"
     }

@@ -15,10 +15,10 @@
     "vite": "^2.9.9"
   },
   "dependencies": {
-    "better-react": "^1.0.7",
+    "better-react": "^1.0.8",
     "better-react-dom": "^1.0.7",
-    "better-react-dom-helper": "^1.0.7",
-    "better-react-helper": "^1.0.8",
+    "better-react-dom-helper": "^1.0.8",
+    "better-react-helper": "^1.0.9",
     "motion": "^10.11.0",
     "stylis-creater": "^1.0.5"
   }

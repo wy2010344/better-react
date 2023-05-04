@@ -1,6 +1,6 @@
-import { useMap, useState } from "better-react";
+import { useMap } from "better-react";
 import { useContent, useDom } from "better-react-dom";
-import { useRef } from "better-react-helper";
+import { useState } from "better-react-helper";
 import { useTopic } from "../dbStore";
 import { normalPanel } from "../panel/PanelContext";
 import topicPanel from "./topic";

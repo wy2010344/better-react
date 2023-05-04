@@ -5,7 +5,7 @@ type Item = {
 }
 export const whiteList = ' \r\n\t'.split('')
 const infixAtom = './|:'.split('')
-const prefixAtom = '!~'.split('')
+const prefixAtom = '+!~'.split('')
 //关键字,自成一个   
 /**
  * . 访问属性
@@ -16,7 +16,7 @@ const prefixAtom = '!~'.split('')
  * 可能还需要默认...解包语法(同类型赋值)用~
  * \!非语法
  */
-const keywords = '()'.split('').concat(infixAtom).concat(prefixAtom)
+const keywords = '()[]'.split('').concat(infixAtom).concat(prefixAtom)
 
 
 function parseString(content: string, split: string, i: number) {

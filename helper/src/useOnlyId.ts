@@ -1,10 +1,10 @@
-import { useConstRefValue, useRefValue } from "./useRef"
+import { useConstRefValue } from "./useRef"
 
 
 
 let id = 0
-export function useOnlyId(prefix?: string) {
-  return useConstRefValue(() => id++)
+export function useOnlyId() {
+  return useConstRefValue(getOnlyId)
 }
 export function getOnlyId() {
   return id++

@@ -1,12 +1,15 @@
 import App from "./App";
-import { useMap, useMemo, useState } from "better-react";
+import { useEffect, useMap, useMemo } from "better-react";
 import { useContent, useDom, scheduleAskTime, StyleContext, createRoot } from "better-react-dom";
 import { CountContext, PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
-import { useStoreTriggerRender, useValueCenterWith, ValueCenter, useFragment } from "better-react-helper";
+import { useStoreTriggerRender, useValueCenterWith, ValueCenter, useFragment, useState } from "better-react-helper";
 import { StylisCreater } from "stylis-creater";
 
 import test from './test'
 import sReact from "./s-react";
+import jsonRender from "./json-render";
+import learn from "./learn";
+import cssHasCursor from "./learn/css-has-cursor";
 const destroy = createRoot(
   document.getElementById("app")!,
   function () {
@@ -65,6 +68,12 @@ const destroy = createRoot(
     }, [])
     PanelContext.useProvider(operate)
     useFragment(App)
+
+    useEffect(() => {
+      cssHasCursor(operate)
+      //learn(operate)
+      //jsonRender(operate)
+    })
     useFragment(RenderHost, panels)
   },
   //askTimeWork,

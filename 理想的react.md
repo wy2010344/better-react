@@ -159,3 +159,11 @@ slot部分,是函数,在内部调用的时候,需要通过Fragment展开,才能�
 现在纠结一点,是否能改成现有的jsx
 
 不需要type去diff,这一点跟jetpack一样.
+
+
+# 性能优化
+
+useEvent,禁止在render期间执行
+useMemo/useEffect,回调函数的参数即是依赖参数,使其全局化
+useMap/useOne——组件大写,不再用use
+独立组件声明默认memo,即浅对比,是列表级.但可能需要zod.本来是浅对比的,一个函数有多个参数,只是js不支持参数命名化.全局函数,或非闭包函数,const函数,没法memo

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'better-react'
+import { useEffect, useMemo } from 'better-react'
 import { useRef, useRefValue } from './useRef'
 import { ReduceState, toReduceState, ValueCenter } from './ValueCenter'
+import { useState } from './useState'
 function defaultIsChange<T>(a: T, b: T) {
   return a != b
 }

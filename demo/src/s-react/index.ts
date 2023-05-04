@@ -1,7 +1,26 @@
 import { useEffect } from "better-react"
 import { normalPanel } from "../panel/PanelContext"
+import { evaluate } from "./eval"
 import { mergeTree, parseTree, tokenize } from "./tokenize"
 
+
+/**
+ * 函数的语法
+ * 单参
+ * 单参可以是匿名结构体,可以是元组
+ * 可以无参
+ * A1:(@fun ab:Int 
+ * ...
+ * )
+ * A2:(@lfun ...)
+ * A3:(@fun am:(@struct a:Int b:String) ...)
+ * A4:(@fun [a b c]:[Int Bool String] ...)
+ * 
+ * (A1 9)  -> 9/A1
+ * (A2)  -> +A2
+ * (A3 a:98 b:"dds")  -> 
+ * (A4 9 true "vs") -> [9 true "vs"]/A4
+ */
 export default normalPanel(function (operate) {
   useEffect(() => {
     try {
@@ -63,6 +82,4 @@ TodoApp:(@component
       console.error(err)
     }
   }, [])
-
-
 })

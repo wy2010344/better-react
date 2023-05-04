@@ -2,13 +2,24 @@
   "version": "v1",
   "packages": {
     "better-react-helper": {
-      "signature": "e570a37ddf4e84031cd640b74a150884",
+      "signature": "fc718dad42433b2721f9913d953689a8",
       "file": true,
-      "replaced": "^1.0.6"
+      "replaced": "^1.0.8"
     },
     "better-react-dom-helper": {
-      "signature": "73b34ae313fe0b8f20331d5425405aa7",
-      "file": true
+      "signature": "5223a17efb0036438ac4889a0e9b2085",
+      "file": true,
+      "replaced": "^1.0.7"
+    },
+    "better-react": {
+      "signature": "9c5f371032557faa731909f76c84b95c",
+      "file": true,
+      "replaced": "^1.0.7"
+    },
+    "better-react-dom": {
+      "signature": "d6a1e749504e1a605228be77fa465547",
+      "file": true,
+      "replaced": "^1.0.7"
     }
   }
 }

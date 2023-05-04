@@ -1,5 +1,4 @@
-import { useState } from "better-react";
-import { useIf } from "better-react-helper"
+import { useIf, useState } from "better-react-helper"
 import { useContent, useDom } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
 import ScrollTabPane from "./ScrollTabPane";

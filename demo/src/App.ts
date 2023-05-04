@@ -1,5 +1,5 @@
-import { useEffect, useState } from "better-react";
-import { useFragment, useGuard, useGuardString, } from "better-react-helper"
+import { useEffect } from "better-react";
+import { useFragment, useGuard, useGuardString, useState, } from "better-react-helper"
 import { useContent, useDom } from "better-react-dom";
 import dsl from "./dsl";
 import ExpensiveView from "./ExpensiveView";
@@ -18,6 +18,7 @@ import vote from "./vote";
 import 设计系统 from "./设计系统";
 import figmaClone from "./figmaClone";
 import sReact from "./s-react";
+import 文件系统整理 from "./文件系统整理";
 
 
 export default function FirstPage() {
@@ -165,6 +166,13 @@ export default function FirstPage() {
             children() {
               useContent("drag-demo")
             }
+          })
+          useDom("button", {
+            onClick(event) {
+              event.stopPropagation()
+              文件系统整理(operate)
+            },
+            textContent: "文件系统整理"
           })
         },
         moveFirst() {

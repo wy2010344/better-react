@@ -85,10 +85,10 @@
   resolved "https://registry.yarnpkg.com/@types/stylis/-/stylis-4.0.2.tgz#311c62d68a23dfb01462d54b04549484a4c5cb2a"
   integrity sha512-wtckGuk1eXUlUz0Qb1eXHG37Z7HWT2GfMdqRf8F/ifddTwadSS9Jwsqi4qtXk7cP7MtoyGVIHPElFCLc6HItbg==
 
-better-react-dom-helper@^1.0.7:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/better-react-dom-helper/-/better-react-dom-helper-1.0.7.tgz#a3dc7ec53ba604f0d0ebc82918259a3fbee49baa"
-  integrity sha512-Fts8A/PwlAbLvsQ1bLySMmtvIX6HE32z4C1hnB9RRoML4zRQX+zlkN5q6VpZkXxBUoCI179ot2fQIsoaEwOHhw==
+better-react-dom-helper@^1.0.8:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/better-react-dom-helper/-/better-react-dom-helper-1.0.8.tgz#5a727b4150b398ae959b06280c179abcc3b5d5bf"
+  integrity sha512-tWMT91xfNSEpbtbPZsR8BbQMPlZL/4fZmw9vq8Zy7HRctcj7WNM20CMvleYr1QYCZeF4DRm/9l0pdlwcvX4BmA==
 
 better-react-dom@^1.0.7:
   version "1.0.7"
@@ -97,15 +97,15 @@ better-react-dom@^1.0.7:
   dependencies:
     csstype "^3.1.0"
 
-better-react-helper@^1.0.8:
-  version "1.0.8"
-  resolved "https://registry.yarnpkg.com/better-react-helper/-/better-react-helper-1.0.8.tgz#922efdef13f68002931e409769092bb5bd5af1f9"
-  integrity sha512-PvL5cYqvMDCosOGEaIeKlqDHlDsU0bSmr4eZIdG1FIcZqk4aqq5vJGHjKgeldmAOa1jdo0bDQSQg91FBF/5uDA==
+better-react-helper@^1.0.9:
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/better-react-helper/-/better-react-helper-1.0.9.tgz#7d1359354f65dc337e4fd826496dc14b84cab327"
+  integrity sha512-Vfc3KmrBj0URsziBIInqp1fA7hcZgkDucYknIyCRGqoKHNJImOOVE7tegkpQ5RhmGr84fiHncKnejZYeXg2WdQ==
 
-better-react@^1.0.7:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.0.7.tgz#4cda83e90674abf2d4eba61315a9c8fd0bd2a3b6"
-  integrity sha512-9cpyfR/qLFz0H/lxrUswRRyHV89k/8UM7AsObnYL9YNUpY0b3OXu9fAwRYB9jCmBsytKYgEIjEeT3ejQUfTPEQ==
+better-react@^1.0.8:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.0.8.tgz#b71f7e3706744c2f66356d5d7414dfdc80175539"
+  integrity sha512-cuLxeTo+ImcTQIMfSZf6sZYcqbJD4J2sFU6fOk24h5OE0KhUkXS5KGh+LnX8r4DHnZYb26ByLKcHuwOJQfl5yA==
 
 csstype@^3.1.0:
   version "3.1.0"

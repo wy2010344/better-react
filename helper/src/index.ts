@@ -13,6 +13,10 @@ export * from './useRefState'
 export * from './autoLoadMore'
 export * from './memo'
 export * from './useTransition'
+export * from './usePrevious'
+export * from './useVersion'
+export * from './usePromise'
+export * from './useState'
 export { compileSimpleRule, createMatch, pathExactly, pathStartWith, toAbsolutePath } from "./routes/util"
 export { RouteContext, routeMatch, routeMathWithOther } from "./routes"
 

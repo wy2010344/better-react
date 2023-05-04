@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "better-react"
+import { useEffect, useMemo } from "better-react"
 import { useDom, useSvg } from "better-react-dom"
 import { initDrag, resizeHelper } from "./drag"
 import useResize from "./useResize"
+import { useState } from "better-react-helper"
 
 
 export type PanelParams = {

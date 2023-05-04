@@ -1,9 +1,9 @@
 import { addAppendAsPortal, addAppends, ChangeAtomValue } from "./commitWork"
 
-export type HookValueSet<T> = (v: T | ((v: T) => T), after?: () => void) => void
-export type HookValue<T> = {
+export type HookValueSet<F, T> = (v: F, after?: (v: T) => void) => void
+export type HookValue<F, T> = {
   value: ChangeAtomValue<T>
-  readonly set: HookValueSet<T>
+  readonly set: HookValueSet<F, T>
 }
 export type HookMemo<T> = {
   deps: readonly any[]
@@ -46,7 +46,7 @@ type BaseFiber<T> = {
   contextProvider?: Map<any, {
     changeValue(v: any): void
   }>
-  hookValue?: HookValue<any>[]
+  hookValue?: HookValue<any, any>[]
   hookEffect?: ChangeAtomValue<HookEffect>[]
   hookMemo?: ChangeAtomValue<HookMemo<any>>[]
   hookContextCosumer?: HookContextCosumer<any, any>[]

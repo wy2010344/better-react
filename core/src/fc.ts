@@ -28,26 +28,18 @@ export function updateFunctionComponent(fiber: WithDraftFiber) {
   wipFiber = undefined
 }
 
-function getInit<T>(init: T | (() => T)) {
-  if (typeof (init) == 'function') {
-    return (init as any)()
-  } else {
-    return init
-  }
-}
-export function useState<S = undefined>(): [S | undefined, HookValueSet<S | undefined>];
-export function useState<T>(init: T | (() => T)): [T, HookValueSet<T>];
-export function useState() {
-  const init = arguments[0]
+export type ReducerFun<F, T> = (old: T, action: F) => T
+export type ReducerResult<F, T> = [T, HookValueSet<F, T>];
+export function useReducer<F, T>(reducer: ReducerFun<F, T>, init: () => T): ReducerResult<F, T> {
   const currentFiber = wipFiber!
   if (currentFiber.effectTag == 'PLACEMENT') {
     //新增
     const hookValues = currentFiber.hookValue || []
     currentFiber.hookValue = hookValues
-    const value = createChangeAtom(getInit(init))
-    const hook: HookValue<any> = {
+    const value = createChangeAtom(init())
+    const hook: HookValue<any, any> = {
       value,
-      set: buildSetValue(value, currentFiber)
+      set: buildSetValue(value, currentFiber, reducer)
     }
     hookValues.push(hook)
     return [value.get(), hook.set]
@@ -55,11 +47,11 @@ export function useState() {
     //修改
     const hookValues = currentFiber.hookValue
     if (!hookValues) {
-      throw new Error("原组件上不存在state")
+      throw new Error("原组件上不存在reducer")
     }
     const hook = hookValues[hookIndex.state]
     if (!hook) {
-      throw new Error("出现了更多的state")
+      throw new Error("出现了更多的reducer")
     }
     hookIndex.state++
     return [hook.value.get(), hook.set]
@@ -78,14 +70,14 @@ export function useState() {
  * 用表的思维去思考,特别是provider和consumer.添加了,但其标记还是draft.
  * 只添加记录操作方式而不具体操作,在提交时统一操作.
  */
-function buildSetValue<T>(atom: ChangeAtomValue<T>, fiber: Fiber) {
-  return function set(temp: T | ((v: T) => T), after?: (v: T) => void) {
+function buildSetValue<T, F>(atom: ChangeAtomValue<T>, fiber: Fiber, reducer: (old: T, action: F) => T) {
+  return function (temp: F, after?: (v: T) => void) {
     reconcile({
       beforeLoop() {
         toWithDraftFiber(fiber)
         //这里如果多次设置值,则会改动多次,依前一次结果累积.
         const oldValue = atom.get()
-        const newValue = typeof (temp) == 'function' ? (temp as any)(oldValue) : temp as T
+        const newValue = reducer(oldValue, temp)
         atom.set(newValue)
       },
       afterLoop: after ? () => {
@@ -150,7 +142,14 @@ export function arrayNotEqual<T>(a1: readonly T[], a2: readonly T[], notEqual: (
   }
   return true
 }
-export function useEffect(effect: () => (void | (() => void)), deps?: readonly any[]) {
+function callEffect<T extends readonly any[], F>(effect: (...args: T) => F, deps?: T) {
+  const args = (deps || []) as T
+  return effect(...args)
+}
+export type EffectResult = (void | (() => void))
+export function useEffect<T extends readonly any[] = any[]>(effect: (...args: T) => EffectResult, deps?: T): void
+export function useEffect(effect: () => EffectResult, deps?: readonly any[]): void
+export function useEffect(effect: any, deps: any) {
   const currentFiber = wipFiber!
   if (currentFiber.effectTag == 'PLACEMENT') {
     //新增
@@ -162,7 +161,7 @@ export function useEffect(effect: () => (void | (() => void)), deps?: readonly a
     const hookEffect = createChangeAtom(state)
     hookEffects.push(hookEffect)
     updateEffect(() => {
-      state.destroy = effect()
+      state.destroy = callEffect(effect, deps)
     })
   } else {
     const hookEffects = currentFiber.hookEffect
@@ -189,19 +188,21 @@ export function useEffect(effect: () => (void | (() => void)), deps?: readonly a
         if (state.destroy) {
           state.destroy()
         }
-        newState.destroy = effect()
+        newState.destroy = callEffect(effect, deps)
       })
     }
   }
 }
 
-export function useMemo<T>(effect: () => T, deps: readonly any[]): T {
+export function useMemo<T, V extends readonly any[] = any[]>(effect: (...args: V) => T, deps: V): T
+export function useMemo<T>(effect: () => T, deps: readonly any[]): T
+export function useMemo(effect: any, deps: any) {
   const currentFiber = wipFiber!
   if (currentFiber.effectTag == "PLACEMENT") {
     const hookMemos = currentFiber.hookMemo || []
     currentFiber.hookMemo = hookMemos
     const state = {
-      value: effect(),
+      value: effect(...deps),
       deps
     }
     const hook = createChangeAtom(state)
@@ -224,7 +225,7 @@ export function useMemo<T>(effect: () => T, deps: readonly any[]): T {
       return state.value
     } else {
       const newState = {
-        value: effect(),
+        value: effect(...deps),
         deps
       }
       hook.set(newState)
