@@ -140,7 +140,7 @@ export default normalPanel(function (operate, id) {
           overflow: "auto"
         },
         children() {
-          useFragment(view)
+          useFragment(view, [])
         }
       })
     }
@@ -163,7 +163,7 @@ function ExpensiveView(count: number) {
         }
       })
 
-      useFragment(PartView)
+      useFragment(PartView, [])
       useDom("hr")
       //console.log("render-mvvvv")
       useMap(

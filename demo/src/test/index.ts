@@ -10,10 +10,6 @@ export default function index() {
   useContent("2")
   useContent("3")
   useContent("4")
-  useFragment(simpleButton, '1')
-  useFragment(simpleButton, '2')
-  useFragment(simpleButton, '3')
-  useFragment(simpleButton, '4')
   //testInnerFragment()
   // useContent("----")
   // useDom("hr")
@@ -98,21 +94,6 @@ function testFlushSync() {
 
 function simpleButton(v: string) {
   useContent(v)
-}
-
-function testInnerFragment() {
-  useDom("div", {
-    children() {
-      useDom("div", {
-        children() {
-          useFragment(simpleButton, '1')
-          useFragment(simpleButton, '2')
-          useFragment(simpleButton, '3')
-          useFragment(simpleButton, '4')
-        }
-      })
-    }
-  })
 }
 
 function testIncrease() {

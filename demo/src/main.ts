@@ -67,22 +67,19 @@ const destroy = createRoot(
       }
     }, [])
     PanelContext.useProvider(operate)
-    useFragment(App)
+    useFragment(App, [])
 
     useEffect(() => {
       cssHasCursor(operate)
       //learn(operate)
       //jsonRender(operate)
-    })
-    useFragment(RenderHost, panels)
+    }, [])
+    useFragment(function () {
+      const vs = useStoreTriggerRender(panels)
+      useMap(vs, v => v.id, v => v.callback(v.id))
+    }, [panels])
   },
   //askTimeWork,
   //askIdleTimeWork,
   scheduleAskTime
 );
-
-
-function RenderHost(panels: ValueCenter<PanelCollection>) {
-  const vs = useStoreTriggerRender(panels)
-  useMap(vs, v => v.id, v => v.callback(v.id))
-}

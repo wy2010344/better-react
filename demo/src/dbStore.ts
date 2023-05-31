@@ -74,7 +74,7 @@ export function useStore<K extends DBStoreKEY>(key: K, defaultValue: DBStore[K])
         return notify.subscriber(() => {
           setValue(notify.get())
         })
-      })
+      }, [notify])
       return value
     }
   }

@@ -38,7 +38,7 @@ export function useDynamicPanel(args: Omit<PanelParams, 'moveFirst'>) {
       vs.splice(idx, 1, thisRender);
       panels.set([...vs]);
     }
-  });
+  }, [thisId]);
   useEffect(() => {
     return () => {
       //最后一次,要删除

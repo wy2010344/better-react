@@ -90,22 +90,22 @@ better-react-dom-helper@^1.0.8:
   resolved "https://registry.yarnpkg.com/better-react-dom-helper/-/better-react-dom-helper-1.0.8.tgz#5a727b4150b398ae959b06280c179abcc3b5d5bf"
   integrity sha512-tWMT91xfNSEpbtbPZsR8BbQMPlZL/4fZmw9vq8Zy7HRctcj7WNM20CMvleYr1QYCZeF4DRm/9l0pdlwcvX4BmA==
 
-better-react-dom@^1.0.7:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/better-react-dom/-/better-react-dom-1.0.7.tgz#c9cb2daff0e2f375d6084ad63fe4a9cdec93aa66"
-  integrity sha512-I2AHFF+fjzzL/tYoydPXumv4FYtRmlM7GYSBygf8YADd35F7oa8oayp6ZiQ94QY4Y3eTk/HXSBG/OrqHVAiHKQ==
+better-react-dom@^1.0.8:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/better-react-dom/-/better-react-dom-1.0.8.tgz#e1feeb9c3d623d315feefbe1105ffc88a2eea594"
+  integrity sha512-Y7E/IqTQuMxenCv324clJXSzdK2j6MKBoQZGH3LN8BmRu9WyLyhz/hchkXaLE3Q92hyRoWAJUYdpOfe3uEGTqw==
   dependencies:
     csstype "^3.1.0"
 
-better-react-helper@^1.0.9:
-  version "1.0.9"
-  resolved "https://registry.yarnpkg.com/better-react-helper/-/better-react-helper-1.0.9.tgz#7d1359354f65dc337e4fd826496dc14b84cab327"
-  integrity sha512-Vfc3KmrBj0URsziBIInqp1fA7hcZgkDucYknIyCRGqoKHNJImOOVE7tegkpQ5RhmGr84fiHncKnejZYeXg2WdQ==
+better-react-helper@^1.0.10:
+  version "1.0.10"
+  resolved "https://registry.yarnpkg.com/better-react-helper/-/better-react-helper-1.0.10.tgz#3ff8c833ff296b9400e95b8a61291da661522fc8"
+  integrity sha512-BR4s9t5Sd8crG4Qyn2E1Hv2B32CQ01dysuLhiGCc0c1Fs9WAF+/gLe8UTbe/9Bh1z9TITcxlmLbH6hH64WirqQ==
 
-better-react@^1.0.8:
-  version "1.0.8"
-  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.0.8.tgz#b71f7e3706744c2f66356d5d7414dfdc80175539"
-  integrity sha512-cuLxeTo+ImcTQIMfSZf6sZYcqbJD4J2sFU6fOk24h5OE0KhUkXS5KGh+LnX8r4DHnZYb26ByLKcHuwOJQfl5yA==
+better-react@^1.0.9:
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.0.9.tgz#1c1911ccc7bb89577ed6f3cac569df13e025bfeb"
+  integrity sha512-3klIOyhY0Pp8gC1/72U3+DNaDz3khW/eKcor5CBbmGQ6DUafeC3dZnUz2rJGElGTSk7m/QfMxKjTq/4Ef1FBDw==
 
 csstype@^3.1.0:
   version "3.1.0"
@@ -238,6 +238,11 @@ esbuild@^0.14.27:
     esbuild-windows-64 "0.14.39"
     esbuild-windows-arm64 "0.14.39"
 
+eventemitter3@^2.0.0:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-2.0.3.tgz#b5e1079b59fb5e1ba2771c0a993be060a58c99ba"
+  integrity sha512-jLN68Dx5kyFHaePoXWPsCGW5qdyZQtLYHkxkg02/Mz6g0kYpDx4FyP6XfArhQdlOC4b8Mv+EMxPo/8La7Tzghg==
+
 fsevents@~2.3.2:
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/fsevents/-/fsevents-2.3.2.tgz#8a526f78b8fdf4623b709e0b975c52c24c02fd1a"
@@ -319,15 +324,20 @@ rollup@^2.59.0:
   optionalDependencies:
     fsevents "~2.3.2"
 
+sax@^1.2.4:
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/sax/-/sax-1.2.4.tgz#2816234e2378bddc4e5354fab5caa895df7100d9"
+  integrity sha512-NqVDv9TpANUjFm0N8uM5GxL36UgKi9/atZw+x7YFnQ8ckwFGKrl4xX4yWtrey3UJm5nP1kUbnYgLopqWNSRhWw==
+
 source-map-js@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/source-map-js/-/source-map-js-1.0.2.tgz#adbc361d9c62df380125e7f161f71c826f1e490c"
   integrity sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==
 
-stylis-creater@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/stylis-creater/-/stylis-creater-1.0.5.tgz#98bd972bdb79570fc458882ee0602bf24deafd10"
-  integrity sha512-lklSdXKLzKmAxKAuGUxBdwb7jNkm7OfWkwZ0gizAmLpmwzVVsy12u0EPVcfZbwE/VvKPXMewXl8hm+qeujdPdg==
+stylis-creater@^1.0.8:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/stylis-creater/-/stylis-creater-1.0.8.tgz#3c3e7ef8a4e44b2e18fc805ab00d67b36f2bd4d6"
+  integrity sha512-6Z/tC+h+jOwAuVAywjecrsigdilp2Y/sC4U6GdAX3HVeKjUNn7+ncDR5K/R02pil8d7Dz4u7CD5wm1lO0mCEFA==
   dependencies:
     stylis "^4.0.13"
 
@@ -362,3 +372,25 @@ vite@^2.9.9:
     rollup "^2.59.0"
   optionalDependencies:
     fsevents "~2.3.2"
+
+xml-js@^1.6.11:
+  version "1.6.11"
+  resolved "https://registry.yarnpkg.com/xml-js/-/xml-js-1.6.11.tgz#927d2f6947f7f1c19a316dd8eea3614e8b18f8e9"
+  integrity sha512-7rVi2KMfwfWFl+GpPg6m80IVMWXLRjO+PxTq7V2CDhoGak0wzYzFgUY2m4XJ47OGdXd8eLE8EmwfAmdjw7lC1g==
+  dependencies:
+    sax "^1.2.4"
+
+xml-lexer@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/xml-lexer/-/xml-lexer-0.2.2.tgz#518193a4aa334d58fc7d248b549079b89907e046"
+  integrity sha512-G0i98epIwiUEiKmMcavmVdhtymW+pCAohMRgybyIME9ygfVu8QheIi+YoQh3ngiThsT0SQzJT4R0sKDEv8Ou0w==
+  dependencies:
+    eventemitter3 "^2.0.0"
+
+xml-reader@^2.4.3:
+  version "2.4.3"
+  resolved "https://registry.yarnpkg.com/xml-reader/-/xml-reader-2.4.3.tgz#9f810caf7c425a5aafb848b1c45103c9e71d7530"
+  integrity sha512-xWldrIxjeAMAu6+HSf9t50ot1uL5M+BtOidRCWHXIeewvSeIpscWCsp4Zxjk8kHHhdqFBrfK8U0EJeCcnyQ/gA==
+  dependencies:
+    eventemitter3 "^2.0.0"
+    xml-lexer "^0.2.2"

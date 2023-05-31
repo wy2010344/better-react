@@ -2,9 +2,9 @@
   "version": "v1",
   "packages": {
     "better-react-helper": {
-      "signature": "fc718dad42433b2721f9913d953689a8",
+      "signature": "2b46d26d08e84e4977236d641042ff2b",
       "file": true,
-      "replaced": "^1.0.8"
+      "replaced": "^1.0.9"
     },
     "better-react-dom-helper": {
       "signature": "5223a17efb0036438ac4889a0e9b2085",
@@ -12,14 +12,19 @@
       "replaced": "^1.0.7"
     },
     "better-react": {
-      "signature": "9c5f371032557faa731909f76c84b95c",
+      "signature": "8c6f1361b67cdb2dad3508e5b5719d14",
+      "file": true,
+      "replaced": "^1.0.8"
+    },
+    "better-react-dom": {
+      "signature": "84f3a5f9900384e006dcfab6a6e45603",
       "file": true,
       "replaced": "^1.0.7"
     },
-    "better-react-dom": {
-      "signature": "d6a1e749504e1a605228be77fa465547",
+    "stylis-creater": {
+      "signature": "ecf5d749487e0fcaa7d63daf12186c9f",
       "file": true,
-      "replaced": "^1.0.7"
+      "replaced": "^1.0.5"
     }
   }
 }

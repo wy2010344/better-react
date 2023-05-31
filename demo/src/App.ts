@@ -19,6 +19,8 @@ import 设计系统 from "./设计系统";
 import figmaClone from "./figmaClone";
 import sReact from "./s-react";
 import 文件系统整理 from "./文件系统整理";
+import xmlToBetter from "./xmlToBetter";
+import logic from "./logic";
 
 
 export default function FirstPage() {
@@ -32,7 +34,7 @@ export default function FirstPage() {
         },
         children() {
           useContent("root")
-          useFragment(TestButtonPage)
+          useFragment(TestButtonPage, [])
           useDom("button", {
             onClick(e) {
               e.stopPropagation()
@@ -97,6 +99,14 @@ export default function FirstPage() {
             },
             textContent: "figmaClone"
           })
+
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              xmlToBetter(operate)
+            },
+            textContent: "xmlToBetter"
+          })
           useDom("button", {
             onClick(e) {
               e.stopPropagation()
@@ -151,7 +161,7 @@ export default function FirstPage() {
             }
           })
           Demo()
-
+          // Action()
           //console.log("在这里")
 
           const value = CountContext.useConsumer()
@@ -173,6 +183,13 @@ export default function FirstPage() {
               文件系统整理(operate)
             },
             textContent: "文件系统整理"
+          })
+          useDom("button", {
+            onClick(event) {
+              event.stopPropagation()
+              logic(operate)
+            },
+            textContent: "逻辑编程"
           })
         },
         moveFirst() {
@@ -200,7 +217,7 @@ function TestButtonPage() {
               operate.close(id)
             },
             children() {
-              useFragment(TestButtonPage)
+              useFragment(TestButtonPage, [])
             },
             moveFirst() {
               operate.moveToFirst(id)
@@ -310,8 +327,6 @@ export function App() {
   })
 }
 
-
-
 function Demo() {
   useDom("div", {
     onClick() {
@@ -334,7 +349,7 @@ function Demo() {
   })
   //MapList()
   //console.log("render--根")
-  useFragment(Count)
+  useFragment(Count, [])
   useDom("div", {
     children() {
 
