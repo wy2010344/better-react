@@ -2,7 +2,13 @@ import {
   FindParentAndBefore,
   Props, VirtaulDomNode, createContext
 } from "better-react"
+import { SvgElements } from "./html"
+import { getAttributeAlias } from "./getAttributeAlias"
 
+/**
+ * 这只是一种dom的更新css方式,将css属性交给外部处理
+ * 如果是自定义的其它dom元素,应该内置着css处理
+ */
 export type StyleNode = {
   className: string
   update(css: string): void
@@ -27,11 +33,7 @@ interface FiberAbsNode<T = any> extends VirtaulDomNode<T> {
 }
 // const INPUTS = ["input", "textarea", "select"]
 export class FiberNode<F> implements FiberAbsNode<F> {
-  init() {
-    // if (this.props?.ref) {
-    //   this.props.ref(this.node)
-    // }
-  }
+  init() { }
   private constructor(
     public node: Node,
     private getProps: (v: F) => Props,
@@ -172,12 +174,12 @@ const emptyFun = () => { }
 
 function purifyStyle(style: object) {
   const s = Object.entries(style).map(function (v) {
-    return `${underline(v[0])}:${v[1]};`
+    return `${underlineToCamel(v[0])}:${v[1]};`
   }).join("")
   return s
 }
 
-function underline(str: string) {
+export function underlineToCamel(str: string) {
   return str.replace(/\B([A-Z])/g, '-$1').toLowerCase()
 }
 /**
@@ -190,7 +192,7 @@ function updateDom<F>(
   dom: FiberNode<F>,
   props: Props = emptyProps,
   oldProps: Props = emptyProps,
-  styleCreater?: () => StyleNode
+  styleCreater?: CreateStyleNode
 ) {
   let addClass = ''
   let removeClass = ''
@@ -231,6 +233,7 @@ function updateDom<F>(
   const style = props.style
   if (style && typeof (style) == 'object') {
     //转化成字符串。会造成对style的全覆盖，所以不能单独修改元素
+    //单独个性style属性,允许驼峰与短线,但是这种化驼峰为短线,比较危险.
     props.style = purifyStyle(style)
   }
   prevKeys
@@ -327,6 +330,10 @@ export function updateSVGProps(node: any, key: string, value: any) {
     updatePorps(node, key, value)
   } else {
     if (value) {
+      if (key == 'className') {
+        key = 'class'
+      }
+      key = getAttributeAlias(key)
       node.setAttribute(key, value)
     } else {
       node.removeAttribute(key)
@@ -380,102 +387,65 @@ export function appendAfter(dom: FiberAbsNode, parentAndBefore: [FiberAbsNode, F
 }
 
 export function isSVG(name: string) {
-  name = name.toLowerCase()
-  return svgTagNames.includes(name)
+  return svgTagNames.includes(name as any)
 }
-export const svgTagNames = [
-  'a',
-  'altGlyph',
-  'altGlyphDef',
-  'altGlyphItem',
-  'animate',
-  'animateColor',
-  'animateMotion',
-  'animateTransform',
-  'animation',
-  'audio',
-  //'canvas',
-  'circle',
-  'clipPath',
-  'color-profile',
-  'cursor',
-  'defs',
-  'desc',
-  'discard',
-  'ellipse',
-  'feBlend',
-  'feColorMatrix',
-  'feComponentTransfer',
-  'feComposite',
-  'feConvolveMatrix',
-  'feDiffuseLighting',
-  'feDisplacementMap',
-  'feDistantLight',
-  'feDropShadow',
-  'feFlood',
-  'feFuncA',
-  'feFuncB',
-  'feFuncG',
-  'feFuncR',
-  'feGaussianBlur',
-  'feImage',
-  'feMerge',
-  'feMergeNode',
-  'feMorphology',
-  'feOffset',
-  'fePointLight',
-  'feSpecularLighting',
-  'feSpotLight',
-  'feTile',
-  'feTurbulence',
-  'filter',
-  'font',
-  'font-face',
-  'font-face-format',
-  'font-face-name',
-  'font-face-src',
-  'font-face-uri',
-  'foreignObject',
-  'g',
-  'glyph',
-  'glyphRef',
-  'handler',
-  'hkern',
-  'iframe',
-  'image',
-  'line',
-  'linearGradient',
-  'listener',
-  'marker',
-  'mask',
-  'metadata',
-  'missing-glyph',
-  'mpath',
-  'path',
-  'pattern',
-  'polygon',
-  'polyline',
-  'prefetch',
-  'radialGradient',
-  'rect',
-  'script',
-  'set',
-  'solidColor',
-  'stop',
-  'style',
-  'svg',
-  'switch',
-  'symbol',
-  'tbreak',
-  'text',
-  'textArea',
-  'textPath',
-  'title',
-  'tref',
-  'tspan',
-  'unknown',
-  'use',
-  'video',
-  'view',
-  'vkern'
+export const svgTagNames: (keyof SvgElements)[] = [
+  "svg",
+  "animate",
+  "animateMotion",
+  "animateTransform",
+  "circle",
+  "clipPath",
+  "defs",
+  "desc",
+  "ellipse",
+  "feBlend",
+  "feColorMatrix",
+  "feComponentTransfer",
+  "feComposite",
+  "feConvolveMatrix",
+  "feDiffuseLighting",
+  "feDisplacementMap",
+  "feDistantLight",
+  "feDropShadow",
+  "feFlood",
+  "feFuncA",
+  "feFuncB",
+  "feFuncG",
+  "feFuncR",
+  "feGaussianBlur",
+  "feImage",
+  "feMerge",
+  "feMergeNode",
+  "feMorphology",
+  "feOffset",
+  "fePointLight",
+  "feSpecularLighting",
+  "feSpotLight",
+  "feTile",
+  "feTurbulence",
+  "filter",
+  "foreignObject",
+  "g",
+  "image",
+  "line",
+  "linearGradient",
+  "marker",
+  "mask",
+  "metadata",
+  "mpath",
+  "path",
+  "pattern",
+  "polygon",
+  "polyline",
+  "radialGradient",
+  "rect",
+  "stop",
+  "switch",
+  "symbol",
+  "text",
+  "textPath",
+  "tspan",
+  "use",
+  "view"
 ]

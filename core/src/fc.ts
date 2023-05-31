@@ -147,8 +147,14 @@ function callEffect<T extends readonly any[], F>(effect: (...args: T) => F, deps
   return effect(...args)
 }
 export type EffectResult = (void | (() => void))
-export function useEffect<T extends readonly any[] = any[]>(effect: (...args: T) => EffectResult, deps?: T): void
-export function useEffect(effect: () => EffectResult, deps?: readonly any[]): void
+
+/**
+ * 必须有个依赖项,如果没有依赖项,如果组件有useFragment,则会不执行,造成不一致.
+ * @param effect 
+ * @param deps 
+ */
+export function useEffect<T extends readonly any[] = any[]>(effect: (...args: T) => EffectResult, deps: T): void
+export function useEffect(effect: () => EffectResult, deps: readonly any[]): void
 export function useEffect(effect: any, deps: any) {
   const currentFiber = wipFiber!
   if (currentFiber.effectTag == 'PLACEMENT') {
@@ -175,11 +181,7 @@ export function useEffect(effect: any, deps: any) {
     }
     const state = hookEffect.get()
     hookIndex.effect = index + 1
-    if (Array.isArray(state.deps)
-      && Array.isArray(deps)
-      && arrayEqual(state.deps, deps, simpleEqual)) {
-      //不处理
-    } else {
+    if (arrayNotEqual(state.deps!, deps, simpleNotEqual)) {
       const newState: HookEffect = {
         deps
       }
@@ -237,6 +239,13 @@ export function useMemo(effect: any, deps: any) {
 function defaultShouldUpdate<T>(a: T, b: T) {
   return true
 }
+
+/**
+ * @param render
+ * @param props 
+ * @param shouldUpdate 
+ * @returns 
+ */
 export function useFiber<T>(
   render: (fiber: WithDraftFiber<T>) => void,
   props: T,
@@ -351,6 +360,11 @@ class ContextFactory<T> implements Context<T>{
     }
     hook.changeValue(v)
   }
+  /**
+   * @param getValue 
+   * @param shouldUpdate 
+   * @returns 
+   */
   useSelector<M>(getValue: (v: T) => M, shouldUpdate?: (a: M, b: M) => boolean): M {
     const currentFiber = wipFiber!
     if (currentFiber.effectTag == "PLACEMENT") {

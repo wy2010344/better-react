@@ -127,6 +127,7 @@ function getEditData(v: Fiber): FiberData<any> {
  * 找到最顶层dirty节点->计算出新的节点替换当前->对比标记新节点->更新
  */
 export function commitRoot() {
+  /**最新更新所有注册的*/
   changeAtoms.forEach(atom => atom.commit())
   changeAtoms.length = 0
   //将所有缓存提交

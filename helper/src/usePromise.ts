@@ -1,4 +1,4 @@
-import { useEffect } from "better-react"
+import { arrayEqual, simpleEqual, useEffect } from "better-react"
 import { useEvent } from "./useEvent"
 
 export type PromiseResult<T> = {
@@ -9,24 +9,27 @@ export type PromiseResult<T> = {
   value: any
 }
 export function usePromise<T>({
-  version,
+  disable,
   body,
   onFinally: initOnFinally
 }: {
-  version: number
+  disable?: boolean
   body(): Promise<T>
   onFinally(data: PromiseResult<T>): void
-}) {
-  const onFinally = useEvent(function (data: PromiseResult<T>, callVersion: number) {
-    if (version == callVersion) {
+}, deps: readonly any[]) {
+  const onFinally = useEvent(function (data: PromiseResult<T>, beforeDeps: readonly any[]) {
+    if (arrayEqual(deps, beforeDeps, simpleEqual)) {
       initOnFinally(data)
     }
   })
   useEffect(() => {
+    if (disable) {
+      return
+    }
     body().then(data => {
-      onFinally({ type: "success", value: data }, version)
+      onFinally({ type: "success", value: data }, deps)
     }).catch(err => {
-      onFinally({ type: "error", value: err }, version)
+      onFinally({ type: "error", value: err }, deps)
     })
-  }, [version])
+  }, deps)
 }

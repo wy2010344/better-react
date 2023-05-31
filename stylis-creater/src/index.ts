@@ -8,68 +8,129 @@ function newClassName() {
 function toCssFragment(className: string, css: string) {
   return serialize(compile(`.${className}{${css}}`), middleware([prefixer, stringify]))
 }
-export function StylisCreater(): StyleNode {
-  const className = newClassName()
+
+export function createBodyStyleTag() {
   const styled = document.createElement("style")
-  styled.id = className
   const body = document.body
   body.appendChild(styled)
+  return styled
+}
+/**
+ * 这个是供全局嵌入的css
+ * 单个的可以使用
+ * 这里在内嵌css中,一定是在最终渲染界面是调用
+ * @returns 
+ */
+export function StylisCreater(): StyleNode {
+  const className = newClassName()
+  const styled = createBodyStyleTag()
+  styled.id = className
   return {
     className,
     update(css) {
       styled.textContent = toCssFragment(className, css)
     },
     destroy() {
-      body.removeChild(styled)
+      styled.remove()
     }
   }
 }
-
-/**@todo 同时创建多个在一个styled里面,真有必要吗? */
-export function cssMap<T extends {
+export function genCssMap<T extends {
   [key: string]: string
 }>(map: T): {
+  css: string
+  classMap: {
     [key in keyof T]: string
-  } {
+  }
+} {
   const classMap: any = {}
   const contents = Object.entries(map).map(function ([key, value]) {
     const className = newClassName()
     classMap[key] = className
     return toCssFragment(className, value)
   })
-  const styled = document.createElement("style")
-  const body = document.body
-  body.appendChild(styled)
-  styled.textContent = contents.join('\n')
-  return classMap
+  return {
+    css: contents.join('\n'),
+    classMap,
+  }
 }
 /**
- * 
- * @param ts 
- * @param vs 
+ * 这里是全局的,所以应该在回调里使用
+ * @param map 
  * @returns 
  */
-export function css(ts: TemplateStringsArray, ...vs: (string | number)[]) {
+export function cssMap<T extends {
+  [key: string]: string
+}>(map: T) {
+  const styled = createBodyStyleTag()
+  const { css, classMap } = genCssMap(map)
+  styled.textContent = css
+  return classMap
+}
+
+export function genCSS(ts: TemplateStringsArray, ...vs: (string | number)[]) {
   const xs: any[] = []
   for (let i = 0; i < vs.length; i++) {
     xs.push(ts[i])
     xs.push(vs[i])
   }
   xs.push(ts[vs.length])
-  const css = xs.join('')
+  return xs.join('')
+}
+/**
+ * 单个可以直接用StylisCreater
+ * 这里要延迟到下一次触发
+ * @param ts 
+ * @param vs 
+ * @returns 
+ */
+export function css(ts: TemplateStringsArray, ...vs: (string | number)[]) {
   const body = StylisCreater()
-  body.update(css)
+  body.update(genCSS(ts, ...vs))
   return body.className
 }
 
-import { useMemo, useEffect } from 'better-react'
-export function useCss(fun: () => string, deps: any[]) {
-  const css = useMemo(() => StylisCreater(), [])
-  useEffect(() => {
-    return () => css.destroy()
+import { useMemo, useEffect, createChangeAtom } from 'better-react'
+
+/**
+ * 这里因为在render中,延迟到渲染时执行,可以由事件触发更新css
+ * @returns 
+ */
+export function useBodyStyleUpdate() {
+  const { styled, update } = useMemo(() => {
+    const styled = createBodyStyleTag()
+    const atom = createChangeAtom<string>("", function (css) {
+      styled.textContent = css
+    })
+    return {
+      styled,
+      update(css: string) {
+        atom.set(css)
+      }
+    }
   }, [])
   useEffect(() => {
-    css.update(fun())
+    return function () {
+      styled.remove()
+    }
+  }, [])
+  return update
+}
+
+/**
+ * 使用deps通知更新css
+ * @param callback 
+ * @param deps 
+ * @returns 
+ */
+export function useStyleMap<A extends any[], T extends {
+  [key: string]: string
+}>(callback: (...args: A) => T, deps: A) {
+  const update = useBodyStyleUpdate()
+  return useMemo(() => {
+    const cssMap = callback(...deps)
+    const { css, classMap } = genCssMap(cssMap)
+    update(css)
+    return classMap
   }, deps)
-  return css.className
 }

@@ -873,7 +873,7 @@ export namespace React {
     method?: string | undefined;
     min?: number | string | undefined;
     name?: string | undefined;
-    style?: CSSProperties | undefined;
+    style?: CSSProperties | undefined | string;
     target?: string | undefined;
     type?: string | undefined;
     width?: number | string | undefined;

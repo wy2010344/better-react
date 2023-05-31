@@ -1,25 +1,20 @@
-import { Fiber, useFiber, WithDraftFiber } from "better-react"
+import { arrayNotEqual, Fiber, simpleNotEqual, useFiber, WithDraftFiber } from "better-react"
 
 ////////****类似函数式组件****////////////////////////////////////////////////////////////////////////////////////////////////////////////
-export function useFragment(fun: () => void): Fiber<FragmentProps<void>>
-export function useFragment<T>(fun: (v: T) => void, v: T): Fiber<FragmentProps<T>>;
-export function useFragment<T>(fun: (v?: T) => void, v?: T): Fiber<FragmentProps<T>> {
-  return useFiber<FragmentProps<T>>(Fragment, { call: fun, args: v }, fragmentShouldUpdate)
+export function useFragment(render: () => void, deps: readonly any[]): Fiber<FragmentProps> {
+  return useFiber<FragmentProps>(Fragment, {
+    render,
+    deps
+  }, fragmentShouldUpdate)
 }
-type FragmentProps<T> = {
-  call(v?: T): void
-  args?: T
-} | {
-  call(v: T): void
-  args: T
+type FragmentProps = {
+  render(): void
+  deps: readonly any[]
 }
-function fragmentShouldUpdate<T>(newP: FragmentProps<T>, oldP: FragmentProps<T>) {
-  return newP.call != oldP.call || newP.args != oldP.args
+function fragmentShouldUpdate<T>(newP: FragmentProps, oldP: FragmentProps) {
+  return arrayNotEqual(oldP.deps, newP.deps, simpleNotEqual)
 }
-function Fragment<T>(fiber: WithDraftFiber<{
-  call(v?: T): void
-  args?: T
-}>) {
-  const { call, args } = fiber.draft.props
-  call(args)
+function Fragment(fiber: WithDraftFiber<FragmentProps>) {
+  const { render } = fiber.draft.props
+  render()
 }

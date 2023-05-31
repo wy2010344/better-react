@@ -2,7 +2,8 @@ import { WithDraftFiber, useFiber, render, AskNextTimeWork, Props } from "better
 import { DomElements, React, SvgElements } from "./html";
 import { FiberNode, FiberText } from "./updateDom";
 export { scheduleAskTime } from './schedule'
-export { StyleNode, isSVG, FiberNode, FiberText, StyleContext } from './updateDom'
+export { StyleNode, isSVG, FiberNode, FiberText, StyleContext, underlineToCamel } from './updateDom'
+export { getAliasOfAttribute, getAttributeAlias } from './getAttributeAlias'
 export * from './html'
 /***
  * 先声明dom节点再装入use配置参数,以实现dom节点复用?
@@ -94,7 +95,7 @@ export function useDom<T extends keyof DomElements>(type: T, props?: DomElements
 
 const svgMap = new Map<string, () => FiberNode<any>>()
 function createSvgFun<T extends keyof SvgElements>(type: T) {
-  type = type.toLowerCase() as T
+  //大小写敏感
   let old = svgMap.get(type)
   if (old) {
     return old()

@@ -47,7 +47,13 @@ function simpleUpdate(fiber: Fiber, props: any) {
   }
 }
 ////////****useMap****////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+/**
+ * @param vs 
+ * @param getKey 
+ * @param render 
+ * @param shouldUpdate 
+ * @returns 
+ */
 export function useMap<T>(
   vs: T[],
   getKey: (v: T) => any,
@@ -77,7 +83,7 @@ function MapFiber<T>(fiber: WithDraftFiber<MapFiberProps<T>>) {
   const newMap = new Map<any, Fiber<RenderRowProps<T>>[]>()
   useEffect(() => {
     mapRef.set(newMap)
-  })
+  }, [newMap])
   const draft = fiber.draft
   const { vs, getKey, render } = draft.props
 
@@ -205,11 +211,6 @@ function OneFiber<T>(fiber: WithDraftFiber<OneFiberProps<T>>) {
     }
   }, [])
   let commitWork: (() => void) | void = undefined
-  useEffect(() => {
-    if (commitWork) {
-      commitWork()
-    }
-  })
   const props = {
     value: v,
     callback: render
@@ -242,4 +243,10 @@ function OneFiber<T>(fiber: WithDraftFiber<OneFiberProps<T>>) {
 
     addAdd(plaFiber)
   }
+
+  useEffect(() => {
+    if (commitWork) {
+      commitWork()
+    }
+  }, [commitWork])
 }

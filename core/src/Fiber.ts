@@ -21,8 +21,9 @@ export type HookContextCosumer<T, M> = {
 }
 export type FiberData<T> = {
   render(v: Fiber<T>): void
-  shouldUpdate(oldP: T, newP: T): boolean
   props: T
+  /**由于几个参数都是活动的,所以需要shouldUpdate*/
+  shouldUpdate(oldP: T, newP: T): boolean
   /**第一个子节点 */
   child?: Fiber
   /**弟节点 */

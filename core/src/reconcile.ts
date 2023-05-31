@@ -261,6 +261,7 @@ export function startTransition(fun: () => void) {
 /**
  * 当前工作结点，返回下一个工作结点
  * 先子，再弟，再父(父的弟)
+ * 因为是IMGUI的进化版,只能深度遍历,不能广度遍历.
  * @param fiber 
  * @returns 
  */
