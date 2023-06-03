@@ -84,6 +84,11 @@ function createDomFun<T extends keyof DomElements>(type: T) {
   return createDom()
 }
 
+/**
+ * 不使用deps优化.
+ * 需要的时候自己用Fragment优化
+ * 因为这里面已经有属性对比优化
+ */
 const EMPTYPROPS = {}
 export function useDom<T extends keyof DomElements>(type: T, props?: DomElements[T]) {
   const fiber = useFiber(RenderNode, props || EMPTYPROPS)

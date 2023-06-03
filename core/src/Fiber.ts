@@ -20,6 +20,7 @@ export type HookContextCosumer<T, M> = {
   destroy(): void
 }
 export type FiberData<T> = {
+  /**不能有返回值,无法承接处理,因为子render后返回给父,造成父的继续render?*/
   render(v: Fiber<T>): void
   props: T
   /**由于几个参数都是活动的,所以需要shouldUpdate*/

@@ -1,4 +1,4 @@
-import { useMemo } from "better-react"
+import { quote, useMemo } from "better-react"
 
 type EventHandler<T> = (v: T) => void
 export interface VirtualEventCenter<T> {
@@ -53,14 +53,16 @@ export function valueCenterOf<T>(value: T): ValueCenter<T> {
     subscribe
   }
 }
-export function useValueCenter<T>(init: () => T): ValueCenter<T> {
+export function useValueCenter<T>(init: T): ValueCenter<T>
+export function useValueCenter<T, M>(init: M, trans: (v: M) => T): ValueCenter<T>
+export function useValueCenter<T = undefined>(): ValueCenter<T | undefined>
+export function useValueCenter() {
+  const [init, initTrans] = arguments
   return useMemo(() => {
-    return valueCenterOf(init())
+    const trans = initTrans || quote
+    return valueCenterOf(trans(init))
   }, [])
 }
-export function useValueCenterWith<T>(): ValueCenter<T | undefined>
-export function useValueCenterWith<T>(v: T): ValueCenter<T>
-export function useValueCenterWith() {
-  const v = arguments[0]
-  return useValueCenter(() => v)
+export function useValueCenterFun<T>(fun: () => T): ValueCenter<T> {
+  return useValueCenter(undefined, fun)
 }

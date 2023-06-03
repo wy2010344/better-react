@@ -18,6 +18,7 @@ export * from './usePromise'
 export * from './useState'
 export * from './useCallback'
 export * from './useInit'
+export * from './useReducerFun'
 export { compileSimpleRule, createMatch, pathExactly, pathStartWith, toAbsolutePath } from "./routes/util"
 export { RouteContext, routeMatch, routeMathWithOther } from "./routes"
 

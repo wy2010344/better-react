@@ -30,13 +30,25 @@ export function updateFunctionComponent(fiber: WithDraftFiber) {
 
 export type ReducerFun<F, T> = (old: T, action: F) => T
 export type ReducerResult<F, T> = [T, HookValueSet<F, T>];
-export function useReducer<F, T>(reducer: ReducerFun<F, T>, init: () => T): ReducerResult<F, T> {
+/**
+ * 依赖外部初始值
+ * 也有只依赖一个函数,则值为常值如0,另作一个封装
+ * @param reducer 
+ * @param v 
+ * @param init 
+ */
+export function useReducer<F, M, T>(reducer: ReducerFun<F, T>, v: M, init: (m: M) => T): ReducerResult<F, T>
+export function useReducer<F, T>(reducer: ReducerFun<F, T>, v: T): ReducerResult<F, T>
+export function useReducer<F, T = undefined>(reducer: ReducerFun<F, T>): ReducerResult<F, T | undefined>
+export function useReducer() {
+  const [reducer, init, oldTrans] = arguments
   const currentFiber = wipFiber!
   if (currentFiber.effectTag == 'PLACEMENT') {
     //新增
     const hookValues = currentFiber.hookValue || []
     currentFiber.hookValue = hookValues
-    const value = createChangeAtom(init())
+    const trans = oldTrans || quote
+    const value = createChangeAtom(trans(init))
     const hook: HookValue<any, any> = {
       value,
       set: buildSetValue(value, currentFiber, reducer)
@@ -150,12 +162,13 @@ export type EffectResult = (void | (() => void))
 
 /**
  * 必须有个依赖项,如果没有依赖项,如果组件有useFragment,则会不执行,造成不一致.
+ * useMemo如果无依赖,则不需要使用useMemo,但useEffect没有依赖,仍然有意义.有依赖符合幂等,无依赖不需要幂等.
  * @param effect 
  * @param deps 
  */
-export function useEffect<T extends readonly any[] = any[]>(effect: (...args: T) => EffectResult, deps: T): void
-export function useEffect(effect: () => EffectResult, deps: readonly any[]): void
-export function useEffect(effect: any, deps: any) {
+export function useEffect<T extends readonly any[] = any[]>(effect: (...args: T) => EffectResult, deps?: T): void
+export function useEffect(effect: () => EffectResult, deps?: readonly any[]): void
+export function useEffect(effect: any, deps?: any) {
   const currentFiber = wipFiber!
   if (currentFiber.effectTag == 'PLACEMENT') {
     //新增
@@ -181,7 +194,7 @@ export function useEffect(effect: any, deps: any) {
     }
     const state = hookEffect.get()
     hookIndex.effect = index + 1
-    if (arrayNotEqual(state.deps!, deps, simpleNotEqual)) {
+    if (arrayNotEqualDepsWithEmpty(state.deps, deps)) {
       const newState: HookEffect = {
         deps
       }
@@ -194,6 +207,10 @@ export function useEffect(effect: any, deps: any) {
       })
     }
   }
+}
+
+export function arrayNotEqualDepsWithEmpty(a?: readonly any[], b?: readonly any[]) {
+  return !(a && b && arrayEqual(a, b, simpleEqual))
 }
 
 export function useMemo<T, V extends readonly any[] = any[]>(effect: (...args: V) => T, deps: V): T
@@ -322,7 +339,7 @@ export interface Context<T> {
   useSelector<M>(getValue: (v: T) => M, shouldUpdate?: (a: M, b: M) => boolean): M
   useConsumer(): T
 }
-function quote<T>(v: T) { return v }
+export function quote<T>(v: T) { return v }
 export function createContext<T>(v: T): Context<T> {
   return new ContextFactory(v)
 }

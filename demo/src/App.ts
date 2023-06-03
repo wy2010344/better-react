@@ -21,6 +21,7 @@ import sReact from "./s-react";
 import 文件系统整理 from "./文件系统整理";
 import xmlToBetter from "./xmlToBetter";
 import logic from "./logic";
+import 测试Input from "./test/测试Input";
 
 
 export default function FirstPage() {
@@ -151,6 +152,13 @@ export default function FirstPage() {
             }
           })
 
+          useDom("button", {
+            onClick(e) {
+              e.stopPropagation()
+              测试Input(operate)
+            },
+            textContent: "测试input"
+          })
           useDom("button", {
             onClick(e) {
               e.stopPropagation()
@@ -354,7 +362,7 @@ function Demo() {
     children() {
 
       useContent("ccc内容")
-      const [count, setCount] = useState(() => 0)
+      const [count, setCount] = useState(0)
 
       // useIf(count % 2 == 0, () => {
       //   useContent("这是偶数")
@@ -410,14 +418,22 @@ function Demo() {
 
 function Count() {
   console.log("render-count")
-  const [count, setCount] = useState(() => 9)
+  const [count, setCount] = useState(9)
   useDom("button", {
     onClick(e) {
-      setCount(count + 1)
+      setCount(v => v + 1)
+      setCount(v => v + 1)
       e.stopPropagation()
     },
     children() {
       useContent(`点击了${count}次`)
     }
+  })
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      setCount(count)
+    },
+    textContent: "不点击呢"
   })
 }

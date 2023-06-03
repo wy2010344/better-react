@@ -1,7 +1,7 @@
 import { useMemo } from "better-react"
 import { useEvent } from "./useEvent"
 import { useRefState, useStoreTriggerRender } from "./useRefState"
-import { useValueCenter } from "./ValueCenter"
+import { useValueCenter, useValueCenterFun } from "./ValueCenter"
 
 export type LoadAfterResult<T, K> = {
   list: T[]
@@ -37,7 +37,7 @@ export function useAutoPageLoadMore<T, K, P>({
     arg: null as unknown as P,
     version: 0
   })
-  const dataCenter = useValueCenter<LoadData<T, K>>(() => ({
+  const dataCenter = useValueCenterFun<LoadData<T, K>>(() => ({
     version: version.version,
     list: [],
     nextKey: initFlag,

@@ -1,4 +1,4 @@
-import { useRefValue } from "./useRef";
+import { useRefFun } from "./useRef";
 
 /**
  * 需要应对draft态
@@ -8,7 +8,7 @@ import { useRefValue } from "./useRef";
  * @returns 
  */
 export function useEvent<T extends (...vs: any[]) => any>(fun: T): T {
-  const ref = useRefValue(delegateFun).get()
+  const ref = useRefFun(delegateFun).get()
   ref.setCurrent(fun)
   return ref.run as T
 }

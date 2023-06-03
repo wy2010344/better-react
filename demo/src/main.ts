@@ -2,13 +2,10 @@ import App from "./App";
 import { useEffect, useMap, useMemo } from "better-react";
 import { useContent, useDom, scheduleAskTime, StyleContext, createRoot } from "better-react-dom";
 import { CountContext, PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
-import { useStoreTriggerRender, useValueCenterWith, ValueCenter, useFragment, useState } from "better-react-helper";
+import { useStoreTriggerRender, useFragment, useState, valueCenterOf } from "better-react-helper";
 import { StylisCreater } from "stylis-creater";
 
 import test from './test'
-import sReact from "./s-react";
-import jsonRender from "./json-render";
-import learn from "./learn";
 import cssHasCursor from "./learn/css-has-cursor";
 const destroy = createRoot(
   document.getElementById("app")!,
@@ -37,7 +34,7 @@ const destroy = createRoot(
 
     test()
     const { panels, operate } = useMemo(() => {
-      const panels = useValueCenterWith<PanelCollection>([])
+      const panels = valueCenterOf<PanelCollection>([])
       let uid = 0
       const operate: PanelOperate = {
         push(callback) {

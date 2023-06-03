@@ -1,6 +1,6 @@
 import { useEffect } from "better-react"
 import { useDom, React } from "better-react-dom"
-import { useConstRefValue, useRefValue, useState } from "better-react-helper"
+import { useConstRefFun, useRef, useState } from "better-react-helper"
 import mb, { contentEditable, MbRange } from "./mb"
 
 function shouldRecord(e: React.KeyboardEvent) {
@@ -347,8 +347,8 @@ export default function useCodeJar({
   ...options
 }: CodeJarOption & React.HTMLAttributes<HTMLDivElement>) {
   //缓存上一次向外的更新,保证下一次生效时,才能更新选择.只能有这一个content.
-  const [content, setInterContent] = useState<string>(() => "")
-  const history = useConstRefValue<HistoryManager>(() => new HistoryManager(v => {
+  const [content, setInterContent] = useState<string>("")
+  const history = useConstRefFun<HistoryManager>(() => new HistoryManager(v => {
     setInterContent(x => {
       if (v != x) {
         setContent(v)
@@ -356,8 +356,8 @@ export default function useCodeJar({
       return v
     })
   }))
-  const recording = useRefValue(() => false)
-  const focus = useRefValue(() => false)
+  const recording = useRef(false)
+  const focus = useRef(false)
   function rememberHistory() {
     if (focus.get()) {
       const text = editor.textContent || ''

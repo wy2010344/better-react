@@ -1,4 +1,9 @@
-import { useMemo, storeRef, useEffect } from 'better-react'
+import { useMemo, storeRef, quote } from 'better-react';
+
+type StoreRef<T> = {
+  get(): T
+  set(v: T): void
+}
 
 /**
  * 如果rollback,不允许改变是持久的
@@ -6,20 +11,26 @@ import { useMemo, storeRef, useEffect } from 'better-react'
  * @param init 
  * @returns 
  */
-export function useRefValue<T>(init: () => T) {
-  return useMemo(() => storeRef(init()), [])
+
+export function useRef<M, T>(init: M, trans: (m: M) => T): StoreRef<T>
+export function useRef<T>(init: T): StoreRef<T>
+export function useRef() {
+  const [init, oldTrans] = arguments
+  const trans = oldTrans || quote
+  return useMemo(() => storeRef(trans(init)), [])
 }
 
-export function useRef<T>(init: T) {
-  return useRefValue(() => init)
+export function useRefFun<T>(init: () => T) {
+  return useRef(undefined, init)
 }
-
-export function useConstRefValue<T>(init: () => T) {
-  return useRefValue(init).get()
+export function useConstRef<M, T>(init: M, trans: (m: M) => T): T
+export function useConstRef<T>(init: T): T
+export function useConstRef() {
+  const [init, trans] = arguments
+  return useRef(init, trans).get()
 }
-
-export function useConstRef<T>(init: T) {
-  return useRef(init).get()
+export function useConstRefFun<T>(init: () => T) {
+  return useRef(undefined, init).get()
 }
 
 export function useAlways<T>(init: T) {

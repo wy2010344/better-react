@@ -4,8 +4,8 @@ import { Fiber, fiberDataClone, getEditData, isWithDraftFiber, PlacementFiber, W
 import { AskNextTimeWork, setRootFiber } from "./reconcile"
 export { flushSync, startTransition } from './reconcile'
 export type { REAL_WORK } from './reconcile'
-export { useReducer, useEffect, storeRef, useMemo, createContext, useFiber, arrayEqual, arrayNotEqual, simpleEqual, simpleNotEqual } from './fc'
-export type { ReducerResult } from './fc'
+export { useReducer, useEffect, storeRef, useMemo, createContext, useFiber, arrayNotEqualDepsWithEmpty, arrayEqual, arrayNotEqual, simpleEqual, simpleNotEqual, quote } from './fc'
+export type { ReducerResult, ReducerFun } from './fc'
 export type { Fiber, Props, VirtaulDomNode, WithDraftFiber, PlacementFiber, FindParentAndBefore, HookValueSet } from './Fiber'
 export type { AskNextTimeWork }
 export { createChangeAtom, ChangeAtomValue } from './commitWork'
