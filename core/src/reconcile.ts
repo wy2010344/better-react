@@ -1,6 +1,6 @@
-import { addAdd, addDelect, commitRoot, rollback } from "./commitWork"
+import { addChange, addDelect, commitRoot, rollback } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
-import { Fiber, getData, isWithDraftFiber } from "./Fiber"
+import { Fiber, findParentAndBefore, getData, isChangeBodyFiber, isWithDraftFiber } from "./Fiber"
 /**
  * 执行fiber
  * @param unitOfWork 
@@ -60,7 +60,6 @@ export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
   asyncAskNextTimeWork = ask
   askNextTimeWork = asyncAskNextTimeWork
   rootFiber = fiber
-  addAdd(fiber)
   reconcile({})
   return function () {
     if (rootFiber) {
@@ -270,16 +269,16 @@ export function startTransition(fun: () => void) {
 function performUnitOfWork(fiber: Fiber) {
   //当前fiber脏了，需要重新render
   if (isWithDraftFiber(fiber)) {
-    updateFunctionComponent(fiber)
-    if (fiber.draft.child) {
-      return fiber.draft.child
-    }
-  } else {
-    if (fiber.current.child) {
-      return fiber.current.child
+    addChange(fiber)
+    if (isChangeBodyFiber(fiber)) {
+      updateFunctionComponent(fiber)
     }
   }
-
+  findParentAndBefore(fiber)
+  const child = getData(fiber).child
+  if (child) {
+    return child
+  }
   /**寻找叔叔节点 */
   let nextFiber: Fiber | undefined = fiber
   while (nextFiber) {

@@ -1,8 +1,8 @@
 import App from "./App";
-import { useEffect, useMap, useMemo } from "better-react";
+import { useEffect, useFiber, useMemo } from "better-react";
 import { useContent, useDom, scheduleAskTime, StyleContext, createRoot } from "better-react-dom";
 import { CountContext, PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
-import { useStoreTriggerRender, useFragment, useState, valueCenterOf } from "better-react-helper";
+import { useStoreTriggerRender, useMap, useState, valueCenterOf } from "better-react-helper";
 import { StylisCreater } from "stylis-creater";
 
 import test from './test'
@@ -11,6 +11,7 @@ const destroy = createRoot(
   document.getElementById("app")!,
   function () {
     StyleContext.useProvider(StylisCreater)
+    console.log("root-render")
     useDom("button", {
       onClick() {
         destroy()
@@ -35,6 +36,11 @@ const destroy = createRoot(
     test()
     const { panels, operate } = useMemo(() => {
       const panels = valueCenterOf<PanelCollection>([])
+      const oldSet = panels.set
+      panels.set = function (sv) {
+        console.log("mvs", sv)
+        oldSet(sv)
+      }
       let uid = 0
       const operate: PanelOperate = {
         push(callback) {
@@ -52,7 +58,8 @@ const destroy = createRoot(
         moveToFirst(id) {
           const vs = panels.get()
           const oldIndex = vs.findIndex(v => v.id == id)
-          if (oldIndex > -1) {
+          if (oldIndex > -1 && oldIndex != vs.length - 1) {
+            console.log(oldIndex, vs.length, "cxxxx---")
             const [old] = vs.splice(oldIndex, 1)
             panels.set([...vs, old])
           }
@@ -64,16 +71,22 @@ const destroy = createRoot(
       }
     }, [])
     PanelContext.useProvider(operate)
-    useFragment(App, [])
+    useFiber(App, [])
 
     useEffect(() => {
       cssHasCursor(operate)
       //learn(operate)
       //jsonRender(operate)
     }, [])
-    useFragment(function () {
+    console.log("render-out-1")
+    useFiber(function () {
       const vs = useStoreTriggerRender(panels)
-      useMap(vs, v => v.id, v => v.callback(v.id))
+      console.log("render-out")
+      useMap(vs, v => v.id, v => {
+        useFiber(function () {
+          v.callback(v.id)
+        }, [v.callback, v.id])
+      })
     }, [panels])
   },
   //askTimeWork,

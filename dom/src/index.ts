@@ -1,6 +1,7 @@
-import { WithDraftFiber, useFiber, render, AskNextTimeWork, Props } from "better-react";
-import { DomElements, React, SvgElements } from "./html";
-import { FiberNode, FiberText } from "./updateDom";
+import { useFiber, render, AskNextTimeWork } from "better-react";
+import { DomElement, DomElementType, DomElements, SvgElement, SvgElementType, SvgElements } from "./html";
+import { EMPTYPROPS, FiberNode, FiberText, emptyFun } from "./updateDom";
+import { useCurrentFiber } from "better-react";
 export { scheduleAskTime } from './schedule'
 export { StyleNode, isSVG, FiberNode, FiberText, StyleContext, underlineToCamel } from './updateDom'
 export { getAliasOfAttribute, getAttributeAlias } from './getAttributeAlias'
@@ -11,77 +12,31 @@ export * from './html'
  * 比如移动,其实一些dom状态会丢失,如scrollTop
  * 可能有一些三方组件的封装,配置参数却需要自定义,而不是dom参数
  */
-
-function RootShouldUpdate(a: RootProps, b: RootProps) {
-  return a.node != b.node || a.props != b.props || a.reconcile != b.reconcile
-}
-function RenderRoot(
-  fiber: WithDraftFiber<RootProps>
-) {
-  const { node, reconcile } = fiber.draft.props
-  const dom = (fiber.dom || FiberNode.create<RootProps>(
-    node,
-    getRootProps
-  )) as FiberNode<Props>
-  fiber.dom = dom
-  dom.reconcile()
-  reconcile()
-}
-type RootProps = {
-  node: Node
-  reconcile(): void
-  props: {
-    portalTarget(): Node | null
-  }
-}
-function getRootProps(v: RootProps) {
-  return v.props
-}
 export function createRoot(node: Node, reconcile: () => void, ask: AskNextTimeWork) {
-  return render<RootProps>(
-    RenderRoot,
-    {
-      node,
-      reconcile,
-      props: {
-        portalTarget() {
-          return node.parentNode
-        },
-      }
-    },
-    RootShouldUpdate,
-    ask)
-}
-
-function RenderNode(fiber: WithDraftFiber) {
-  const dom = fiber.dom as FiberNode<Props>
-  dom.reconcile()
-  fiber.draft.props?.children?.()
-}
-function RenderText(fiber: WithDraftFiber<string>) {
-
+  return render(function () {
+    const fiber = useCurrentFiber()
+    let dom = fiber.dom! as FiberNode
+    if (!dom) {
+      dom = FiberNode.create(node)
+      fiber.dom = dom
+    }
+    dom.useUpdateProps({
+      portalTarget() {
+        return node.parentNode
+      },
+    })
+    reconcile()
+  }, ask)
 }
 export function useContent(content: string) {
-  const fiber = useFiber(RenderText, content)
-  if (!fiber.dom) {
-    fiber.dom = FiberText.create()
+  const fiber = useFiber(emptyFun)
+  let dom = fiber.dom as FiberText
+  if (!dom) {
+    dom = FiberText.create()
+    fiber.dom = dom
   }
+  dom.useUpdateProps(content)
   return (fiber.dom as any).node as Text
-}
-
-const domMap = new Map<string, () => FiberNode<any>>()
-function getProps<T>(v: T) {
-  return v as Props
-}
-function createDomFun<T extends keyof DomElements>(type: T) {
-  type = type.toLowerCase() as T
-  let old = domMap.get(type)
-  if (old) {
-    return old()
-  }
-  const createDom = FiberNode.createDom(type, getProps)
-  domMap.set(type, createDom)
-  return createDom()
 }
 
 /**
@@ -89,30 +44,38 @@ function createDomFun<T extends keyof DomElements>(type: T) {
  * 需要的时候自己用Fragment优化
  * 因为这里面已经有属性对比优化
  */
-const EMPTYPROPS = {}
-export function useDom<T extends keyof DomElements>(type: T, props?: DomElements[T]) {
-  const fiber = useFiber(RenderNode, props || EMPTYPROPS)
-  if (!fiber.dom) {
-    fiber.dom = createDomFun(type)
+function NodeRender(deps?: any[]) {
+  const dom = useCurrentFiber().dom! as FiberNode
+  dom.getProps()?.children?.(deps)
+}
+/**
+ * 所有子节点都可以在render里声明,其实也就没必要再要子节点.
+ * 节点是属性字典,没办法约束属性.
+ * 字典属性醒来是diff更新的,只有函数惰性执行.
+ * 可以只对children进行deps更新.
+ * 只是因为恰好,children作为子节点,与fiber子节点对应.而useFiber的deps本来也只针对各子成员的fiber,并不涉及自身属性
+ * @param type 
+ * @param render 
+ * @param deps 
+ */
+export function useDom<T extends DomElementType>(type: T, props?: DomElements[T], deps?: any[]): DomElement<T> {
+  const fiber = useFiber(NodeRender, deps)
+  let dom = fiber.dom as FiberNode
+  if (!dom) {
+    dom = FiberNode.createDom(type)
+    fiber.dom = dom
   }
-  return (fiber.dom as FiberNode<any>).node as DomElements[T] extends React.DetailedHTMLProps<infer A, infer F> ? F : never
+  dom.useUpdateProps(props || EMPTYPROPS)
+  return dom.node as unknown as DomElement<T>
 }
 
-const svgMap = new Map<string, () => FiberNode<any>>()
-function createSvgFun<T extends keyof SvgElements>(type: T) {
-  //大小写敏感
-  let old = svgMap.get(type)
-  if (old) {
-    return old()
+export function useSvg<T extends SvgElementType>(type: T, props?: SvgElements[T], deps?: any[]): SvgElement<T> {
+  const fiber = useFiber(NodeRender, deps)
+  let dom = fiber.dom as FiberNode
+  if (!dom) {
+    dom = FiberNode.createSvg(type)
+    fiber.dom = dom
   }
-  const createSvg = FiberNode.createSvg(type, getProps)
-  svgMap.set(type, createSvg)
-  return createSvg()
-}
-export function useSvg<T extends keyof SvgElements>(type: T, props?: SvgElements[T]) {
-  const fiber = useFiber(RenderNode, props || EMPTYPROPS)
-  if (!fiber.dom) {
-    fiber.dom = createSvgFun(type)
-  }
-  return (fiber.dom as FiberNode<any>).node as SvgElements[T] extends React.SVGProps<infer F> ? F : never
+  dom.useUpdateProps(props || EMPTYPROPS)
+  return dom.node as unknown as SvgElement<T>
 }

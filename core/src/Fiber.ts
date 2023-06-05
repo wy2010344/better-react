@@ -19,12 +19,10 @@ export type HookContextCosumer<T, M> = {
   shouldUpdate?(a: M, b: M): boolean
   destroy(): void
 }
-export type FiberData<T> = {
+export type FiberData = {
   /**不能有返回值,无法承接处理,因为子render后返回给父,造成父的继续render?*/
-  render(v: Fiber<T>): void
-  props: T
-  /**由于几个参数都是活动的,所以需要shouldUpdate*/
-  shouldUpdate(oldP: T, newP: T): boolean
+  render(deps?: readonly any[]): void
+  deps?: readonly any[]
   /**第一个子节点 */
   child?: Fiber
   /**弟节点 */
@@ -36,20 +34,24 @@ export type FiberData<T> = {
 }
 
 //一定要克隆,克隆后还要加工
-export function fiberDataClone<T>(v: FiberData<T>): FiberData<T> {
+export function fiberDataClone(v: FiberData): FiberData {
   return {
     ...v
   }
 }
 
-type BaseFiber<T> = {
+type BaseFiber = {
   parent?: Fiber
-  dom?: VirtaulDomNode<T>
+  dom?: VirtaulDomNode
   contextProvider?: Map<any, {
     changeValue(v: any): void
   }>
   hookValue?: HookValue<any, any>[]
-  hookEffect?: ChangeAtomValue<HookEffect>[]
+  hookEffects?: [
+    ChangeAtomValue<HookEffect>[],
+    ChangeAtomValue<HookEffect>[],
+    ChangeAtomValue<HookEffect>[]
+  ]
   hookMemo?: ChangeAtomValue<HookMemo<any>>[]
   hookContextCosumer?: HookContextCosumer<any, any>[]
 }
@@ -59,49 +61,52 @@ type BaseFiber<T> = {
  * 
  * 将自身地址作为ID,这个地址下有两条记录
  */
-export type Fiber<T = any> = WithDraftFiber<T> | ({
-  current: Readonly<FiberData<T>>
-} & BaseFiber<T>)
-export type PlacementFiber<T> = {
+export type PlacementFiber = {
   effectTag: "PLACEMENT"
-  draft: FiberData<T>
-} & BaseFiber<T>
-export type UpdateFiber<T> = {
+  draft: FiberData
+} & BaseFiber
+export type UpdateFiber = {
   effectTag: "UPDATE"
-  current: Readonly<FiberData<T>>
-  draft: FiberData<T>
-} & BaseFiber<T>
-export type WithDraftFiber<T = Props> = PlacementFiber<T> | UpdateFiber<T>
-
-
-export function isWithDraftFiber<V>(v: Fiber<V>): v is WithDraftFiber<V> {
-  return !!(v as any).effectTag
+  current: Readonly<FiberData>
+  draft: FiberData
+} & BaseFiber
+export type ChangeOrderFiber = {
+  current: Readonly<FiberData>
+  draft: FiberData
+} & BaseFiber
+export type NotChangeFiber = {
+  current: Readonly<FiberData>
+} & BaseFiber
+export type ChangeBodyFiber = PlacementFiber | UpdateFiber
+export type WithDraftFiber = ChangeBodyFiber | ChangeOrderFiber
+export type Fiber = WithDraftFiber | NotChangeFiber
+export function isChangeBodyFiber(v: Fiber): v is ChangeBodyFiber {
+  return (v as any).effectTag as any
 }
-export function isPlacementFiber<T>(v: Fiber<T>): v is PlacementFiber<T> {
+export function isPlacementFiber(v: Fiber): v is PlacementFiber {
   return (v as any).effectTag == "PLACEMENT"
 }
-
-export function getData<T>(v: Fiber<T>) {
+export function isWithDraftFiber(v: Fiber): v is WithDraftFiber {
+  return (v as any).draft as any
+}
+export function getData(v: Fiber) {
   if (isWithDraftFiber(v)) {
     return v.draft
   } else {
     return v.current
   }
 }
-export function getEditData<T>(v: Fiber<T>): FiberData<T> {
+export function getEditData<T>(v: Fiber): FiberData {
   return (v as any).draft
 }
 
-export type VirtaulDomNode<T = Props> = {
+export type VirtaulDomNode = {
   //创建
-  create(props: T): void
-  //每次更新props
-  update(props: T): void
-  //只第一次更新,在create之后,即不权updateProps,还准备好了子节点
-  init(): void
+  // create(): void
+  // //每次更新props
+  // update(): void
   //在update之前,所以要更新props
-  isPortal(props: T): boolean
-
+  isPortal(): boolean
   appendAsPortal(): void
   appendAfter(value: FindParentAndBefore): void
   //只对部分元素执行删除
@@ -121,10 +126,10 @@ export type StoreValue<T> = {
 }
 export type Props = { [key: string]: any }
 
-export function findParentAndBefore<T>(fiber: Fiber<T>) {
+export function findParentAndBefore(fiber: Fiber) {
   const dom = fiber.dom
   if (dom) {
-    if (dom.isPortal(getData(fiber).props)) {
+    if (dom.isPortal()) {
       addAppendAsPortal(dom)
     } else {
       const prevData = getData(fiber).prev
@@ -141,7 +146,7 @@ export function findParentAndBefore<T>(fiber: Fiber<T>) {
 }
 
 function getCurrentBefore(fiber: Fiber): FindParentAndBefore {
-  if (fiber.dom?.isPortal(getData(fiber).props)) {
+  if (fiber.dom?.isPortal()) {
     const prev = getData(fiber).prev
     if (prev) {
       return getCurrentBefore(prev)

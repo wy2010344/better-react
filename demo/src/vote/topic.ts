@@ -1,4 +1,4 @@
-import { useMap } from "better-react";
+import { useMap } from "better-react-helper";
 import { useContent, useDom } from "better-react-dom";
 import { getTextColor } from "../colorUtil";
 import { TopicModel, useUser } from "../dbStore";

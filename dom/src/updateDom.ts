@@ -1,6 +1,6 @@
 import {
   FindParentAndBefore,
-  Props, VirtaulDomNode, createContext
+  Props, VirtaulDomNode, createChangeAtom, createContext, useAttrEffect
 } from "better-react"
 import { SvgElements } from "./html"
 import { getAttributeAlias } from "./getAttributeAlias"
@@ -28,70 +28,68 @@ const DefaultStyleCreater: CreateStyleNode = () => {
 }
 export const StyleContext = createContext<CreateStyleNode>(DefaultStyleCreater)
 
-interface FiberAbsNode<T = any> extends VirtaulDomNode<T> {
+interface FiberAbsNode extends VirtaulDomNode {
   node: Node
 }
+export const EMPTYPROPS = {}
 // const INPUTS = ["input", "textarea", "select"]
-export class FiberNode<F> implements FiberAbsNode<F> {
-  init() { }
+export class FiberNode implements FiberAbsNode {
   private constructor(
     public node: Node,
-    private getProps: (v: F) => Props,
     private _updateProp: (node: Node, key: string, value: any) => void,
   ) { }
-  create(props: F): void {
-    this.update(props)
+  /**正式与draft的props*/
+  private propsValue = createChangeAtom<Props>(EMPTYPROPS)
+  getProps() {
+    return this.propsValue.get()
   }
-  private props: Props = {}
-  private createStyle: CreateStyleNode = DefaultStyleCreater
-  reconcile(): void {
-    this.createStyle = this.findStyleCreate()
+  private oldProps: Props = EMPTYPROPS
+  useUpdateProps(props: Props): void {
+    this.propsValue.set(props)
+    const createStyle = StyleContext.useConsumer()
+    const that = this
+    useAttrEffect(() => {
+      const props = that.getProps()
+      updateDom(that,
+        props,
+        that.oldProps,
+        createStyle
+      )
+      that.oldProps = props
+    })
   }
-  private findStyleCreate() {
-    return StyleContext.useConsumer()
-  }
-  static create<F>(
+  static create(
     node: Node,
-    getProps: (v: F) => Props,
     updateProps: (node: Node, key: string, value: any) => void = updatePorps
   ) {
     return new FiberNode(
       node,
-      getProps,
       updateProps
     )
   }
-  static createDom<F>(type: string, getProps: (v: F) => Props) {
-    const create = () => document.createElement(type)
-    return function () {
-      return new FiberNode(
-        create(),
-        getProps,
-        updatePorps
-      )
-    }
+  static createDom<F>(type: string) {
+    return new FiberNode(
+      document.createElement(type),
+      updatePorps
+    )
   }
-  static createSvg<T>(type: string, getProps: (v: T) => Props) {
-    const create = () => document.createElementNS("http://www.w3.org/2000/svg", type)
-    return function () {
-      return new FiberNode(
-        create(),
-        getProps,
-        updateSVGProps
-      )
-    }
+  static createSvg<T>(type: string) {
+    return new FiberNode(
+      document.createElementNS("http://www.w3.org/2000/svg", type),
+      updateSVGProps
+    )
   }
-  isPortal(props: F): boolean {
-    return this.getProps(props).portalTarget
+  isPortal(): boolean {
+    return this.getProps().portalTarget
   }
   appendAsPortal(): void {
-    const parent = this.props.portalTarget()
+    const parent = this.getProps().portalTarget()
     if (parent) {
       if (parent != this.node.parentNode) {
         parent.appendChild(this.node)
       }
     } else {
-      console.warn('no parent get', this.props)
+      console.warn('no parent get', this.getProps())
     }
   }
   appendAfter(value?: FindParentAndBefore): void {
@@ -102,27 +100,15 @@ export class FiberNode<F> implements FiberAbsNode<F> {
       this.style.destroy()
     }
   }
-  /**
-   * 属性更新
-   * @param props 
-   */
-  update(v: F) {
-    const newProps = this.getProps(v)
-    updateDom(this,
-      newProps,
-      this.props,
-      this.createStyle
-    )
-    this.props = newProps
-  }
   private realRemove() {
     this.node.parentElement?.removeChild(this.node)
   }
 
   removeFromParent() {
-    if (this.props?.exit) {
+    const props = this.getProps()
+    if (props.exit) {
       const that = this
-      this.props.exit(this.node).then(() => {
+      props.exit(this.node).then(() => {
         that.realRemove()
       })
     } else {
@@ -137,23 +123,24 @@ export class FiberNode<F> implements FiberAbsNode<F> {
 }
 
 
-export class FiberText implements FiberAbsNode<string>{
+export class FiberText implements FiberAbsNode {
   public node: Node = document.createTextNode("")
   static create() {
     return new FiberText()
   }
-  private content: string = ""
-  create(props: string): void {
-    this.update(props)
+  private propsValue = createChangeAtom('')
+  public getProps() {
+    return this.propsValue.get()
   }
-  update(props: string): void {
-    if (props != this.content) {
-      this.node.textContent = props
-      this.content = props
+  useUpdateProps(v: string) {
+    this.propsValue.set(v)
+    const content = this.getProps()
+    if (this.oldContent != content) {
+      this.node.textContent = content
+      this.oldContent = content
     }
   }
-  init(): void {
-  }
+  private oldContent: string = ""
   isPortal(): boolean {
     return false
   }
@@ -168,9 +155,7 @@ export class FiberText implements FiberAbsNode<string>{
   destroy(): void {
   }
 }
-
-const emptyProps = {}
-const emptyFun = () => { }
+export const emptyFun = () => { }
 
 function purifyStyle(style: object) {
   const s = Object.entries(style).map(function (v) {
@@ -188,10 +173,10 @@ export function underlineToCamel(str: string) {
  * @param oldProps 
  * @param props 
  */
-function updateDom<F>(
-  dom: FiberNode<F>,
-  props: Props = emptyProps,
-  oldProps: Props = emptyProps,
+function updateDom(
+  dom: FiberNode,
+  props: Props,
+  oldProps: Props,
   styleCreater?: CreateStyleNode
 ) {
   let addClass = ''

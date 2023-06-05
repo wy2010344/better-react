@@ -1,7 +1,7 @@
-import { render, useMap, useOne } from "better-react";
+import { render } from "better-react";
 import { useDom } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
-import { useBaseGuard, useGuardString, useState } from "better-react-helper"
+import { useBaseGuard, useGuardString, useState, useMap, useOne } from "better-react-helper"
 
 export default normalPanel(function (operate, id) {
 
@@ -42,7 +42,7 @@ function 测试useOne() {
       setIndex(index => ({ key: index.key }))
     }
   })
-  useOne(index, quoteOne, renderOne, indexShouldUpdate)
+  // useOne(index, quoteOne, renderOne)
 }
 
 function 测试useMapString() {
@@ -126,7 +126,7 @@ function 测试useMap() {
       setList(list => JSON.parse(JSON.stringify(list)))
     }
   })
-  useMap(list, quoteOne, renderOne, indexShouldUpdate)
+  useMap(list, quoteOne, renderOne)
 }
 
 function 测试useBaseGuard() {
@@ -146,7 +146,7 @@ function 测试useBaseGuard() {
       setIndex(index => ({ key: index.key }))
     }
   })
-  useBaseGuard(index, baseGuards, indexShouldUpdate)
+  useBaseGuard(index, baseGuards)
 }
 
 const baseGuards: Array<readonly [

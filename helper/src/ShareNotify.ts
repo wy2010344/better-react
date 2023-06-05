@@ -1,4 +1,4 @@
-import { useMap } from "better-react";
+import { useMap } from "./useMap";
 import { getOnlyId } from "./useOnlyId";
 import { useStoreTriggerRender } from "./useRefState";
 import { valueCenterOf } from "./ValueCenter";

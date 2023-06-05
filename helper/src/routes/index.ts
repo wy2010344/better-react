@@ -1,5 +1,6 @@
-import { createContext, useOne } from "better-react";
+import { createContext } from "better-react";
 import { getMatchRoutes, MatchRoute, MathRule } from "./util";
+import { useOne } from "../useOne";
 
 export function useRoutes(
   path: string[],
@@ -7,7 +8,7 @@ export function useRoutes(
   other?: (v: string[]) => void
 ) {
   const match = getMatchRoutes(path, matchRules, other)
-  useOne(match, getKey, match.render)
+  useOne(match.index, match.render)
 }
 function getKey(v: ReturnType<typeof getMatchRoutes>) {
   return v.index

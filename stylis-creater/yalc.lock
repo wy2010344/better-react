@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "packages": {
+    "better-react-dom": {
+      "signature": "e219f25be38cd20fadcb4644923009ff",
+      "file": true,
+      "replaced": "^1.0.8"
+    },
+    "better-react": {
+      "signature": "3024cf84d64c8d6492b41528db36a332",
+      "file": true,
+      "replaced": "^1.0.9"
+    }
+  }
+}

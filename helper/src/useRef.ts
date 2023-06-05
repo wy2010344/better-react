@@ -19,7 +19,6 @@ export function useRef() {
   const trans = oldTrans || quote
   return useMemo(() => storeRef(trans(init)), [])
 }
-
 export function useRefFun<T>(init: () => T) {
   return useRef(undefined, init)
 }

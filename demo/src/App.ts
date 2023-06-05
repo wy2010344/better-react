@@ -1,5 +1,5 @@
-import { useEffect } from "better-react";
-import { useFragment, useGuard, useGuardString, useState, } from "better-react-helper"
+import { useEffect, useFiber } from "better-react";
+import { useGuard, useGuardString, useState, } from "better-react-helper"
 import { useContent, useDom } from "better-react-dom";
 import dsl from "./dsl";
 import ExpensiveView from "./ExpensiveView";
@@ -12,7 +12,7 @@ import scrollPage from "./scrollPage";
 import dragDemo from "./test/dragDemo";
 import 测试useOne from "./test/测试useOne";
 import 测试其它 from "./test/测试其它";
-import todoList from "./todoList";
+import todoList from "./todoList/index";
 import typeSystem from "./typeSystem";
 import vote from "./vote";
 import 设计系统 from "./设计系统";
@@ -35,7 +35,7 @@ export default function FirstPage() {
         },
         children() {
           useContent("root")
-          useFragment(TestButtonPage, [])
+          useFiber(TestButtonPage, [])
           useDom("button", {
             onClick(e) {
               e.stopPropagation()
@@ -225,7 +225,7 @@ function TestButtonPage() {
               operate.close(id)
             },
             children() {
-              useFragment(TestButtonPage, [])
+              useFiber(TestButtonPage, [])
             },
             moveFirst() {
               operate.moveToFirst(id)
@@ -357,7 +357,7 @@ function Demo() {
   })
   //MapList()
   //console.log("render--根")
-  useFragment(Count, [])
+  useFiber(Count, [])
   useDom("div", {
     children() {
 

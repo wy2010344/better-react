@@ -1,4 +1,5 @@
-import { useOne } from "better-react"
+import { useOneF } from "better-react"
+import { emptyFun } from "./ValueCenter"
 type GuardBaseFiber<A, T> = (readonly [
   A,
   (v: T) => void
@@ -6,62 +7,28 @@ type GuardBaseFiber<A, T> = (readonly [
 function findFirst<A, T>(
   matches: GuardBaseFiber<A, T>[],
   value: T,
-  equal: (a: A, v: T) => boolean,
-  shouldUpdate?: (a: T, b: T) => boolean
+  equal: (a: A, v: T) => boolean
 ) {
   for (let i = 0; i < matches.length; i++) {
     const match = matches[i]
     if (equal(match[0], value)) {
-      return {
-        index: i,
-        value,
-        match,
-        shouldUpdate
-      }
+      return [i, match[1]] as const
     }
   }
-}
-type MatchOne<A, T> = {
-  index: number
-  value: T
-  match: GuardBaseFiber<A, T>
-  shouldUpdate?: (a: T, b: T) => boolean
-}
-function getMatchOneIndex(v?: MatchOne<any, any>) {
-  if (v) {
-    return v.index
-  } else {
-    return -1
-  }
-}
-function renderMatchOne<T>(v?: MatchOne<any, T>) {
-  if (v) {
-    return v.match[1](v.value)
-  }
-}
-function shoudMatchOneUpdate<A, T>(a: MatchOne<A, T> | undefined, b: MatchOne<A, T> | undefined) {
-  if (a == b) {
-    return false
-  }
-  if (a && b) {
-    if (a.match != b.match || a.shouldUpdate != b.shouldUpdate) {
-      return true
-    }
-    if (a.shouldUpdate) {
-      return a.shouldUpdate(a.value, b.value)
-    }
-    return a.value != b.value
-  }
-  return true
+  return [-1, emptyFun] as const
 }
 ////////****guard****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type GuardMatchType<T> = GuardBaseFiber<(v: T) => any, T>
 function guardMatchEqual<T>(a: (v: T) => boolean, v: T) {
   return a(v)
 }
-export function useBaseGuard<T>(v: T, matches: GuardMatchType<T>[], shouldUpdate?: (a: T, b: T) => boolean) {
-  const match = findFirst(matches, v, guardMatchEqual, shouldUpdate)
-  return useOne(match, getMatchOneIndex, renderMatchOne, shoudMatchOneUpdate)
+export function useBaseGuard<T>(v: T, matches: GuardMatchType<T>[]) {
+  useOneF(v, function (v) {
+    const [index, match] = findFirst(matches, v, guardMatchEqual)
+    return [index, function () {
+      match(v)
+    }]
+  })
 }
 export function useGuard<T>(v: T, ...matches: GuardMatchType<T>[]) {
   useBaseGuard(v, matches)
@@ -102,23 +69,17 @@ function isSwitch<T>(a: T, v: T) {
   return a == v
 }
 export function useSwitch<T>(v: T, ...matches: GuardSwitchType<T>[]) {
-  const match = findFirst(matches, v, isSwitch)
-  return useOne(match, getMatchOneIndex, renderMatchOne, shoudMatchOneUpdate)
+  return useOneF(v, function (v) {
+    const [index, match] = findFirst(matches, v, isSwitch)
+    return [index, function () {
+      match(v)
+    }]
+  })
 }
 ////////****useGuardString****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type MatchStringOne = {
   key: string
   match(v: string): void
-}
-function getMatchStringOneIndex(v?: MatchStringOne) {
-  if (v) {
-    return v.key
-  }
-}
-function renderMatchStringOne<T>(v?: MatchStringOne) {
-  if (v) {
-    return v.match(v.key)
-  }
 }
 function findMatchString<T extends string>(value: T, map: {
   [key in T]?: (k: string) => void
@@ -135,24 +96,17 @@ function findMatchString<T extends string>(value: T, map: {
     }
   }
 }
-function shoudMatchStringOneUpdate(a: MatchStringOne | undefined, b: MatchStringOne | undefined) {
-  if (a == b) {
-    return false
-  }
-  if (a && b) {
-    if (a.match == b.match) {
-      return false
-    }
-    //key已经作为对比了
-  }
-  return true
-}
+
 export function useGuardString<T extends string>(
   value: T,
   map: {
     [key in T]?: (k: string) => void
   }
 ) {
-  const matches = findMatchString(value, map)
-  return useOne(matches, getMatchStringOneIndex, renderMatchStringOne, shoudMatchStringOneUpdate)
+  return useOneF(value, function (value) {
+    const matches = findMatchString(value, map)
+    return [matches?.key, function () {
+      matches?.match(value)
+    }]
+  })
 }

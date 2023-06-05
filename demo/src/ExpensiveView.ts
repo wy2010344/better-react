@@ -1,6 +1,6 @@
-import { useMap, useMemo, startTransition, useEffect } from "better-react";
+import { useMemo, startTransition, useEffect, useFiber } from "better-react";
 import { useContent, useDom } from "better-react-dom";
-import { useEvent, useFragment, useState } from "better-react-helper";
+import { useEvent, useState, useMap } from "better-react-helper";
 import { normalPanel } from "./panel/PanelContext";
 import { useInput } from "better-react-dom-helper";
 
@@ -140,7 +140,7 @@ export default normalPanel(function (operate, id) {
           overflow: "auto"
         },
         children() {
-          useFragment(view, [])
+          useFiber(view, [])
         }
       })
     }
@@ -163,7 +163,7 @@ function ExpensiveView(count: number) {
         }
       })
 
-      useFragment(PartView, [])
+      useFiber(PartView, [])
       useDom("hr")
       //console.log("render-mvvvv")
       useMap(

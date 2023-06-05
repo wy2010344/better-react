@@ -4,6 +4,8 @@ import { useRefFun } from "./useRef";
  * 需要应对draft态
  * 即需要rollback.
  * 因为rollback后,render还是同一个
+ * 
+ * 只是对应单个函数,如果对应多个函数,就是Map,需要直接useRefConst
  * @param fun 
  * @returns 
  */

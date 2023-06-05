@@ -1,6 +1,6 @@
-import { useEffect, useMap, useMemo } from "better-react";
+import { useEffect, useMemo } from "better-react";
 import { useDom } from "better-react-dom";
-import { useEvent, useState } from "better-react-helper";
+import { useEvent, useState, useMap } from "better-react-helper";
 import { initDrag } from "../panel/drag";
 
 

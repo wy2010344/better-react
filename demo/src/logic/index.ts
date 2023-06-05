@@ -32,19 +32,44 @@ function term(head: any, body?: any) {
   }
 }
 let globalMap: Map<String, AVar> | undefined = undefined
-function V(ts: TemplateStringsArray) {
-  const key = ts.join('').trim()
-  if (globalMap) {
-    let oldVar = globalMap.get(key)
-    if (!oldVar) {
-      oldVar = new AVar(key)
-      globalMap.set(key, oldVar)
+// function V(ts: TemplateStringsArray) {
+//   const key = ts.join('').trim()
+//   if (globalMap) {
+//     let oldVar = globalMap.get(key)
+//     if (!oldVar) {
+//       oldVar = new AVar(key)
+//       globalMap.set(key, oldVar)
+//     }
+//     return oldVar
+//   } else {
+//     throw new Error(`必须在规则的执行中`)
+//   }
+// }
+
+/**
+ * 用字符串模块来简化书写
+ * 用Proxy来简化书写
+ * 用pipline的中缀法来简化书写(pipline限定的是可以组合的可能性)
+ * 用函数调用来构造复杂对象(基础)
+ * 都是简化书写的方式.
+ * 还有可能就是重载操作符——复用操作符号的中缀
+ */
+const V = new Proxy<{
+  [key: string]: AVar
+}>({}, {
+  get(a, key: string) {
+    if (globalMap) {
+      let oldVar = globalMap.get(key)
+      if (!oldVar) {
+        oldVar = new AVar(key)
+        globalMap.set(key, oldVar)
+      }
+      return oldVar
+    } else {
+      throw new Error(`必须在规则的执行中`)
     }
-    return oldVar
-  } else {
-    throw new Error(`必须在规则的执行中`)
   }
-}
+})
 function mergeRule<T>(fun: () => T) {
   const map = new Map<string, AVar>()
   globalMap = map
@@ -63,11 +88,11 @@ function list(...vs: any[]) {
 
 const scope = list(
   () => term(
-    append(list(), V`B`, V`B`)
+    append(list(), V.B, V.B)
   ),
   () => term(
-    append(pair(V`X`, V`Y`), V`B`, pair(V`X`, V`F`)),
-    append(V`Y`, V`B`, V`F`)
+    append(pair(V.X, V.Y), V.B, pair(V.X, V.F)),
+    append(V.Y, V.B, V.F)
   )
 )
 function logList(list: any) {
@@ -172,12 +197,12 @@ function logStream(list: any) {
   }
   console.log(a)
 }
-// const out = runInScope(scope, () => append(V`X`, V`Y`, list(1, 2, 3, 4, 5)))
+// const out = runInScope(scope, () => append(V.X, V.Y, list(1, 2, 3, 4, 5)))
 
-const out = runInScope(scope, () => and(
-  append(V`X`, V`Y`, list(1, 2, 3, 4, 5)),
-  append(V`Y`, V`F`, list(4, 5, 6, 7))
-))
+// const out = runInScope(scope, () => and(
+//   append(V.X, V.Y, list(1, 2, 3, 4, 5)),
+//   append(V.Y, V.F, list(4, 5, 6, 7))
+// ))
 
 
 function and(left: any, right: any) {

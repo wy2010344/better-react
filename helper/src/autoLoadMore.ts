@@ -1,7 +1,7 @@
 import { useMemo } from "better-react"
 import { useEvent } from "./useEvent"
 import { useRefState, useStoreTriggerRender } from "./useRefState"
-import { useValueCenter, useValueCenterFun } from "./ValueCenter"
+import { useValueCenterFun } from "./ValueCenter"
 
 export type LoadAfterResult<T, K> = {
   list: T[]

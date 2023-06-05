@@ -1,14 +1,15 @@
-import { useFragment, useState } from "better-react-helper";
+import { useState } from "better-react-helper";
 import { normalPanel } from "../panel/PanelContext";
 import Counter from "./Counter";
 import { useInput } from "better-react-dom-helper";
+import { useFiber } from "better-react";
 
 export default normalPanel(function () {
 
 
   Counter()
   console.log("外部render")
-  useFragment(() => {
+  useFiber(() => {
     console.log("内部render")
 
 

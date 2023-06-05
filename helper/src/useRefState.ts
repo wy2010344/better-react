@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from 'better-react'
-import { useRef } from './useRef'
+import { useAlways, useRef } from './useRef'
 import { ReduceState, toReduceState, ValueCenter } from './ValueCenter'
-import { useState } from './useState'
+import { useChange } from './useState'
+import { useChangeFun } from './useState'
 function defaultIsChange<T>(a: T, b: T) {
   return a != b
 }
@@ -22,17 +23,19 @@ type RefStatePropsWithTrans<T, M> = {
 /**
  * 最后一个是version
  */
-type RefState<T> = [T, ReduceState<T>, () => T]
+type RefState<T> = [T, ReduceState<T>, () => T, () => RefStateProps<T>]
 export function useRefState<T>(): RefState<T | undefined>
 export function useRefState<T>(init: T | (() => T), arg?: RefStateProps<T>): RefState<T>
 export function useRefState<T, M>(init: M, arg: RefStatePropsWithTrans<T, M>): RefState<T>
-export function useRefState<T>() {
+export function useRefState() {
   const [init, arg] = arguments
-  const [state, setState] = useState<T, any>(init, arg?.trans)
+  const [state, setState] = typeof (init) == 'function' ? useChangeFun(init) : useChange<any, any>(init, arg?.trans)
   const ref = useRef(state)
   const get = ref.get
+  const newArg = useAlways(arg)
   const set = useMemo(() => {
-    return toReduceState<T>(value => {
+    return toReduceState(value => {
+      const arg = newArg()
       const isChange = arg?.isChange || defaultIsChange
       if (isChange(value, ref.get())) {
         ref.set(value)
@@ -43,14 +46,15 @@ export function useRefState<T>() {
       //都需要在内容生效后调用
       arg?.onSet?.(value)
     }, ref.get)
-  }, [arg?.isChange, arg?.onChange, arg?.onSet])
-  return [state, set, get] as const
+  }, [])
+  return [state, set, get, newArg] as const
 }
 
 export function useStoreTriggerRender<T>(store: ValueCenter<T>, arg?: RefStateProps<T>) {
-  const [state, setState] = useRefState<T>(store.get(), arg)
+  const [state, setState, getState, getArg] = useRefState<T>(store.get(), arg)
   useEffect(function () {
     const newState = store.get()
+    const arg = getArg()
     const isChange = arg?.isChange || defaultIsChange
     if (isChange(newState, state)) {
       setState(store.get())

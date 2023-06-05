@@ -1,4 +1,4 @@
-import { ReducerResult, useReducer, quote } from "better-react";
+import { ReducerResult, useReducer } from "better-react";
 type StateReducerState<T> = T | ((v: T) => T)
 function reducer<T>(old: T, action: StateReducerState<T>) {
   if (typeof (action) == 'function') {
