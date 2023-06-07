@@ -1,4 +1,4 @@
-import { useMemo } from "better-react"
+import { useMemo } from "better-react-helper"
 import { useDom, useSvg } from "better-react-dom"
 
 /**

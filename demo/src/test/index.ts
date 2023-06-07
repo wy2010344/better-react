@@ -1,6 +1,6 @@
-import { flushSync, useMemo } from "better-react";
+import { flushSync } from "better-react";
 import { DomElements, React, useContent, useDom } from "better-react-dom";
-import { useRef, useMap, useIf, useState } from "better-react-helper";
+import { useRef, useMap, useIf, useState, useMemo } from "better-react-helper";
 import { usePortalPanel } from "../panel/PanelContext";
 import { useDynamicPanel } from "../panel/useDynamicPanel";
 import usePanel from "../panel/usePanel";

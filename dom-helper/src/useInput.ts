@@ -1,4 +1,4 @@
-import { useMemo } from "better-react"
+import { useEffect } from "better-react"
 import { DomElements, useDom } from "better-react-dom"
 import { useVersion } from 'better-react-helper'
 type InputType = "input" | "textarea"
@@ -24,8 +24,8 @@ export function useInput(type: InputType, {
     },
     ...props
   }) as HTMLInputElement
-  //用useMemo更快触发
-  useMemo(() => {
+  //用useMemo更快触发,但会面临回滚问题
+  useEffect(() => {
     if (value != input.value) {
       //外部值和内部值不一样,说明外部阻塞了变化
       input.value = value

@@ -1,12 +1,20 @@
 import App from "./App";
-import { useEffect, useFiber, useMemo } from "better-react";
+import { AskNextTimeWork, useEffect, useFiber } from "better-react";
 import { useContent, useDom, scheduleAskTime, StyleContext, createRoot } from "better-react-dom";
 import { CountContext, PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
-import { useStoreTriggerRender, useMap, useState, valueCenterOf } from "better-react-helper";
+import { useStoreTriggerRender, useMap, useState, valueCenterOf, useFragment, useMemo } from "better-react-helper";
 import { StylisCreater } from "stylis-creater";
 
 import test from './test'
 import cssHasCursor from "./learn/css-has-cursor";
+
+const askTimeWork: AskNextTimeWork = function (getNextWork) {
+  let work = getNextWork()
+  while (work) {
+    work()
+    work = getNextWork()
+  }
+}
 const destroy = createRoot(
   document.getElementById("app")!,
   function () {
@@ -71,7 +79,7 @@ const destroy = createRoot(
       }
     }, [])
     PanelContext.useProvider(operate)
-    useFiber(App, [])
+    useFragment(App, [])
 
     useEffect(() => {
       cssHasCursor(operate)
@@ -79,11 +87,11 @@ const destroy = createRoot(
       //jsonRender(operate)
     }, [])
     console.log("render-out-1")
-    useFiber(function () {
+    useFragment(function () {
       const vs = useStoreTriggerRender(panels)
       console.log("render-out")
       useMap(vs, v => v.id, v => {
-        useFiber(function () {
+        useFragment(function () {
           v.callback(v.id)
         }, [v.callback, v.id])
       })
@@ -91,5 +99,7 @@ const destroy = createRoot(
   },
   //askTimeWork,
   //askIdleTimeWork,
+  // askTimeWork,
   scheduleAskTime
 );
+

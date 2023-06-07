@@ -1,6 +1,6 @@
-import { addChange, addDelect, commitRoot, rollback } from "./commitWork"
+import { addDelect, commitRoot, rollback } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
-import { Fiber, findParentAndBefore, getData, isChangeBodyFiber, isWithDraftFiber } from "./Fiber"
+import { Fiber, findParentAndBefore } from "./Fiber"
 /**
  * 执行fiber
  * @param unitOfWork 
@@ -268,23 +268,20 @@ export function startTransition(fun: () => void) {
  */
 function performUnitOfWork(fiber: Fiber) {
   //当前fiber脏了，需要重新render
-  if (isWithDraftFiber(fiber)) {
-    addChange(fiber)
-    if (isChangeBodyFiber(fiber)) {
-      updateFunctionComponent(fiber)
-    }
+  if (fiber.effectTag.get()) {
+    updateFunctionComponent(fiber)
   }
   findParentAndBefore(fiber)
-  const child = getData(fiber).child
+  const child = fiber.firstChild.get()
   if (child) {
     return child
   }
   /**寻找叔叔节点 */
   let nextFiber: Fiber | undefined = fiber
   while (nextFiber) {
-    const propData = getData(nextFiber)
-    if (propData.sibling) {
-      return propData.sibling
+    const next = nextFiber.next.get()
+    if (next) {
+      return next
     }
     nextFiber = nextFiber.parent
   }

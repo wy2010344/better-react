@@ -1,8 +1,10 @@
-import { useMemo } from "better-react"
+import { useMemo } from "./useRef"
 import { useStoreTriggerRender } from "./useRefState"
 import { useValueCenter } from "./ValueCenter"
 
 /**
+ * 
+ * @todo 会在并发回溯时遇到问题
  * 这样声明的pop,同步到弹窗里
  * @param vs 
  * @returns 

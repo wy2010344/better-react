@@ -1,4 +1,5 @@
-import { quote, useMemo } from "better-react"
+import { quote } from "better-react"
+import { useMemo } from "./useRef"
 
 type EventHandler<T> = (v: T) => void
 export interface VirtualEventCenter<T> {

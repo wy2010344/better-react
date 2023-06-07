@@ -1,12 +1,12 @@
-import { WithDraftFiber } from ".";
 import { addDraftConsumer, ChangeAtomValue, createChangeAtom, updateEffect, UpdateEffectLevel } from "./commitWork";
-import { Fiber, fiberDataClone, getData, getEditData, HookContextCosumer, HookEffect, HookValue, HookValueSet, StoreRef, ChangeBodyFiber, isChangeBodyFiber, UpdateFiber, NotChangeFiber, isWithDraftFiber } from "./Fiber";
+import { Fiber, HookContextCosumer, HookEffect, HookValue, HookValueSet, RenderWithDep, VirtaulDomNode, VirtualDomOperator } from "./Fiber";
 import { reconcile } from "./reconcile";
+import { arrayEqual, arrayNotEqualDepsWithEmpty, simpleEqual } from "./util";
 
 
-let wipFiber: ChangeBodyFiber | undefined = undefined
+let wipFiber: Fiber | undefined = undefined
 
-export function useCurrentFiber() {
+export function useParentFiber() {
   if (allowWipFiber) {
     return wipFiber!
   }
@@ -15,10 +15,10 @@ export function useCurrentFiber() {
 }
 
 let allowWipFiber = true
-export function draftFiber() {
+export function draftParentFiber() {
   allowWipFiber = false
 }
-export function revertFiber() {
+export function revertParentFiber() {
   allowWipFiber = true
 }
 const hookIndex = {
@@ -31,7 +31,7 @@ const hookIndex = {
   cusomer: 0
 }
 
-export function updateFunctionComponent(fiber: ChangeBodyFiber) {
+export function updateFunctionComponent(fiber: Fiber) {
   wipFiber = fiber
   hookIndex.state = 0
   hookIndex.effect = [0, 0, 0]
@@ -40,7 +40,7 @@ export function updateFunctionComponent(fiber: ChangeBodyFiber) {
   hookIndex.beforeFiber = undefined
 
   hookIndex.cusomer = 0
-  fiber.draft.render(fiber.draft.deps)
+  fiber.render()
   wipFiber = undefined
 }
 
@@ -58,8 +58,8 @@ export function useReducer<F, T>(reducer: ReducerFun<F, T>, v: T): ReducerResult
 export function useReducer<F, T = undefined>(reducer: ReducerFun<F, T>): ReducerResult<F, T | undefined>
 export function useReducer() {
   const [reducer, init, oldTrans] = arguments
-  const currentFiber = useCurrentFiber()
-  if (currentFiber.effectTag == 'PLACEMENT') {
+  const currentFiber = useParentFiber()
+  if (currentFiber.effectTag.get() == 'PLACEMENT') {
     //新增
     const hookValues = currentFiber.hookValue || []
     currentFiber.hookValue = hookValues
@@ -104,7 +104,7 @@ function buildSetValue<T, F>(atom: ChangeAtomValue<T>, fiber: Fiber, reducer: (o
   return function (temp: F, after?: (v: T) => void) {
     reconcile({
       beforeLoop() {
-        toWithDraftFiber(fiber)
+        fiber.effectTag.set("UPDATE")
         //这里如果多次设置值,则会改动多次,依前一次结果累积.
         const oldValue = atom.get()
         const newValue = reducer(oldValue, temp)
@@ -117,53 +117,6 @@ function buildSetValue<T, F>(atom: ChangeAtomValue<T>, fiber: Fiber, reducer: (o
   }
 }
 
-/**
- * 设置状态、context通知,将其更新为脏
- * @param fiber 
- * @returns 
- */
-export function toWithDraftFiber(fiber: Fiber): WithDraftFiber {
-  const nFiber = fiber as any
-  if (!nFiber.effectTag) {
-    nFiber.effectTag = "UPDATE"
-  }
-  if (!nFiber.draft) {
-    nFiber.draft = fiberDataClone(nFiber.current)
-  }
-  return nFiber
-}
-export function storeRef<T>(value: T) {
-  return {
-    get() {
-      return value
-    },
-    set(v: T) {
-      value = v
-    }
-  } as StoreRef<T>
-}
-
-export function simpleEqual<T>(a: T, b: T) {
-  return a == b
-}
-
-/**6种情况为false,NaN是数字类型*/
-export type FalseType = false | undefined | null | 0 | ""
-export function arrayEqual<T>(a1: readonly T[], a2: readonly T[], equal: (x: T, y: T) => boolean) {
-  if (a1 == a2) {
-    return true
-  }
-  const len = a1.length
-  if (a2.length == len) {
-    for (let i = 0; i < len; i++) {
-      if (!equal(a1[i], a2[i])) {
-        return false
-      }
-    }
-    return true
-  }
-  return false
-}
 export const EMPTYCONSTARRAY = [] as readonly any[]
 
 export type EffectResult = (void | (() => void))
@@ -178,8 +131,8 @@ function buildUseEffect(level: UpdateEffectLevel) {
   function useEffect<T extends readonly any[] = readonly any[]>(effect: (args: T) => EffectResult, deps: T): void
   function useEffect(effect: () => EffectResult, deps?: readonly any[]): void
   function useEffect(effect: any, deps?: any) {
-    const currentFiber = useCurrentFiber()
-    if (currentFiber.effectTag == 'PLACEMENT') {
+    const currentFiber = useParentFiber()
+    if (currentFiber.effectTag.get() == 'PLACEMENT') {
       //新增
       const hookEffects = currentFiber.hookEffects || [[], [], []]
       currentFiber.hookEffects = hookEffects
@@ -224,28 +177,34 @@ export const useBeforeAttrEffect = buildUseEffect(0)
 export const useAttrEffect = buildUseEffect(1)
 export const useEffect = buildUseEffect(2)
 
-export function arrayNotEqualDepsWithEmpty(a?: readonly any[], b?: readonly any[]) {
-  return !(a && b && arrayEqual(a, b, simpleEqual))
-}
+/**
+ * 通过返回函数,能始终通过函数访问fiber上的最新值
+ * @param effect 
+ * @param deps 
+ * @returns 
+ */
+export function useMemoGet<T, V extends readonly any[] = readonly any[]>(effect: (deps: V) => T, deps: V): () => T {
+  const parentFiber = useParentFiber()
+  if (parentFiber.effectTag.get() == "PLACEMENT") {
+    const hookMemos = parentFiber.hookMemo || []
+    parentFiber.hookMemo = hookMemos
 
-export function useMemo<T, V extends readonly any[] = readonly any[]>(effect: (deps: V) => T, deps: V): T {
-  const currentFiber = useCurrentFiber()
-  if (currentFiber.effectTag == "PLACEMENT") {
-    const hookMemos = currentFiber.hookMemo || []
-    currentFiber.hookMemo = hookMemos
-
-    draftFiber()
+    draftParentFiber()
     const state = {
       value: effect(deps),
-      deps
+      deps,
     }
-    revertFiber()
+    revertParentFiber()
 
     const hook = createChangeAtom(state)
-    hookMemos.push(hook)
-    return state.value
+    const get = () => hook.get().value
+    hookMemos.push({
+      value: hook,
+      get,
+    })
+    return get
   } else {
-    const hookMemos = currentFiber.hookMemo
+    const hookMemos = parentFiber.hookMemo
     if (!hookMemos) {
       throw new Error("原组件上不存在memos")
     }
@@ -255,26 +214,89 @@ export function useMemo<T, V extends readonly any[] = readonly any[]>(effect: (d
       throw new Error("出现了更多的memo")
     }
     hookIndex.memo = index + 1
-    const state = hook.get()
+    const state = hook.value.get()
     if (arrayEqual(state.deps, deps, simpleEqual)) {
       //不处理
-      return state.value
+      return hook.get
     } else {
 
-      draftFiber()
+      draftParentFiber()
       const newState = {
         value: effect(deps),
         deps
       }
-      revertFiber()
+      revertParentFiber()
 
-      hook.set(newState)
-      return newState.value
+      hook.value.set(newState)
+      return hook.get
     }
   }
 }
+export function useBaseFiber<T extends readonly any[] = readonly any[]>(
+  dom: VirtualDomOperator,
+  dynamicChild: boolean,
+  ...vs: RenderWithDep<T>
+): VirtaulDomNode
+export function useBaseFiber<T extends readonly any[] = readonly any[]>(
+  dom: void,
+  dynamicChild: boolean,
+  ...vs: RenderWithDep<T>
+): void
+export function useBaseFiber(
+  dom: any,
+  dynamicChild: boolean,
+  render: any,
+  deps?: any
+): any {
+  const parentFiber = useParentFiber()
+  let currentFiber: Fiber
+  if (parentFiber.effectTag.get() == 'PLACEMENT') {
+    //新增
+    currentFiber = Fiber.createFix(parentFiber, {
+      render,
+      deps
+    }, dynamicChild)
+    currentFiber.before.set(hookIndex.beforeFiber)
+    //第一次要标记sibling
+    if (hookIndex.beforeFiber) {
+      hookIndex.beforeFiber.next.set(currentFiber)
+    } else {
+      parentFiber.firstChild.set(currentFiber)
+    }
+    //一直组装到最后
+    parentFiber.lastChild.set(currentFiber)
 
-type UserOldFiber = UpdateFiber | NotChangeFiber
+    hookIndex.beforeFiber = currentFiber
+
+    if (dom) {
+      currentFiber.dom = dom[0](dom[2])
+    }
+  } else {
+    //修改
+    let oldFiber: Fiber | void = undefined
+    if (hookIndex.beforeFiber) {
+      oldFiber = hookIndex.beforeFiber.next.get()
+    }
+    if (!oldFiber) {
+      oldFiber = parentFiber.firstChild.get()
+    }
+    if (!oldFiber) {
+      throw new Error("非预期地多出现了fiter")
+    }
+    currentFiber = oldFiber
+
+    hookIndex.beforeFiber = currentFiber
+    currentFiber.changeRender(render, deps)
+  }
+  const currentDom = currentFiber.dom
+  if (currentDom) {
+    if (!dom) {
+      throw new Error('需要更新参数')
+    }
+    currentDom.useUpdate(dom[1])
+  }
+  return currentDom
+}
 /**
  * 两种方式,一种是传任意props进来,有一个公用的处理函数,和一个判断props是否发生变成
  * 一种是有一个主函数,有一个deps,deps发生变更,主函数执行,跟useMemo/useEffect一样,这里跟useEffect更相似,依赖是可选的
@@ -285,81 +307,21 @@ type UserOldFiber = UpdateFiber | NotChangeFiber
  * @param shouldUpdate 
  * @returns 
  */
-export function useFiber<T extends readonly any[] = readonly any[]>(render: (args: T) => void, deps: T): Fiber
-export function useFiber(render: () => void, deps?: readonly any[]): Fiber
-export function useFiber(render: any, deps?: any) {
-  const currentFiber = useCurrentFiber()
-  if (currentFiber.effectTag == 'PLACEMENT') {
-    //新增
-    const hook: Fiber = {
-      effectTag: "PLACEMENT",
-      parent: currentFiber,
-      draft: {
-        render,
-        deps,
-        prev: hookIndex.beforeFiber
-      }
-    }
-    //第一次要标记sibling
-    if (hookIndex.beforeFiber) {
-      getEditData(hookIndex.beforeFiber).sibling = hook
-    } else {
-      getEditData(currentFiber).child = hook
-    }
-    //一直组装到最后
-    getEditData(currentFiber).lastChild = hook
-
-    hookIndex.beforeFiber = hook
-    return hook
-  } else {
-    //修改
-    let oldFiber: Fiber | undefined
-    if (hookIndex.beforeFiber) {
-      oldFiber = getData(hookIndex.beforeFiber).sibling
-    }
-    if (!oldFiber) {
-      oldFiber = currentFiber.draft.child
-    }
-    if (!oldFiber) {
-      throw new Error("非预期地多出现了fiter")
-    }
-    hookIndex.beforeFiber = oldFiber
-    simpleUpdateFiber(oldFiber, render, deps)
-    return oldFiber
-  }
-}
-
-/**
- * 这里的Fiber,只能是UpdateFiber或NoChangeFiber
- * @param oldFiber 
- * @param render 
- * @param deps 
- */
-export function simpleUpdateFiber(
-  oldFiber: Fiber,
-  render: (vs: any[]) => void,
-  deps?: any[]
+export function useFiber<T extends readonly any[] = readonly any[]>(
+  dom: VirtualDomOperator,
+  ...vs: RenderWithDep<T>
+): VirtaulDomNode
+export function useFiber<T extends readonly any[] = readonly any[]>(
+  dom: void,
+  ...vs: RenderWithDep<T>
+): void
+export function useFiber(
+  dom: any,
+  render: any,
+  deps?: any
 ) {
-  if (isWithDraftFiber(oldFiber)) {
-    if (isChangeBodyFiber(oldFiber)) {
-      //已经被标记为脏,需要更新,则直接更新
-      oldFiber.draft.render = render
-      oldFiber.draft.deps = deps
-    } else {
-      const msg = "此处不允许有排序的Fiber"
-      console.error(msg, oldFiber)
-      throw new Error(msg)
-    }
-  } else {
-    if (arrayNotEqualDepsWithEmpty(oldFiber.current.deps, deps)) {
-      //检查出来需要更新
-      const draft = toWithDraftFiber(oldFiber).draft
-      draft.render = render
-      draft.deps = deps
-    }
-  }
+  return useBaseFiber(dom, false, render, deps)
 }
-
 export interface Context<T> {
   useProvider(v: T): void
   useSelector<M>(getValue: (v: T) => M, shouldUpdate?: (a: M, b: M) => boolean): M
@@ -389,7 +351,7 @@ class ContextFactory<T> implements Context<T>{
     let map: Map<any, {
       changeValue(v: any): void
     }>
-    const currentFiber = useCurrentFiber()
+    const currentFiber = useParentFiber()
     if (currentFiber.contextProvider) {
       map = currentFiber.contextProvider
     } else {
@@ -409,8 +371,8 @@ class ContextFactory<T> implements Context<T>{
    * @returns 
    */
   useSelector<M>(getValue: (v: T) => M, shouldUpdate?: (a: M, b: M) => any): M {
-    const currentFiber = useCurrentFiber()
-    if (currentFiber.effectTag == "PLACEMENT") {
+    const currentFiber = useParentFiber()
+    if (currentFiber.effectTag.get() == "PLACEMENT") {
       const hookConsumers = currentFiber.hookContextCosumer || []
       currentFiber.hookContextCosumer = hookConsumers
 
@@ -499,14 +461,14 @@ class ContextListener<T, M>{
     const oldValue = this.atom.get()
     if (newValue != oldValue && this.didShouldUpdate(newValue, oldValue)) {
       this.atom.set(newValue)
-      toWithDraftFiber(this.fiber)
+      this.fiber.effectTag.set("UPDATE")
     }
   }
   didShouldUpdate(a: M, b: M) {
     if (this.shouldUpdate) {
-      draftFiber()
+      draftParentFiber()
       const v = this.shouldUpdate(a, b)
-      revertFiber()
+      revertParentFiber()
       return v
     } else {
       return true

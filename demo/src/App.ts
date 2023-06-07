@@ -1,5 +1,5 @@
-import { useEffect, useFiber } from "better-react";
-import { useGuard, useGuardString, useState, } from "better-react-helper"
+import { useEffect } from "better-react";
+import { useFragment, useGuard, useGuardString, useState, } from "better-react-helper"
 import { useContent, useDom } from "better-react-dom";
 import dsl from "./dsl";
 import ExpensiveView from "./ExpensiveView";
@@ -35,7 +35,7 @@ export default function FirstPage() {
         },
         children() {
           useContent("root")
-          useFiber(TestButtonPage, [])
+          useFragment(TestButtonPage, [])
           useDom("button", {
             onClick(e) {
               e.stopPropagation()
@@ -225,7 +225,7 @@ function TestButtonPage() {
               operate.close(id)
             },
             children() {
-              useFiber(TestButtonPage, [])
+              useFragment(TestButtonPage, [])
             },
             moveFirst() {
               operate.moveToFirst(id)
@@ -357,7 +357,7 @@ function Demo() {
   })
   //MapList()
   //console.log("render--根")
-  useFiber(Count, [])
+  useFragment(Count, [])
   useDom("div", {
     children() {
 

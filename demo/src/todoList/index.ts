@@ -102,7 +102,7 @@ export default normalPanel(function (operate, id) {
           (v) => {
             console.log("外部render")
             const vs = v?.value! as TodoModel[]
-            useMapF(vs, defaultTranslate, function (row, i) {
+            useMapF(undefined, vs, defaultTranslate, function (row, i) {
               console.log("map-render")
               return [row.id, function () {
                 console.log("row-render", row.id)
@@ -142,7 +142,7 @@ export default normalPanel(function (operate, id) {
                     Counter()
 
                     useDom("button", {
-                      textContent: `${i}移动到随机`,
+                      textContent: `${i + 1}移动到随机`,
                       onClick(e) {
                         setCt(v => v + 1)
                         moveFromTo(i)
@@ -151,7 +151,7 @@ export default normalPanel(function (operate, id) {
                     })
                   }
                 })
-              }, [row, i]]
+              }, [row]]
             }, [vs])
           }
         ],

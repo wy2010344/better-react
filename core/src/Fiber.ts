@@ -1,4 +1,5 @@
-import { addAppendAsPortal, addAppends, ChangeAtomValue } from "./commitWork"
+import { addAppendAsPortal, addAppends, ChangeAtomValue, createChangeAtom } from "./commitWork"
+import { arrayNotEqualDepsWithEmpty, storeRef } from "./util"
 
 export type HookValueSet<F, T> = (v: F, after?: (v: T) => void) => void
 export type HookValue<F, T> = {
@@ -19,28 +20,31 @@ export type HookContextCosumer<T, M> = {
   shouldUpdate?(a: M, b: M): boolean
   destroy(): void
 }
-export type FiberData = {
-  /**不能有返回值,无法承接处理,因为子render后返回给父,造成父的继续render?*/
+
+
+type RenderDeps = {
+  deps?: readonly any[],
   render(deps?: readonly any[]): void
-  deps?: readonly any[]
-  /**第一个子节点 */
-  child?: Fiber
-  /**弟节点 */
-  sibling?: Fiber
-  /**最后一个节点 */
-  lastChild?: Fiber
-  /**前一个节点 */
-  prev?: Fiber
 }
 
-//一定要克隆,克隆后还要加工
-export function fiberDataClone(v: FiberData): FiberData {
-  return {
-    ...v
-  }
+type EffectTag = "PLACEMENT" | "UPDATE" | void
+function whenCommitEffectTag(v: EffectTag) {
+  return undefined
 }
-
-type BaseFiber = {
+/**
+ * 会调整顺序的,包括useMap的父节点与子结点.但父节点只调整child与lastChild
+ * 子节点只调整prev与next
+ * 但是子节点又可能是父节点,父节点也可能是子节点.
+ * 如果是普通fiber节点,它的兄弟是定的,但它可能是useMap的根节点
+ * 如果是useMap的子节点,它的兄弟是不定的,它的父是定的,
+ * 所有的类型,父节点一定是定的,区别在于是父的什么位置
+ * 只有声明的时候能确定
+ * 普通Fiber的子节点可能是MapFiber,MapFiber自动将child/lastChild变成动态的.
+ * 只是MapFiber的子节点都是手动创建的.但手动创建的是普通Fiber,不是MapFiber?
+ * 可以是MapFiber,只要控制返回值不是render+deps,而是mapFiber的构造参数
+ * 如果是oneFiber,父节点的child与lastChild会变化,但子结点的before与next都是空
+ */
+export class Fiber {
   parent?: Fiber
   dom?: VirtaulDomNode
   contextProvider?: Map<any, {
@@ -52,59 +56,123 @@ type BaseFiber = {
     ChangeAtomValue<HookEffect>[],
     ChangeAtomValue<HookEffect>[]
   ]
-  hookMemo?: ChangeAtomValue<HookMemo<any>>[]
+  hookMemo?: {
+    get(): any,
+    value: ChangeAtomValue<HookMemo<any>>
+  }[]
   hookContextCosumer?: HookContextCosumer<any, any>[]
-}
-/**
- * 并不需要新旧diff,所以不需要alter
- * 节点树是固定的,除了特殊的map/if
- * 
- * 将自身地址作为ID,这个地址下有两条记录
- */
-export type PlacementFiber = {
-  effectTag: "PLACEMENT"
-  draft: FiberData
-} & BaseFiber
-export type UpdateFiber = {
-  effectTag: "UPDATE"
-  current: Readonly<FiberData>
-  draft: FiberData
-} & BaseFiber
-export type ChangeOrderFiber = {
-  current: Readonly<FiberData>
-  draft: FiberData
-} & BaseFiber
-export type NotChangeFiber = {
-  current: Readonly<FiberData>
-} & BaseFiber
-export type ChangeBodyFiber = PlacementFiber | UpdateFiber
-export type WithDraftFiber = ChangeBodyFiber | ChangeOrderFiber
-export type Fiber = WithDraftFiber | NotChangeFiber
-export function isChangeBodyFiber(v: Fiber): v is ChangeBodyFiber {
-  return (v as any).effectTag as any
-}
-export function isPlacementFiber(v: Fiber): v is PlacementFiber {
-  return (v as any).effectTag == "PLACEMENT"
-}
-export function isWithDraftFiber(v: Fiber): v is WithDraftFiber {
-  return (v as any).draft as any
-}
-export function getData(v: Fiber) {
-  if (isWithDraftFiber(v)) {
-    return v.draft
-  } else {
-    return v.current
+
+  /**初始化或更新 
+   * UPDATE可能是setState造成的,可能是更新造成的
+   * 这其中要回滚
+   * 当提交生效的时候,自己的值变空.回滚的时候,也变成空
+  */
+  effectTag = createChangeAtom<EffectTag>("PLACEMENT", whenCommitEffectTag)
+  /**顺序*/
+  firstChild: StoreRef<Fiber | void> = undefined!
+  lastChild: StoreRef<Fiber | void> = undefined!
+  before: StoreRef<Fiber | void> = undefined!
+  next: StoreRef<Fiber | void> = undefined!
+
+  private renderDeps: ChangeAtomValue<RenderDeps>
+  private constructor(rd: RenderDeps) {
+    this.renderDeps = createChangeAtom(rd)
+  }
+  changeRender(render: (deps?: readonly any[]) => void, deps?: readonly any[]) {
+    const { deps: oldDeps } = this.renderDeps.get()
+    if (arrayNotEqualDepsWithEmpty(oldDeps, deps)) {
+      //能改变render,需要UPDATE
+      this.renderDeps.set({
+        render,
+        deps
+      })
+      this.effectTag.set("UPDATE")
+    }
+  }
+  render() {
+    const { render, deps } = this.renderDeps.get()
+    render(deps)
+  }
+  private static createChild(fiber: Fiber, dynamicChild?: boolean) {
+    if (dynamicChild) {
+      fiber.firstChild = createChangeAtom(undefined)
+      fiber.lastChild = createChangeAtom(undefined)
+    } else {
+      fiber.firstChild = storeRef(undefined)
+      fiber.lastChild = storeRef(undefined)
+    }
+  }
+  /**
+   * 创建一个固定节点,该节点是不是MapFiber不一定
+   * @param rd 
+   * @param dynamicChild 
+   */
+  static createFix(parentFiber: Fiber, rd: RenderDeps, dynamicChild?: boolean) {
+    const fiber = new Fiber(rd)
+    fiber.parent = parentFiber
+    fiber.before = storeRef(undefined)
+    fiber.next = storeRef(undefined)
+    Fiber.createChild(fiber, dynamicChild)
+    return fiber
+  }
+
+  /**
+   * Map的子节点,子节点是不是Map不一定
+   * @param parentFiber 
+   * @param rd 
+   * @param dynamicChild 
+   */
+  static createMapChild(parentFiber: Fiber, rd: RenderDeps, dynamicChild?: boolean) {
+    const fiber = new Fiber(rd)
+    fiber.parent = parentFiber
+    fiber.before = createChangeAtom(undefined)
+    fiber.next = createChangeAtom(undefined)
+    Fiber.createChild(fiber, dynamicChild)
+    return fiber
+  }
+  /**
+   * One的子节点,子节点是不是Map不一定
+   * @param parentFiber 
+   * @param rd 
+   * @param dynamicChild 
+   */
+  static createOneChild(parentFiber: Fiber, rd: RenderDeps, dynamicChild?: boolean) {
+    const fiber = new Fiber(rd)
+    fiber.parent = parentFiber
+    fiber.before = emptyPlace
+    fiber.next = emptyPlace
+    Fiber.createChild(fiber, dynamicChild)
+    return fiber
   }
 }
-export function getEditData<T>(v: Fiber): FiberData {
-  return (v as any).draft
-}
+const emptyPlace = storeRef<Fiber | void>(undefined)
 
-export type VirtaulDomNode = {
+export type VirtualDomOperator<T = any, M = any> = [
+  (m: M) => VirtaulDomNode<T>,
+  T,
+  M
+] | [
+  (m: undefined) => VirtaulDomNode<T>,
+  T,
+  undefined
+] | [
+  () => VirtaulDomNode<T>,
+  T
+]
+
+export type RenderWithDep<T extends readonly any[] = readonly any[]> = [
+  (v: T) => void,
+  T
+] | [
+  (v: undefined) => void,
+  undefined
+] | [
+  () => void
+]
+
+export type VirtaulDomNode<T = any> = {
+  useUpdate(props: T): void
   //创建
-  // create(): void
-  // //每次更新props
-  // update(): void
   //在update之前,所以要更新props
   isPortal(): boolean
   appendAsPortal(): void
@@ -132,7 +200,7 @@ export function findParentAndBefore(fiber: Fiber) {
     if (dom.isPortal()) {
       addAppendAsPortal(dom)
     } else {
-      const prevData = getData(fiber).prev
+      const prevData = fiber.before.get()
       const parentBefore = prevData
         ? getCurrentBefore(prevData)
         : findParentBefore(fiber)
@@ -147,7 +215,7 @@ export function findParentAndBefore(fiber: Fiber) {
 
 function getCurrentBefore(fiber: Fiber): FindParentAndBefore {
   if (fiber.dom?.isPortal()) {
-    const prev = getData(fiber).prev
+    const prev = fiber.before.get()
     if (prev) {
       return getCurrentBefore(prev)
     } else {
@@ -158,7 +226,7 @@ function getCurrentBefore(fiber: Fiber): FindParentAndBefore {
     //portal节点不能作为邻节点
     return [getParentDomFilber(fiber).dom!, fiber.dom]
   }
-  const lastChild = getData(fiber).lastChild
+  const lastChild = fiber.lastChild.get()
   if (lastChild) {
     //在子节点中寻找
     const dom = getCurrentBefore(lastChild)
@@ -166,7 +234,7 @@ function getCurrentBefore(fiber: Fiber): FindParentAndBefore {
       return dom
     }
   }
-  const prev = getData(fiber).prev
+  const prev = fiber.before.get()
   if (prev) {
     //在兄节点中找
     const dom = getCurrentBefore(prev)
@@ -185,7 +253,7 @@ function findParentBefore(fiber: Fiber): FindParentAndBefore {
       //找到父节点，且父节点是有dom的
       return [parent.dom, null]
     }
-    const prev = getData(parent).prev
+    const prev = parent.before.get()
     if (prev) {
       //在父的兄节点中寻找
       const dom = getCurrentBefore(prev)

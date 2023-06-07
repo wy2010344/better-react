@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from "better-react"
-import { useState } from "better-react-helper"
+import { useEffect } from "better-react"
+import { useState, useMemo } from "better-react-helper"
 
 /**
  * 简单的以/分割

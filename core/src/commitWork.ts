@@ -1,19 +1,15 @@
-import { Fiber, FiberData, HookContextCosumer, VirtaulDomNode, ChangeBodyFiber } from "./Fiber"
+import { Fiber, HookContextCosumer, StoreRef, VirtaulDomNode } from "./Fiber"
+import { removeEqual } from "./util"
 
 /**本次新注册的监听者*/
-const draftConsumer: HookContextCosumer<any, any>[] = []
+const draftConsumers: HookContextCosumer<any, any>[] = []
 export function addDraftConsumer(v: HookContextCosumer<any, any>) {
-  draftConsumer.push(v)
+  draftConsumers.push(v)
 }
 /**本次等待删除的fiber*/
 const deletions: Fiber[] = []
 export function addDelect(fiber: Fiber) {
   deletions.push(fiber)
-}
-/**本次需要更新的fiber */
-const changes: Fiber[] = []
-export function addChange(fiber: Fiber) {
-  changes.push(fiber)
 }
 export type UpdateEffect = () => void
 /**本次所有需要执行的effects 
@@ -40,7 +36,7 @@ export type ChangeAtomValue<T> = {
   set(v: T): void
   get(): T
 }
-function defaultDidCommit<T>(v: T) { }
+function defaultDidCommit<T>(v: T) { return v }
 /**
  * 在commit期间修改后,都是最新值,直到commit前,都可以回滚
  * @param value 
@@ -49,76 +45,82 @@ function defaultDidCommit<T>(v: T) { }
  */
 export function createChangeAtom<T>(
   value: T,
-  didCommit?: (v: T) => void
+  didCommit?: (v: T) => T
 ): ChangeAtomValue<T> {
   return new ChangeAtom(value, didCommit || defaultDidCommit)
 }
-class ChangeAtom<T> implements ChangeAtomValue<T>{
+
+/**
+ * 需要区分create和update阶段
+ */
+class ChangeAtom<T> implements ChangeAtomValue<T>, StoreRef<T>{
+  private isCreate = true
   constructor(
     private value: T,
-    private didCommit: (v: T) => void
-  ) { }
+    private whenCommit: (v: T) => T
+  ) {
+    changeAtoms.push(this)
+  }
   dirty = false
   draftValue!: T
   set(v: T) {
-    if (!this.dirty) {
-      this.dirty = true
-      changeAtoms.push(this)
+    if (this.isCreate) {
+      this.value = v
+    } else {
+      if (v != this.value) {
+        if (!this.dirty) {
+          this.dirty = true
+          changeAtoms.push(this)
+        }
+        this.draftValue = v
+      } else {
+        if (this.dirty) {
+          this.dirty = false
+          removeEqual(changeAtoms, this)
+        }
+        this.draftValue = this.value
+      }
     }
-    this.draftValue = v
   }
   get() {
-    if (this.dirty) {
-      return this.draftValue
+    if (this.isCreate) {
+      return this.value
+    } else {
+      if (this.dirty) {
+        return this.draftValue
+      }
+      return this.value
     }
-    return this.value
   }
   commit() {
-    this.dirty = false
-    this.value = this.draftValue
-    this.didCommit(this.draftValue)
+    if (this.isCreate) {
+      this.isCreate = false
+      this.value = this.whenCommit(this.value)
+    } else {
+      this.dirty = false
+      this.value = this.whenCommit(this.draftValue)
+    }
   }
   rollback() {
-    this.dirty = false
+    if (this.isCreate) {
+      //不处理?一般挂在hooks上会丢弃
+    } else {
+      this.dirty = false
+    }
   }
 }
 
 export function rollback() {
   changeAtoms.forEach(atom => atom.rollback())
   changeAtoms.length = 0
-  changes.forEach(rollbackTag)
-  deletions.forEach(rollbackTag)
-
-  draftConsumer.forEach(draft => draft.destroy())
-  draftConsumer.length = 0
-  changes.length = 0
+  draftConsumers.forEach(draft => draft.destroy())
+  draftConsumers.length = 0
   deletions.length = 0
   for (const updateEffect of updateEffects) {
     updateEffect.length = 0
   }
   appends.length = 0
   appendAsPortals.length = 0
-}
-function rollbackTag(v: Fiber) {
-  const mv = v as any
-  if (mv.draft) {
-    mv.draft = undefined
-    mv.effectTag = undefined
-  }
-}
-function commitEffectTag(v: Fiber) {
-  const mv = v as any
-  if (mv.draft) {
-    mv.effectTag = undefined
-    mv.current = mv.draft
-    mv.draft = undefined
-  } else {
-    //console.log("已经被处理过了")
-  }
-}
-
-function getEditData(v: Fiber): FiberData {
-  return (v as any).current
 }
 /**
  * 提交变更应该从根dirty节点开始。
@@ -128,11 +130,6 @@ export function commitRoot() {
   /**最新更新所有注册的*/
   changeAtoms.forEach(atom => atom.commit())
   changeAtoms.length = 0
-  //将所有缓存提交
-  changes.forEach(commitEffectTag)
-  changes.length = 0
-
-  deletions.forEach(commitEffectTag)
   /******清理删除********************************************************/
   deletions.forEach(function (fiber) {
     //清理effect
@@ -152,7 +149,7 @@ export function commitRoot() {
   /******执行所有的effect********************************************************/
   runUpdateEffect(2)
   /******清理所有的draft********************************************************/
-  draftConsumer.length = 0
+  draftConsumers.length = 0
 }
 
 function runUpdateEffect(level: UpdateEffectLevel) {
@@ -180,17 +177,17 @@ function commitDeletion(fiber: Fiber) {
   if (fiber.dom) {
     removeFromDom(fiber)
   } else {
-    circleCommitDelection(getEditData(fiber).child)
+    circleCommitDelection(fiber.firstChild.get())
   }
 }
-function circleCommitDelection(fiber: Fiber | undefined) {
+function circleCommitDelection(fiber: Fiber | void) {
   if (fiber) {
     if (fiber.dom) {
       removeFromDom(fiber)
     } else {
-      circleCommitDelection(getEditData(fiber).child)
+      circleCommitDelection(fiber.firstChild.get())
     }
-    circleCommitDelection(getEditData(fiber).sibling)
+    circleCommitDelection(fiber.next.get())
   }
 }
 
@@ -202,12 +199,12 @@ function removeFromDom(fiber: Fiber) {
 }
 function notifyDel(fiber: Fiber) {
   destroyFiber(fiber)
-  const child = getEditData(fiber).child
+  const child = fiber.firstChild.get()
   if (child) {
-    let next: Fiber | undefined = child
+    let next: Fiber | void = child
     while (next) {
       notifyDel(next)
-      next = getEditData(next).sibling
+      next = fiber.next.get()
     }
   }
 }

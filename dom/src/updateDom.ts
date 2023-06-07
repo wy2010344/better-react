@@ -44,7 +44,7 @@ export class FiberNode implements FiberAbsNode {
     return this.propsValue.get()
   }
   private oldProps: Props = EMPTYPROPS
-  useUpdateProps(props: Props): void {
+  useUpdate(props: Props): void {
     this.propsValue.set(props)
     const createStyle = StyleContext.useConsumer()
     const that = this
@@ -132,7 +132,7 @@ export class FiberText implements FiberAbsNode {
   public getProps() {
     return this.propsValue.get()
   }
-  useUpdateProps(v: string) {
+  useUpdate(v: string) {
     this.propsValue.set(v)
     const content = this.getProps()
     if (this.oldContent != content) {

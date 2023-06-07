@@ -1,6 +1,6 @@
-import { useMemo, startTransition, useEffect, useFiber } from "better-react";
+import { startTransition, useEffect } from "better-react";
 import { useContent, useDom } from "better-react-dom";
-import { useEvent, useState, useMap } from "better-react-helper";
+import { useEvent, useState, useMap, useFragment, useMemo } from "better-react-helper";
 import { normalPanel } from "./panel/PanelContext";
 import { useInput } from "better-react-dom-helper";
 
@@ -30,12 +30,6 @@ export default normalPanel(function (operate, id) {
   useEffect(() => {
     setAvCount(v => v + 1)
   }, [onTrans])
-
-  const view = useMemo(() => {
-    return () => {
-      ExpensiveView(renderValue)
-    }
-  }, [renderValue])
 
   useDom("div", {
     style: {
@@ -140,7 +134,10 @@ export default normalPanel(function (operate, id) {
           overflow: "auto"
         },
         children() {
-          useFiber(view, [])
+
+          useFragment(() => {
+            ExpensiveView(renderValue)
+          }, [renderValue])
         }
       })
     }
@@ -163,7 +160,7 @@ function ExpensiveView(count: number) {
         }
       })
 
-      useFiber(PartView, [])
+      useFragment(PartView, [])
       useDom("hr")
       //console.log("render-mvvvv")
       useMap(

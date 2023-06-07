@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'better-react'
-import { useAlways, useRef } from './useRef'
+import { useEffect } from 'better-react'
+import { useAlways, useMemo, useRef } from './useRef'
 import { ReduceState, toReduceState, ValueCenter } from './ValueCenter'
 import { useChange } from './useState'
 import { useChangeFun } from './useState'

@@ -7,9 +7,9 @@
       "replaced": "^1.0.8"
     },
     "better-react": {
-      "signature": "3024cf84d64c8d6492b41528db36a332",
+      "signature": "293f5352999435defa960525607fe460",
       "file": true,
-      "replaced": "^1.0.9"
+      "replaced": "^1.1.0"
     }
   }
 }

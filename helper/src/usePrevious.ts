@@ -1,5 +1,11 @@
 import { useRef } from "./useRef";
 
+/**
+ * @todo 
+ * 会在并发回滚时出问题
+ * @param initBefore 
+ * @returns 
+ */
 export function getUsePrevious<T>(initBefore?: T) {
   return function (value: T) {
     const getBefore = useRef(initBefore)

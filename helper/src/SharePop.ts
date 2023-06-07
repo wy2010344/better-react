@@ -37,8 +37,7 @@ export function createSharePop() {
     useProvider() {
       const { stacks, index } = useStoreTriggerRender(popCenter)
       const currentPop = stacks[index]
-
-      useOneF(currentPop, renderContent)
+      useOneF(undefined, currentPop, renderContent)
     },
     push(render: () => void, id: any = render) {
       const { stacks, index } = popCenter.get()

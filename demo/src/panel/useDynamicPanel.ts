@@ -1,6 +1,6 @@
-import { createContext, useEffect, useMemo } from "better-react";
+import { createContext, useEffect } from "better-react";
 import usePanel, { PanelParams } from "./usePanel";
-import { ValueCenter, valueCenterOf } from "better-react-helper";
+import { useMemo, valueCenterOf } from "better-react-helper";
 
 const PortalContext = createContext(valueCenterOf<{
   id: number

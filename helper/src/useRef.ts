@@ -1,10 +1,13 @@
-import { useMemo, storeRef, quote } from 'better-react';
+import { useMemoGet, storeRef, quote } from 'better-react';
 
 type StoreRef<T> = {
   get(): T
   set(v: T): void
 }
 
+export function useMemo<T, V extends readonly any[] = readonly any[]>(effect: (deps: V) => T, deps: V): T {
+  return useMemoGet(effect, deps)()
+}
 /**
  * 如果rollback,不允许改变是持久的
  * 但是ref本质上就是持久的
@@ -32,8 +35,14 @@ export function useConstRefFun<T>(init: () => T) {
   return useRef(undefined, init).get()
 }
 
+function getDep<T>(dep: readonly [T]) {
+  return dep[0]
+}
+/**
+ * 始终获得render上的最新值
+ * @param init 
+ * @returns 
+ */
 export function useAlways<T>(init: T) {
-  const ref = useRef(init)
-  ref.set(init)
-  return ref.get
+  return useMemoGet(getDep, [init] as const)
 }

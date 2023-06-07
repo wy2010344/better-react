@@ -1,35 +1,48 @@
 import { addDelect } from "./commitWork"
 import {
-  arrayNotEqualDepsWithEmpty, draftFiber, EMPTYCONSTARRAY,
-  revertFiber,
-  simpleUpdateFiber,
-  storeRef, toWithDraftFiber, useCurrentFiber,
-  useEffect, useFiber, useMemo
+  draftParentFiber, EMPTYCONSTARRAY,
+  revertParentFiber, useBaseFiber, useBeforeAttrEffect, useParentFiber,
+  useEffect, useMemoGet
 } from "./fc"
-import { Fiber, fiberDataClone, getEditData, isChangeBodyFiber, isWithDraftFiber, PlacementFiber } from "./Fiber"
+import { storeRef } from './util'
+import { Fiber, VirtaulDomNode, VirtualDomOperator } from "./Fiber"
 import { AskNextTimeWork, setRootFiber } from "./reconcile"
 export { flushSync, startTransition } from './reconcile'
 export type { REAL_WORK } from './reconcile'
 export {
-  useReducer, useEffect, useAttrEffect, useBeforeAttrEffect, storeRef, useMemo,
-  createContext, useFiber, arrayNotEqualDepsWithEmpty,
-  arrayEqual, simpleEqual, quote, EMPTYCONSTARRAY, useCurrentFiber
+  useReducer, useEffect, useAttrEffect, useBeforeAttrEffect, useMemoGet,
+  createContext, useFiber, quote, EMPTYCONSTARRAY
 } from './fc'
+export {
+  arrayNotEqualDepsWithEmpty,
+  arrayEqual, simpleEqual,
+  storeRef
+} from './util'
 export type { ReducerResult, ReducerFun } from './fc'
-export type { Fiber, Props, VirtaulDomNode, ChangeBodyFiber as WithDraftFiber, PlacementFiber, FindParentAndBefore, HookValueSet } from './Fiber'
+export type {
+  Fiber, Props,
+  VirtaulDomNode,
+  FindParentAndBefore,
+  HookValueSet,
+  RenderWithDep,
+  VirtualDomOperator
+} from './Fiber'
 export type { AskNextTimeWork }
 export { createChangeAtom, ChangeAtomValue } from './commitWork'
 
-export function render(
+export function render<T>(
+  dom: VirtaulDomNode<T>,
+  props: T,
   render: () => void,
   ask: AskNextTimeWork
 ) {
-  const rootFiber: Fiber = {
-    effectTag: "PLACEMENT",
-    draft: {
-      render
+  const rootFiber = Fiber.createFix(null!, {
+    render() {
+      dom.useUpdate(props)
+      render()
     }
-  } as const
+  })
+  rootFiber.dom = dom
   return setRootFiber(rootFiber, ask)
 }
 
@@ -58,78 +71,64 @@ function createMapRef() {
  * @param deps 
  */
 export function useMapF<M, K>(
+  dom: VirtualDomOperator,
   data: M,
   translate: Translate<M, K>,
   /**中间不允许hooks,应该处理一下*/
   render: (row: K, i: number) => MapRowRender<any>,
   deps?: readonly any[]
-): void {
-  useFiber(function () {
-    const mapRef = useMemo(createMapRef, EMPTYCONSTARRAY);
+): VirtaulDomNode
+export function useMapF<M, K>(
+  dom: void,
+  data: M,
+  translate: Translate<M, K>,
+  /**中间不允许hooks,应该处理一下*/
+  render: (row: K, i: number) => MapRowRender<any>,
+  deps?: readonly any[]
+): void
+export function useMapF<M, K>(
+  dom: any,
+  data: M,
+  translate: Translate<M, K>,
+  /**中间不允许hooks,应该处理一下*/
+  render: (row: K, i: number) => MapRowRender<any>,
+  deps?: readonly any[]
+) {
+  return useBaseFiber(dom, true, function () {
+    const mapRef = useMemoGet(createMapRef, EMPTYCONSTARRAY)();
     const oldMap = cloneMap(mapRef.get())
     const newMap = new Map<any, Fiber[]>()
-    useEffect(function () {
+    useBeforeAttrEffect(function () {
       mapRef.set(newMap)
     })
+    const parentFiber = useParentFiber()
 
-    const parentFiber = useCurrentFiber()
-    const draft = parentFiber.draft
     let beforeFiber: Fiber | undefined = undefined
     //提前置空
-    draft.child = undefined
-    draft.lastChild = undefined
+    parentFiber.firstChild.set(undefined!)
+    parentFiber.lastChild.set(undefined!)
 
     const maxSize = translate.size(data)
     for (let i = 0; i < maxSize; i++) {
       const v = translate.get(data, i)
 
-      draftFiber()
+      draftParentFiber()
       const [key, rowRender, deps] = render(v, i)
-      revertFiber()
+      revertParentFiber()
 
       const oldFibers = oldMap.get(key)
       let oldFiber = oldFibers?.[0]
       if (oldFiber) {
         //因为新排序了,必须产生draft用于排序,
-        if (isWithDraftFiber(oldFiber)) {
-          if (isChangeBodyFiber(oldFiber)) {
-            const oldDraft = oldFiber.draft
-            oldDraft.render = rowRender
-            oldDraft.deps = deps
-            oldDraft.prev = beforeFiber
-          } else {
-            const msg = "此处不允许有排序的Fiber"
-            console.error(msg, oldFiber)
-            throw new Error(msg)
-          }
-        } else {
-          if (arrayNotEqualDepsWithEmpty(oldFiber.current.deps, deps)) {
-            const oldDraft = toWithDraftFiber(oldFiber).draft
-            oldDraft.render = rowRender
-            oldDraft.deps = deps
-            oldDraft.prev = beforeFiber
-          } else {
-            //很可能,此时状态被setState更新
-            const nOldFiber = oldFiber as any
-            let draft = nOldFiber.draft
-            if (!draft) {
-              draft = fiberDataClone(oldFiber.current);
-              nOldFiber.draft = draft;
-            }
-            draft.prev = beforeFiber
-          }
-        }
+        oldFiber.changeRender(rowRender, deps)
+        oldFiber.before.set(beforeFiber)
         oldFibers?.shift()
       } else {
-        const tempFiber: PlacementFiber = {
-          effectTag: "PLACEMENT",
-          parent: parentFiber,
-          draft: {
-            render: rowRender,
-            deps,
-            prev: beforeFiber
-          }
-        }
+        const tempFiber = Fiber.createMapChild(parentFiber, {
+          render: rowRender,
+          deps
+        })
+        tempFiber.before.set(beforeFiber!)
         oldFiber = tempFiber
       }
       const newFibers = newMap.get(key) || []
@@ -141,12 +140,12 @@ export function useMapF<M, K>(
 
       //构建双向树
       if (beforeFiber) {
-        getEditData(beforeFiber).sibling = oldFiber
+        beforeFiber.next.set(oldFiber)
       } else {
-        draft.child = oldFiber
+        parentFiber.firstChild.set(oldFiber)
       }
-      draft.lastChild = oldFiber
-      getEditData(oldFiber).sibling = undefined
+      parentFiber.lastChild.set(oldFiber)
+      oldFiber.next.set(undefined)
 
       beforeFiber = oldFiber
     }
@@ -157,7 +156,7 @@ export function useMapF<M, K>(
       }
     }
 
-  }, deps)
+  }, deps!)
 }
 export function cloneMap<T>(map: Map<any, T[]>) {
   const newMap = new Map<any, T[]>()
@@ -176,39 +175,49 @@ function initCache() {
     fiber?: Fiber
   }
 }
-export function useOneF<M>(data: M, outRender: (data: M) => OneProps<any[]>, outDeps?: readonly any[]): void {
-  useFiber(function () {
-    draftFiber()
+export function useOneF<M>(
+  dom: VirtualDomOperator,
+  data: M,
+  outRender: (data: M) => OneProps<any[]>,
+  outDeps?: readonly any[]
+): VirtaulDomNode
+export function useOneF<M>(
+  dom: void,
+  data: M,
+  outRender: (data: M) => OneProps<any[]>,
+  outDeps?: readonly any[]
+): void
+export function useOneF<M>(
+  dom: any,
+  data: M,
+  outRender: (data: M) => OneProps<any[]>,
+  outDeps?: readonly any[]
+) {
+  return useBaseFiber(dom, true, function () {
+    draftParentFiber()
     const [key, render, deps] = outRender(data)
-    revertFiber()
+    revertParentFiber()
 
     let commitWork: (() => void) | void = undefined
-    const fiber = useCurrentFiber()
-    const cache = useMemo(initCache, EMPTYCONSTARRAY)
+    const fiber = useParentFiber()
+    const cache = useMemoGet(initCache, EMPTYCONSTARRAY)()
     if (cache.key == key && cache.fiber) {
       //key相同复用
-      simpleUpdateFiber(cache.fiber, render, deps)
+      cache.fiber.changeRender(render as any, deps)
     } else {
       //删旧增新
       if (cache.fiber) {
         //节点存在
         addDelect(cache.fiber)
       }
-      const placeFiber: PlacementFiber = {
-        effectTag: "PLACEMENT",
-        parent: fiber,
-        draft: {
-          render,
-          deps
-        }
-      }
+      const placeFiber = Fiber.createOneChild(fiber, { render, deps })
       commitWork = () => {
         cache.key = key
         cache.fiber = placeFiber
       }
       //只有一个节点,故是同一个
-      fiber.draft.lastChild = placeFiber
-      fiber.draft.child = placeFiber
+      fiber.lastChild.set(placeFiber)
+      fiber.firstChild.set(placeFiber)
     }
 
     useEffect(() => {
@@ -216,5 +225,5 @@ export function useOneF<M>(data: M, outRender: (data: M) => OneProps<any[]>, out
         commitWork()
       }
     })
-  }, outDeps)
+  }, outDeps!)
 }

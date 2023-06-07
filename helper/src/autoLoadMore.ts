@@ -1,5 +1,5 @@
-import { useMemo } from "better-react"
 import { useEvent } from "./useEvent"
+import { useMemo } from "./useRef"
 import { useRefState, useStoreTriggerRender } from "./useRefState"
 import { useValueCenterFun } from "./ValueCenter"
 

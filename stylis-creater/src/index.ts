@@ -90,17 +90,18 @@ export function css(ts: TemplateStringsArray, ...vs: (string | number)[]) {
   return body.className
 }
 
-import { useMemo, useEffect, createChangeAtom } from 'better-react'
+import { useMemoGet, useEffect, createChangeAtom } from 'better-react'
 
 /**
  * 这里因为在render中,延迟到渲染时执行,可以由事件触发更新css
  * @returns 
  */
 export function useBodyStyleUpdate() {
-  const { styled, update } = useMemo(() => {
+  const { styled, update } = useMemoGet(() => {
     const styled = createBodyStyleTag()
     const atom = createChangeAtom<string>("", function (css) {
       styled.textContent = css
+      return css
     })
     return {
       styled,
@@ -108,7 +109,7 @@ export function useBodyStyleUpdate() {
         atom.set(css)
       }
     }
-  }, [])
+  }, [])()
   useEffect(() => {
     return function () {
       styled.remove()
@@ -127,10 +128,10 @@ export function useStyleMap<A extends any[], T extends {
   [key: string]: string
 }>(callback: (...args: A) => T, deps: A) {
   const update = useBodyStyleUpdate()
-  return useMemo(() => {
+  return useMemoGet(() => {
     const cssMap = callback(...deps)
     const { css, classMap } = genCssMap(cssMap)
     update(css)
     return classMap
-  }, deps)
+  }, deps)()
 }

@@ -1,5 +1,6 @@
-import { useMemo } from 'better-react'
+
 import { ReduceState, SetStateAction } from './ValueCenter'
+import { useMemo } from './useRef'
 
 export * from './useGuard'
 export * from './useOnlyId'
@@ -20,6 +21,7 @@ export * from './useInit'
 export * from './useReducerFun'
 export * from './useMap'
 export * from './useOne'
+export * from './useFragment'
 export { compileSimpleRule, createMatch, pathExactly, pathStartWith, toAbsolutePath } from "./routes/util"
 export { RouteContext, routeMatch, routeMathWithOther } from "./routes"
 
