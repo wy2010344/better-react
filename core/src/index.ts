@@ -152,6 +152,9 @@ export function useMapF<M, K>(
 
     for (const olds of oldMap.values()) {
       for (const old of olds) {
+        //需要清理,以保证不会删除错误
+        old.before.set(undefined)
+        old.next.set(undefined)
         addDelect(old)
       }
     }

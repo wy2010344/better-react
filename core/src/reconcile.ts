@@ -274,6 +274,9 @@ function performUnitOfWork(fiber: Fiber) {
   findParentAndBefore(fiber)
   const child = fiber.firstChild.get()
   if (child) {
+    // if (child.parent != fiber) {
+    //   console.log("错误,子节点与父节点不对应", child)
+    // }
     return child
   }
   /**寻找叔叔节点 */
@@ -281,8 +284,19 @@ function performUnitOfWork(fiber: Fiber) {
   while (nextFiber) {
     const next = nextFiber.next.get()
     if (next) {
+      // if (next.parent != nextFiber.parent) {
+      //   console.log("错误,子节点与父节点不对应11", child)
+      // }
+      // if (next.before.get() != nextFiber) {
+      //   console.log("错误,弟节点与兄不对应", next)
+      // }
       return next
     }
+    // if (nextFiber.parent) {
+    //   if (nextFiber.parent.lastChild.get() != nextFiber) {
+    //     console.log("错误!最后一个节点不与自己对应", nextFiber)
+    //   }
+    // }
     nextFiber = nextFiber.parent
   }
   return undefined

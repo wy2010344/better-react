@@ -38,13 +38,17 @@ export function removeEqual<T>(vs: T[], v: T) {
   removeWhere(vs, simpleEqual, v)
 }
 
+class StoreRefImpl<T> implements StoreRef<T>{
+  constructor(
+    private value: T
+  ) { }
+  get() {
+    return this.value
+  }
+  set(v: T): void {
+    this.value = v
+  }
+}
 export function storeRef<T>(value: T) {
-  return {
-    get() {
-      return value
-    },
-    set(v: T) {
-      value = v
-    }
-  } as StoreRef<T>
+  return new StoreRefImpl(value) as StoreRef<T>
 }

@@ -127,7 +127,7 @@ export default normalPanel(function (operate, id) {
       useDom("div", {
         textContent: isPending ? `正在进行中...` : ''
       })
-      useDom("hr", {})
+      useDom("hr")
       useDom("div", {
         style: {
           flex: "1",

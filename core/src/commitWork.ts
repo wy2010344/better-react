@@ -122,6 +122,18 @@ export function rollback() {
   appends.length = 0
   appendAsPortals.length = 0
 }
+
+// function checkRepeat<T>(vs: T[]) {
+//   for (let i = 0; i < vs.length; i++) {
+//     const v = vs[i]
+//     for (let x = i + 1; x < vs.length; x++) {
+//       const r = vs[x]
+//       if (v == r) {
+//         console.log("出错,出现重复的数组", v)
+//       }
+//     }
+//   }
+// }
 /**
  * 提交变更应该从根dirty节点开始。
  * 找到最顶层dirty节点->计算出新的节点替换当前->对比标记新节点->更新
@@ -130,7 +142,10 @@ export function commitRoot() {
   /**最新更新所有注册的*/
   changeAtoms.forEach(atom => atom.commit())
   changeAtoms.length = 0
+  /******清理所有的draft********************************************************/
+  draftConsumers.length = 0
   /******清理删除********************************************************/
+  // checkRepeat(deletions)
   deletions.forEach(function (fiber) {
     //清理effect
     notifyDel(fiber)
@@ -148,8 +163,6 @@ export function commitRoot() {
   appends.length = 0
   /******执行所有的effect********************************************************/
   runUpdateEffect(2)
-  /******清理所有的draft********************************************************/
-  draftConsumers.length = 0
 }
 
 function runUpdateEffect(level: UpdateEffectLevel) {

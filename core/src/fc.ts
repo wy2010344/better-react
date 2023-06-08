@@ -439,6 +439,7 @@ class ContextProvider<T>{
   off(fun: ContextListener<T, any>) {
     if (!this.list.delete(fun)) {
       console.warn("重复删除context", fun)
+      //throw new Error('重复删除debug')
     }
   }
 }
