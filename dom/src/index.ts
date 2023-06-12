@@ -14,12 +14,9 @@ export * from './html'
 export function createRoot(node: Node, reconcile: () => void, ask: AskNextTimeWork) {
   return render(
     FiberNode.create(node),
-    {
-      portalTarget() {
-        return node.parentNode
-      },
-    },
+    EMPTYPROPS,
     reconcile,
+    emptyFun,
     ask
   )
 }

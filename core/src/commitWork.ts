@@ -1,4 +1,5 @@
 import { Fiber, HookContextCosumer, StoreRef, VirtaulDomNode } from "./Fiber"
+import { deepTravelFiber, findParentAndBefore } from "./findParentAndBefore"
 import { removeEqual } from "./util"
 
 /**本次新注册的监听者*/
@@ -21,15 +22,15 @@ export function updateEffect(set: UpdateEffect, level: UpdateEffectLevel) {
   updateEffects[level].push(set)
 }
 /**计算出需要appends的节点 */
-const appends: [VirtaulDomNode, FindParentAndBefore][] = []
-export function addAppends(dom: VirtaulDomNode, pb: FindParentAndBefore) {
-  appends.push([dom, pb])
-}
+// const appends: [VirtaulDomNode, FindParentAndBefore][] = []
+// export function addAppends(dom: VirtaulDomNode, pb: FindParentAndBefore) {
+//   appends.push([dom, pb])
+// }
 /**计算出需要appends的Portal节点*/
-const appendAsPortals: VirtaulDomNode[] = []
-export function addAppendAsPortal(dom: VirtaulDomNode) {
-  appendAsPortals.push(dom)
-}
+// const appendAsPortals: VirtaulDomNode[] = []
+// export function addAppendAsPortal(dom: VirtaulDomNode) {
+//   appendAsPortals.push(dom)
+// }
 /**批量提交需要最终确认的atoms */
 const changeAtoms: ChangeAtom<any>[] = []
 export type ChangeAtomValue<T> = {
@@ -119,8 +120,8 @@ export function rollback() {
   for (const updateEffect of updateEffects) {
     updateEffect.length = 0
   }
-  appends.length = 0
-  appendAsPortals.length = 0
+  // appends.length = 0
+  // appendAsPortals.length = 0
 }
 
 // function checkRepeat<T>(vs: T[]) {
@@ -138,7 +139,7 @@ export function rollback() {
  * 提交变更应该从根dirty节点开始。
  * 找到最顶层dirty节点->计算出新的节点替换当前->对比标记新节点->更新
  */
-export function commitRoot() {
+export function commitRoot(rootFiber: Fiber, layout: () => void) {
   /**最新更新所有注册的*/
   changeAtoms.forEach(atom => atom.commit())
   changeAtoms.length = 0
@@ -157,13 +158,23 @@ export function commitRoot() {
   /******更新属性********************************************************/
   runUpdateEffect(1)
   /******遍历修补********************************************************/
-  appendAsPortals.forEach(v => v.appendAsPortal())
-  appendAsPortals.length = 0
-  appends.forEach(v => v[0].appendAfter(v[1]))
-  appends.length = 0
+  // appendAsPortals.forEach(v => v.appendAsPortal())
+  // appendAsPortals.length = 0
+  // appends.forEach(v => v[0].appendAfter(v[1]))
+  // appends.length = 0
+  updateFixDom(rootFiber)
+  layout()
   /******执行所有的effect********************************************************/
   runUpdateEffect(2)
 }
+
+function updateFixDom(fiber: Fiber | undefined) {
+  while (fiber) {
+    fiber = fixDomAppend(fiber)
+  }
+}
+const fixDomAppend = deepTravelFiber(findParentAndBefore)
+
 
 function runUpdateEffect(level: UpdateEffectLevel) {
   const updateEffect = updateEffects[level]
@@ -205,9 +216,9 @@ function circleCommitDelection(fiber: Fiber | void) {
 }
 
 function removeFromDom(fiber: Fiber) {
-  if (fiber.dom?.isPortal()) {
-    return
-  }
+  // if (fiber.dom?.isPortal()) {
+  //   return
+  // }
   fiber.dom?.removeFromParent()
 }
 function notifyDel(fiber: Fiber) {
@@ -238,9 +249,9 @@ function destroyFiber(fiber: Fiber) {
     listener.destroy()
   })
   if (fiber.dom) {
-    if (fiber.dom.isPortal()) {
-      fiber.dom.removeFromParent()
-    }
+    // if (fiber.dom.isPortal()) {
+    //   fiber.dom.removeFromParent()
+    // }
     fiber.dom.destroy()
   }
 }

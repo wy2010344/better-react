@@ -22,18 +22,19 @@ export type { ReducerResult, ReducerFun } from './fc'
 export type {
   Fiber, Props,
   VirtaulDomNode,
-  FindParentAndBefore,
   HookValueSet,
   RenderWithDep,
   VirtualDomOperator
 } from './Fiber'
 export type { AskNextTimeWork }
 export { createChangeAtom, ChangeAtomValue } from './commitWork'
+export type { FindParentAndBefore } from './findParentAndBefore'
 
 export function render<T>(
   dom: VirtaulDomNode<T>,
   props: T,
   render: () => void,
+  layout: () => void,
   ask: AskNextTimeWork
 ) {
   const rootFiber = Fiber.createFix(null!, {
@@ -43,7 +44,7 @@ export function render<T>(
     }
   })
   rootFiber.dom = dom
-  return setRootFiber(rootFiber, ask)
+  return setRootFiber(rootFiber, layout, ask)
 }
 
 ////////****useMap****////////////////////////////////////////////////////////////////////////////////////////////////////////////

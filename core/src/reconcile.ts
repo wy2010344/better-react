@@ -1,6 +1,7 @@
 import { addDelect, commitRoot, rollback } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
-import { Fiber, findParentAndBefore } from "./Fiber"
+import { Fiber } from "./Fiber"
+import { deepTravelFiber } from "./findParentAndBefore"
 /**
  * 执行fiber
  * @param unitOfWork 
@@ -16,7 +17,7 @@ function workLoop(unitOfWork: Fiber): NextTimeWork {
     return () => {
       currentTick.on = false
       currentTick.lowRollback.length = 0
-      commitRoot()
+      commitRoot(rootFiber!, rootLayout)
     }
   }
 }
@@ -30,6 +31,7 @@ const currentTick = {
 }
 type EMPTY_FUN = () => void
 let rootFiber: Fiber | undefined = undefined
+let rootLayout: () => void
 //相当于往线程池中添加一个任务
 type LoopWork = {
   type: "loop"
@@ -56,10 +58,15 @@ export type AskNextTimeWork = (askNextWork: () => REAL_WORK | void) => void
 let askNextTimeWork: AskNextTimeWork = () => { }
 //异步地执行任务
 let asyncAskNextTimeWork: AskNextTimeWork
-export function setRootFiber(fiber: Fiber, ask: AskNextTimeWork) {
+export function setRootFiber(
+  fiber: Fiber,
+  layout: () => void,
+  ask: AskNextTimeWork
+) {
   asyncAskNextTimeWork = ask
   askNextTimeWork = asyncAskNextTimeWork
   rootFiber = fiber
+  rootLayout = layout
   reconcile({})
   return function () {
     if (rootFiber) {
@@ -266,38 +273,9 @@ export function startTransition(fun: () => void) {
  * @param fiber 
  * @returns 
  */
-function performUnitOfWork(fiber: Fiber) {
+const performUnitOfWork = deepTravelFiber(function (fiber) {
   //当前fiber脏了，需要重新render
   if (fiber.effectTag.get()) {
     updateFunctionComponent(fiber)
   }
-  findParentAndBefore(fiber)
-  const child = fiber.firstChild.get()
-  if (child) {
-    // if (child.parent != fiber) {
-    //   console.log("错误,子节点与父节点不对应", child)
-    // }
-    return child
-  }
-  /**寻找叔叔节点 */
-  let nextFiber: Fiber | undefined = fiber
-  while (nextFiber) {
-    const next = nextFiber.next.get()
-    if (next) {
-      // if (next.parent != nextFiber.parent) {
-      //   console.log("错误,子节点与父节点不对应11", child)
-      // }
-      // if (next.before.get() != nextFiber) {
-      //   console.log("错误,弟节点与兄不对应", next)
-      // }
-      return next
-    }
-    // if (nextFiber.parent) {
-    //   if (nextFiber.parent.lastChild.get() != nextFiber) {
-    //     console.log("错误!最后一个节点不与自己对应", nextFiber)
-    //   }
-    // }
-    nextFiber = nextFiber.parent
-  }
-  return undefined
-}
+})

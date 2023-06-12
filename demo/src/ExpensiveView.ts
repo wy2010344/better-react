@@ -66,25 +66,16 @@ export default normalPanel(function (operate, id) {
               setRenderValue(value)
             }
           }
-          const range = useDom("input", {
+          useInput("input", {
+            value: value + '',
             type: "range",
             min: 0,
             max: 600,
             step: 1,
-            onChange(e) {
-              //console.log(range.value)
-              const input = e.target as HTMLInputElement
-            },
-            onInput(e) {
-              const v = (e.target as any).value!
-              //console.log("change", v)
+            onValueChange(v) {
               changeValue(v)
-              e.preventDefault()
-            }
+            },
           })
-          useEffect(() => {
-            range.value = "" + value
-          }, [value])
           useInput("input", {
             type: "range",
             min: 0,

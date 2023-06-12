@@ -818,7 +818,7 @@ export namespace React {
     onTransitionEndCapture?: TransitionEventHandler<T> | undefined;
 
     /**作为转移到别的父节点下 */
-    portalTarget?(): Node
+    // portalTarget?(): Node
     /**加一个css属性，作为全局的类配置*/
     css?: string
     /**增加一个退出类型 */

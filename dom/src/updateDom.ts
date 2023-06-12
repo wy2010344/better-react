@@ -79,19 +79,19 @@ export class FiberNode implements FiberAbsNode {
       updateSVGProps
     )
   }
-  isPortal(): boolean {
-    return this.getProps().portalTarget
-  }
-  appendAsPortal(): void {
-    const parent = this.getProps().portalTarget()
-    if (parent) {
-      if (parent != this.node.parentNode) {
-        parent.appendChild(this.node)
-      }
-    } else {
-      console.warn('no parent get', this.getProps())
-    }
-  }
+  // isPortal(): boolean {
+  //   return this.getProps().portalTarget
+  // }
+  // appendAsPortal(): void {
+  //   const parent = this.getProps().portalTarget()
+  //   if (parent) {
+  //     if (parent != this.node.parentNode) {
+  //       parent.appendChild(this.node)
+  //     }
+  //   } else {
+  //     console.warn('no parent get', this.getProps())
+  //   }
+  // }
   appendAfter(value?: FindParentAndBefore): void {
     appendAfter(this, value as any)
   }
@@ -141,11 +141,6 @@ export class FiberText implements FiberAbsNode {
     }
   }
   private oldContent: string = ""
-  isPortal(): boolean {
-    return false
-  }
-  appendAsPortal(): void {
-  }
   appendAfter(value: FindParentAndBefore): void {
     appendAfter(this, value as any)
   }

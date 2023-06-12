@@ -6,7 +6,7 @@ import { useState, useMemo } from "better-react-helper"
 
 
 export type PanelParams = {
-  portalTarget?(): Node
+  // portalTarget?(): Node
   initWidth?: number
   initHeight?: number
   initTop?: number
@@ -37,7 +37,7 @@ export default ({
   children,
   close,
   moveFirst,
-  portalTarget
+  // portalTarget
 }: PanelParams) => {
 
   const [top, setTop] = useState(initTop)
@@ -62,7 +62,7 @@ export default ({
   const titleHeight = 32
 
   return useDom("div", {
-    portalTarget,
+    // portalTarget,
     style: {
       left: `${left}px`,
       top: `${top}px`
