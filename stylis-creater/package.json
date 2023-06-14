@@ -1,5 +1,5 @@
 {
-  "version": "1.0.8",
+  "version": "1.1.1",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -20,8 +20,8 @@
     "analyze": "size-limit --why"
   },
   "peerDependencies": {
-    "better-react": "^1.0.10",
-    "better-react-dom": "^1.0.8"
+    "better-react": "^1.1.1",
+    "better-react-dom": "^1.1.1"
   },
   "husky": {
     "hooks": {
@@ -53,8 +53,8 @@
   "devDependencies": {
     "@size-limit/preset-small-lib": "^7.0.8",
     "@types/stylis": "^4.0.2",
-    "better-react": "file:.yalc/better-react",
-    "better-react-dom": "^1.1.0",
+    "better-react": "^1.1.1",
+    "better-react-dom": "^1.1.1",
     "husky": "^7.0.4",
     "size-limit": "^7.0.8",
     "tsdx": "^0.14.1",

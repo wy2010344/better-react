@@ -15,13 +15,13 @@
     "vite": "^2.9.9"
   },
   "dependencies": {
-    "better-react": "file:.yalc/better-react",
-    "better-react-dom": "file:.yalc/better-react-dom",
-    "better-react-dom-helper": "file:.yalc/better-react-dom-helper",
-    "better-react-helper": "file:.yalc/better-react-helper",
+    "better-react": "^1.1.1",
+    "better-react-dom": "^1.1.1",
+    "better-react-dom-helper": "^1.1.1",
+    "better-react-helper": "^1.1.1",
     "jsstore": "^4.5.4",
     "motion": "^10.11.0",
-    "stylis-creater": "file:.yalc/stylis-creater",
+    "stylis-creater": "^1.1.1",
     "xml-js": "^1.6.11",
     "xml-reader": "^2.4.3"
   }
