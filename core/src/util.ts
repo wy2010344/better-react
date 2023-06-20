@@ -1,4 +1,4 @@
-import { StoreRef } from "./Fiber"
+import { StoreRef } from "./commitWork"
 
 export function simpleEqual<T>(a: T, b: T) {
   return a == b
@@ -52,3 +52,5 @@ class StoreRefImpl<T> implements StoreRef<T>{
 export function storeRef<T>(value: T) {
   return new StoreRefImpl(value) as StoreRef<T>
 }
+
+export function quote<T>(v: T) { return v }

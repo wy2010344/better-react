@@ -1,4 +1,4 @@
-import { addDelect, commitRoot, rollback } from "./commitWork"
+import { EMPTY_FUN, EnvModel, LoopWork } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
 import { Fiber } from "./Fiber"
 import { deepTravelFiber } from "./findParentAndBefore"
@@ -7,39 +7,22 @@ import { deepTravelFiber } from "./findParentAndBefore"
  * @param unitOfWork 
  * @returns 
  */
-function workLoop(unitOfWork: Fiber): NextTimeWork {
-  const nextUnitOfWork = performUnitOfWork(unitOfWork)
+function workLoop(envModel: EnvModel, unitOfWork: Fiber): NextTimeWork {
+  const nextUnitOfWork = performUnitOfWork(unitOfWork, envModel)
   if (nextUnitOfWork) {
     return () => {
-      return workLoop(nextUnitOfWork)
+      return workLoop(envModel, nextUnitOfWork)
     }
   } else {
     return () => {
-      currentTick.on = false
-      currentTick.lowRollback.length = 0
-      commitRoot(rootFiber!, rootLayout)
+      envModel.currentTick.on = false
+      envModel.currentTick.lowRollback.length = 0
+      envModel.commit()
     }
   }
 }
-//当前任务
-const currentTick = {
-  on: false as boolean,
-  //当前执行的render任务是否是低优先级的
-  isLow: false as boolean,
-  //提交的任务
-  lowRollback: [] as LoopWork[]
-}
-type EMPTY_FUN = () => void
-let rootFiber: Fiber | undefined = undefined
-let rootLayout: () => void
 //相当于往线程池中添加一个任务
-type LoopWork = {
-  type: "loop"
-  //是否是低优先级
-  isLow?: boolean
-  beforeWork?: EMPTY_FUN
-  afterWork?: EMPTY_FUN
-}
+
 export type WorkUnit = {
   /**
    * 任务收集不能停止,会动态增加loop和afterLoop
@@ -52,46 +35,36 @@ export type WorkUnit = {
   work: EMPTY_FUN
 } | LoopWork
 export type NextTimeWork = () => (NextTimeWork | void)
-//任务列表
-const workList: WorkUnit[] = []
-export type AskNextTimeWork = (askNextWork: () => REAL_WORK | void) => void
-let askNextTimeWork: AskNextTimeWork = () => { }
-//异步地执行任务
-let asyncAskNextTimeWork: AskNextTimeWork
+
+export type AskNextTimeWork<T> = (askNextWork: (env: T) => REAL_WORK | void) => void
 export function setRootFiber(
-  fiber: Fiber,
-  layout: () => void,
-  ask: AskNextTimeWork
+  envModel: EnvModel
 ) {
-  asyncAskNextTimeWork = ask
-  askNextTimeWork = asyncAskNextTimeWork
-  rootFiber = fiber
-  rootLayout = layout
-  reconcile({})
+  reconcile(envModel, {})
   return function () {
-    if (rootFiber) {
-      addDelect(rootFiber)
-      reconcile({
+    if (envModel.rootFiber) {
+      envModel.addDelect(envModel.rootFiber)
+      reconcile(envModel, {
         afterLoop() {
-          rootFiber = undefined
+          envModel.rootFiber = undefined
         }
       })
     }
   }
 }
-const renderWorks: EMPTY_FUN[] = []
 export type REAL_WORK = EMPTY_FUN & {
   isRender?: boolean
 }
-const addAfter = (fun: NextTimeWork) => {
+function addAfter(envModel: EnvModel, fun: NextTimeWork) {
   return function () {
     const after = fun()
     if (after) {
-      renderWorks.unshift(addAfter(after))
+      envModel.renderWorks.unshift(addAfter(envModel, after))
     }
   }
 }
-function getNextWork(): REAL_WORK | void {
+function getNextWork(envModel: EnvModel): REAL_WORK | void {
+  const workList = envModel.workList
   //寻找批量任务
   const index = workList.findIndex(v => v.type == 'batchCollect')
   if (index > -1) {
@@ -101,43 +74,44 @@ function getNextWork(): REAL_WORK | void {
     }
   }
 
-  if (currentTick.on && currentTick.isLow) {
+  if (envModel.currentTick.on && envModel.currentTick.isLow) {
     //寻找是否有渲染任务,如果有,则中断
-    const work = findRenderWork(false)
+    const work = findRenderWork(envModel, false)
     if (work) {
-      renderWorks.length = 0
-      rollback()
-      const ws = currentTick.lowRollback
+      envModel.renderWorks.length = 0
+      envModel.rollback()
+      const ws = envModel.currentTick.lowRollback
       for (let i = ws.length - 1; i > -1; i--) {
         workList.unshift(ws[i])
       }
-      currentTick.lowRollback.length = 0
-      currentTick.on = false
+      envModel.currentTick.lowRollback.length = 0
+      envModel.currentTick.on = false
       console.log("强行中断低优先级任务,执行高优先级")
       return work
     }
   }
   //执行计划任务
-  if (renderWorks.length) {
+  if (envModel.renderWorks.length) {
     return function () {
-      const work = renderWorks.shift()
+      const work = envModel.renderWorks.shift()
       work!()
     }
   }
   //寻找渲染任务
-  const work = findRenderWork(false)
+  const work = findRenderWork(envModel, false)
   if (work) {
     return work
   }
   //寻找低优先级渲染任务
-  const lowWork = findRenderWork(true)
+  const lowWork = findRenderWork(envModel, true)
   if (lowWork) {
     return lowWork
   }
 }
 
-function findRenderWork(isLow: boolean) {
+function findRenderWork(envModel: EnvModel, isLow: boolean) {
   let loopIndex = -1
+  const workList = envModel.workList
   function shouldAdd(work: LoopWork) {
     return (isLow && work.isLow) || (!isLow && !work.isLow)
   }
@@ -146,23 +120,25 @@ function findRenderWork(isLow: boolean) {
     if (work.type == 'loop' && shouldAdd(work)) {
       loopIndex = i
       const realWork: REAL_WORK = function () {
-        currentTick.on = true
-        currentTick.isLow = isLow
+        envModel.currentTick.on = true
+        envModel.currentTick.isLow = isLow
         //寻找渲染前的任务
         for (let i = 0; i < workList.length; i++) {
           const work = workList[i]
           if (work.type == 'loop' && shouldAdd(work)) {
             if (work.beforeWork) {
-              renderWorks.push(work.beforeWork)
+              envModel.renderWorks.push(work.beforeWork)
             }
-            currentTick.lowRollback.push(work)
+            envModel.currentTick.lowRollback.push(work)
           }
         }
         //动态添加渲染任务
-        renderWorks.push(() => {
-          const next = loopWork()
-          if (next) {
-            renderWorks.push(addAfter(next))
+        envModel.renderWorks.push(() => {
+          if (envModel.hasChangeAtoms()) {
+            const next = loopWork(envModel)
+            if (next) {
+              envModel.renderWorks.push(addAfter(envModel, next))
+            }
           }
         })
         //寻找渲染后的任务
@@ -170,7 +146,7 @@ function findRenderWork(isLow: boolean) {
           const work = workList[i]
           if (work.type == 'loop' && shouldAdd(work)) {
             if (work.afterWork) {
-              renderWorks.push(work.afterWork)
+              envModel.renderWorks.push(work.afterWork)
             }
           }
         }
@@ -190,66 +166,66 @@ function findRenderWork(isLow: boolean) {
 
 
 
-//同步地清空所的的任务
-const sycAskNextTimeWork: AskNextTimeWork = (getNextWork) => {
-  let work = getNextWork()
-  while (work) {
-    work()
-    work = getNextWork()
-  }
-}
-export function flushSync(fun: () => void) {
-  askNextTimeWork = sycAskNextTimeWork
-  fun()
-  callNextTimeWork()
-  askNextTimeWork = asyncAskNextTimeWork
-}
-function callNextTimeWork() {
-  askNextTimeWork(getNextWork)
+// //同步地清空所的的任务
+// const sycAskNextTimeWork: AskNextTimeWork = (envModel, getNextWork) => {
+//   let work = getNextWork(envModel)
+//   while (work) {
+//     work()
+//     work = getNextWork(envModel)
+//   }
+// }
+
+// /**
+//  * fun 里面是立即执行的各种setState
+//  * @param fun 
+//  */
+// export function flushSync(fun: () => void) {
+//   // askNextTimeWork = sycAskNextTimeWork
+//   // fun()
+//   // callNextTimeWork()
+//   // askNextTimeWork = asyncAskNextTimeWork
+// }
+function callNextTimeWork(envModel: EnvModel) {
+  envModel.askNextTimeWork(getNextWork)
 }
 
-
-const batchUpdate = {
-  on: false,
-  works: [] as LoopWork[]
-}
-
-function loopWork() {
-  if (rootFiber) {
-    return workLoop(rootFiber)
+function loopWork(envModel: EnvModel) {
+  if (envModel.rootFiber) {
+    return workLoop(envModel, envModel.rootFiber)
   }
 }
 /**
  * 由于是触发的,需要批量触发
  * @param callback 
  */
-export function reconcile({
+export function reconcile(envModel: EnvModel, {
   beforeLoop,
   afterLoop
 }: {
   beforeLoop?: EMPTY_FUN
   afterLoop?: EMPTY_FUN
 }) {
-  batchUpdate.works.push({
+  const workList = envModel.workList
+  envModel.batchUpdate.works.push({
     type: "loop",
     isLow: currentTaskIsLow,
     beforeWork: beforeLoop,
     afterWork: afterLoop
   })
-  if (!batchUpdate.on) {
-    batchUpdate.on = true
+  if (!envModel.batchUpdate.on) {
+    envModel.batchUpdate.on = true
     workList.push({
       type: "batchCollect",
       work() {
         //批量提交
-        batchUpdate.on = false
-        batchUpdate.works.forEach(work => {
+        envModel.batchUpdate.on = false
+        envModel.batchUpdate.works.forEach(work => {
           workList.push(work)
         })
-        batchUpdate.works.length = 0
+        envModel.batchUpdate.works.length = 0
       }
     })
-    callNextTimeWork()
+    callNextTimeWork(envModel)
   }
 }
 
@@ -273,9 +249,9 @@ export function startTransition(fun: () => void) {
  * @param fiber 
  * @returns 
  */
-const performUnitOfWork = deepTravelFiber(function (fiber) {
+const performUnitOfWork = deepTravelFiber<EnvModel[]>(function (fiber, envModel) {
   //当前fiber脏了，需要重新render
   if (fiber.effectTag.get()) {
-    updateFunctionComponent(fiber)
+    updateFunctionComponent(envModel, fiber)
   }
 })

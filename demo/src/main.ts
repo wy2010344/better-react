@@ -1,20 +1,12 @@
 import App from "./App";
 import { AskNextTimeWork, useEffect, useFiber } from "better-react";
-import { useContent, useDom, scheduleAskTime, StyleContext, createRoot } from "better-react-dom";
+import { useContent, useDom, getScheduleAskTime, StyleContext, createRoot } from "better-react-dom";
 import { CountContext, PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
 import { useStoreTriggerRender, useMap, useState, valueCenterOf, useFragment, useMemo } from "better-react-helper";
 import { StylisCreater } from "stylis-creater";
 
 import test from './test'
 import cssHasCursor from "./learn/css-has-cursor";
-
-const askTimeWork: AskNextTimeWork = function (getNextWork) {
-  let work = getNextWork()
-  while (work) {
-    work()
-    work = getNextWork()
-  }
-}
 const destroy = createRoot(
   document.getElementById("app")!,
   function () {
@@ -36,6 +28,14 @@ const destroy = createRoot(
       },
       children() {
         useContent(`增加计数 ${count}`)
+      }
+    })
+    useDom("button", {
+      onClick() {
+        setCount(v => v)
+      },
+      children() {
+        useContent(`不增加计数`)
       }
     })
     CountContext.useProvider(count)
@@ -100,6 +100,6 @@ const destroy = createRoot(
   //askTimeWork,
   //askIdleTimeWork,
   // askTimeWork,
-  scheduleAskTime
+  getScheduleAskTime
 );
 

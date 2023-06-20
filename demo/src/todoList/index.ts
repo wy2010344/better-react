@@ -104,7 +104,7 @@ export default normalPanel(function (operate, id) {
             const vs = v?.value! as TodoModel[]
             useMapF(undefined, vs, defaultTranslate, function (row, i) {
               console.log("map-render")
-              return [row.id, function () {
+              return [row.id, undefined, function () {
                 console.log("row-render", row.id)
 
                 const [ct, setCt] = useState(0);

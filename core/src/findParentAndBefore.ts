@@ -102,11 +102,9 @@ function getParentDomFilber(fiber: Fiber) {
 }
 
 
-
-
-export function deepTravelFiber(call: (fiber: Fiber) => void) {
-  return function (fiber: Fiber) {
-    call(fiber)
+export function deepTravelFiber<T extends any[]>(call: (Fiber: Fiber, ...vs: T) => void) {
+  return function (fiber: Fiber, ...vs: T) {
+    call(fiber, ...vs)
     //findParentAndBefore(fiber)
     const child = fiber.firstChild.get()
     if (child) {

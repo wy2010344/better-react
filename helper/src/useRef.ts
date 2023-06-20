@@ -30,16 +30,6 @@ export function useRef() {
 export function useRefFun<T>(init: () => T) {
   return useRef(undefined, init)
 }
-export function useConstRef<M, T>(init: M, trans: (m: M) => T): T
-export function useConstRef<T>(init: T): T
-export function useConstRef() {
-  const [init, trans] = arguments
-  return useRef(init, trans).get()
-}
-export function useConstRefFun<T>(init: () => T) {
-  return useRef(undefined, init).get()
-}
-
 function getDep<T>(dep: readonly [T]) {
   return dep[0]
 }

@@ -1,4 +1,3 @@
-import { flushSync } from "better-react";
 import { DomElements, React, useContent, useDom } from "better-react-dom";
 import { useRef, useMap, useIf, useState, useMemo } from "better-react-helper";
 import { usePortalPanel } from "../panel/PanelContext";
@@ -19,8 +18,17 @@ export default function index() {
   MapList()
 
   testFlushSync()
-
+  Demo2()
   testPortalPanel()
+}
+function useRenderCount(prefix: string) {
+  const renderCount = useRef(0)
+  renderCount.set(renderCount.get() + 1)
+  console.log(prefix, "重新渲染", renderCount.get())
+}
+
+function Demo2() {
+  useRenderCount("主")
 }
 
 function testPortalPanel() {
@@ -79,9 +87,7 @@ function testFlushSync() {
       })
       useDom("button", {
         onClick() {
-          flushSync(() => {
-            setValue(v => v + 1)
-          })
+          setValue(v => v + 1)
           console.log(input.value)
         },
         children() {

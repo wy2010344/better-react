@@ -18,7 +18,7 @@ export function useMap<T>(
   render: (v: T, i: number) => void
 ) {
   useMapF(undefined, vs, defaultTranslate, function (row, i) {
-    return [getKey(row), function () {
+    return [getKey(row), undefined, function () {
       render(row, i)
     }]
   })

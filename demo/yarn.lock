@@ -90,22 +90,22 @@ better-react-dom-helper@^1.1.1:
   resolved "https://registry.yarnpkg.com/better-react-dom-helper/-/better-react-dom-helper-1.1.1.tgz#adf6f4d384fbb21164d63257b643799572b4c3d2"
   integrity sha512-l42rFJxwWJfjttjLRZ5oBif7NyJsXWAY4VvPgEb2p4bn3Q8jW/flAnWzvb2J1ZlJ/WNJvZqeDoIlq5Sg9hAX6A==
 
-better-react-dom@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/better-react-dom/-/better-react-dom-1.1.1.tgz#78308b255c0021cdc95c1242f9a28b64afc8edc1"
-  integrity sha512-HxTw6wjPSns/Wpsu/JJu4OT5WgKJe3tClX/tA8fzp+1CVvHHTw/2ocjJ9SQK9mvrxuTSsaiPKCrLWi90Twcvbg==
+better-react-dom@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/better-react-dom/-/better-react-dom-1.1.2.tgz#206ac181d1479708e63179b7f2a48b0e16a6d10d"
+  integrity sha512-ynEEfBKdROyJ13vCwxqY1tUtzvroW5/DEUhTce8U1rqZFUbQmZLqUmzpaKRM8HFsAgrvnqJiFHISKYM+9ZcrxA==
   dependencies:
     csstype "^3.1.0"
 
-better-react-helper@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/better-react-helper/-/better-react-helper-1.1.1.tgz#97f47dccdc3524dff63feefc4e984f6d31cd8e61"
-  integrity sha512-MAooBUFQwFnxnzXm5z9CoAhOllaouiY3eg4+Zp5aoZ/Vr5d6wu0zxWXT2063nrqUSRuX9EPIEbejs/KnHJLf3A==
+better-react-helper@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/better-react-helper/-/better-react-helper-1.1.2.tgz#45292aea7827a84d8d98918c9d040cc2eb4ae549"
+  integrity sha512-nkSu7QNWN8Ugb3y1/tfcZ5oBv5ZcLnyL6rRyVF5SSbVIvPbTCJXBJ33lsN1cHX+iU12i/k0tLFfN7vuz5B5aVw==
 
-better-react@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.1.1.tgz#f55646f9edc52e2a07feb07de03ef93a94fa81fa"
-  integrity sha512-K60fsvg+OdttAL5+V0nAb6DBgJbnYqdmKGofmzpIYxab5lpMBbyG8P8Qskm66zUahVJmEjPRCtf2WI31S883Xw==
+better-react@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.1.2.tgz#68aad813de03d215ca3f65193beeb65c3802ccc7"
+  integrity sha512-afGxoW3cXWOged2QApNjCzSBCZqnr97lOZffzDpNFHC+1nzyAyru3lO31pxLqeJ+/1ZXfS+YWsIpNzkQRGqESg==
 
 csstype@^3.1.0:
   version "3.1.0"

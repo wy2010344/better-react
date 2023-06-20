@@ -25,7 +25,7 @@ function guardMatchEqual<T>(a: (v: T) => boolean, v: T) {
 export function useBaseGuard<T>(v: T, matches: GuardMatchType<T>[]) {
   useOneF(undefined, v, function (v) {
     const [index, match] = findFirst(matches, v, guardMatchEqual)
-    return [index, function () {
+    return [index, undefined, function () {
       match(v)
     }]
   })
@@ -71,7 +71,7 @@ function isSwitch<T>(a: T, v: T) {
 export function useSwitch<T>(v: T, ...matches: GuardSwitchType<T>[]) {
   return useOneF(undefined, v, function (v) {
     const [index, match] = findFirst(matches, v, isSwitch)
-    return [index, function () {
+    return [index, undefined, function () {
       match(v)
     }]
   })
@@ -105,7 +105,7 @@ export function useGuardString<T extends string>(
 ) {
   return useOneF(undefined, value, function (value) {
     const matches = findMatchString(value, map)
-    return [matches?.key, function () {
+    return [matches?.key, undefined, function () {
       matches?.match(value)
     }]
   })

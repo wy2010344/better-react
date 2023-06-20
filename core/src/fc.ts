@@ -1,11 +1,10 @@
-import { addDraftConsumer, ChangeAtomValue, createChangeAtom, updateEffect, UpdateEffectLevel } from "./commitWork";
+import { StoreRef, EnvModel, UpdateEffectLevel } from "./commitWork";
 import { Fiber, HookContextCosumer, HookEffect, HookValue, HookValueSet, RenderWithDep, VirtaulDomNode, VirtualDomOperator } from "./Fiber";
 import { reconcile } from "./reconcile";
-import { arrayEqual, arrayNotEqualDepsWithEmpty, simpleEqual } from "./util";
+import { arrayEqual, arrayNotEqualDepsWithEmpty, FalseType, quote, simpleEqual } from "./util";
 
 
-let wipFiber: Fiber | undefined = undefined
-
+let wipFiber: [EnvModel, Fiber] | undefined = undefined
 export function useParentFiber() {
   if (allowWipFiber) {
     return wipFiber!
@@ -31,8 +30,8 @@ const hookIndex = {
   cusomer: 0
 }
 
-export function updateFunctionComponent(fiber: Fiber) {
-  wipFiber = fiber
+export function updateFunctionComponent(envModel: EnvModel, fiber: Fiber) {
+  wipFiber = [envModel, fiber]
   hookIndex.state = 0
   hookIndex.effect = [0, 0, 0]
   hookIndex.memo = 0
@@ -53,27 +52,39 @@ export type ReducerResult<F, T> = [T, HookValueSet<F, T>];
  * @param v 
  * @param init 
  */
-export function useReducer<F, M, T>(reducer: ReducerFun<F, T>, v: M, init: (m: M) => T): ReducerResult<F, T>
-export function useReducer<F, T>(reducer: ReducerFun<F, T>, v: T): ReducerResult<F, T>
-export function useReducer<F, T = undefined>(reducer: ReducerFun<F, T>): ReducerResult<F, T | undefined>
+export function useReducer<F, M, T>(
+  reducer: ReducerFun<F, T>,
+  v: M,
+  init: (m: M) => T,
+  didCommit?: (v: T) => void
+): ReducerResult<F, T>
+export function useReducer<F, T>(
+  reducer: ReducerFun<F, T>,
+  v: T,
+  init?: FalseType,
+  didCommit?: (v: T) => void
+): ReducerResult<F, T>
+export function useReducer<F, T = undefined>(
+  reducer: ReducerFun<F, T>
+): ReducerResult<F, T | undefined>
 export function useReducer() {
-  const [reducer, init, oldTrans] = arguments
-  const currentFiber = useParentFiber()
-  if (currentFiber.effectTag.get() == 'PLACEMENT') {
+  const [reducer, init, oldTrans, didCommit] = arguments
+  const [envModel, parentFiber] = useParentFiber()
+  if (parentFiber.effectTag.get() == 'PLACEMENT') {
     //新增
-    const hookValues = currentFiber.hookValue || []
-    currentFiber.hookValue = hookValues
+    const hookValues = parentFiber.hookValue || []
+    parentFiber.hookValue = hookValues
     const trans = oldTrans || quote
-    const value = createChangeAtom(trans(init))
+    const value = envModel.createChangeAtom(trans(init), didCommit)
     const hook: HookValue<any, any> = {
       value,
-      set: buildSetValue(value, currentFiber, reducer)
+      set: buildSetValue(value, envModel, parentFiber, reducer)
     }
     hookValues.push(hook)
     return [value.get(), hook.set]
   } else {
     //修改
-    const hookValues = currentFiber.hookValue
+    const hookValues = parentFiber.hookValue
     if (!hookValues) {
       throw new Error("原组件上不存在reducer")
     }
@@ -100,15 +111,25 @@ export function useReducer() {
  * 
  * 很有可能,这个fiber是被更新了的,比如移位
  */
-function buildSetValue<T, F>(atom: ChangeAtomValue<T>, fiber: Fiber, reducer: (old: T, action: F) => T) {
+function buildSetValue<T, F>(atom: StoreRef<T>,
+  envModel: EnvModel,
+  fiber: Fiber,
+  reducer: (old: T, action: F) => T
+) {
   return function (temp: F, after?: (v: T) => void) {
-    reconcile({
+    if (fiber.destroyed) {
+      console.log("更新已经销毁的fiber")
+      return
+    }
+    reconcile(envModel, {
       beforeLoop() {
-        fiber.effectTag.set("UPDATE")
         //这里如果多次设置值,则会改动多次,依前一次结果累积.
         const oldValue = atom.get()
         const newValue = reducer(oldValue, temp)
-        atom.set(newValue)
+        if (newValue != oldValue) {
+          fiber.effectTag.set("UPDATE")
+          atom.set(newValue)
+        }
       },
       afterLoop: after ? () => {
         after(atom.get())
@@ -119,7 +140,7 @@ function buildSetValue<T, F>(atom: ChangeAtomValue<T>, fiber: Fiber, reducer: (o
 
 export const EMPTYCONSTARRAY = [] as readonly any[]
 
-export type EffectResult = (void | (() => void))
+export type EffectResult<T> = (void | ((deps: T) => void))
 
 function buildUseEffect(level: UpdateEffectLevel) {
   /**
@@ -128,24 +149,24 @@ function buildUseEffect(level: UpdateEffectLevel) {
    * @param effect 
    * @param deps 
    */
-  function useEffect<T extends readonly any[] = readonly any[]>(effect: (args: T) => EffectResult, deps: T): void
-  function useEffect(effect: () => EffectResult, deps?: readonly any[]): void
+  function useEffect<T extends readonly any[] = readonly any[]>(effect: (args: T) => EffectResult<T>, deps: T): void
+  function useEffect(effect: () => EffectResult<any[]>, deps?: readonly any[]): void
   function useEffect(effect: any, deps?: any) {
-    const currentFiber = useParentFiber()
-    if (currentFiber.effectTag.get() == 'PLACEMENT') {
+    const [envModel, parentFiber] = useParentFiber()
+    if (parentFiber.effectTag.get() == 'PLACEMENT') {
       //新增
-      const hookEffects = currentFiber.hookEffects || [[], [], []]
-      currentFiber.hookEffects = hookEffects
+      const hookEffects = parentFiber.hookEffects || [[], [], []]
+      parentFiber.hookEffects = hookEffects
       const state: HookEffect = {
         deps
       }
-      const hookEffect = createChangeAtom(state)
+      const hookEffect = envModel.createChangeAtom(state)
       hookEffects[level].push(hookEffect)
-      updateEffect(() => {
+      envModel.updateEffect(() => {
         state.destroy = effect(deps)
       }, level)
     } else {
-      const hookEffects = currentFiber.hookEffects
+      const hookEffects = parentFiber.hookEffects
       if (!hookEffects) {
         throw new Error("原组件上不存在hookEffects")
       }
@@ -161,9 +182,9 @@ function buildUseEffect(level: UpdateEffectLevel) {
           deps
         }
         hookEffect.set(newState)
-        updateEffect(() => {
+        envModel.updateEffect(() => {
           if (state.destroy) {
-            state.destroy()
+            state.destroy(state.deps)
           }
           newState.destroy = effect(deps)
         }, level)
@@ -177,14 +198,22 @@ export const useBeforeAttrEffect = buildUseEffect(0)
 export const useAttrEffect = buildUseEffect(1)
 export const useEffect = buildUseEffect(2)
 
+export function createChangeAtom<T>(v: T, didCommit?: (v: T) => T) {
+  const [envModel] = useParentFiber()
+  return envModel.createChangeAtom(v, didCommit)
+}
 /**
  * 通过返回函数,能始终通过函数访问fiber上的最新值
  * @param effect 
  * @param deps 
  * @returns 
  */
-export function useMemoGet<T, V extends readonly any[] = readonly any[]>(effect: (deps: V) => T, deps: V): () => T {
-  const parentFiber = useParentFiber()
+export function useMemoGet<T, V extends readonly any[] = readonly any[]>(
+  effect: (deps: V) => T,
+  deps: V,
+  didCommit?: (v: T) => void
+): () => T {
+  const [envModel, parentFiber] = useParentFiber()
   if (parentFiber.effectTag.get() == "PLACEMENT") {
     const hookMemos = parentFiber.hookMemo || []
     parentFiber.hookMemo = hookMemos
@@ -196,7 +225,10 @@ export function useMemoGet<T, V extends readonly any[] = readonly any[]>(effect:
     }
     revertParentFiber()
 
-    const hook = createChangeAtom(state)
+    const hook = envModel.createChangeAtom(state, didCommit ? (v) => {
+      didCommit(v.value);
+      return v
+    } : undefined)
     const get = () => hook.get().value
     hookMemos.push({
       value: hook,
@@ -248,14 +280,20 @@ export function useBaseFiber(
   render: any,
   deps?: any
 ): any {
-  const parentFiber = useParentFiber()
+  const [envModel, parentFiber] = useParentFiber()
   let currentFiber: Fiber
   if (parentFiber.effectTag.get() == 'PLACEMENT') {
     //新增
-    currentFiber = Fiber.createFix(parentFiber, {
-      render,
-      deps
-    }, dynamicChild)
+    const vdom = dom ? dom[0](dom[2]) : undefined
+    currentFiber = Fiber.createFix(
+      envModel,
+      parentFiber,
+      vdom,
+      {
+        render,
+        deps
+      },
+      dynamicChild)
     currentFiber.before.set(hookIndex.beforeFiber)
     //第一次要标记sibling
     if (hookIndex.beforeFiber) {
@@ -265,12 +303,7 @@ export function useBaseFiber(
     }
     //一直组装到最后
     parentFiber.lastChild.set(currentFiber)
-
     hookIndex.beforeFiber = currentFiber
-
-    if (dom) {
-      currentFiber.dom = dom[0](dom[2])
-    }
   } else {
     //修改
     let oldFiber: Fiber | void = undefined
@@ -281,7 +314,7 @@ export function useBaseFiber(
       oldFiber = parentFiber.firstChild.get()
     }
     if (!oldFiber) {
-      throw new Error("非预期地多出现了fiter")
+      throw new Error("非预期地多出现了fiber")
     }
     currentFiber = oldFiber
 
@@ -327,7 +360,6 @@ export interface Context<T> {
   useSelector<M>(getValue: (v: T) => M, shouldUpdate?: (a: M, b: M) => boolean): M
   useConsumer(): T
 }
-export function quote<T>(v: T) { return v }
 export function createContext<T>(v: T): Context<T> {
   return new ContextFactory(v)
 }
@@ -344,20 +376,24 @@ class ContextFactory<T> implements Context<T>{
   private createProvider(value: T): ContextProvider<T> {
     return new ContextProvider(value, this)
   }
-  private createConsumer<M>(fiber: Fiber, getValue: (v: T) => M, shouldUpdate?: (a: M, b: M) => boolean): ContextListener<T, M> {
-    return new ContextListener(this.findProvider(fiber), fiber, getValue, shouldUpdate)
+  private createConsumer<M>(
+    envModel: EnvModel,
+    fiber: Fiber,
+    getValue: (v: T) => M,
+    shouldUpdate?: (a: M, b: M) => boolean
+  ): ContextListener<T, M> {
+    return new ContextListener(
+      envModel,
+      this.findProvider(fiber),
+      fiber,
+      getValue,
+      shouldUpdate
+    )
   }
   useProvider(v: T) {
-    let map: Map<any, {
-      changeValue(v: any): void
-    }>
-    const currentFiber = useParentFiber()
-    if (currentFiber.contextProvider) {
-      map = currentFiber.contextProvider
-    } else {
-      map = new Map()
-      currentFiber.contextProvider = map
-    }
+    const [envModel, parentFiber] = useParentFiber()
+    const map = parentFiber.contextProvider || new Map()
+    parentFiber.contextProvider = map
     let hook = map.get(this)
     if (!hook) {
       hook = this.createProvider(v)
@@ -371,18 +407,18 @@ class ContextFactory<T> implements Context<T>{
    * @returns 
    */
   useSelector<M>(getValue: (v: T) => M, shouldUpdate?: (a: M, b: M) => any): M {
-    const currentFiber = useParentFiber()
-    if (currentFiber.effectTag.get() == "PLACEMENT") {
-      const hookConsumers = currentFiber.hookContextCosumer || []
-      currentFiber.hookContextCosumer = hookConsumers
+    const [envModel, parentFiber] = useParentFiber()
+    if (parentFiber.effectTag.get() == "PLACEMENT") {
+      const hookConsumers = parentFiber.hookContextCosumer || []
+      parentFiber.hookContextCosumer = hookConsumers
 
-      const hook: HookContextCosumer<T, M> = this.createConsumer(currentFiber, getValue, shouldUpdate)
+      const hook: HookContextCosumer<T, M> = this.createConsumer(envModel, parentFiber, getValue, shouldUpdate)
       hookConsumers.push(hook)
-      addDraftConsumer(hook)
+      envModel.addDraftConsumer(hook)
       //如果draft废弃,需要移除该hook
       return hook.getValue()
     } else {
-      const hookConsumers = currentFiber.hookContextCosumer
+      const hookConsumers = parentFiber.hookContextCosumer
       if (!hookConsumers) {
         throw new Error("原组件上不存在hookConsumers")
       }
@@ -446,19 +482,27 @@ class ContextProvider<T>{
 
 class ContextListener<T, M>{
   constructor(
+    envModel: EnvModel,
     public context: ContextProvider<T>,
     private fiber: Fiber,
     public select: (v: T) => M,
     public shouldUpdate?: (a: M, b: M) => boolean
   ) {
     this.context.on(this)
+    this.atom = envModel.createChangeAtom(this.getFilberValue())
   }
-  public atom = createChangeAtom(this.select(this.context.value))
+  public atom: StoreRef<M>
   getValue() {
     return this.atom.get()
   }
+  private getFilberValue() {
+    draftParentFiber()
+    const v = this.select(this.context.value)
+    revertParentFiber()
+    return v
+  }
   change() {
-    const newValue = this.select(this.context.value)
+    const newValue = this.getFilberValue()
     const oldValue = this.atom.get()
     if (newValue != oldValue && this.didShouldUpdate(newValue, oldValue)) {
       this.atom.set(newValue)

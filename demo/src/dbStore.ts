@@ -1,4 +1,4 @@
-import { ChangeAtomValue, createChangeAtom, createContext, useEffect } from "better-react"
+import { StoreRef, createChangeAtom, createContext, useEffect } from "better-react"
 import { useState, useMemo } from "better-react-helper"
 import { TypeSystemModel } from "./typeSystem/model"
 
@@ -26,7 +26,7 @@ export type DBStore = {
 type DBStoreKEY = keyof DBStore
 
 class NotifyCenter<T> {
-  center: ChangeAtomValue<T>
+  center: StoreRef<T>
   pool = new Set<NOTIFY_FUN>()
   constructor(key: string, defaultValue: T) {
     const valueStr = localStorage.getItem(key)

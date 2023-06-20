@@ -1,9 +1,9 @@
-import { ChangeAtomValue, createChangeAtom, FindParentAndBefore } from "./commitWork"
+import { StoreRef, EnvModel, FindParentAndBefore } from "./commitWork"
 import { arrayNotEqualDepsWithEmpty, storeRef } from "./util"
 
 export type HookValueSet<F, T> = (v: F, after?: (v: T) => void) => void
 export type HookValue<F, T> = {
-  value: ChangeAtomValue<T>
+  value: StoreRef<T>
   readonly set: HookValueSet<F, T>
 }
 export type HookMemo<T> = {
@@ -12,7 +12,7 @@ export type HookMemo<T> = {
 }
 export type HookEffect = {
   deps?: readonly any[]
-  destroy?: void | (() => void)
+  destroy?: void | ((deps?: readonly any[]) => void)
 }
 export type HookContextCosumer<T, M> = {
   getValue(): M
@@ -45,22 +45,22 @@ function whenCommitEffectTag(v: EffectTag) {
  * 如果是oneFiber,父节点的child与lastChild会变化,但子结点的before与next都是空
  */
 export class Fiber {
+  /**是否已经销毁 */
+  destroyed?: boolean
   /**全局key,使帧复用,或keep-alive*/
-  globalKey?: any
-  parent?: Fiber
-  dom?: VirtaulDomNode
+  // globalKey?: any
   contextProvider?: Map<any, {
     changeValue(v: any): void
   }>
   hookValue?: HookValue<any, any>[]
   hookEffects?: [
-    ChangeAtomValue<HookEffect>[],
-    ChangeAtomValue<HookEffect>[],
-    ChangeAtomValue<HookEffect>[]
+    StoreRef<HookEffect>[],
+    StoreRef<HookEffect>[],
+    StoreRef<HookEffect>[]
   ]
   hookMemo?: {
     get(): any,
-    value: ChangeAtomValue<HookMemo<any>>
+    value: StoreRef<HookMemo<any>>
   }[]
   hookContextCosumer?: HookContextCosumer<any, any>[]
 
@@ -69,16 +69,30 @@ export class Fiber {
    * 这其中要回滚
    * 当提交生效的时候,自己的值变空.回滚的时候,也变成空
   */
-  effectTag = createChangeAtom<EffectTag>("PLACEMENT", whenCommitEffectTag)
+  readonly effectTag: StoreRef<EffectTag>
   /**顺序*/
-  firstChild: StoreRef<Fiber | void> = undefined!
-  lastChild: StoreRef<Fiber | void> = undefined!
-  before: StoreRef<Fiber | void> = undefined!
-  next: StoreRef<Fiber | void> = undefined!
+  readonly firstChild: StoreRef<Fiber | void> = undefined!
+  readonly lastChild: StoreRef<Fiber | void> = undefined!
 
-  private renderDeps: ChangeAtomValue<RenderDeps>
-  private constructor(rd: RenderDeps) {
-    this.renderDeps = createChangeAtom(rd)
+  private renderDeps: StoreRef<RenderDeps>
+  private constructor(
+    envModel: EnvModel,
+    public readonly parent: Fiber | undefined,
+    public readonly dom: VirtaulDomNode | undefined,
+    public readonly before: StoreRef<Fiber | void>,
+    public readonly next: StoreRef<Fiber | void>,
+    rd: RenderDeps,
+    dynamicChild?: boolean
+  ) {
+    this.effectTag = envModel.createChangeAtom<EffectTag>("PLACEMENT", whenCommitEffectTag)
+    this.renderDeps = envModel.createChangeAtom(rd)
+    if (dynamicChild) {
+      this.firstChild = envModel.createChangeAtom(undefined)
+      this.lastChild = envModel.createChangeAtom(undefined)
+    } else {
+      this.firstChild = storeRef(undefined)
+      this.lastChild = storeRef(undefined)
+    }
   }
   changeRender(render: (deps?: readonly any[]) => void, deps?: readonly any[]) {
     const { deps: oldDeps } = this.renderDeps.get()
@@ -95,26 +109,26 @@ export class Fiber {
     const { render, deps } = this.renderDeps.get()
     render(deps)
   }
-  private static createChild(fiber: Fiber, dynamicChild?: boolean) {
-    if (dynamicChild) {
-      fiber.firstChild = createChangeAtom(undefined)
-      fiber.lastChild = createChangeAtom(undefined)
-    } else {
-      fiber.firstChild = storeRef(undefined)
-      fiber.lastChild = storeRef(undefined)
-    }
-  }
   /**
    * 创建一个固定节点,该节点是不是MapFiber不一定
    * @param rd 
    * @param dynamicChild 
    */
-  static createFix(parentFiber: Fiber, rd: RenderDeps, dynamicChild?: boolean) {
-    const fiber = new Fiber(rd)
-    fiber.parent = parentFiber
-    fiber.before = storeRef(undefined)
-    fiber.next = storeRef(undefined)
-    Fiber.createChild(fiber, dynamicChild)
+  static createFix(
+    envModel: EnvModel,
+    parentFiber: Fiber,
+    dom: VirtaulDomNode | undefined,
+    rd: RenderDeps,
+    dynamicChild?: boolean
+  ) {
+    const fiber = new Fiber(
+      envModel,
+      parentFiber,
+      dom,
+      storeRef(undefined),
+      storeRef(undefined),
+      rd,
+      dynamicChild)
     return fiber
   }
 
@@ -124,12 +138,21 @@ export class Fiber {
    * @param rd 
    * @param dynamicChild 
    */
-  static createMapChild(parentFiber: Fiber, rd: RenderDeps, dynamicChild?: boolean) {
-    const fiber = new Fiber(rd)
-    fiber.parent = parentFiber
-    fiber.before = createChangeAtom(undefined)
-    fiber.next = createChangeAtom(undefined)
-    Fiber.createChild(fiber, dynamicChild)
+  static createMapChild(
+    envModel: EnvModel,
+    parentFiber: Fiber,
+    dom: VirtaulDomNode | undefined,
+    rd: RenderDeps,
+    dynamicChild?: boolean
+  ) {
+    const fiber = new Fiber(
+      envModel,
+      parentFiber,
+      dom,
+      envModel.createChangeAtom(undefined),
+      envModel.createChangeAtom(undefined),
+      rd,
+      dynamicChild)
     return fiber
   }
   /**
@@ -138,12 +161,21 @@ export class Fiber {
    * @param rd 
    * @param dynamicChild 
    */
-  static createOneChild(parentFiber: Fiber, rd: RenderDeps, dynamicChild?: boolean) {
-    const fiber = new Fiber(rd)
-    fiber.parent = parentFiber
-    fiber.before = emptyPlace
-    fiber.next = emptyPlace
-    Fiber.createChild(fiber, dynamicChild)
+  static createOneChild(
+    envModel: EnvModel,
+    parentFiber: Fiber,
+    dom: VirtaulDomNode | undefined,
+    rd: RenderDeps,
+    dynamicChild?: boolean
+  ) {
+    const fiber = new Fiber(
+      envModel,
+      parentFiber,
+      dom,
+      emptyPlace,
+      emptyPlace,
+      rd,
+      dynamicChild)
     return fiber
   }
 }
@@ -183,10 +215,6 @@ export type VirtaulDomNode<T = any> = {
   removeFromParent(): void
   //所有都会执行
   destroy(): void
-}
-export type StoreRef<T> = {
-  get(): T
-  set(v: T): void
 }
 export type StoreValue<T> = {
   setFiber(v: Fiber): void

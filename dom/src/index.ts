@@ -1,7 +1,7 @@
 import { useFiber, render, AskNextTimeWork, VirtualDomOperator } from "better-react";
 import { DomElement, DomElementType, DomElements, SvgElement, SvgElementType, SvgElements } from "./html";
 import { EMPTYPROPS, FiberNode, FiberText, emptyFun } from "./updateDom";
-export { scheduleAskTime } from './schedule'
+export { getScheduleAskTime } from './schedule'
 export { StyleNode, isSVG, FiberNode, FiberText, StyleContext, underlineToCamel } from './updateDom'
 export { getAliasOfAttribute, getAttributeAlias } from './getAttributeAlias'
 export * from './html'
@@ -11,13 +11,13 @@ export * from './html'
  * 比如移动,其实一些dom状态会丢失,如scrollTop
  * 可能有一些三方组件的封装,配置参数却需要自定义,而不是dom参数
  */
-export function createRoot(node: Node, reconcile: () => void, ask: AskNextTimeWork) {
+export function createRoot(node: Node, reconcile: () => void, getAsk: <T>(env: T) => AskNextTimeWork<T>) {
   return render(
     FiberNode.create(node),
     EMPTYPROPS,
     reconcile,
     emptyFun,
-    ask
+    getAsk
   )
 }
 export function useContent(content: string) {

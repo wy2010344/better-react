@@ -1,26 +1,131 @@
-import { Fiber, HookContextCosumer, StoreRef, VirtaulDomNode } from "./Fiber"
+import { Fiber, HookContextCosumer, VirtaulDomNode } from "./Fiber"
 import { deepTravelFiber, findParentAndBefore } from "./findParentAndBefore"
-import { removeEqual } from "./util"
+import { AskNextTimeWork, WorkUnit } from "./reconcile"
+import { quote, removeEqual } from "./util"
 
-/**本次新注册的监听者*/
-const draftConsumers: HookContextCosumer<any, any>[] = []
-export function addDraftConsumer(v: HookContextCosumer<any, any>) {
-  draftConsumers.push(v)
+
+export type CreateChangeAtom<T> = (v: T, didCommit?: (v: T) => T) => StoreRef<T>
+export class EnvModel {
+  constructor(
+    public rootFiber: Fiber | undefined,
+    private readonly layout: () => void,
+    /**异步地请求下一步*/
+    getAskNextTimeWork: (env: EnvModel) => AskNextTimeWork<EnvModel>
+  ) {
+    this.askNextTimeWork = getAskNextTimeWork(this)
+  }
+  askNextTimeWork: AskNextTimeWork<EnvModel>
+  /**请求下一步*/
+  //任务列表
+  readonly workList: WorkUnit[] = []
+  /**本次新注册的监听者*/
+  private readonly draftConsumers: HookContextCosumer<any, any>[] = []
+  addDraftConsumer(v: HookContextCosumer<any, any>) {
+    this.draftConsumers.push(v)
+  }
+  /**本次等待删除的fiber*/
+  private readonly deletions: Fiber[] = []
+  addDelect(fiber: Fiber) {
+    this.deletions.push(fiber)
+  }
+  private updateEffects: [UpdateEffect[], UpdateEffect[], UpdateEffect[]] = [[], [], []]
+  updateEffect(set: UpdateEffect, level: UpdateEffectLevel) {
+    this.updateEffects[level].push(set)
+  }
+  /**批量提交需要最终确认的atoms */
+  readonly changeAtoms: ChangeAtom<any>[] = []
+  hasChangeAtoms() {
+    return this.changeAtoms.length > 0
+  }
+
+  rollback() {
+    this.changeAtoms.forEach(atom => atom.rollback())
+    this.changeAtoms.length = 0
+    this.draftConsumers.forEach(draft => draft.destroy())
+    this.draftConsumers.length = 0
+    this.deletions.length = 0
+    for (const updateEffect of this.updateEffects) {
+      updateEffect.length = 0
+    }
+    // appends.length = 0
+    // appendAsPortals.length = 0
+  }
+  commit() {
+    /**最新更新所有注册的*/
+    this.changeAtoms.forEach(atom => atom.commit())
+    this.changeAtoms.length = 0
+    /******清理所有的draft********************************************************/
+    this.draftConsumers.length = 0
+    /******清理删除********************************************************/
+    // checkRepeat(deletions)
+    this.deletions.forEach(function (fiber) {
+      //清理effect
+      notifyDel(fiber)
+      //删除
+      commitDeletion(fiber)
+    })
+    this.deletions.length = 0
+    this.runUpdateEffect(0)
+    /******更新属性********************************************************/
+    this.runUpdateEffect(1)
+    /******遍历修补********************************************************/
+    // appendAsPortals.forEach(v => v.appendAsPortal())
+    // appendAsPortals.length = 0
+    // appends.forEach(v => v[0].appendAfter(v[1]))
+    // appends.length = 0
+    updateFixDom(this.rootFiber)
+    this.layout()
+    /******执行所有的effect********************************************************/
+    this.runUpdateEffect(2)
+  }
+  private runUpdateEffect(level: UpdateEffectLevel) {
+    const updateEffect = this.updateEffects[level]
+    updateEffect.forEach(effect => effect())
+    updateEffect.length = 0
+  }
+  /**
+ * 在commit期间修改后,都是最新值,直到commit前,都可以回滚
+ * @param value 
+ * @param didCommit 
+ * @returns 
+ */
+  createChangeAtom<T>(
+    value: T,
+    didCommit?: (v: T) => T
+  ): StoreRef<T> {
+    return new ChangeAtom(this, value, didCommit || quote)
+  }
+
+  batchUpdate = {
+    on: false,
+    works: [] as LoopWork[]
+  }
+
+  //当前任务
+  currentTick = {
+    on: false as boolean,
+    //当前执行的render任务是否是低优先级的
+    isLow: false as boolean,
+    //提交的任务
+    lowRollback: [] as LoopWork[]
+  }
+
+  renderWorks: EMPTY_FUN[] = []
 }
-/**本次等待删除的fiber*/
-const deletions: Fiber[] = []
-export function addDelect(fiber: Fiber) {
-  deletions.push(fiber)
+export type EMPTY_FUN = () => void
+export type LoopWork = {
+  type: "loop"
+  //是否是低优先级
+  isLow?: boolean
+  beforeWork?: EMPTY_FUN
+  afterWork?: EMPTY_FUN
 }
 export type UpdateEffect = () => void
 /**本次所有需要执行的effects 
  * 分为3个等级,更新属性前,更新属性中,更新属性后
 */
 export type UpdateEffectLevel = 0 | 1 | 2
-const updateEffects: [UpdateEffect[], UpdateEffect[], UpdateEffect[]] = [[], [], []]
-export function updateEffect(set: UpdateEffect, level: UpdateEffectLevel) {
-  updateEffects[level].push(set)
-}
+
 /**计算出需要appends的节点 */
 // const appends: [VirtaulDomNode, FindParentAndBefore][] = []
 // export function addAppends(dom: VirtaulDomNode, pb: FindParentAndBefore) {
@@ -31,36 +136,21 @@ export function updateEffect(set: UpdateEffect, level: UpdateEffectLevel) {
 // export function addAppendAsPortal(dom: VirtaulDomNode) {
 //   appendAsPortals.push(dom)
 // }
-/**批量提交需要最终确认的atoms */
-const changeAtoms: ChangeAtom<any>[] = []
-export type ChangeAtomValue<T> = {
+export type StoreRef<T> = {
   set(v: T): void
   get(): T
 }
-function defaultDidCommit<T>(v: T) { return v }
-/**
- * 在commit期间修改后,都是最新值,直到commit前,都可以回滚
- * @param value 
- * @param didCommit 
- * @returns 
- */
-export function createChangeAtom<T>(
-  value: T,
-  didCommit?: (v: T) => T
-): ChangeAtomValue<T> {
-  return new ChangeAtom(value, didCommit || defaultDidCommit)
-}
-
 /**
  * 需要区分create和update阶段
  */
-class ChangeAtom<T> implements ChangeAtomValue<T>, StoreRef<T>{
+class ChangeAtom<T> implements StoreRef<T>{
   private isCreate = true
   constructor(
+    private envModel: EnvModel,
     private value: T,
     private whenCommit: (v: T) => T
   ) {
-    changeAtoms.push(this)
+    envModel.changeAtoms.push(this)
   }
   dirty = false
   draftValue!: T
@@ -71,13 +161,13 @@ class ChangeAtom<T> implements ChangeAtomValue<T>, StoreRef<T>{
       if (v != this.value) {
         if (!this.dirty) {
           this.dirty = true
-          changeAtoms.push(this)
+          this.envModel.changeAtoms.push(this)
         }
         this.draftValue = v
       } else {
         if (this.dirty) {
           this.dirty = false
-          removeEqual(changeAtoms, this)
+          removeEqual(this.envModel.changeAtoms, this)
         }
         this.draftValue = this.value
       }
@@ -110,20 +200,6 @@ class ChangeAtom<T> implements ChangeAtomValue<T>, StoreRef<T>{
     }
   }
 }
-
-export function rollback() {
-  changeAtoms.forEach(atom => atom.rollback())
-  changeAtoms.length = 0
-  draftConsumers.forEach(draft => draft.destroy())
-  draftConsumers.length = 0
-  deletions.length = 0
-  for (const updateEffect of updateEffects) {
-    updateEffect.length = 0
-  }
-  // appends.length = 0
-  // appendAsPortals.length = 0
-}
-
 // function checkRepeat<T>(vs: T[]) {
 //   for (let i = 0; i < vs.length; i++) {
 //     const v = vs[i]
@@ -139,35 +215,6 @@ export function rollback() {
  * 提交变更应该从根dirty节点开始。
  * 找到最顶层dirty节点->计算出新的节点替换当前->对比标记新节点->更新
  */
-export function commitRoot(rootFiber: Fiber, layout: () => void) {
-  /**最新更新所有注册的*/
-  changeAtoms.forEach(atom => atom.commit())
-  changeAtoms.length = 0
-  /******清理所有的draft********************************************************/
-  draftConsumers.length = 0
-  /******清理删除********************************************************/
-  // checkRepeat(deletions)
-  deletions.forEach(function (fiber) {
-    //清理effect
-    notifyDel(fiber)
-    //删除
-    commitDeletion(fiber)
-  })
-  deletions.length = 0
-  runUpdateEffect(0)
-  /******更新属性********************************************************/
-  runUpdateEffect(1)
-  /******遍历修补********************************************************/
-  // appendAsPortals.forEach(v => v.appendAsPortal())
-  // appendAsPortals.length = 0
-  // appends.forEach(v => v[0].appendAfter(v[1]))
-  // appends.length = 0
-  updateFixDom(rootFiber)
-  layout()
-  /******执行所有的effect********************************************************/
-  runUpdateEffect(2)
-}
-
 function updateFixDom(fiber: Fiber | undefined) {
   while (fiber) {
     fiber = fixDomAppend(fiber)
@@ -176,11 +223,6 @@ function updateFixDom(fiber: Fiber | undefined) {
 const fixDomAppend = deepTravelFiber(findParentAndBefore)
 
 
-function runUpdateEffect(level: UpdateEffectLevel) {
-  const updateEffect = updateEffects[level]
-  updateEffect.forEach(effect => effect())
-  updateEffect.length = 0
-}
 
 export type FindParentAndBefore = [VirtaulDomNode, VirtaulDomNode | null] | [VirtaulDomNode | null, VirtaulDomNode] | null
 /**
@@ -199,28 +241,21 @@ export type FindParentAndBefore = [VirtaulDomNode, VirtaulDomNode | null] | [Vir
  */
 function commitDeletion(fiber: Fiber) {
   if (fiber.dom) {
-    removeFromDom(fiber)
+    // if (fiber.dom?.isPortal()) {
+    //   return
+    // }
+    fiber.dom.removeFromParent()
   } else {
     circleCommitDelection(fiber.firstChild.get())
   }
 }
 function circleCommitDelection(fiber: Fiber | void) {
   if (fiber) {
-    if (fiber.dom) {
-      removeFromDom(fiber)
-    } else {
-      circleCommitDelection(fiber.firstChild.get())
-    }
+    commitDeletion(fiber)
     circleCommitDelection(fiber.next.get())
   }
 }
 
-function removeFromDom(fiber: Fiber) {
-  // if (fiber.dom?.isPortal()) {
-  //   return
-  // }
-  fiber.dom?.removeFromParent()
-}
 function notifyDel(fiber: Fiber) {
   destroyFiber(fiber)
   const child = fiber.firstChild.get()
@@ -233,13 +268,15 @@ function notifyDel(fiber: Fiber) {
   }
 }
 function destroyFiber(fiber: Fiber) {
+  fiber.destroyed = true
   const effects = fiber.hookEffects
   if (effects) {
     for (const effect of effects) {
       for (const ef of effect) {
-        const destroy = ef.get().destroy
+        const state = ef.get()
+        const destroy = state.destroy
         if (destroy) {
-          destroy()
+          destroy(state.deps)
         }
       }
     }
@@ -248,10 +285,8 @@ function destroyFiber(fiber: Fiber) {
   listeners?.forEach(listener => {
     listener.destroy()
   })
-  if (fiber.dom) {
-    // if (fiber.dom.isPortal()) {
-    //   fiber.dom.removeFromParent()
-    // }
-    fiber.dom.destroy()
-  }
+  // if (fiber.dom.isPortal()) {
+  //   fiber.dom.removeFromParent()
+  // }
+  fiber.dom?.destroy()
 }

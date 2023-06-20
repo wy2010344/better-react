@@ -4,6 +4,7 @@ import {
 } from "better-react"
 import { SvgElements } from "./html"
 import { getAttributeAlias } from "./getAttributeAlias"
+import { ChangeAtomValue, EnvModel } from "better-react/dist/commitWork"
 
 /**
  * 这只是一种dom的更新css方式,将css属性交给外部处理
@@ -37,14 +38,17 @@ export class FiberNode implements FiberAbsNode {
   private constructor(
     public node: Node,
     private _updateProp: (node: Node, key: string, value: any) => void,
-  ) { }
-  /**正式与draft的props*/
-  private propsValue = createChangeAtom<Props>(EMPTYPROPS)
+  ) {
+  }
+  private propsValue: ChangeAtomValue<Props> = null as any
   getProps() {
     return this.propsValue.get()
   }
   private oldProps: Props = EMPTYPROPS
   useUpdate(props: Props): void {
+    if (!this.propsValue) {
+      this.propsValue = createChangeAtom(props)
+    }
     this.propsValue.set(props)
     const createStyle = StyleContext.useConsumer()
     const that = this
@@ -66,14 +70,15 @@ export class FiberNode implements FiberAbsNode {
       node,
       updateProps
     )
+
   }
-  static createDom<F>(type: string) {
+  static createDom(type: string) {
     return new FiberNode(
       document.createElement(type),
       updatePorps
     )
   }
-  static createSvg<T>(type: string) {
+  static createSvg(type: string) {
     return new FiberNode(
       document.createElementNS("http://www.w3.org/2000/svg", type),
       updateSVGProps
@@ -128,11 +133,14 @@ export class FiberText implements FiberAbsNode {
   static create() {
     return new FiberText()
   }
-  private propsValue = createChangeAtom('')
+  private propsValue: ChangeAtomValue<string> = null as any
   public getProps() {
     return this.propsValue.get()
   }
   useUpdate(v: string) {
+    if (!this.propsValue) {
+      this.propsValue = createChangeAtom(v)
+    }
     this.propsValue.set(v)
     const content = this.getProps()
     if (this.oldContent != content) {
