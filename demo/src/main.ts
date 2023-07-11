@@ -1,8 +1,8 @@
 import App from "./App";
-import { AskNextTimeWork, useEffect, useFiber } from "better-react";
-import { useContent, useDom, getScheduleAskTime, StyleContext, createRoot } from "better-react-dom";
+import { AskNextTimeWork, useEffect } from "better-react";
+import { renderContent, useDom, getScheduleAskTime, StyleContext, createRoot, domOf } from "better-react-dom";
 import { CountContext, PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
-import { useStoreTriggerRender, useMap, useState, valueCenterOf, useFragment, useMemo } from "better-react-helper";
+import { useStoreTriggerRender, renderMap, useState, valueCenterOf, renderFragment, useMemo } from "better-react-helper";
 import { StylisCreater } from "stylis-creater";
 
 import test from './test'
@@ -13,13 +13,16 @@ const destroy = createRoot(
     StyleContext.useProvider(StylisCreater)
     console.log("root-render")
     useDom("button", {
+      className: "abddc",
+      "aria-hidden": true,
       onClick() {
         destroy()
       },
       children() {
-        useContent("销毁所有")
+        renderContent("销毁所有")
       }
     })
+    const div = domOf("div").render()
     console.log("正在render")
     const [count, setCount] = useState(0)
     useDom("button", {
@@ -27,7 +30,7 @@ const destroy = createRoot(
         setCount(v => v + 1)
       },
       children() {
-        useContent(`增加计数 ${count}`)
+        renderContent(`增加计数 ${count}`)
       }
     })
     useDom("button", {
@@ -35,7 +38,7 @@ const destroy = createRoot(
         setCount(v => v)
       },
       children() {
-        useContent(`不增加计数`)
+        renderContent(`不增加计数`)
       }
     })
     CountContext.useProvider(count)
@@ -79,7 +82,7 @@ const destroy = createRoot(
       }
     }, [])
     PanelContext.useProvider(operate)
-    useFragment(App, [])
+    renderFragment(App, [])
 
     useEffect(() => {
       cssHasCursor(operate)
@@ -87,11 +90,11 @@ const destroy = createRoot(
       //jsonRender(operate)
     }, [])
     console.log("render-out-1")
-    useFragment(function () {
+    renderFragment(function () {
       const vs = useStoreTriggerRender(panels)
       console.log("render-out")
-      useMap(vs, v => v.id, v => {
-        useFragment(function () {
+      renderMap(vs, v => v.id, v => {
+        renderFragment(function () {
           v.callback(v.id)
         }, [v.callback, v.id])
       })

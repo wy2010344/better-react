@@ -1,4 +1,4 @@
-import { useDom, useContent } from "better-react-dom"
+import { useDom, renderContent } from "better-react-dom"
 
 
 export type Context = {
@@ -53,7 +53,7 @@ const libraryDefines: {
   },
   Text: {
     run(args: any) {
-      useContent(args.content)
+      renderContent(args.content)
     }
   }
 }

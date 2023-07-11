@@ -10,18 +10,18 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@types/stylis": "^4.0.2",
     "typescript": "^4.5.4",
     "vite": "^2.9.9"
   },
   "dependencies": {
-    "better-react": "^1.1.2",
-    "better-react-dom": "^1.1.2",
-    "better-react-dom-helper": "^1.1.1",
-    "better-react-helper": "^1.1.2",
+    "@types/prismjs": "^1.26.0",
+    "better-react": "^1.2.0",
+    "better-react-dom": "^1.2.0",
+    "better-react-dom-helper": "^1.2.0",
+    "better-react-helper": "^1.2.0",
     "jsstore": "^4.5.4",
     "motion": "^10.11.0",
-    "stylis-creater": "^1.1.1",
+    "stylis-creater": "^1.2.0",
     "xml-js": "^1.6.11",
     "xml-reader": "^2.4.3"
   }

@@ -1,4 +1,4 @@
-import { getAliasOfAttribute, isSVG, useContent, useDom, useSvg } from "better-react-dom";
+import { getAliasOfAttribute, isSVG, renderContent, useDom, useSvg } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
 import { useState } from "better-react-helper";
 import { XmlNode, parseSync } from "xml-reader";
@@ -677,7 +677,7 @@ function toBetter(data: XmlNode): string {
     return `${fun}(${JSON.stringify(name)}${attrs})`
   } else {
     console.log('warn,暂不支持纯文字')
-    return `useContent(${JSON.stringify(data.value)})`
+    return `renderContent(${JSON.stringify(data.value)})`
   }
 }
 

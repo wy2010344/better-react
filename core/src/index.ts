@@ -1,58 +1,65 @@
-import {
-  draftParentFiber, EMPTYCONSTARRAY,
-  revertParentFiber, useBaseFiber, useBeforeAttrEffect, useParentFiber,
-  useMemoGet
-} from "./fc"
-import { storeRef } from './util'
-import { Fiber, VirtaulDomNode, VirtualDomOperator } from "./Fiber"
-import { AskNextTimeWork, setRootFiber } from "./reconcile"
+import { Fiber, VirtaulDomNode } from "./Fiber"
+import { AskNextTimeWork, BatchWork, getReconcile } from "./reconcile"
 import { EnvModel } from "./commitWork"
+import { emptyObject } from "./util"
 export { startTransition } from './reconcile'
 export type { REAL_WORK } from './reconcile'
 export {
   createChangeAtom,
-  useReducer, useEffect, useAttrEffect, useBeforeAttrEffect, useMemoGet,
-  createContext, useFiber, EMPTYCONSTARRAY
+  useBaseReducer, useEffect, useAttrEffect, useBeforeAttrEffect, useBaseMemoGet,
+  createContext, renderFiber
 } from './fc'
 export {
   arrayNotEqualDepsWithEmpty,
   arrayEqual, simpleEqual,
   storeRef,
-  quote
+  quote,
+  emptyArray,
+  emptyObject,
+  emptyFun,
+  expandFunCall,
+  expandFunReturn
 } from './util'
-export type { ReducerResult, ReducerFun } from './fc'
+export type { ReducerResult, ReducerFun, ValueNotify } from './fc'
 export type {
   Fiber, Props,
   VirtaulDomNode,
   HookValueSet,
   RenderWithDep,
-  VirtualDomOperator
+  VirtualDomOperator,
 } from './Fiber'
 export type { AskNextTimeWork }
 export { StoreRef } from './commitWork'
 export type { FindParentAndBefore } from './findParentAndBefore'
-export * from './useOneF'
-export * from './useMapF'
+export * from './renderOneF'
+export * from './renderMapF'
+export type { FalseType, EmptyFun, AnyFunction } from './util'
 
 export function render<T>(
   dom: VirtaulDomNode<T>,
   props: T,
   render: () => void,
   layout: () => void,
-  getAsk: <M>(env: M) => AskNextTimeWork<M>
+  getAsk: AskNextTimeWork
 ) {
-  const envModel = new EnvModel(
-    undefined,
-    layout,
-    getAsk
-  )
+  const envModel = new EnvModel()
   const rootFiber = Fiber.createFix(envModel, null!, dom, {
     render() {
       dom.useUpdate(props)
       render()
     }
   })
-  envModel.rootFiber = rootFiber
-  return setRootFiber(envModel)
+  const batchWork = new BatchWork(
+    rootFiber,
+    envModel,
+    layout
+  )
+  const reconcile = getReconcile(batchWork, envModel, getAsk)
+  envModel.reconcile = reconcile
+  //开始执行
+  reconcile(emptyObject)
+  return function () {
+    batchWork.destroy()
+  }
 }
 

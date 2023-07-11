@@ -1,4 +1,4 @@
-import { useContent, useDom } from "better-react-dom";
+import { renderContent, useDom } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
 import { initJsStore } from "../jsStore";
 import { todoService } from "../jsStore/todo";
@@ -16,7 +16,7 @@ export default normalPanel(function (operate, id) {
         onClick() {
         },
         children() {
-          useContent("查询")
+          renderContent("查询")
         }
       })
       useDom("button", {
@@ -39,7 +39,7 @@ export default normalPanel(function (operate, id) {
           }
         },
         children() {
-          useContent("粘贴查看")
+          renderContent("粘贴查看")
         }
       })
     }

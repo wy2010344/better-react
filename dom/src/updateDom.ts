@@ -1,10 +1,9 @@
 import {
   FindParentAndBefore,
-  Props, VirtaulDomNode, createChangeAtom, createContext, useAttrEffect
+  Props, StoreRef, VirtaulDomNode, createChangeAtom, createContext, useAttrEffect
 } from "better-react"
 import { SvgElements } from "./html"
 import { getAttributeAlias } from "./getAttributeAlias"
-import { ChangeAtomValue, EnvModel } from "better-react/dist/commitWork"
 
 /**
  * 这只是一种dom的更新css方式,将css属性交给外部处理
@@ -40,20 +39,15 @@ export class FiberNode implements FiberAbsNode {
     private _updateProp: (node: Node, key: string, value: any) => void,
   ) {
   }
-  private propsValue: ChangeAtomValue<Props> = null as any
-  getProps() {
-    return this.propsValue.get()
-  }
+  //这个props不需要AtomValue,因为在运行时不访问
+  private props: Props = EMPTYPROPS
   private oldProps: Props = EMPTYPROPS
   useUpdate(props: Props): void {
-    if (!this.propsValue) {
-      this.propsValue = createChangeAtom(props)
-    }
-    this.propsValue.set(props)
+    this.props = props
     const createStyle = StyleContext.useConsumer()
     const that = this
     useAttrEffect(() => {
-      const props = that.getProps()
+      const props = that.props
       updateDom(that,
         props,
         that.oldProps,
@@ -110,7 +104,7 @@ export class FiberNode implements FiberAbsNode {
   }
 
   removeFromParent() {
-    const props = this.getProps()
+    const props = this.props
     if (props.exit) {
       const that = this
       props.exit(this.node).then(() => {
@@ -133,16 +127,7 @@ export class FiberText implements FiberAbsNode {
   static create() {
     return new FiberText()
   }
-  private propsValue: ChangeAtomValue<string> = null as any
-  public getProps() {
-    return this.propsValue.get()
-  }
-  useUpdate(v: string) {
-    if (!this.propsValue) {
-      this.propsValue = createChangeAtom(v)
-    }
-    this.propsValue.set(v)
-    const content = this.getProps()
+  useUpdate(content: string) {
     if (this.oldContent != content) {
       this.node.textContent = content
       this.oldContent = content
@@ -311,7 +296,11 @@ function isGone(prev: Props, next: Props) {
 }
 
 export function updatePorps(node: any, key: string, value: any) {
-  node[key] = value
+  if (key.includes('-')) {
+    node.setAttribute(key, value)
+  } else {
+    node[key] = value
+  }
 }
 export function updateSVGProps(node: any, key: string, value: any) {
   if (key == 'innerHTML' || key == 'textContent') {

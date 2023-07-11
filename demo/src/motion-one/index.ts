@@ -1,8 +1,8 @@
-import { useContent, useDom } from "better-react-dom";
+import { renderContent, useDom } from "better-react-dom";
 import { css } from "stylis-creater";
 import { normalPanel } from "../panel/PanelContext";
 import { animate } from 'motion'
-import { useIf, useState, useMemo } from "better-react-helper"
+import { renderIf, useState, useMemo } from "better-react-helper"
 import { MotionProps, useMotionDom } from "./MotionDOM";
 
 
@@ -13,7 +13,7 @@ export default normalPanel(function (operate, id) {
       setOpen(!open)
     },
     children() {
-      useContent("切换开关")
+      renderContent("切换开关")
     }
   })
   const [length, setLength] = useState(100)
@@ -22,7 +22,7 @@ export default normalPanel(function (operate, id) {
       setLength(length + 10)
     },
     children() {
-      useContent("增加要素")
+      renderContent("增加要素")
     }
   })
   const boxProps: MotionProps = useMemo(() => {
@@ -35,7 +35,7 @@ export default normalPanel(function (operate, id) {
       }
     }
   }, [length])
-  // useIf(open, () => {
+  // renderIf(open, () => {
   //   const div = useMotionDom("div", boxProps, {
   //     className: box,
   //     style: {
@@ -52,7 +52,7 @@ export default normalPanel(function (operate, id) {
   // })
 
 
-  useIf(open, () => {
+  renderIf(open, () => {
     useMotionDom("div", {
       layoutID: "abcd",
       enter: {

@@ -1,7 +1,7 @@
 import { useEffect } from "better-react";
 import { useChange } from "better-react-helper";
 
-export default function useMatchMedia(pattern: string) {
+export function useMatchMedia(pattern: string) {
   const [matchMedia, setMatchMedia] = useChange(true);
   useEffect(() => {
     function heightChange(ev: MediaQueryListEvent) {

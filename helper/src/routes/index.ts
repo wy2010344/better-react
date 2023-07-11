@@ -1,14 +1,14 @@
 import { createContext } from "better-react";
 import { getMatchRoutes, MatchRoute, MathRule } from "./util";
-import { useOne } from "../useOne";
+import { renderOne } from "../renderOne";
 
-export function useRoutes(
+export function renderRoutes(
   path: string[],
   matchRules: MathRule[],
   other?: (v: string[]) => void
 ) {
   const match = getMatchRoutes(path, matchRules, other)
-  useOne(match.index, match.render)
+  renderOne(match.index, match.render)
 }
 function getKey(v: ReturnType<typeof getMatchRoutes>) {
   return v.index
@@ -39,7 +39,7 @@ export function routeMathWithOther({
   other(): void
 }) {
   const { paths, getPrefix } = RouteContext.useConsumer()
-  useRoutes(paths, matches.map(match => {
+  renderRoutes(paths, matches.map(match => {
     return {
       match: match.match,
       render({ scope, rest }) {

@@ -90,32 +90,34 @@ export function css(ts: TemplateStringsArray, ...vs: (string | number)[]) {
   return body.className
 }
 
-import { useMemoGet, useEffect, createChangeAtom } from 'better-react'
+import { useBaseMemoGet, useEffect, createChangeAtom, emptyArray, StoreRef } from 'better-react'
 
+function createStyledUpdate() {
+  return {
+    atom: null as StoreRef<string> | null,
+    styled: createBodyStyleTag()
+  }
+}
 /**
  * 这里因为在render中,延迟到渲染时执行,可以由事件触发更新css
  * @returns 
  */
 export function useBodyStyleUpdate() {
-  const { styled, update } = useMemoGet(() => {
-    const styled = createBodyStyleTag()
-    const atom = createChangeAtom<string>("", function (css) {
-      styled.textContent = css
+  const styledUp = useBaseMemoGet(undefined, createStyledUpdate, emptyArray)()
+  if (!styledUp.atom) {
+    styledUp.atom = createChangeAtom<string>("", function (css) {
+      styledUp.styled.textContent = css
       return css
     })
-    return {
-      styled,
-      update(css: string) {
-        atom.set(css)
-      }
-    }
-  }, [])()
+  }
   useEffect(() => {
     return function () {
-      styled.remove()
+      styledUp.styled.remove()
     }
-  }, [])
-  return update
+  }, emptyArray)
+  return function (css: string) {
+    styledUp.atom?.set(css)
+  }
 }
 
 /**
@@ -128,7 +130,7 @@ export function useStyleMap<A extends any[], T extends {
   [key: string]: string
 }>(callback: (...args: A) => T, deps: A) {
   const update = useBodyStyleUpdate()
-  return useMemoGet(() => {
+  return useBaseMemoGet(undefined, () => {
     const cssMap = callback(...deps)
     const { css, classMap } = genCssMap(cssMap)
     update(css)

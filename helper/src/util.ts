@@ -23,7 +23,7 @@ export function buildSubSet<PARENT, CHILD>(
   }
 }
 
-export function buildSubSetObject<PARENT extends object, K extends keyof PARENT>(
+export function buildSubSetObject<PARENT, K extends keyof PARENT>(
   parentSet: ReduceState<PARENT>,
   key: K,
   callback?: (v: PARENT[K], parent: PARENT) => PARENT[K]
@@ -80,4 +80,9 @@ export function useBuildSubSetArray<T>(
   equal: ((v: T) => boolean)
 ): ReduceRowState<T> {
   return useMemo(() => buildSubSetArray(parentSet, equal), [])
+}
+
+
+export function run<T>(fun: (...vs: any[]) => T) {
+  return fun()
 }

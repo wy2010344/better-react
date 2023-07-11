@@ -5,6 +5,10 @@ export type HookValueSet<F, T> = (v: F, after?: (v: T) => void) => void
 export type HookValue<F, T> = {
   value: StoreRef<T>
   readonly set: HookValueSet<F, T>
+  reducer: any,
+  init: any,
+  initFun: any,
+  didCommit: any,
 }
 export type HookMemo<T> = {
   deps: readonly any[]

@@ -1838,10 +1838,10 @@ bcrypt-pbkdf@^1.0.0:
   dependencies:
     tweetnacl "^0.14.3"
 
-better-react@^1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.1.2.tgz#68aad813de03d215ca3f65193beeb65c3802ccc7"
-  integrity sha512-afGxoW3cXWOged2QApNjCzSBCZqnr97lOZffzDpNFHC+1nzyAyru3lO31pxLqeJ+/1ZXfS+YWsIpNzkQRGqESg==
+better-react@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.2.0.tgz#24b606da7748a496f926db39e8e8840038ea76bd"
+  integrity sha512-KW+8yIKTVexdsaOezM0/HFRpIpf5YrQ00Gzr7TOGVQ1PpU3bWGgfpXVkGimumixBrT5UDFvcph/pmyPn3EmX9g==
 
 binary-extensions@^2.0.0:
   version "2.2.0"

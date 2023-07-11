@@ -1,20 +1,18 @@
-import { DomElements, React, useContent, useDom } from "better-react-dom";
-import { useRef, useMap, useIf, useState, useMemo } from "better-react-helper";
+import { DomElementType, renderContent, useDom } from "better-react-dom";
+import { useRef, renderMap, renderIf, useState } from "better-react-helper";
 import { usePortalPanel } from "../panel/PanelContext";
-import { useDynamicPanel } from "../panel/useDynamicPanel";
-import usePanel from "../panel/usePanel";
 
 export default function index() {
-  useContent("1")
-  useContent("2")
-  useContent("3")
-  useContent("4")
+  renderContent("1")
+  renderContent("2")
+  renderContent("3")
+  renderContent("4")
   //testInnerFragment()
-  // useContent("----")
+  // renderContent("----")
   // useDom("hr")
   // testIncrease()
   //testcIncrease()
-  // useFragment(testIncrease)
+  // renderFragment(testIncrease)
   MapList()
 
   testFlushSync()
@@ -38,16 +36,16 @@ function testPortalPanel() {
       setShowRoot(true)
     },
     children() {
-      useContent("进入portal")
+      renderContent("进入portal")
     }
   })
-  useIf(showRoot, () => {
+  renderIf(showRoot, () => {
     usePortalPanel({
       close() {
         setShowRoot(false)
       },
       children() {
-        useContent("这是window级的portal")
+        renderContent("这是window级的portal")
 
         testPortalPanel()
         testChangeValue()
@@ -57,7 +55,7 @@ function testPortalPanel() {
 }
 
 function testChangeValue() {
-  const [value, setValue] = useState<keyof DomElements>("div")
+  const [value, setValue] = useState<DomElementType>("div")
 
   useDom(value, {
     children() {
@@ -66,7 +64,7 @@ function testChangeValue() {
           setValue(value == "div" ? "pre" : "div")
         },
         children() {
-          useContent("点击切换")
+          renderContent("点击切换")
         }
       })
     }
@@ -91,7 +89,7 @@ function testFlushSync() {
           console.log(input.value)
         },
         children() {
-          useContent("设置值")
+          renderContent("设置值")
         }
       })
     }
@@ -99,7 +97,7 @@ function testFlushSync() {
 }
 
 function simpleButton(v: string) {
-  useContent(v)
+  renderContent(v)
 }
 
 function testIncrease() {
@@ -112,16 +110,16 @@ function testIncrease() {
           setCount(count + 1)
         },
         children() {
-          useContent("增加")
+          renderContent("增加")
         }
       })
-      useContent(`值${count}`)
+      renderContent(`值${count}`)
       useDom("button", {
         onClick() {
           setCount(count - 1)
         },
         children() {
-          useContent("减少")
+          renderContent("减少")
         }
       })
     }
@@ -138,16 +136,16 @@ function testcIncrease() {
           setCount(count + 1)
         },
         children() {
-          useContent("增c加")
+          renderContent("增c加")
         }
       })
-      useContent(`值${count}`)
+      renderContent(`值${count}`)
       useDom("button", {
         onClick() {
           setCount(count - 1)
         },
         children() {
-          useContent("减c少")
+          renderContent("减c少")
         }
       })
     }
@@ -160,12 +158,12 @@ function MapList() {
     index: number,
     key: string
   }[]>(() => [])
-  useMap(list, v => v.index, (row, i) => {
+  renderMap(list, v => v.index, (row, i) => {
     useDom("div", {
       children() {
         useDom("div", {
           children() {
-            useContent(`我是内容${row.index}---${row.key}`)
+            renderContent(`我是内容${row.index}---${row.key}`)
           }
         })
         useDom("input")
@@ -177,7 +175,7 @@ function MapList() {
             console.log(list, i)
           },
           children() {
-            useContent("删除")
+            renderContent("删除")
           }
         })
       }
@@ -195,7 +193,7 @@ function MapList() {
       e.stopPropagation()
     },
     children() {
-      useContent("增加列表")
+      renderContent("增加列表")
     }
   })
 }

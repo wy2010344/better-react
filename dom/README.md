@@ -11,17 +11,15 @@ isSVG
 createRoot(node,recocile,ask)
 
 hooks:
-* useContent
-* useDom
-* useSvg
+* renderContent
+* domOf(DomElementType).render/renderChildren
+* svgOf(SvgElementType).render
 
 
 types:
-* DomElements
 * DomElementType
 * DomAttribute
-* DomELement
-* SvgElements
-* SvgElementType = keyof SvgElements
-* SvgAttribute\<T extends SvgElementType> = SvgElements[T]
-* SvgElement\<T>
+* DomElement
+* SvgElementType
+* SvgAttribute
+* SvgElement

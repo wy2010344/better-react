@@ -1,7 +1,7 @@
 import { render } from "better-react";
 import { useDom } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
-import { useBaseGuard, useGuardString, useState, useMap, useOne } from "better-react-helper"
+import { renderGuardString, useState, renderMap, renderOne, renderBaseGuard } from "better-react-helper"
 
 export default normalPanel(function (operate, id) {
 
@@ -18,15 +18,15 @@ export default normalPanel(function (operate, id) {
         }
       })
 
-      //测试useOne()
-      // 测试useMap()
-      // 测试useMapString()
+      //测试renderOne()
+      // 测试renderMap()
+      // 测试renderMapString()
       测试useBaseGuard()
     }
   })
 })
 
-function 测试useOne() {
+function 测试renderOne() {
   const [index, setIndex] = useState<IndexModel>({ key: 0 })
   useDom("button", {
     textContent: "测试button" + index.key,
@@ -42,10 +42,10 @@ function 测试useOne() {
       setIndex(index => ({ key: index.key }))
     }
   })
-  // useOne(index, quoteOne, renderOne)
+  // renderOne(index, quoteOne, renderOne)
 }
 
-function 测试useMapString() {
+function 测试renderMapString() {
   const [key, setKey] = useState<'a' | 'b' | 'c'>('a')
 
   useDom("button", {
@@ -61,7 +61,7 @@ function 测试useMapString() {
       }
     }
   })
-  useGuardString(key, map)
+  renderGuardString(key, map)
 }
 type IndexModel = {
   key: number
@@ -73,7 +73,7 @@ function indexShouldUpdate(a: IndexModel, b: IndexModel) {
   console.log("判断")
   return a.key != b.key
 }
-function renderOne(i: IndexModel) {
+function renderOneFun(i: IndexModel) {
   console.log("测试render---", i.key)
   return useDom("div", {
     textContent: `这是内容${i.key}`
@@ -102,7 +102,7 @@ const map = {
   }
 }
 
-function 测试useMap() {
+function 测试renderMap() {
 
   const [list, setList] = useState<IndexModel[]>([])
   useDom("button", {
@@ -126,7 +126,7 @@ function 测试useMap() {
       setList(list => JSON.parse(JSON.stringify(list)))
     }
   })
-  useMap(list, quoteOne, renderOne)
+  renderMap(list, quoteOne, renderOneFun)
 }
 
 function 测试useBaseGuard() {
@@ -146,7 +146,7 @@ function 测试useBaseGuard() {
       setIndex(index => ({ key: index.key }))
     }
   })
-  useBaseGuard(index, baseGuards)
+  renderBaseGuard(index, baseGuards)
 }
 
 const baseGuards: Array<readonly [

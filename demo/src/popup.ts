@@ -1,4 +1,4 @@
-import { useContent, useDom } from "better-react-dom";
+import { renderContent, useDom } from "better-react-dom";
 import { normalPanel } from "./panel/PanelContext";
 
 export default normalPanel(function (operate, id) {
@@ -39,9 +39,9 @@ export default normalPanel(function (operate, id) {
         }
         `,
         children() {
-          useContent('Click me to toggle the popup!')
+          renderContent('Click me to toggle the popup!')
           useDom("br")
-          useContent('Click me to toggle the popup!')
+          renderContent('Click me to toggle the popup!')
           useDom("div", {
             className: 'popup',
             css: `
@@ -69,7 +69,7 @@ export default normalPanel(function (operate, id) {
               }
             `,
             children() {
-              useContent('A Simple Popup!')
+              renderContent('A Simple Popup!')
             },
           })
         },
@@ -132,7 +132,7 @@ export default normalPanel(function (operate, id) {
               }
             `,
             children() {
-              useContent('A Simple Popup!')
+              renderContent('A Simple Popup!')
             },
           })
           useDom("div", {

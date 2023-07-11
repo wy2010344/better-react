@@ -36,7 +36,13 @@ export default normalPanel(function (operate) {
                 return getColorStr(lastRow)
               }))
             } else {
-              if (!(addText && isText(row))) {
+              if (row.includes('var(--color')) {
+                //@todo 不是很好
+                const [first, second] = row.split('var(--color')
+                const [color_path] = second.split(',')
+                const colorPaths = color_path.split('-')
+                newList.push(`${first}\${preset.color.${colorPaths.join('.')}};`)
+              } else if (!(addText && isText(row))) {
                 const newRow = replacePX(row)
                 newList.push(newRow)
               }
@@ -50,17 +56,44 @@ export default normalPanel(function (operate) {
       setPreText(replaceText)
     }
   })
+  useDom("button", {
+    textContent: "替换颜色",
+    async onClick(e) {
+      const text = await navigator.clipboard.readText()
+      const replaceText = getColorStrBase(text)
+      navigator.clipboard.writeText(replaceText)
+      setPreText(replaceText)
+    }
+  })
+  useDom("button", {
+    textContent: "获得字体样式",
+    async onClick(e) {
+      const text = await navigator.clipboard.readText()
+      const first = text.split('\n')[0]
+      let replaceText = ''
+      if (first.startsWith(StyleName)) {
+        replaceText = `\${preset.text.${first.slice(StyleName.length).replaceAll("/", ".").replaceAll("-", "_")}}`
+      }
+      navigator.clipboard.writeText(replaceText)
+      setPreText(replaceText)
+    }
+  })
   useDom("pre", {
     textContent: preText
   })
 })
+const StyleName = '//styleName: '
 
 const RGBACOLORREG = /[rR][gG][Bb][Aa]?[\(]([\s]*(2[0-4][0-9]|25[0-5]|[01]?[0-9][0-9]?),){2}[\s]*(2[0-4][0-9]|25[0-5]|[01]?[0-9][0-9]?),?[\s]*(0\.\d{1,2}|1|0)?[\)]{1}/
 
 const COLORREG = /#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})/
 function getColorStr(lastRow: string) {
-  const newStr = lastRow.slice(8, lastRow.length - 3).replaceAll("/", ".").replaceAll("-", "_")
-  return `\${preset.color${newStr}}`
+  const newStr = lastRow.slice(8, lastRow.length - 3)
+  return getColorStrBase(newStr)
+}
+
+function getColorStrBase(str: string) {
+  return `\${preset.color.${str.replaceAll("/", ".").replaceAll("-", "_")}}`
 }
 
 const reg = /((\-|\+)?\d+(\.\d+)?)+(px)/gi;

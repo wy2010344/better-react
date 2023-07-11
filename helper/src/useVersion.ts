@@ -1,4 +1,5 @@
-import { useReducer } from "better-react";
+import { useReducer } from "./useReducer";
+
 
 function increase(old: number) {
   return old + 1
@@ -7,9 +8,7 @@ function increase(old: number) {
  * 如果更细化定制,是否是初始化参数,步进?
  * @returns 
  */
-export function useVersion() {
-  const [version, setVersion] = useReducer(increase, 0);
-  return [version, function (after?: (v: number) => void) {
-    setVersion(undefined, after)
-  }] as const
+export function useVersion(init = 0) {
+  const [version, dispatch] = useReducer(increase, init);
+  return [version, dispatch as (v?: any, after?: (v: number) => void) => void] as const
 }

@@ -1,4 +1,4 @@
-import { DomElements, React, SvgElements, useDom, useSvg } from "better-react-dom";
+import { DomAttribute, DomElement, DomElementType, DomWithChildren, React, SvgAttribute, SvgElement, SvgElementType, SvgWithChildren, useDom, useSvg } from "better-react-dom";
 
 import { MotionKeyframesDefinition, AnimationOptionsWithOverrides } from "@motionone/dom"
 import { useEffect } from "better-react";
@@ -14,12 +14,12 @@ export type MotionProps = {
   onFinished?(): void
 }
 
-export function useMotionDom<T extends keyof DomElements>(
+export function useMotionDom<T extends DomElementType>(
   type: T,
   option: MotionProps,
-  props?: Omit<DomElements[T], 'exit'>
-): DomElements[T] extends React.DetailedHTMLProps<infer A, infer F> ? F : never {
-  const newProps = (props || {}) as DomElements[T]
+  props?: Omit<DomWithChildren<T>, 'exit'>
+): DomElement<T> {
+  const newProps = (props || {}) as DomWithChildren<T>
   if (option.exit) {
     newProps.exit = async () => {
       const thisExit = option.layoutID
@@ -110,13 +110,11 @@ type LayoutParam = {
 }
 const layoutPool = new Map<string, LayoutParam>()
 
-export function useMotionSvg<T extends keyof SvgElements>(
+export function useMotionSvg<T extends SvgElementType>(
   type: T,
   option: MotionProps,
-  props?: SvgElements[T]
-): SvgElements[T] extends React.SVGProps<infer F> ? F : never {
+  props?: SvgWithChildren<T>
+): SvgElement<T> {
   const svg = useSvg(type, props)
-
-
   return svg
 }

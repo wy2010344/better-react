@@ -1,5 +1,5 @@
-import { useContent, useDom } from "better-react-dom";
-import { useState, useMap } from "better-react-helper";
+import { renderContent, useDom } from "better-react-dom";
+import { useState, renderMap } from "better-react-helper";
 import { useTopic } from "../dbStore";
 import { normalPanel } from "../panel/PanelContext";
 import topicPanel from "./topic";
@@ -35,13 +35,13 @@ export default normalPanel(function (operate, id) {
           }
         },
         children() {
-          useContent("增加话题")
+          renderContent("增加话题")
         }
       })
     }
   })
 
-  useMap(topic.topics, v => v.description, function (v, i) {
+  renderMap(topic.topics, v => v.description, function (v, i) {
     useDom("div", {
       css: `
       cursor:pointer;
@@ -56,7 +56,7 @@ export default normalPanel(function (operate, id) {
         })
       },
       children() {
-        useContent(v.description)
+        renderContent(v.description)
       }
     })
     useDom("hr")

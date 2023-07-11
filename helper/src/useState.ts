@@ -1,4 +1,8 @@
-import { ReducerResult, useReducer } from "better-react";
+import { ReducerResult, expandFunReturn } from "better-react";
+import { useReducer } from "./useReducer";
+
+
+
 type StateReducerState<T> = T | ((v: T) => T)
 function reducer<T>(old: T, action: StateReducerState<T>) {
   if (typeof (action) == 'function') {
@@ -17,7 +21,7 @@ export function useState<T>(init: T | (() => T)): ReducerResult<StateReducerStat
 export function useState() {
   const [init, trans] = arguments
   if (typeof (init) == 'function') {
-    return useReducer<any, any, any>(reducer, undefined, init)
+    return useReducer<any, any, any>(reducer, init, expandFunReturn)
   } else {
     return useReducer<any, any, any>(reducer, init, trans)
   }

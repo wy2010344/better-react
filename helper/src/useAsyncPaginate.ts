@@ -1,11 +1,10 @@
-import { useEffect } from "better-react";
+import { emptyFun, useEffect } from "better-react";
 import { PromiseResult } from "./usePromise";
 import { useChange, useState } from "./useState";
-import { useRef } from "./useRef";
 import { useCallback } from "./useCallback";
 import { useEvent } from "./useEvent";
-import { emptyFun } from "./ValueCenter";
 import { useBuildSubSetObject } from "./util";
+import { useVersionLock } from "./Lock";
 
 /**
  * 所有页数
@@ -27,7 +26,7 @@ type AsyncPaginateModel<T, K> =
   | undefined;
 function useAsyncPaginate3<T, K>(getPage: GetPage<T, K>) {
   const [data, setData] = useState<AsyncPaginateModel<T, K>>();
-  const versionRef = useRef(0); //自增ID
+  const [getVersion, updateVersion] = useVersionLock()
   const [version, setVersion] = useState<number>();
   return {
     data,
@@ -51,11 +50,10 @@ function useAsyncPaginate3<T, K>(getPage: GetPage<T, K>) {
     }, []),
     getPage: useEvent(function (page: K, onError: (err: any) => void) {
       //可以重复请求,后覆盖前
-      const version = versionRef.get();
-      versionRef.set(version)
+      const version = updateVersion()
       setVersion(version);
       return toPromise(getPage, page).then((data) => {
-        if (versionRef.get() == version) {
+        if (getVersion() == version) {
           if (data.type == "error") {
             onError(data.value);
           }

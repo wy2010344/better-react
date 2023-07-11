@@ -1,6 +1,6 @@
 
 
-export * from './useGuard'
+export * from './renderGuard'
 export * from './useOnlyId'
 export * from './useRef'
 export * from './ValueCenter'
@@ -16,10 +16,11 @@ export * from './usePromise'
 export * from './useState'
 export * from './useCallback'
 export * from './useInit'
-export * from './useReducerFun'
-export * from './useMap'
-export * from './useOne'
-export * from './useFragment'
+export * from './useReducer'
+export * from './renderMap'
+export * from './renderOne'
+export * from './renderFragment'
+export * from './Lock'
 export { compileSimpleRule, createMatch, pathExactly, pathStartWith, toAbsolutePath } from "./routes/util"
 export { RouteContext, routeMatch, routeMathWithOther } from "./routes"
 

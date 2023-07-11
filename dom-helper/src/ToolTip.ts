@@ -6,7 +6,7 @@ import { useDom, useSvg } from "better-react-dom"
  * @param param0 
  * @returns 
  */
-export default function ToolTip({
+export function ToolTip({
   parentRef,
   anchorRef,
   children,

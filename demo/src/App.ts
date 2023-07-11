@@ -1,6 +1,6 @@
 import { useEffect } from "better-react";
-import { useFragment, useGuard, useGuardString, useState, } from "better-react-helper"
-import { useContent, useDom } from "better-react-dom";
+import { renderFragment, renderGuard, renderGuardString, useState, } from "better-react-helper"
+import { renderContent, useDom } from "better-react-dom";
 import dsl from "./dsl";
 import ExpensiveView from "./ExpensiveView";
 import FlexAbc from "./FlexAbc";
@@ -10,7 +10,7 @@ import usePanel from "./panel/usePanel";
 import popup from "./popup";
 import scrollPage from "./scrollPage";
 import dragDemo from "./test/dragDemo";
-import 测试useOne from "./test/测试useOne";
+import 测试renderOne from "./test/测试useOne";
 import 测试其它 from "./test/测试其它";
 import todoList from "./todoList/index";
 import typeSystem from "./typeSystem";
@@ -34,15 +34,15 @@ export default function FirstPage() {
           operate.close(id)
         },
         children() {
-          useContent("root")
-          useFragment(TestButtonPage, [])
+          renderContent("root")
+          renderFragment(TestButtonPage, [])
           useDom("button", {
             onClick(e) {
               e.stopPropagation()
               dsl(operate)
             },
             children() {
-              useContent("进入DSL")
+              renderContent("进入DSL")
             }
           })
           useDom("button", {
@@ -51,7 +51,7 @@ export default function FirstPage() {
               ExpensiveView(operate)
             },
             children() {
-              useContent("进入ExpansiveView")
+              renderContent("进入ExpansiveView")
             }
           })
           useDom("button", {
@@ -60,7 +60,7 @@ export default function FirstPage() {
               FlexAbc(operate)
             },
             children() {
-              useContent("FlexAbc")
+              renderContent("FlexAbc")
             }
           })
           useDom("button", {
@@ -83,7 +83,7 @@ export default function FirstPage() {
               vote(operate)
             },
             children() {
-              useContent("vote")
+              renderContent("vote")
             }
           })
           useDom("button", {
@@ -121,7 +121,7 @@ export default function FirstPage() {
               todoList(operate)
             },
             children() {
-              useContent("todoList")
+              renderContent("todoList")
             }
           })
           useDom("button", {
@@ -130,7 +130,7 @@ export default function FirstPage() {
               motionOne(operate)
             },
             children() {
-              useContent("motion-one")
+              renderContent("motion-one")
             }
           })
           useDom("button", {
@@ -139,7 +139,7 @@ export default function FirstPage() {
               scrollPage(operate)
             },
             children() {
-              useContent("scroll-page")
+              renderContent("scroll-page")
             }
           })
           useDom("button", {
@@ -148,7 +148,7 @@ export default function FirstPage() {
               popup(operate)
             },
             children() {
-              useContent("popup")
+              renderContent("popup")
             }
           })
 
@@ -162,10 +162,10 @@ export default function FirstPage() {
           useDom("button", {
             onClick(e) {
               e.stopPropagation()
-              测试useOne(operate)
+              测试renderOne(operate)
             },
             children() {
-              useContent("测试useOne")
+              renderContent("测试renderOne")
             }
           })
           Demo()
@@ -173,7 +173,7 @@ export default function FirstPage() {
           //console.log("在这里")
 
           const value = CountContext.useConsumer()
-          useContent(`在这里${value}`)
+          renderContent(`在这里${value}`)
 
 
           useDom("button", {
@@ -182,7 +182,7 @@ export default function FirstPage() {
               dragDemo(operate)
             },
             children() {
-              useContent("drag-demo")
+              renderContent("drag-demo")
             }
           })
           useDom("button", {
@@ -225,7 +225,7 @@ function TestButtonPage() {
               operate.close(id)
             },
             children() {
-              useFragment(TestButtonPage, [])
+              renderFragment(TestButtonPage, [])
             },
             moveFirst() {
               operate.moveToFirst(id)
@@ -236,7 +236,7 @@ function TestButtonPage() {
       }
     },
     children() {
-      useContent("新弹窗")
+      renderContent("新弹窗")
     }
   })
   useEffect(() => {
@@ -274,7 +274,7 @@ export function App() {
         backdrop-filter: blur(10px);
         `,
         children() {
-          useContent("使用backdrop-filter")
+          renderContent("使用backdrop-filter")
         }
       })
       useDom("div", {
@@ -293,7 +293,7 @@ export function App() {
         }
         `,
         children() {
-          useContent("使用filter")
+          renderContent("使用filter")
         }
       })
     }
@@ -357,31 +357,31 @@ function Demo() {
   })
   //MapList()
   //console.log("render--根")
-  useFragment(Count, [])
+  renderFragment(Count, [])
   useDom("div", {
     children() {
 
-      useContent("ccc内容")
+      renderContent("ccc内容")
       const [count, setCount] = useState(0)
 
-      // useIf(count % 2 == 0, () => {
-      //   useContent("这是偶数")
-      //   useContent("这是偶数1")
-      //   useContent("这是偶数2")
-      //   useContent("这是偶数3")
+      // renderIf(count % 2 == 0, () => {
+      //   renderContent("这是偶数")
+      //   renderContent("这是偶数1")
+      //   renderContent("这是偶数2")
+      //   renderContent("这是偶数3")
       // })
 
-      useGuard(count % 3,
+      renderGuard(count % 3,
         [
           v => v == 0,
           () => {
-            useContent("是0")
+            renderContent("是0")
           }
         ],
         [
           v => v == 1,
           () => {
-            useContent("是1")
+            renderContent("是1")
           }
         ]
       )
@@ -391,15 +391,15 @@ function Demo() {
           background:yellow;
           `,
         children() {
-          useContent("这是内容")
-          useGuardString(count % 3 + 'vv', {
+          renderContent("这是内容")
+          renderGuardString(count % 3 + 'vv', {
             '0vv'() {
-              useContent("022")
-              useContent("a322")
+              renderContent("022")
+              renderContent("a322")
             },
             '2vv'() {
 
-              useContent("abcdefv")
+              renderContent("abcdefv")
             }
           })
         }
@@ -409,7 +409,7 @@ function Demo() {
           setCount(count + 1)
         },
         children() {
-          useContent("点击")
+          renderContent("点击")
         }
       })
     }
@@ -426,7 +426,7 @@ function Count() {
       e.stopPropagation()
     },
     children() {
-      useContent(`点击了${count}次`)
+      renderContent(`点击了${count}次`)
     }
   })
   useDom("button", {

@@ -1,6 +1,6 @@
 import { useEffect } from "better-react";
 import { useDom } from "better-react-dom";
-import { useEvent, useState, useMap, useMemo } from "better-react-helper";
+import { useEvent, useState, renderMap, useMemo } from "better-react-helper";
 import { initDrag } from "../panel/drag";
 
 
@@ -191,7 +191,7 @@ export default function ScrollTabPane<T>({
             }
           }, [selected, step])
 
-          useMap([before, current, after], v => v.realKey, function (row, i) {
+          renderMap([before, current, after], v => v.realKey, function (row, i) {
             useDom("div", {
               css: `
               ${row.css || ''}

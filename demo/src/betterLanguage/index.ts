@@ -11,5 +11,8 @@
  * (abc bcd efg afc)
  * 
  */
+console.log("ccc")
+
+const a: any = {}
 
 export { }

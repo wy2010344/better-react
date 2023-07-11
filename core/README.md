@@ -9,10 +9,9 @@ hooks
 *  useEffect
 *  useMemo
 *  createContext
-*  useFiber
-*  useMap
-*  useOne
-*  flushSync
+*  renderFiber
+*  renderMapF
+*  renderOneF
 *  startTransition
 
 other

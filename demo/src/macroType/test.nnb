@@ -1,0 +1,24 @@
+{
+    "cells": [
+        {
+            "language": "typescript",
+            "source": [
+                "import { NumberType } from \"./lib\"\n\nconst a=8\n\nNumberType.include(a)"
+            ],
+            "outputs": [
+                {
+                    "items": [
+                        {
+                            "mime": "application/vnd.code.notebook.error",
+                            "value": {
+                                "name": "Error",
+                                "message": "Must use import to load ES Module: /Users/wyknmjj/Documents/GitHub/better-react/demo/src/macroType/lib.ts",
+                                "stack": "/Users/wyknmjj/.vscode/extensions/donjayamanne.typescript-notebook-2.0.6/resources/scripts/node_modules/ts-node/dist-raw/node-cjs-loader-utils.js:30\n    throw createErrRequireEsm(filename, parentPath, packageJsonPath);\n    ^\n\nError [ERR_REQUIRE_ESM]: Must use import to load ES Module: /Users/wyknmjj/Documents/GitHub/better-react/demo/src/macroType/lib.ts\n    at createErrRequireEsm (/Users/wyknmjj/.vscode/extensions/donjayamanne.typescript-notebook-2.0.6/resources/scripts/node_modules/ts-node/dist-raw/node-cjs-loader-utils.js:97:15)\n    at assertScriptCanLoadAsCJSImpl (/Users/wyknmjj/.vscode/extensions/donjayamanne.typescript-notebook-2.0.6/resources/scripts/node_modules/ts-node/dist-raw/node-cjs-loader-utils.js:30:11)\n    at Object.require.extensions.<computed> [as .ts] (/Users/wyknmjj/.vscode/extensions/donjayamanne.typescript-notebook-2.0.6/resources/scripts/node_modules/ts-node/src/index.ts:1363:5)\n    at Module.load (node:internal/modules/cjs/loader:1119:32)\n    at Function.Module._load (node:internal/modules/cjs/loader:960:12)\n    at Function._._load (/Users/wyknmjj/.vscode/extensions/donjayamanne.typescript-notebook-2.0.6/out/extension/server/index.js:2:115372)\n    at Module.require (node:internal/modules/cjs/loader:1143:19)\n    at require (node:internal/modules/cjs/helpers:110:18)\n    at <Cell 1> [1, 37]\n    at Script.runInContext (node:vm:141:12)"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

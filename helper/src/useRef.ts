@@ -1,8 +1,12 @@
-import { useMemoGet, storeRef, quote } from 'better-react';
+import { useBaseMemoGet, storeRef, quote } from 'better-react';
 
 type StoreRef<T> = {
   get(): T
   set(v: T): void
+}
+
+export function useMemoGet<T, V extends readonly any[] = readonly any[]>(effect: (deps: V) => T, deps: V) {
+  return useBaseMemoGet(undefined, effect, deps)
 }
 
 export function useMemo<T, V extends readonly any[] = readonly any[]>(effect: (deps: V) => T, deps: V): T {

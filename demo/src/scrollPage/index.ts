@@ -1,5 +1,5 @@
-import { useIf, useState } from "better-react-helper"
-import { useContent, useDom } from "better-react-dom";
+import { renderIf, useState } from "better-react-helper"
+import { renderContent, useDom } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
 import ScrollTabPane from "./ScrollTabPane";
 
@@ -31,8 +31,8 @@ export default normalPanel(function (operate, id) {
               `}
               `,
               children() {
-                useContent(key)
-                useIf(isSelected, () => {
+                renderContent(key)
+                renderIf(isSelected, () => {
                   useDom("div", {
                     css: `
                     height:1px;

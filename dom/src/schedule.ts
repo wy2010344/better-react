@@ -21,8 +21,7 @@ function runMicroTask(fun: () => void) {
   }
   return runMacroTask(fun)
 }
-export function getScheduleAskTime<T>(envModel: T): AskNextTimeWork<T> {
-  let getNextWork: (env: T) => REAL_WORK | void
+export const getScheduleAskTime: AskNextTimeWork = function (getNextWork) {
   let onWork = false
   const threshold: number = 5
   let lastRenderTime = getTime()
@@ -33,26 +32,23 @@ export function getScheduleAskTime<T>(envModel: T): AskNextTimeWork<T> {
    */
   const flush = () => {
     const deadline = getTime() + threshold
-    let rendered = false
-    let callback = getNextWork(envModel)
+    let callback = getNextWork()
     while (callback) {
       if (getTime() < deadline) {
         if (callback.isRender) {
-          rendered = true
           const thisRenderTime = getTime()
           if (thisRenderTime - lastRenderTime < 16) {
-            //和上次的间隔需要大于16ms
+            //和上次的间隔需要大于16ms,因为刷新频率,放到下一次去执行
             runMacroTask(flush)
             break
           }
           callback()
-          rendered = true
           //console.log("render", thisRenderTime - lastRenderTime)
           lastRenderTime = thisRenderTime
         } else {
           callback()
         }
-        callback = getNextWork(envModel)
+        callback = getNextWork()
       } else {
         //需要中止,进入宏任务.原列表未处理完
         runMacroTask(flush)
@@ -63,8 +59,7 @@ export function getScheduleAskTime<T>(envModel: T): AskNextTimeWork<T> {
       onWork = false
     }
   }
-  return function (_getNextWork) {
-    getNextWork = _getNextWork
+  return function () {
     if (!onWork) {
       onWork = true
       runMicroTask(flush)

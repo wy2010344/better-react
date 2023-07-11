@@ -1,9 +1,9 @@
-import { useMap } from "better-react-helper";
-import { useContent, useDom } from "better-react-dom";
+import { renderMap } from "better-react-helper";
+import { renderContent, useDom } from "better-react-dom";
 import { getTextColor } from "../colorUtil";
 import { TopicModel, useUser } from "../dbStore";
 import { panelWith } from "../panel/PanelContext";
-import { useIf, useState } from "better-react-helper"
+import { renderIf, useState } from "better-react-helper"
 import person from "./person";
 
 
@@ -21,7 +21,7 @@ export default panelWith({
     }
     useDom("div", {
       children() {
-        useContent(topic.description)
+        renderContent(topic.description)
       }
     })
     useDom("button", {
@@ -30,7 +30,7 @@ export default panelWith({
         e.stopPropagation()
       },
       children() {
-        useContent(`增加人物`)
+        renderContent(`增加人物`)
       }
     })
     useDom("div", {
@@ -44,15 +44,15 @@ export default panelWith({
                   children() {
                     useDom("th", {
                       children() {
-                        useContent("参与人")
+                        renderContent("参与人")
                       }
                     })
                     useDom("th", {
                       children() {
-                        useContent("提出建议")
+                        renderContent("提出建议")
                       }
                     })
-                    useMap(topic.votes, v => v.description, vote => {
+                    renderMap(topic.votes, v => v.description, vote => {
                       const user = vote.creater ? users.find(v => v.name == vote.creater) : undefined
                       useDom("th", {
                         style: user ? {
@@ -68,7 +68,7 @@ export default panelWith({
             })
             useDom("tbody", {
               children() {
-                useMap(users, v => v.name, user => {
+                renderMap(users, v => v.name, user => {
                   useDom("tr", {
                     children() {
                       useDom("td", {
@@ -81,7 +81,7 @@ export default panelWith({
                       useDom("td", {
                         children() {
                           const vote = topic.votes.find(v => v.creater == user.name)
-                          useIf(
+                          renderIf(
                             !!vote,
                             () => {
                               useDom("div", {
@@ -111,19 +111,19 @@ export default panelWith({
                                   }
                                 },
                                 children() {
-                                  useContent("提出建议")
+                                  renderContent("提出建议")
                                 }
                               })
                             })
                         }
                       })
-                      useMap(topic.votes, v => v.description, (vote, i) => {
+                      renderMap(topic.votes, v => v.description, (vote, i) => {
                         useDom("td", {
                           children() {
-                            useIf(
+                            renderIf(
                               vote.whoVotes.includes(user.name),
                               () => {
-                                useContent("已选择")
+                                renderContent("已选择")
                               },
                               () => {
                                 useDom("button", {
@@ -152,7 +152,7 @@ export default panelWith({
                                     })
                                   },
                                   children() {
-                                    useContent("")
+                                    renderContent("")
                                   }
                                 })
                               })

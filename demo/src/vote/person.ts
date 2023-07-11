@@ -1,5 +1,5 @@
-import { useContent, useDom } from "better-react-dom";
-import { useRef, useMap } from "better-react-helper";
+import { domOf, renderContent, useDom } from "better-react-dom";
+import { useRef, renderMap } from "better-react-helper";
 import { useUser } from "../dbStore";
 import { normalPanel } from "../panel/PanelContext";
 import { useInput } from "better-react-dom-helper";
@@ -8,7 +8,7 @@ export default normalPanel(function (operate, id) {
   const user = useUser()
   useDom("div", {
     children() {
-      const input = useDom("input")
+      const input = domOf("input").render()
       useDom("button", {
         onClick() {
           const err = user.add(input.value)
@@ -19,7 +19,7 @@ export default normalPanel(function (operate, id) {
           input.value = ''
         },
         children() {
-          useContent("增加人物")
+          renderContent("增加人物")
         }
       })
     }
@@ -46,7 +46,7 @@ export default normalPanel(function (operate, id) {
           })
           useDom("tbody", {
             children() {
-              useMap(users, v => v.name, user => {
+              renderMap(users, v => v.name, user => {
                 useDom("tr", {
                   children() {
                     useDom("td", {

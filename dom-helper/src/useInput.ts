@@ -1,8 +1,8 @@
 import { useEffect } from "better-react"
-import { DomElements, useDom } from "better-react-dom"
+import { DomAttribute, domOf } from "better-react-dom"
 import { useVersion } from 'better-react-helper'
 type InputType = "input" | "textarea"
-type InputTypeProps = DomElements[InputType] & {
+type InputTypeProps = DomAttribute<InputType> & {
   value: string
   onValueChange(v: string): void
 }
@@ -14,7 +14,7 @@ export function useInput(type: InputType, {
 }: InputTypeProps) {
   //只是为了强制这个模块更新
   const [version, updateVersion] = useVersion()
-  const input = useDom(type, {
+  const input = domOf(type, {
     onInput(e: any) {
       e.preventDefault()
       const newValue = input.value
@@ -23,7 +23,7 @@ export function useInput(type: InputType, {
       onInput?.(e)
     },
     ...props
-  }) as HTMLInputElement
+  }).render()
   //用useMemo更快触发,但会面临回滚问题
   useEffect(() => {
     if (value != input.value) {

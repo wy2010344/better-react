@@ -1,5 +1,4 @@
 
-type MEMONode = () => void
 /*
 React projects that don't include the DOM library need these interfaces to compile.
 React Native applications use React, but there is no DOM available. The JavaScript runtime
@@ -825,32 +824,10 @@ export namespace React {
     exit?(e: T): Promise<void>
   }
 
-  export type DetailedHTMLProps<E extends HTMLAttributes<T>, T> = E & ({
-    children?: MEMONode;
-    innerHTML?: never
-    textContent?: never
-    contentEditable?: never
-  } | {
-    children?: never
-    innerHTML: string
-    textContent?: never
-    contentEditable?: never
-  } | {
-    children?: never
-    innerHTML?: never
-    textContent: string
-    contentEditable?: never
-  } | {
-    children?: never
-    innerHTML?: never
-    textContent?: never
-    contentEditable: Booleanish | "inherit" | "plaintext-only";
-  } | {
-    children?: never
-    innerHTML?: never
-    textContent?: never
-    contentEditable?: never
-  })
+  export type DetailedHTMLProps<E extends HTMLAttributes<T>, T> = {
+    attributes: E,
+    element: T
+  }
 
   // this list is "complete" in that it contains every SVG attribute
   // that React supports, but the types can be improved.
@@ -1128,17 +1105,10 @@ export namespace React {
     z?: number | string | undefined;
     zoomAndPan?: string | undefined;
   }
-  export type SVGPureProps<T> = SVGAttributes<T>
-  export type SVGProps<T> = SVGAttributes<T> & ({
-    children: MEMONode;
-    innerHTML?: never
-  } | {
-    children?: never
-    innerHTML: string
-  } | {
-    children?: never
-    innerHTML?: never
-  })
+  export type SVGProps<T> = {
+    attributes: SVGAttributes<T>,
+    element: T
+  }
   export interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
     // React-specific Attributes
     // defaultChecked?: boolean | undefined;
@@ -1693,7 +1663,7 @@ export namespace React {
 
 export type CSSProperties = React.CSSProperties
 //117个
-export type DomElements = {
+type DomElements = {
   a: React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement>;
   abbr: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
   address: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
@@ -1814,20 +1784,20 @@ export type DomElements = {
 }
 
 export type DomElementType = keyof DomElements
-export type DomAttribute<T extends DomElementType> = DomElements[T]
-export type DomElement<T extends DomElementType> = DomElements[T] extends React.DetailedHTMLProps<infer _, infer M> ? M : never
+export type DomAttribute<T extends DomElementType> = DomElements[T]['attributes']
+export type DomElement<T extends DomElementType> = DomElements[T]['element']
 
 //58个svg
-export type SvgElements = {
+type SvgElements = {
   svg: React.SVGProps<SVGSVGElement>;
   animate: React.SVGProps<SVGElement>; // TODO: It is SVGAnimateElement but is not in TypeScript's lib.dom.d.ts for now.
   animateMotion: React.SVGProps<SVGElement>;
   animateTransform: React.SVGProps<SVGElement>; // TODO: It is SVGAnimateTransformElement but is not in TypeScript's lib.dom.d.ts for now.
-  circle: React.SVGPureProps<SVGCircleElement>;
+  circle: React.SVGProps<SVGCircleElement>;
   clipPath: React.SVGProps<SVGClipPathElement>;
   defs: React.SVGProps<SVGDefsElement>;
   desc: React.SVGProps<SVGDescElement>;
-  ellipse: React.SVGPureProps<SVGEllipseElement>;
+  ellipse: React.SVGProps<SVGEllipseElement>;
   feBlend: React.SVGProps<SVGFEBlendElement>;
   feColorMatrix: React.SVGProps<SVGFEColorMatrixElement>;
   feComponentTransfer: React.SVGProps<SVGFEComponentTransferElement>;
@@ -1856,24 +1826,27 @@ export type SvgElements = {
   filter: React.SVGProps<SVGFilterElement>;
   foreignObject: React.SVGProps<SVGForeignObjectElement>;
   g: React.SVGProps<SVGGElement>;
-  image: React.SVGPureProps<SVGImageElement>;
-  line: React.SVGPureProps<SVGLineElement>;
+  image: React.SVGProps<SVGImageElement>;
+  line: React.SVGProps<SVGLineElement>;
   linearGradient: React.SVGProps<SVGLinearGradientElement>;
   marker: React.SVGProps<SVGMarkerElement>;
   mask: React.SVGProps<SVGMaskElement>;
   metadata: React.SVGProps<SVGMetadataElement>;
   mpath: React.SVGProps<SVGElement>;
-  path: React.SVGPureProps<SVGPathElement>;
+  path: React.SVGProps<SVGPathElement>;
   pattern: React.SVGProps<SVGPatternElement>;
   polygon: React.SVGProps<SVGPolygonElement>;
   polyline: React.SVGProps<SVGPolylineElement>;
   radialGradient: React.SVGProps<SVGRadialGradientElement>;
-  rect: React.SVGPureProps<SVGRectElement>;
+  rect: React.SVGProps<SVGRectElement>;
   stop: React.SVGProps<SVGStopElement>;
   switch: React.SVGProps<SVGSwitchElement>;
   symbol: React.SVGProps<SVGSymbolElement>;
-  text: React.SVGAttributes<SVGTextElement> & {
-    textContent?: string
+  text: {
+    attributes: React.SVGAttributes<SVGTextElement> & {
+      textContent?: string
+    },
+    element: SVGTextElement
   };
   textPath: React.SVGProps<SVGTextPathElement>;
   tspan: React.SVGProps<SVGTSpanElement>;
@@ -1882,5 +1855,5 @@ export type SvgElements = {
 }
 
 export type SvgElementType = keyof SvgElements
-export type SvgAttribute<T extends SvgElementType> = SvgElements[T]
-export type SvgElement<T extends SvgElementType> = SvgElements[T] extends React.SVGProps<infer M> ? M : never
+export type SvgAttribute<T extends SvgElementType> = SvgElements[T]['attributes']
+export type SvgElement<T extends SvgElementType> = SvgElements[T]['element']

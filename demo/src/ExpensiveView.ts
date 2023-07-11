@@ -1,6 +1,6 @@
 import { startTransition, useEffect } from "better-react";
-import { useContent, useDom } from "better-react-dom";
-import { useEvent, useState, useMap, useFragment, useMemo } from "better-react-helper";
+import { renderContent, useDom } from "better-react-dom";
+import { useEvent, useState, renderMap, renderFragment, useMemo } from "better-react-helper";
 import { normalPanel } from "./panel/PanelContext";
 import { useInput } from "better-react-dom-helper";
 
@@ -86,25 +86,25 @@ export default normalPanel(function (operate, id) {
               changeValue(v)
             }
           })
-          useContent(`${value}`)
+          renderContent(`${value}`)
           const select = useDom("select", {
             children() {
               useDom("option", {
                 value: 9,
                 children() {
-                  useContent("9")
+                  renderContent("9")
                 }
               })
               useDom("option", {
                 value: 8,
                 children() {
-                  useContent("8")
+                  renderContent("8")
                 }
               })
               useDom("option", {
                 value: 7,
                 children() {
-                  useContent("7")
+                  renderContent("7")
                 }
               })
             }
@@ -112,7 +112,7 @@ export default normalPanel(function (operate, id) {
           useEffect(() => {
             select.value = "7"
           }, [])
-          useContent(`改变内部值${onTrans ? "A" : "B"}外部存储值${avCount}---abc---${abcValue}`)
+          renderContent(`改变内部值${onTrans ? "A" : "B"}外部存储值${avCount}---abc---${abcValue}`)
         }
       })
       useDom("div", {
@@ -126,7 +126,7 @@ export default normalPanel(function (operate, id) {
         },
         children() {
 
-          useFragment(() => {
+          renderFragment(() => {
             ExpensiveView(renderValue)
           }, [renderValue])
         }
@@ -147,14 +147,14 @@ function ExpensiveView(count: number) {
           console.log(div.childNodes.length)
         },
         children() {
-          useContent(`内容 ${length}`)
+          renderContent(`内容 ${length}`)
         }
       })
 
-      useFragment(PartView, [])
+      renderFragment(PartView, [])
       useDom("hr")
       //console.log("render-mvvvv")
-      useMap(
+      renderMap(
         Array.from(Array(length).keys()).reverse(),
         v => v,
         v => {
@@ -170,7 +170,7 @@ function ExpensiveView(count: number) {
           useDom("div", {
             style,
             children() {
-              useContent(`${v}`)
+              renderContent(`${v}`)
             }
           })
         })
@@ -195,7 +195,7 @@ function PartView() {
   const vvValue = useMyExternal(abcStore.subscribe, abcStore.get)
   useDom("div", {
     children() {
-      useContent(`内部读取{ testValue } --- abc-- - ${vvValue}`)
+      renderContent(`内部读取{ testValue } --- abc-- - ${vvValue}`)
     }
   })
 }

@@ -1,15 +1,18 @@
-import { quote } from "better-react"
-import { useMemo } from "./useRef"
+import { emptyFun, quote, useEffect } from "better-react"
+import { useMemo, useRef } from "./useRef"
+import { useRefState } from "./useRefState"
 
 type EventHandler<T> = (v: T) => void
 export interface VirtualEventCenter<T> {
   subscribe(notify: EventHandler<T>): () => void
 }
 type Subscriber<T> = (v: EventHandler<T>) => (() => void)
-export const emptyFun = () => { }
 export function eventCenter<T>() {
   const pool = new Set<EventHandler<T>>()
   return {
+    poolSize() {
+      return pool.size
+    },
     subscribe(notify: EventHandler<T>) {
       if (pool.has(notify)) {
         return emptyFun
@@ -34,14 +37,15 @@ export function toReduceState<T>(set: (v: T) => void, get: () => T,) {
   }
 }
 export type SetStateAction<T> = T | ((v: T) => T)
-export type ReduceState<T> = (v: SetStateAction<T>) => void
+export type ReduceState<T> = (v: SetStateAction<T>, didCommit?: (v: T) => void) => void
 export interface ValueCenter<T> {
   get(): T
   set: ReduceState<T>
+  poolSize(): number
   subscribe: Subscriber<T>
 }
 export function valueCenterOf<T>(value: T): ValueCenter<T> {
-  const { subscribe, notify } = eventCenter<T>()
+  const { subscribe, notify, poolSize } = eventCenter<T>()
   function get() {
     return value
   }
@@ -50,7 +54,9 @@ export function valueCenterOf<T>(value: T): ValueCenter<T> {
     notify(v)
   }, get)
   return {
-    get, set,
+    get,
+    poolSize,
+    set,
     subscribe
   }
 }
@@ -66,4 +72,34 @@ export function useValueCenter() {
 }
 export function useValueCenterFun<T>(fun: () => T): ValueCenter<T> {
   return useValueCenter(undefined, fun)
+}
+/**
+ * 
+ * @param store 
+ * @param arg 只能初始化,中间不可以改变,即使改变,也是跟随的
+ */
+export function useStoreTriggerRender<T, M>(store: ValueCenter<T>, arg: {
+  filter(a: T): M,
+  onBind?(a: M): void
+}): M
+export function useStoreTriggerRender<T>(store: ValueCenter<T>, arg?: {
+  filter?(a: T): T,
+  onBind?(a: T): void
+}): T
+export function useStoreTriggerRender<T>(store: ValueCenter<T>) {
+  const arg = arguments[1]
+  const filter = arg?.filter || quote
+  const [state, setState] = useRefState(store.get(), filter)
+  useEffect(function () {
+    function setValue(v: T) {
+      const newState = filter(v) as T
+      setState(newState)
+      return newState
+    }
+    const newValue = store.get() as T
+    setValue(newValue)
+    arg?.onBind?.(newValue)
+    return store.subscribe(setState)
+  }, [store])
+  return state
 }

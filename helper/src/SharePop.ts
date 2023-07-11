@@ -1,7 +1,6 @@
 
-import { useOneF } from "better-react";
-import { useStoreTriggerRender } from "./useRefState";
-import { valueCenterOf } from "./ValueCenter";
+import { renderOneF } from "better-react";
+import { useStoreTriggerRender, valueCenterOf } from "./ValueCenter";
 type FunElement = {
   render(): void
   id: any
@@ -10,7 +9,7 @@ function getId(v: FunElement) {
   return v.id
 }
 function renderContent(v: FunElement) {
-  return [v.id, v.render] as const
+  return [v.id, undefined, v.render] as const
 }
 
 function initSharePop(): {
@@ -37,7 +36,7 @@ export function createSharePop() {
     useProvider() {
       const { stacks, index } = useStoreTriggerRender(popCenter)
       const currentPop = stacks[index]
-      useOneF(undefined, currentPop, renderContent)
+      renderOneF(undefined, currentPop, renderContent)
     },
     push(render: () => void, id: any = render) {
       const { stacks, index } = popCenter.get()

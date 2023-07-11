@@ -1,5 +1,5 @@
 import { useState } from "better-react-helper";
-import { useContent, useDom, useSvg } from "better-react-dom";
+import { renderContent, useDom, useSvg } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
 
 export default normalPanel(function (operate, id) {
@@ -16,7 +16,7 @@ export default normalPanel(function (operate, id) {
             y: 100,
             textContent: "vds",
           })
-          useContent("bcd")
+          renderContent("bcd")
           useSvg("g", {
             // width: 400,
             // height: 500,

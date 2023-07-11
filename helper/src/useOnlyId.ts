@@ -1,4 +1,4 @@
-import { EMPTYCONSTARRAY } from "better-react"
+import { emptyArray } from "better-react"
 import { useMemo } from "./useRef"
 
 
@@ -10,7 +10,7 @@ let id = 0
  * @returns 
  */
 export function useOnlyId(deps?: readonly any[]) {
-  return useMemo(getOnlyId, deps || EMPTYCONSTARRAY)
+  return useMemo(getOnlyId, deps || emptyArray)
 }
 export function getOnlyId() {
   return id++

@@ -1,19 +1,18 @@
 import { StoreRef, EnvModel, UpdateEffectLevel } from "./commitWork";
 import { Fiber, HookContextCosumer, HookEffect, HookValue, HookValueSet, RenderWithDep, VirtaulDomNode, VirtualDomOperator } from "./Fiber";
-import { reconcile } from "./reconcile";
-import { arrayEqual, arrayNotEqualDepsWithEmpty, FalseType, quote, simpleEqual } from "./util";
+import { arrayEqual, arrayNotEqualDepsWithEmpty, quote, simpleEqual } from "./util";
 
 
-let wipFiber: [EnvModel, Fiber] | undefined = undefined
+const wipFiber: [EnvModel, Fiber] = [] as any
 export function useParentFiber() {
   if (allowWipFiber) {
-    return wipFiber!
+    return wipFiber
   }
   console.error('禁止在此处访问fiber')
   throw new Error('禁止在此处访问fiber')
 }
 
-let allowWipFiber = true
+let allowWipFiber = false
 export function draftParentFiber() {
   allowWipFiber = false
 }
@@ -31,7 +30,10 @@ const hookIndex = {
 }
 
 export function updateFunctionComponent(envModel: EnvModel, fiber: Fiber) {
-  wipFiber = [envModel, fiber]
+  revertParentFiber()
+  wipFiber[0] = envModel
+  wipFiber[1] = fiber
+
   hookIndex.state = 0
   hookIndex.effect = [0, 0, 0]
   hookIndex.memo = 0
@@ -40,11 +42,12 @@ export function updateFunctionComponent(envModel: EnvModel, fiber: Fiber) {
 
   hookIndex.cusomer = 0
   fiber.render()
-  wipFiber = undefined
+  draftParentFiber()
 }
 
 export type ReducerFun<F, T> = (old: T, action: F) => T
 export type ReducerResult<F, T> = [T, HookValueSet<F, T>];
+
 /**
  * 依赖外部初始值
  * 也有只依赖一个函数,则值为常值如0,另作一个封装
@@ -52,33 +55,28 @@ export type ReducerResult<F, T> = [T, HookValueSet<F, T>];
  * @param v 
  * @param init 
  */
-export function useReducer<F, M, T>(
-  reducer: ReducerFun<F, T>,
-  v: M,
-  init: (m: M) => T,
-  didCommit?: (v: T) => void
-): ReducerResult<F, T>
-export function useReducer<F, T>(
-  reducer: ReducerFun<F, T>,
-  v: T,
-  init?: FalseType,
-  didCommit?: (v: T) => void
-): ReducerResult<F, T>
-export function useReducer<F, T = undefined>(
-  reducer: ReducerFun<F, T>
-): ReducerResult<F, T | undefined>
-export function useReducer() {
-  const [reducer, init, oldTrans, didCommit] = arguments
+export function useBaseReducer<F, M, T>(didCommit: undefined | ValueNotify<T>, reducer: ReducerFun<F, T>, init: M, initFun: (m: M) => T): ReducerResult<F, T>
+export function useBaseReducer<F, T>(didCommit: undefined | ValueNotify<T>, reducer: ReducerFun<F, T>, init: T, initFun?: (m: T) => T): ReducerResult<F, T>
+export function useBaseReducer<F, T = undefined>(didCommit: undefined | ValueNotify<T>, reducer: ReducerFun<F, T>, init?: T, initFun?: (m: T) => T): ReducerResult<F, T>
+export function useBaseReducer() {
+  const [didCommit, reducer, init, initFun] = arguments
   const [envModel, parentFiber] = useParentFiber()
   if (parentFiber.effectTag.get() == 'PLACEMENT') {
     //新增
     const hookValues = parentFiber.hookValue || []
     parentFiber.hookValue = hookValues
-    const trans = oldTrans || quote
-    const value = envModel.createChangeAtom(trans(init), didCommit)
+    const trans = initFun || quote
+    const value = envModel.createChangeAtom(trans(init), didCommit ? (v) => {
+      didCommit(v)
+      return v
+    } : undefined)
     const hook: HookValue<any, any> = {
       value,
-      set: buildSetValue(value, envModel, parentFiber, reducer)
+      set: buildSetValue(value, envModel, parentFiber, reducer),
+      reducer,
+      init,
+      initFun,
+      didCommit,
     }
     hookValues.push(hook)
     return [value.get(), hook.set]
@@ -92,10 +90,23 @@ export function useReducer() {
     if (!hook) {
       throw new Error("出现了更多的reducer")
     }
+    if (hook.reducer != reducer) {
+      console.warn("useReducer的reducer变化")
+    }
+    // if (hook.init != init) {
+    //   console.warn("useReducer的init变化")
+    // }
+    if (hook.initFun != initFun) {
+      console.warn("useReducer的initFun变化")
+    }
+    // if (hook.didCommit != didCommit) {
+    //   console.warn("useReducer的didCommit变化")
+    // }
     hookIndex.state++
     return [hook.value.get(), hook.set]
   }
 }
+export type ValueNotify<T> = (v: T) => void
 /**
  * setState需要做成异步提交
  * 提交的时候,只是在一个副本树上修改
@@ -113,21 +124,21 @@ export function useReducer() {
  */
 function buildSetValue<T, F>(atom: StoreRef<T>,
   envModel: EnvModel,
-  fiber: Fiber,
+  parentFiber: Fiber,
   reducer: (old: T, action: F) => T
 ) {
-  return function (temp: F, after?: (v: T) => void) {
-    if (fiber.destroyed) {
+  return function (temp: F, after?: ValueNotify<T>) {
+    if (parentFiber.destroyed) {
       console.log("更新已经销毁的fiber")
       return
     }
-    reconcile(envModel, {
+    envModel.reconcile({
       beforeLoop() {
         //这里如果多次设置值,则会改动多次,依前一次结果累积.
         const oldValue = atom.get()
         const newValue = reducer(oldValue, temp)
         if (newValue != oldValue) {
-          fiber.effectTag.set("UPDATE")
+          parentFiber.effectTag.set("UPDATE")
           atom.set(newValue)
         }
       },
@@ -137,8 +148,6 @@ function buildSetValue<T, F>(atom: StoreRef<T>,
     })
   }
 }
-
-export const EMPTYCONSTARRAY = [] as readonly any[]
 
 export type EffectResult<T> = (void | ((deps: T) => void))
 
@@ -208,10 +217,10 @@ export function createChangeAtom<T>(v: T, didCommit?: (v: T) => T) {
  * @param deps 
  * @returns 
  */
-export function useMemoGet<T, V extends readonly any[] = readonly any[]>(
+export function useBaseMemoGet<T, V extends readonly any[] = readonly any[]>(
+  didCommit: undefined | ((v: T) => void),
   effect: (deps: V) => T,
   deps: V,
-  didCommit?: (v: T) => void
 ): () => T {
   const [envModel, parentFiber] = useParentFiber()
   if (parentFiber.effectTag.get() == "PLACEMENT") {
@@ -264,17 +273,17 @@ export function useMemoGet<T, V extends readonly any[] = readonly any[]>(
     }
   }
 }
-export function useBaseFiber<T extends readonly any[] = readonly any[]>(
+export function renderBaseFiber<T extends readonly any[] = readonly any[]>(
   dom: VirtualDomOperator,
   dynamicChild: boolean,
   ...vs: RenderWithDep<T>
 ): VirtaulDomNode
-export function useBaseFiber<T extends readonly any[] = readonly any[]>(
+export function renderBaseFiber<T extends readonly any[] = readonly any[]>(
   dom: void,
   dynamicChild: boolean,
   ...vs: RenderWithDep<T>
 ): void
-export function useBaseFiber(
+export function renderBaseFiber(
   dom: any,
   dynamicChild: boolean,
   render: any,
@@ -340,20 +349,20 @@ export function useBaseFiber(
  * @param shouldUpdate 
  * @returns 
  */
-export function useFiber<T extends readonly any[] = readonly any[]>(
+export function renderFiber<T extends readonly any[] = readonly any[]>(
   dom: VirtualDomOperator,
   ...vs: RenderWithDep<T>
 ): VirtaulDomNode
-export function useFiber<T extends readonly any[] = readonly any[]>(
+export function renderFiber<T extends readonly any[] = readonly any[]>(
   dom: void,
   ...vs: RenderWithDep<T>
 ): void
-export function useFiber(
+export function renderFiber(
   dom: any,
   render: any,
   deps?: any
 ) {
-  return useBaseFiber(dom, false, render, deps)
+  return renderBaseFiber(dom, false, render, deps)
 }
 export interface Context<T> {
   useProvider(v: T): void
@@ -427,8 +436,12 @@ class ContextFactory<T> implements Context<T>{
       if (!hook) {
         throw new Error("没有出现更多consumes")
       }
-      hook.select = getValue
-      hook.shouldUpdate = shouldUpdate
+      if (hook.select != getValue) {
+        console.warn("useSelector的select变化")
+      }
+      if (hook.shouldUpdate != shouldUpdate) {
+        console.warn("useSelector的shouldUpdate变化")
+      }
       hookIndex.cusomer = index + 1
       return hook.getValue()
     }

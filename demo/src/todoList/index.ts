@@ -2,9 +2,9 @@ import { useDom } from "better-react-dom";
 import { initJsStore } from "../jsStore";
 import { normalPanel } from "../panel/PanelContext";
 import { useInput } from "better-react-dom-helper";
-import { useChange, usePromise, useVersion, PromiseResult, useInit, useGuard, useIf, useMap, defaultTranslate, useState } from "better-react-helper";
+import { useChange, useVersion, PromiseResult, useInit, renderGuard, renderIf, defaultTranslate, useState, useCallbackPromiseCall } from "better-react-helper";
 import { TodoModel, todoService } from "../jsStore/todo";
-import { useEffect, useMapF } from "better-react";
+import { renderMapF } from "better-react";
 import Counter from "../test/Counter";
 
 initJsStore()
@@ -46,17 +46,18 @@ export default normalPanel(function (operate, id) {
       useDom("div", {
         children() {
           const [value, setValue] = useChange('');
-          usePromise({
-            body() {
-              return todoService.getAll()
-            },
-            onFinally(data) {
+
+          useCallbackPromiseCall(
+            (data) => {
               setData({
                 ...data,
                 version
-              } as any)
+              })
             },
-          }, [version])
+            () => {
+              return todoService.getAll()
+            },
+            [version])
 
           useInput("input", {
             value,
@@ -88,7 +89,7 @@ export default normalPanel(function (operate, id) {
         },
       })
       console.log('guard-render')
-      useGuard(data,
+      renderGuard(data,
         [
           v => !v,
           () => {
@@ -102,7 +103,7 @@ export default normalPanel(function (operate, id) {
           (v) => {
             console.log("外部render")
             const vs = v?.value! as TodoModel[]
-            useMapF(undefined, vs, defaultTranslate, function (row, i) {
+            renderMapF(undefined, vs, defaultTranslate, function (row, i) {
               console.log("map-render")
               return [row.id, undefined, function () {
                 console.log("row-render", row.id)
@@ -166,7 +167,7 @@ export default normalPanel(function (operate, id) {
       )
 
 
-      useIf(data?.version != version, function () {
+      renderIf(data?.version != version, function () {
         useDom('div', {
           textContent: '正在加载'
         })

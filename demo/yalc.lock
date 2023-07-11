@@ -2,29 +2,29 @@
   "version": "v1",
   "packages": {
     "better-react-helper": {
-      "signature": "93b61a791445a1b5aa12042f0409dd64",
+      "signature": "3499b320d7ea94c42fe8bfb7afdcb18b",
       "file": true,
-      "replaced": "^1.1.1"
+      "replaced": "^1.1.2"
     },
     "better-react-dom-helper": {
-      "signature": "09d18c273155a2fcb4bff0f8fd3d6179",
+      "signature": "829dc331cb41fe6d846ba0a087423f0c",
       "file": true,
-      "replaced": "^1.0.9"
+      "replaced": "^1.1.1"
     },
     "better-react": {
-      "signature": "9ba3773c4a8b4483b66fe1a13b272a8d",
+      "signature": "3cd95b0346f823441160db6feb185eed",
       "file": true,
-      "replaced": "^1.1.1"
+      "replaced": "^1.1.2"
     },
     "better-react-dom": {
-      "signature": "6fc6d9020526b62275129d4e39efac4d",
+      "signature": "30ecb25a9a9d3910a5cc652d9c443f65",
       "file": true,
-      "replaced": "^1.1.1"
+      "replaced": "^1.1.2"
     },
     "stylis-creater": {
-      "signature": "4eaf30c18e269929ce65e8a7d3f6b4fe",
+      "signature": "eecec4b764d819e89f3e749c14ac3635",
       "file": true,
-      "replaced": "^1.0.8"
+      "replaced": "^1.1.1"
     }
   }
 }

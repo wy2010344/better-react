@@ -1,23 +1,19 @@
 import { Fiber, HookContextCosumer, VirtaulDomNode } from "./Fiber"
 import { deepTravelFiber, findParentAndBefore } from "./findParentAndBefore"
-import { AskNextTimeWork, WorkUnit } from "./reconcile"
-import { quote, removeEqual } from "./util"
+import { EmptyFun, ManageValue, quote, removeEqual } from "./util"
 
 
 export type CreateChangeAtom<T> = (v: T, didCommit?: (v: T) => T) => StoreRef<T>
+export type Reconcile = ({
+  beforeLoop,
+  afterLoop
+}: {
+  beforeLoop?: EmptyFun
+  afterLoop?: EmptyFun
+}) => void
 export class EnvModel {
-  constructor(
-    public rootFiber: Fiber | undefined,
-    private readonly layout: () => void,
-    /**异步地请求下一步*/
-    getAskNextTimeWork: (env: EnvModel) => AskNextTimeWork<EnvModel>
-  ) {
-    this.askNextTimeWork = getAskNextTimeWork(this)
-  }
-  askNextTimeWork: AskNextTimeWork<EnvModel>
-  /**请求下一步*/
-  //任务列表
-  readonly workList: WorkUnit[] = []
+  reconcile: Reconcile = null as any
+  // readonly askNextTimeWork: () => void
   /**本次新注册的监听者*/
   private readonly draftConsumers: HookContextCosumer<any, any>[] = []
   addDraftConsumer(v: HookContextCosumer<any, any>) {
@@ -33,7 +29,20 @@ export class EnvModel {
     this.updateEffects[level].push(set)
   }
   /**批量提交需要最终确认的atoms */
-  readonly changeAtoms: ChangeAtom<any>[] = []
+  private readonly changeAtoms: ChangeAtom<any>[]
+  private changeAtomsManage: ManageValue<ChangeAtom<any>>
+  constructor() {
+    const changeAtoms: ChangeAtom<any>[] = []
+    this.changeAtoms = changeAtoms
+    this.changeAtomsManage = {
+      add(v) {
+        changeAtoms.push(v)
+      },
+      remove(v) {
+        removeEqual(changeAtoms, v)
+      },
+    }
+  }
   hasChangeAtoms() {
     return this.changeAtoms.length > 0
   }
@@ -50,7 +59,7 @@ export class EnvModel {
     // appends.length = 0
     // appendAsPortals.length = 0
   }
-  commit() {
+  commit(rootFiber: Fiber, layout: () => void) {
     /**最新更新所有注册的*/
     this.changeAtoms.forEach(atom => atom.commit())
     this.changeAtoms.length = 0
@@ -73,11 +82,12 @@ export class EnvModel {
     // appendAsPortals.length = 0
     // appends.forEach(v => v[0].appendAfter(v[1]))
     // appends.length = 0
-    updateFixDom(this.rootFiber)
-    this.layout()
+    updateFixDom(rootFiber)
+    layout()
     /******执行所有的effect********************************************************/
     this.runUpdateEffect(2)
   }
+
   private runUpdateEffect(level: UpdateEffectLevel) {
     const updateEffect = this.updateEffects[level]
     updateEffect.forEach(effect => effect())
@@ -93,32 +103,15 @@ export class EnvModel {
     value: T,
     didCommit?: (v: T) => T
   ): StoreRef<T> {
-    return new ChangeAtom(this, value, didCommit || quote)
+    return new ChangeAtom(this.changeAtomsManage, value, didCommit || quote)
   }
-
-  batchUpdate = {
-    on: false,
-    works: [] as LoopWork[]
-  }
-
-  //当前任务
-  currentTick = {
-    on: false as boolean,
-    //当前执行的render任务是否是低优先级的
-    isLow: false as boolean,
-    //提交的任务
-    lowRollback: [] as LoopWork[]
-  }
-
-  renderWorks: EMPTY_FUN[] = []
 }
-export type EMPTY_FUN = () => void
 export type LoopWork = {
   type: "loop"
   //是否是低优先级
   isLow?: boolean
-  beforeWork?: EMPTY_FUN
-  afterWork?: EMPTY_FUN
+  beforeWork?: EmptyFun
+  afterWork?: EmptyFun
 }
 export type UpdateEffect = () => void
 /**本次所有需要执行的effects 
@@ -140,17 +133,18 @@ export type StoreRef<T> = {
   set(v: T): void
   get(): T
 }
+
 /**
  * 需要区分create和update阶段
  */
 class ChangeAtom<T> implements StoreRef<T>{
   private isCreate = true
   constructor(
-    private envModel: EnvModel,
+    private manage: ManageValue<ChangeAtom<any>>,
     private value: T,
     private whenCommit: (v: T) => T
   ) {
-    envModel.changeAtoms.push(this)
+    this.manage.add(this)
   }
   dirty = false
   draftValue!: T
@@ -161,13 +155,13 @@ class ChangeAtom<T> implements StoreRef<T>{
       if (v != this.value) {
         if (!this.dirty) {
           this.dirty = true
-          this.envModel.changeAtoms.push(this)
+          this.manage.add(this)
         }
         this.draftValue = v
       } else {
         if (this.dirty) {
           this.dirty = false
-          removeEqual(this.envModel.changeAtoms, this)
+          this.manage.remove(this)
         }
         this.draftValue = this.value
       }
@@ -263,7 +257,7 @@ function notifyDel(fiber: Fiber) {
     let next: Fiber | void = child
     while (next) {
       notifyDel(next)
-      next = fiber.next.get()
+      next = next.next.get()
     }
   }
 }
