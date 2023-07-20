@@ -18,6 +18,7 @@ class TypeCreater {
     /**
      * 类型才有include方法,普通值没有
      * 将普通值声明成类型,只有联合类型
+     * 自身是v的类型,即自身作为集合,包含v
      */
     public readonly include: (v: any) => boolean
   ) { }
@@ -227,6 +228,24 @@ const abcFunc = new FunctionTypeCreater([NumberType, StringType, NumberType], Nu
  */
 console.log(abcFunc.include(new FunctionTypeCreater([NumberType], NumberType)))
 console.log(abcFunc.include(new FunctionTypeCreater([NumberType, StringType, NumberType], 9)))
+//入参过多的时候不能赋值过去,因为调用时参数不满足.但如果过多的入参是带或空如Any?,是可以满足的.如果是Number?,能保证调用时传空
+//但是这时候又传给另一个String?,意外将String传给Number
+//在元组中,[String?]能赋值给[],但[]不能赋[Number?]?
+//在函数中,[String?]->Void能赋给[]->Void,[]->Void也能赋给[Number?]->Void
+//但按现在的理论,前一步无法完成.
+//主要是[String?]等价于[String]|[].
+//不对,空元组访问1,得到undefined.那么不能将[String?]赋值给[],因为不能将String?赋值给undefined,只能是相反
+//所以[]能赋给类型[String?],而函数[String?]->Void能赋值给[]->Void,因为调用的时候必然传空
+//元素[String,Number,String]能赋给[String,Number],而不是相反,是因为变成后者类型后,任何访问都能正常.就是8变成Number类型,能访问Number的方法.方法总量是在变少
+//[String?]能赋值给[],是方法变少
+//但在作为函数入参,入参类型是被绑定的值,入参类型的方法应该比具体类型的方法更少,是它的类型
+//所以[]->Void能赋值给[String?]->Void,是因为到时候传[]或["abc"],都能正常返回Void.
+//而[String?]->Void不能赋值给[]->Void?....不,主要是[String?]的真实类型是[String]&[],是即是也是,而不是或
+//作为类型[String?],能接受[String]或[],因为它是二者的集合
+//作为值[String?],其实只能赋值给[String?],或其它联合,类似[String]&[]&[Number,String]
+//函数Number->String,能赋值给8|9->String,因为具体调用的时候,只会传8或9
+//所以[]->String能赋值给[String?]->String,但是[String?]->String不能赋值给[]->String.就是在这一步出的错.因为[String?]/[Number?]都可以赋值给[]
+console.log(abcFunc.include(new FunctionTypeCreater([NumberType, StringType, NumberType, StringType], 9)))
 console.log(abcFunc.include(new FunctionTypeCreater([], 8)))
 
 

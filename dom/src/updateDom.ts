@@ -2,8 +2,8 @@ import {
   FindParentAndBefore,
   Props, StoreRef, VirtaulDomNode, createChangeAtom, createContext, useAttrEffect
 } from "better-react"
-import { SvgElements } from "./html"
 import { getAttributeAlias } from "./getAttributeAlias"
+import { SvgElementType } from "./html"
 
 /**
  * 这只是一种dom的更新css方式,将css属性交给外部处理
@@ -67,14 +67,22 @@ export class FiberNode implements FiberAbsNode {
 
   }
   static createDom(type: string) {
-    return new FiberNode(
-      document.createElement(type),
-      updatePorps
+    return FiberNode.createDomWith(
+      document.createElement(type)
     )
   }
+  static createDomWith(node: Node) {
+    return new FiberNode(node, updatePorps)
+  }
   static createSvg(type: string) {
+    return FiberNode.createSvgWith(
+      document.createElementNS("http://www.w3.org/2000/svg", type)
+    )
+  }
+  static createSvgWith(node: Node) {
+
     return new FiberNode(
-      document.createElementNS("http://www.w3.org/2000/svg", type),
+      node,
       updateSVGProps
     )
   }
@@ -366,7 +374,7 @@ export function appendAfter(dom: FiberAbsNode, parentAndBefore: [FiberAbsNode, F
 export function isSVG(name: string) {
   return svgTagNames.includes(name as any)
 }
-export const svgTagNames: (keyof SvgElements)[] = [
+export const svgTagNames: SvgElementType[] = [
   "svg",
   "animate",
   "animateMotion",

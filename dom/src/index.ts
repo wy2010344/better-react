@@ -1,4 +1,4 @@
-import { render, AskNextTimeWork, VirtualDomOperator, RenderWithDep, renderFiber } from "better-react";
+import { render, AskNextTimeWork, VirtualDomOperator, RenderWithDep, renderFiber, useAttrEffect } from "better-react";
 import { DomAttribute, DomElement, DomElementType, SvgAttribute, SvgElement, SvgElementType } from "./html";
 import { EMPTYPROPS, FiberNode, FiberText, emptyFun } from "./updateDom";
 export { getScheduleAskTime } from './schedule'
@@ -107,96 +107,112 @@ function getChildren(props: any) {
 }
 
 
-export class DomCreater<T extends DomElementType>{
+export class DomCreater<T extends DomElementType, M>{
   constructor(
-    public readonly type: T,
-    public readonly props: DomAttribute<T> = EMPTYPROPS
+    public readonly props: DomAttribute<T> = EMPTYPROPS,
+    public readonly create: (v: M) => FiberNode,
+    public readonly createArg: M
   ) { }
-  renderChildren<M extends readonly any[]>(...vs: RenderWithDep<M>) {
-    const dom = renderFiber(
-      <VirtualDomOperator<any>>[FiberNode.createDom, this.props, this.type],
-      ...vs
-    ) as FiberNode
-    return dom.node as unknown as DomElement<T>
-  }
   renderInnerHTML(innerHTML: string) {
     const dom = renderFiber(
-      <VirtualDomOperator<any>>[FiberNode.createDom, {
+      <VirtualDomOperator<any>>[this.create, {
         ...this.props,
         innerHTML
-      }, this.type],
+      }, this.createArg],
       emptyFun
     ) as FiberNode
     return dom.node as unknown as DomElement<T>
   }
   renderTextContent(textContent: string) {
     const dom = renderFiber(
-      <VirtualDomOperator<any>>[FiberNode.createDom, {
+      <VirtualDomOperator<any>>[this.create, {
         ...this.props,
         textContent
-      }, this.type],
+      }, this.createArg],
       emptyFun
     ) as FiberNode
     return dom.node as unknown as DomElement<T>
-
   }
-  renderContentEditable(contentEditable: boolean | "inherit" | "plaintext-only") {
+  renderContentEditable(contentEditable: true | "inherit" | "plaintext-only", text: string, as: "html" | "text"): void
+  renderContentEditable(contentEditable?: true | "inherit" | "plaintext-only"): void
+  renderContentEditable() {
+    const contentEditable = arguments[0]
+    const text = arguments[1]
+    const as = arguments[2]
     const dom = renderFiber(
-      <VirtualDomOperator<any>>[FiberNode.createDom, {
+      <VirtualDomOperator<any>>[this.create, {
         ...this.props,
         contentEditable
-      }, this.type],
+      }, this.createArg],
       emptyFun
     ) as FiberNode
-    return dom.node as unknown as DomElement<T>
+    const node = dom.node as unknown as DomElement<T>
+    useAttrEffect(() => {
+      if (text) {
+        if (as == "html") {
+          node.innerHTML = text
+        } else if (as == "text") {
+          node.textContent = text
+        }
+      }
+    }, [])
+    return node
   }
+  render<M extends readonly any[]>(...vs: RenderWithDep<M>): DomElement<T>
+  render(): DomElement<T>
   render() {
+    const render = arguments[0] || emptyFun
+    const deps = arguments[1]
     const dom = renderFiber(
-      <VirtualDomOperator<any>>[FiberNode.createDom, this.props, this.type],
-      emptyFun
+      <VirtualDomOperator<any>>[this.create, this.props, this.createArg],
+      render,
+      deps
     ) as FiberNode
     return dom.node as unknown as DomElement<T>
   }
 }
 
 export function domOf<T extends DomElementType>(type: T, props?: DomAttribute<T>) {
-  return new DomCreater(type, props)
+  return new DomCreater(props, FiberNode.createDom, type)
 }
-
-export class SvgCreater<T extends SvgElementType>{
+export function domExistOf<T extends DomElementType>(node: DomElement<T>, props?: DomAttribute<T>) {
+  return new DomCreater(props, FiberNode.createDomWith, node);
+}
+export class SvgCreater<T extends SvgElementType, M>{
   constructor(
-    public readonly type: T,
-    public readonly props: SvgAttribute<T> = EMPTYPROPS
+    public readonly props: SvgAttribute<T> = EMPTYPROPS,
+    public readonly create: (v: M) => FiberNode,
+    public readonly createArg: M
   ) { }
 
+  render<M extends readonly any[]>(...vs: RenderWithDep<M>): SvgElement<T>
+  render(): SvgElement<T>
   render() {
+    const render = arguments[0] || emptyFun
+    const deps = arguments[1]
     const dom = renderFiber(
-      <VirtualDomOperator<any>>[FiberNode.createSvg, this.props, this.type] as any,
-      emptyFun
+      <VirtualDomOperator<any>>[this.create, this.props, this.createArg] as any,
+      render,
+      deps
     ) as FiberNode
     return dom.node as unknown as SvgElement<T>
   }
 
   renderInnerHTML(innerHTML: string) {
     const dom = renderFiber(
-      <VirtualDomOperator<any>>[FiberNode.createSvg, {
+      <VirtualDomOperator<any>>[this.create, {
         ...this.props,
         innerHTML
-      }, this.type],
+      }, this.createArg],
       emptyFun
-    ) as FiberNode
-    return dom.node as unknown as SvgElement<T>
-  }
-
-  renderChildren<M extends readonly any[]>(...vs: RenderWithDep<M>) {
-    const dom = renderFiber(
-      <VirtualDomOperator<any>>[FiberNode.createSvg, this.props, this.type],
-      ...vs
     ) as FiberNode
     return dom.node as unknown as SvgElement<T>
   }
 }
 
 export function svgOf<T extends SvgElementType>(type: T, props?: SvgAttribute<T>) {
-  return new SvgCreater(type, props)
+  return new SvgCreater(props, FiberNode.createSvg, type)
+}
+export function svgExistOf<T extends SvgElementType>(node: SvgElement<T>, props?: SvgAttribute<T>) {
+  return new SvgCreater(props, FiberNode.createSvgWith, node);
 }

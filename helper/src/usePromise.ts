@@ -1,7 +1,7 @@
 import { useEffect } from "better-react"
 import { useEvent } from "./useEvent"
 import { useChange, useState } from "./useState"
-import { useMemo } from "./useRef"
+import { useMemo, useRef } from "./useRef"
 import { FalseType } from "better-react/dist/util"
 import { useVersionLock } from "./Lock"
 import { useCallback } from "./useCallback"
@@ -114,31 +114,34 @@ export function useCallbackPromiseState<T, Deps extends readonly any[]>(
   return useBaseCallbackPromiseState(undefined, effect, deps)
 }
 
-type MutationResult<Res> = PromiseResult<Res> & {
-  version: number
-}
-export function useMutation<Req extends any[], Res>(effect: (...vs: Req) => Promise<Res>, opts?: {
-  onCall?(version: number): void
-  onFinally?(data: MutationResult<Res>): void
-}) {
-  const [versionLock, updateVersionLock] = useVersionLock()
-  const [data, updateData] = useChange<MutationResult<Res>>()
-  const onFinally = useEvent(function (data: MutationResult<Res>) {
-    if (versionLock() == data.version) {
-      opts?.onFinally?.(data)
-      updateData(data)
-    }
-  })
-  return [function (...vs: Req) {
-    if (data?.version != versionLock()) {
+export function useMutation<Req extends any[], Res>(effect: (...vs: Req) => Promise<Res>) {
+  const boolLock = useRef(false)
+  return function (...vs: Req) {
+    if (boolLock.get()) {
       return
     }
-    const version = updateVersionLock()
-    opts?.onCall?.(version)
-    return effect(...vs).then(res => {
-      onFinally({ type: "success", value: res, version })
-    }).catch(err => {
-      onFinally({ type: "error", value: err, version })
+    boolLock.set(true)
+    return effect(...vs).finally(() => {
+      boolLock.set(false)
     })
-  }, data] as const
+  }
+}
+
+export type MutationState<T> = PromiseResult<T> & {
+  version: number
+}
+export function useMutationState<Req extends any[], Res>(effect: (...vs: Req) => Promise<Res>) {
+  const [getVersion, updateVersion] = useVersionLock()
+  const [data, updateData] = useChange<MutationState<Res>>()
+  return [useEvent(function (...vs: Req) {
+    if ((data?.version || 0) != getVersion()) {
+      return
+    }
+    const version = updateVersion()
+    effect(...vs).then(res => {
+      updateData({ type: "success", value: res, version })
+    }).catch(err => {
+      updateData({ type: "error", value: err, version })
+    })
+  }), data] as const
 }

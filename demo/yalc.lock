@@ -9,7 +9,7 @@
     "better-react-dom-helper": {
       "signature": "829dc331cb41fe6d846ba0a087423f0c",
       "file": true,
-      "replaced": "^1.1.1"
+      "replaced": "^1.2.0"
     },
     "better-react": {
       "signature": "3cd95b0346f823441160db6feb185eed",
@@ -17,9 +17,9 @@
       "replaced": "^1.1.2"
     },
     "better-react-dom": {
-      "signature": "30ecb25a9a9d3910a5cc652d9c443f65",
+      "signature": "a929695f991a16e2f7b99dccfdcf9321",
       "file": true,
-      "replaced": "^1.1.2"
+      "replaced": "^1.2.0"
     },
     "stylis-creater": {
       "signature": "eecec4b764d819e89f3e749c14ac3635",
