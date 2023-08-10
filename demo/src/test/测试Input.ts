@@ -1,7 +1,7 @@
 import { renderFragment, useState } from "better-react-helper";
 import { normalPanel } from "../panel/PanelContext";
 import Counter from "./Counter";
-import { useInput } from "better-react-dom-helper";
+import { renderInput } from "better-react-dom-helper";
 
 export default normalPanel(function () {
 
@@ -14,7 +14,7 @@ export default normalPanel(function () {
 
     const [value, setValue] = useState('');
 
-    useInput("input", {
+    renderInput("input", {
       value,
       onValueChange(v) {
         console.log("cc", v)

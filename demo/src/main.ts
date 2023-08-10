@@ -7,6 +7,7 @@ import { StylisCreater } from "stylis-creater";
 
 import test from './test'
 import cssHasCursor from "./learn/css-has-cursor";
+import 测试sharePortal from "./测试sharePortal";
 const destroy = createRoot(
   document.getElementById("app")!,
   function () {
@@ -42,7 +43,7 @@ const destroy = createRoot(
       }
     })
     CountContext.useProvider(count)
-
+    测试sharePortal()
 
     test()
     const { panels, operate } = useMemo(() => {

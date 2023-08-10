@@ -2,29 +2,29 @@
   "version": "v1",
   "packages": {
     "better-react-helper": {
-      "signature": "3499b320d7ea94c42fe8bfb7afdcb18b",
+      "signature": "3dd4b205004116b1a698d29dfdd5c6a1",
       "file": true,
-      "replaced": "^1.1.2"
+      "replaced": "^1.2.0"
     },
     "better-react-dom-helper": {
-      "signature": "829dc331cb41fe6d846ba0a087423f0c",
+      "signature": "55cbaf96894943aff00dc747cef6871a",
       "file": true,
       "replaced": "^1.2.0"
     },
     "better-react": {
-      "signature": "3cd95b0346f823441160db6feb185eed",
+      "signature": "a1f8c48972f9bf7c5399ebc5bf4ddbf3",
       "file": true,
-      "replaced": "^1.1.2"
+      "replaced": "^1.2.0"
     },
     "better-react-dom": {
-      "signature": "a929695f991a16e2f7b99dccfdcf9321",
+      "signature": "68018dad04b7dc10a0ad6961cc59dd55",
       "file": true,
       "replaced": "^1.2.0"
     },
     "stylis-creater": {
-      "signature": "eecec4b764d819e89f3e749c14ac3635",
+      "signature": "51eb09243473e5cfb6767bfbf310e6cb",
       "file": true,
-      "replaced": "^1.1.1"
+      "replaced": "^1.2.0"
     }
   }
 }

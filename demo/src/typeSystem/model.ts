@@ -1,3 +1,4 @@
+import { useStoreTriggerRender } from "better-react-helper";
 import { useStore } from "../dbStore";
 
 
@@ -28,8 +29,8 @@ function equalRow(a: TypeSystemModel, b: TypeSystemModel) {
   return a.metaType == b.metaType && a.name == b.name
 }
 export function useTypeDB() {
-  const { notify, useValue } = useStore("typeSystem", [])
-  const list = useValue()
+  const notify = useStore("typeSystem", [])
+  const list = useStoreTriggerRender(notify)
   function checkExist(metaType: "type" | "value", name: string) {
     if (list.find(x => x.metaType == metaType && x.name == name)) {
       return true

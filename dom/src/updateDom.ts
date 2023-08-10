@@ -1,6 +1,6 @@
 import {
   FindParentAndBefore,
-  Props, StoreRef, VirtaulDomNode, createChangeAtom, createContext, useAttrEffect
+  Props, VirtaulDomNode, createContext, useAttrEffect
 } from "better-react"
 import { getAttributeAlias } from "./getAttributeAlias"
 import { SvgElementType } from "./html"
@@ -37,6 +37,7 @@ export class FiberNode implements FiberAbsNode {
   private constructor(
     public node: Node,
     private _updateProp: (node: Node, key: string, value: any) => void,
+    public readonly isPortal?: boolean,
   ) {
   }
   //这个props不需要AtomValue,因为在运行时不访问
@@ -58,53 +59,58 @@ export class FiberNode implements FiberAbsNode {
   }
   static create(
     node: Node,
-    updateProps: (node: Node, key: string, value: any) => void = updatePorps
+    updateProps: (node: Node, key: string, value: any) => void,
+    isPortal?: boolean,
   ) {
     return new FiberNode(
       node,
-      updateProps
+      updateProps,
+      isPortal
     )
-
   }
-  static createDom(type: string) {
+  static createDomWith(node: Node, isPortal?: boolean) {
+    return new FiberNode(node, updatePorps, isPortal)
+  }
+  static portalCreateDomWith(node: Node) {
+    return FiberNode.createDomWith(node, true)
+  }
+  static createDom(type: string, isPortal?: boolean) {
     return FiberNode.createDomWith(
-      document.createElement(type)
+      document.createElement(type),
+      isPortal
     )
   }
-  static createDomWith(node: Node) {
-    return new FiberNode(node, updatePorps)
+  static portalCreateDom(type: string) {
+    return FiberNode.createDom(type, true)
   }
-  static createSvg(type: string) {
-    return FiberNode.createSvgWith(
-      document.createElementNS("http://www.w3.org/2000/svg", type)
-    )
-  }
-  static createSvgWith(node: Node) {
-
+  static createSvgWith(node: Node, isPortal?: boolean) {
     return new FiberNode(
       node,
-      updateSVGProps
+      updateSVGProps,
+      isPortal
     )
   }
-  // isPortal(): boolean {
-  //   return this.getProps().portalTarget
-  // }
-  // appendAsPortal(): void {
-  //   const parent = this.getProps().portalTarget()
-  //   if (parent) {
-  //     if (parent != this.node.parentNode) {
-  //       parent.appendChild(this.node)
-  //     }
-  //   } else {
-  //     console.warn('no parent get', this.getProps())
-  //   }
-  // }
+  static portalCreateSvgWith(node: Node) {
+    return FiberNode.createSvgWith(node, true)
+  }
+  static createSvg(type: string, isPortal?: boolean) {
+    return FiberNode.createSvgWith(
+      document.createElementNS("http://www.w3.org/2000/svg", type),
+      isPortal
+    )
+  }
+  static portalCreateSvg(type: string) {
+    return FiberNode.createSvg(type, true)
+  }
   appendAfter(value?: FindParentAndBefore): void {
     appendAfter(this, value as any)
   }
   destroy(): void {
     if (this.style) {
       this.style.destroy()
+    }
+    if (this.isPortal) {
+      this.removeFromParent()
     }
   }
   private realRemove() {
@@ -134,6 +140,9 @@ export class FiberText implements FiberAbsNode {
   public node: Node = document.createTextNode("")
   static create() {
     return new FiberText()
+  }
+  appendAsPortal(): void {
+
   }
   useUpdate(content: string) {
     if (this.oldContent != content) {
@@ -278,7 +287,7 @@ function isEvent(key: string) {
  * @returns 
  */
 function isProperty(key: string) {
-  return key != 'children' && key != 'css' && key != 'exit' && !isEvent(key)
+  return key != 'children' && key != 'css' && key != 'exit' && !isEvent(key) && key != 'appendAsPortal'
 }
 /**
  * 属性发生变更

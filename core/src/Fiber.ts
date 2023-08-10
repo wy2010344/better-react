@@ -210,10 +210,10 @@ export type RenderWithDep<T extends readonly any[] = readonly any[]> = [
 
 export type VirtaulDomNode<T = any> = {
   useUpdate(props: T): void
+  isPortal?: boolean
   //创建
   //在update之前,所以要更新props
   // isPortal(): boolean
-  // appendAsPortal(): void
   appendAfter(value: FindParentAndBefore): void
   //只对部分元素执行删除
   removeFromParent(): void

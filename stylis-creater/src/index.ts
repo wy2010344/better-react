@@ -90,7 +90,7 @@ export function css(ts: TemplateStringsArray, ...vs: (string | number)[]) {
   return body.className
 }
 
-import { useBaseMemoGet, useEffect, createChangeAtom, emptyArray, StoreRef } from 'better-react'
+import { useBaseMemoGet, useEffect, useGetCreateChangeAtom, emptyArray, StoreRef } from 'better-react'
 
 function createStyledUpdate() {
   return {
@@ -103,6 +103,7 @@ function createStyledUpdate() {
  * @returns 
  */
 export function useBodyStyleUpdate() {
+  const createChangeAtom = useGetCreateChangeAtom()
   const styledUp = useBaseMemoGet(undefined, createStyledUpdate, emptyArray)()
   if (!styledUp.atom) {
     styledUp.atom = createChangeAtom<string>("", function (css) {

@@ -2,7 +2,7 @@ import { domOf, renderContent, useDom } from "better-react-dom";
 import { useRef, renderMap } from "better-react-helper";
 import { useUser } from "../dbStore";
 import { normalPanel } from "../panel/PanelContext";
-import { useInput } from "better-react-dom-helper";
+import { renderInput } from "better-react-dom-helper";
 
 export default normalPanel(function (operate, id) {
   const user = useUser()
@@ -54,7 +54,7 @@ export default normalPanel(function (operate, id) {
                     })
                     useDom("td", {
                       children() {
-                        useInput("input", {
+                        renderInput("input", {
                           type: "color",
                           value: user.color || "#000000",
                           onValueChange(v) {

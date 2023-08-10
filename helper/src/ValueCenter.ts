@@ -40,23 +40,21 @@ export type SetStateAction<T> = T | ((v: T) => T)
 export type ReduceState<T> = (v: SetStateAction<T>, didCommit?: (v: T) => void) => void
 export interface ValueCenter<T> {
   get(): T
-  set: ReduceState<T>
+  set(v: T): void
   poolSize(): number
   subscribe: Subscriber<T>
 }
 export function valueCenterOf<T>(value: T): ValueCenter<T> {
   const { subscribe, notify, poolSize } = eventCenter<T>()
-  function get() {
-    return value
-  }
-  const set = toReduceState(v => {
-    value = v
-    notify(v)
-  }, get)
   return {
-    get,
+    get() {
+      return value
+    },
     poolSize,
-    set,
+    set(v) {
+      value = v
+      notify(v)
+    },
     subscribe
   }
 }

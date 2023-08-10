@@ -207,9 +207,9 @@ export const useBeforeAttrEffect = buildUseEffect(0)
 export const useAttrEffect = buildUseEffect(1)
 export const useEffect = buildUseEffect(2)
 
-export function createChangeAtom<T>(v: T, didCommit?: (v: T) => T) {
+export function useGetCreateChangeAtom() {
   const [envModel] = useParentFiber()
-  return envModel.createChangeAtom(v, didCommit)
+  return envModel.createChangeAtom
 }
 /**
  * 通过返回函数,能始终通过函数访问fiber上的最新值
@@ -535,4 +535,10 @@ class ContextListener<T, M>{
   destroy() {
     this.context.off(this)
   }
+}
+
+
+export function useGetFlushSync() {
+  const [envModel] = useParentFiber()
+  return envModel.flushSync
 }

@@ -5,9 +5,9 @@ import { emptyObject } from "./util"
 export { startTransition } from './reconcile'
 export type { REAL_WORK } from './reconcile'
 export {
-  createChangeAtom,
+  useGetCreateChangeAtom,
   useBaseReducer, useEffect, useAttrEffect, useBeforeAttrEffect, useBaseMemoGet,
-  createContext, renderFiber
+  createContext, renderFiber, useGetFlushSync
 } from './fc'
 export {
   arrayNotEqualDepsWithEmpty,
@@ -29,7 +29,7 @@ export type {
   VirtualDomOperator,
 } from './Fiber'
 export type { AskNextTimeWork }
-export { StoreRef } from './commitWork'
+export { StoreRef, CreateChangeAtom } from './commitWork'
 export type { FindParentAndBefore } from './findParentAndBefore'
 export * from './renderOneF'
 export * from './renderMapF'

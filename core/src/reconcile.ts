@@ -1,8 +1,8 @@
-import { EnvModel, LoopWork } from "./commitWork"
+import { EnvModel, LoopWork, StoreRef } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
 import { Fiber } from "./Fiber"
 import { deepTravelFiber } from "./findParentAndBefore"
-import { EmptyFun } from "./util"
+import { EmptyFun, storeRef } from "./util"
 
 function getRec1(askNextTimeWork: EmptyFun, appendWork: (work: WorkUnit) => void) {
   let batchUpdateOn = false
@@ -44,7 +44,10 @@ export function getReconcile(
 ) {
   /**业务的工作队列 */
   const { appendWork, getNextWork } = buildWorkUnits(envModel, batchWork)
-  const askNextTimeWork = askWork(getNextWork)
+  const askNextTimeWork = askWork({
+    askNextWork: getNextWork,
+    realTime: envModel.realTime,
+  })
   return getRec1(askNextTimeWork, appendWork)
 }
 /**
@@ -57,7 +60,7 @@ export class BatchWork {
     private layout: () => void
   ) { }
   beginRender(currentTick: CurrentTick, renderWorks: RenderWorks) {
-    if (this.envModel.hasChangeAtoms() && this.rootFiber) {
+    if (this.envModel.shouldRender() && this.rootFiber) {
       this.workLoop(renderWorks, currentTick, this.rootFiber)
     }
   }
@@ -272,7 +275,10 @@ export type WorkUnit = {
   work: EmptyFun
 } | LoopWork
 
-export type AskNextTimeWork = (askNextWork: () => REAL_WORK | void) => EmptyFun
+export type AskNextTimeWork = (data: {
+  realTime: StoreRef<boolean>
+  askNextWork: () => REAL_WORK | void
+}) => EmptyFun
 export type REAL_WORK = EmptyFun & {
   isRender?: boolean
 }

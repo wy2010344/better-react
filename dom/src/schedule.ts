@@ -1,8 +1,8 @@
-import { AskNextTimeWork, REAL_WORK } from "better-react"
+import { AskNextTimeWork, EmptyFun, REAL_WORK } from "better-react"
 export const getTime = () => performance.now()
 const canPromise = typeof Promise !== 'undefined' && window.queueMicrotask
 const canMessageChannel = typeof MessageChannel !== 'undefined'
-function runMacroTask(fun: () => void) {
+function runMacroTask(fun: EmptyFun) {
   if (canMessageChannel) {
     /**
      * MessageChannel是一个宏任务,
@@ -15,13 +15,37 @@ function runMacroTask(fun: () => void) {
   }
   return setTimeout(fun)
 }
-function runMicroTask(fun: () => void) {
+function runMicroTask(fun: EmptyFun) {
   if (canPromise) {
     queueMicrotask(fun)
   }
   return runMacroTask(fun)
 }
-export const getScheduleAskTime: AskNextTimeWork = function (getNextWork) {
+
+let startSyncTask = false
+const syncTasks: EmptyFun[] = []
+function runTaskSync(fun: EmptyFun) {
+  syncTasks.push(fun)
+  if (!startSyncTask) {
+    startSyncTask = true
+    let task = syncTasks.pop()
+    while (task) {
+      task()
+      task = syncTasks.pop()
+    }
+    startSyncTask = false
+  }
+}
+
+function runTask(fun: EmptyFun, realTime: boolean) {
+  if (realTime) {
+    runTaskSync(fun)
+  } else {
+    runMacroTask(fun)
+  }
+}
+
+export const getScheduleAskTime: AskNextTimeWork = function ({ askNextWork, realTime }) {
   let onWork = false
   const threshold: number = 5
   let lastRenderTime = getTime()
@@ -32,27 +56,32 @@ export const getScheduleAskTime: AskNextTimeWork = function (getNextWork) {
    */
   const flush = () => {
     const deadline = getTime() + threshold
-    let callback = getNextWork()
+    let callback = askNextWork()
     while (callback) {
-      if (getTime() < deadline) {
-        if (callback.isRender) {
-          const thisRenderTime = getTime()
-          if (thisRenderTime - lastRenderTime < 16) {
-            //和上次的间隔需要大于16ms,因为刷新频率,放到下一次去执行
-            runMacroTask(flush)
-            break
-          }
-          callback()
-          //console.log("render", thisRenderTime - lastRenderTime)
-          lastRenderTime = thisRenderTime
-        } else {
-          callback()
-        }
-        callback = getNextWork()
+      if (realTime.get()) {
+        callback()
+        callback = askNextWork()
       } else {
-        //需要中止,进入宏任务.原列表未处理完
-        runMacroTask(flush)
-        break
+        if (getTime() < deadline) {
+          if (callback.isRender) {
+            const thisRenderTime = getTime()
+            if (thisRenderTime - lastRenderTime < 16) {
+              //和上次的间隔需要大于16ms,因为刷新频率,放到下一次去执行
+              runTask(flush, realTime.get())
+              break
+            }
+            callback()
+            //console.log("render", thisRenderTime - lastRenderTime)
+            lastRenderTime = thisRenderTime
+          } else {
+            callback()
+          }
+          callback = askNextWork()
+        } else {
+          //需要中止,进入宏任务.原列表未处理完
+          runTask(flush, realTime.get())
+          break
+        }
       }
     }
     if (!callback) {
@@ -62,7 +91,7 @@ export const getScheduleAskTime: AskNextTimeWork = function (getNextWork) {
   return function () {
     if (!onWork) {
       onWork = true
-      runMicroTask(flush)
+      runTask(flush, realTime.get())
     }
   }
 }

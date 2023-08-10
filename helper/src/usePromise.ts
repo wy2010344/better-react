@@ -145,3 +145,36 @@ export function useMutationState<Req extends any[], Res>(effect: (...vs: Req) =>
     })
   }), data] as const
 }
+
+/**
+ * 串行的请求
+ * @param callback 
+ * @param effect 
+ * @returns 
+ */
+export function useSerialRequest<Req extends any[], Res>(
+  callback: (...vs: Req) => Promise<Res>,
+  effect: (res: PromiseResult<Res>) => void
+) {
+  const [versionLock, updateVersion] = useVersionLock();
+  return [function (...vs: Req) {
+    const version = updateVersion();
+    callback(...vs)
+      .then((data) => {
+        if (version == versionLock()) {
+          effect({
+            type: "success",
+            value: data,
+          });
+        }
+      })
+      .catch((err) => {
+        if (version == versionLock()) {
+          effect({
+            type: "error",
+            value: err,
+          });
+        }
+      });
+  }, updateVersion()] as const
+}

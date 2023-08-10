@@ -1,6 +1,6 @@
 import { Fiber, HookContextCosumer, VirtaulDomNode } from "./Fiber"
 import { deepTravelFiber, findParentAndBefore } from "./findParentAndBefore"
-import { EmptyFun, ManageValue, quote, removeEqual } from "./util"
+import { EmptyFun, ManageValue, quote, removeEqual, storeRef } from "./util"
 
 
 export type CreateChangeAtom<T> = (v: T, didCommit?: (v: T) => T) => StoreRef<T>
@@ -12,6 +12,18 @@ export type Reconcile = ({
   afterLoop?: EmptyFun
 }) => void
 export class EnvModel {
+  realTime = storeRef(false)
+  flushSync(fun: EmptyFun) {
+    const realTime = this.realTime
+    realTime.set(true)
+    fun()
+    this.reconcile({
+      afterLoop() {
+        realTime.set(false)
+      }
+    })
+  }
+
   reconcile: Reconcile = null as any
   // readonly askNextTimeWork: () => void
   /**本次新注册的监听者*/
@@ -42,9 +54,12 @@ export class EnvModel {
         removeEqual(changeAtoms, v)
       },
     }
+    this.flushSync = this.flushSync.bind(this)
+    this.createChangeAtom = this.createChangeAtom.bind(this)
   }
-  hasChangeAtoms() {
-    return this.changeAtoms.length > 0
+  shouldRender() {
+    //changeAtoms说明有状态变化,deletions表示,比如销毁
+    return this.changeAtoms.length > 0 || this.deletions.length > 0
   }
 
   rollback() {
@@ -234,11 +249,12 @@ export type FindParentAndBefore = [VirtaulDomNode, VirtaulDomNode | null] | [Vir
  * @param domParent 
  */
 function commitDeletion(fiber: Fiber) {
-  if (fiber.dom) {
-    // if (fiber.dom?.isPortal()) {
-    //   return
-    // }
-    fiber.dom.removeFromParent()
+  const dom = fiber.dom
+  if (dom) {
+    if (!dom.isPortal) {
+      //portal自己在destroy里移除
+      dom.removeFromParent()
+    }
   } else {
     circleCommitDelection(fiber.firstChild.get())
   }
@@ -279,8 +295,5 @@ function destroyFiber(fiber: Fiber) {
   listeners?.forEach(listener => {
     listener.destroy()
   })
-  // if (fiber.dom.isPortal()) {
-  //   fiber.dom.removeFromParent()
-  // }
   fiber.dom?.destroy()
 }

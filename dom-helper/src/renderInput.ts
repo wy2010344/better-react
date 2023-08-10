@@ -6,7 +6,7 @@ type InputTypeProps = DomAttribute<InputType> & {
   value: string
   onValueChange(v: string): void
 }
-export function useInput(type: InputType, {
+export function renderInput(type: InputType, {
   value,
   onValueChange,
   onInput,

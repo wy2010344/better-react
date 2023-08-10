@@ -1,6 +1,6 @@
 export * from './Animation'
 export * from './useClickOutside'
-export * from './useInput'
+export * from './renderInput'
 export * from "./router-base"
 export * from "./nest-router"
 export * from "./useMatchMedia"
@@ -10,3 +10,4 @@ export * from "./prismHelper"
 export * from "./mb"
 export * from "./useCodeJar"
 export * from "./observerIntersection"
+export * from "./useRequestAnimationFrame"

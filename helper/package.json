@@ -1,5 +1,5 @@
 {
-  "version": "1.2.1",
+  "version": "1.2.3",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -12,6 +12,8 @@
   },
   "scripts": {
     "start": "tsdx watch",
+    "ts": "tsc --noEmit --incremental",
+    "ts:watch": "yarn ts --watch",
     "build": "tsdx build",
     "test": "tsdx test",
     "lint": "tsdx lint",
@@ -20,7 +22,7 @@
     "analyze": "size-limit --why"
   },
   "peerDependencies": {
-    "better-react": "^1.2.0"
+    "better-react": "^1.2.2"
   },
   "husky": {
     "hooks": {
@@ -48,7 +50,7 @@
   ],
   "devDependencies": {
     "@size-limit/preset-small-lib": "^7.0.8",
-    "better-react": "^1.2.0",
+    "better-react": "^1.2.2",
     "husky": "^7.0.4",
     "size-limit": "^7.0.8",
     "tsdx": "^0.14.1",

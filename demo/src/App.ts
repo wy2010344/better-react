@@ -1,6 +1,6 @@
 import { useEffect } from "better-react";
 import { renderFragment, renderGuard, renderGuardString, useState, } from "better-react-helper"
-import { renderContent, useDom } from "better-react-dom";
+import { domOf, renderContent, useDom } from "better-react-dom";
 import dsl from "./dsl";
 import ExpensiveView from "./ExpensiveView";
 import FlexAbc from "./FlexAbc";
@@ -22,6 +22,11 @@ import 文件系统整理 from "./文件系统整理";
 import xmlToBetter from "./xmlToBetter";
 import logic from "./logic";
 import 测试Input from "./test/测试Input";
+import 测试appendAsPortal from "./测试appendAsPortal";
+import 测试sharePortal from "./测试sharePortal";
+import 测试tooltip from "./测试tooltip";
+import 测试flushSync from "./测试flushSync";
+import JserPopOver from "./测试tooltip/JserPopOver";
 
 
 export default function FirstPage() {
@@ -54,6 +59,12 @@ export default function FirstPage() {
               renderContent("进入ExpansiveView")
             }
           })
+          domOf("button", {
+            onClick(e) {
+              e.stopPropagation()
+              测试appendAsPortal(operate)
+            }
+          }).renderTextContent("测试appendAsPortal")
           useDom("button", {
             onClick(e) {
               e.stopPropagation()
@@ -199,6 +210,24 @@ export default function FirstPage() {
             },
             textContent: "逻辑编程"
           })
+          domOf("button", {
+            onClick(event) {
+              event.stopPropagation()
+              测试tooltip(operate)
+            },
+          }).renderTextContent("测试tooltip")
+          domOf("button", {
+            onClick(event) {
+              event.stopPropagation()
+              测试flushSync(operate)
+            },
+          }).renderTextContent("测试flushsync")
+          domOf("button", {
+            onClick(event) {
+              event.stopPropagation()
+              JserPopOver(operate)
+            },
+          }).renderTextContent("JserPopOver")
         },
         moveFirst() {
           operate.moveToFirst(id)

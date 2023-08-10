@@ -2,7 +2,7 @@ import { useDom } from "better-react-dom";
 import { useBuildSubSetArray, useBuildSubSetObject, useState, renderMap } from "better-react-helper";
 import { normalPanel } from "../panel/PanelContext";
 import { alertWith, use居中 } from "../panel/居中";
-import { useClickOutside, useInput } from "better-react-dom-helper";
+import { useClickOutside, renderInput } from "better-react-dom-helper";
 import { AllType, SubStructTypeModel, useTypeDB } from "./model";
 
 
@@ -146,7 +146,7 @@ const structAlert = alertWith<{
                 display: "table-cell"
               },
               children() {
-                useInput("input", {
+                renderInput("input", {
                   value: row.key || '',
                   onValueChange(v) {
                     setKey(v)
@@ -183,7 +183,7 @@ const structAlert = alertWith<{
                             }
                           })
                         })
-                        useInput("input", {
+                        renderInput("input", {
                           value: filterValue,
                           onFocus() {
                             setShow(true)

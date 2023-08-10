@@ -1,7 +1,7 @@
 import { useDom } from "better-react-dom";
 import { initJsStore } from "../jsStore";
 import { normalPanel } from "../panel/PanelContext";
-import { useInput } from "better-react-dom-helper";
+import { renderInput } from "better-react-dom-helper";
 import { useChange, useVersion, PromiseResult, useInit, renderGuard, renderIf, defaultTranslate, useState, useCallbackPromiseCall } from "better-react-helper";
 import { TodoModel, todoService } from "../jsStore/todo";
 import { renderMapF } from "better-react";
@@ -59,7 +59,7 @@ export default normalPanel(function (operate, id) {
             },
             [version])
 
-          useInput("input", {
+          renderInput("input", {
             value,
             onValueChange(v) {
               setValue(v)

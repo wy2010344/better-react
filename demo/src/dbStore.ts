@@ -1,5 +1,5 @@
-import { StoreRef, createChangeAtom, createContext, useEffect } from "better-react"
-import { useState, useMemo } from "better-react-helper"
+import { StoreRef, useGetCreateChangeAtom, CreateChangeAtom, useEffect } from "better-react"
+import { useState, useMemo, valueCenterOf, ValueCenter, useStoreTriggerRender } from "better-react-helper"
 import { TypeSystemModel } from "./typeSystem/model"
 
 export type UserModel = {
@@ -25,65 +25,32 @@ export type DBStore = {
 
 type DBStoreKEY = keyof DBStore
 
-class NotifyCenter<T> {
-  center: StoreRef<T>
-  pool = new Set<NOTIFY_FUN>()
-  constructor(key: string, defaultValue: T) {
-    const valueStr = localStorage.getItem(key)
-    this.center = createChangeAtom(valueStr ? JSON.parse(valueStr) : defaultValue, (v) => {
-      if (v) {
-        localStorage.setItem(key, JSON.stringify(v))
-      } else {
-        localStorage.removeItem(key)
-      }
-    })
-  }
-  get() {
-    return this.center.get()
-  }
-  set(v: T) {
-    this.center.set(v)
-    this.pool.forEach(run => run())
-  }
-  subscriber(fun: () => void) {
-    this.pool.add(fun)
-    return () => {
-      this.pool.delete(fun)
-    }
-  }
-}
-
-const current = new Map<DBStoreKEY, NotifyCenter<DBStore[DBStoreKEY]>>()
-type NOTIFY_FUN = () => void
+const current = new Map<DBStoreKEY, ValueCenter<DBStore[DBStoreKEY]>>()
 function getNotify<K extends DBStoreKEY>(key: K, defaultValue: DBStore[K]) {
   if (current.has(key)) {
-    return current.get(key) as NotifyCenter<DBStore[K]>
+    return current.get(key) as ValueCenter<DBStore[K]>
   }
-  const center = new NotifyCenter(key, defaultValue)
+  const valueStr = localStorage.getItem(key)
+  const center = valueCenterOf<DBStore[K]>(valueStr ? JSON.parse(valueStr) : defaultValue)
+  center.subscribe(function (v) {
+    if (v) {
+      localStorage.setItem(key, JSON.stringify(v))
+    } else {
+      localStorage.removeItem(key)
+    }
+  })
   current.set(key, center)
   return center
 }
 
 export function useStore<K extends DBStoreKEY>(key: K, defaultValue: DBStore[K]) {
-  const notify = useMemo(() => getNotify(key, defaultValue), [])
-  return {
-    notify,
-    useValue() {
-      const [value, setValue] = useState<DBStore[K]>(() => notify.get())
-      useEffect(() => {
-        return notify.subscriber(() => {
-          setValue(notify.get())
-        })
-      }, [notify])
-      return value
-    }
-  }
+  return useMemo(() => getNotify(key, defaultValue), [])
 }
 
 const defaultUSER = "Admin"
 export function useTopic() {
-  const { notify, useValue } = useStore("vote", [])
-  const topics = useValue()
+  const notify = useStore("vote", [])
+  const topics = useStoreTriggerRender(notify)
   return {
     topics,
     update(v: TopicModel, i: number) {
@@ -110,12 +77,12 @@ export function useTopic() {
 }
 
 export function useUser() {
-  const { notify, useValue } = useStore("user", [
+  const notify = useStore("user", [
     {
       name: defaultUSER
     }
   ])
-  const users = useValue()
+  const users = useStoreTriggerRender(notify)
   return {
     users,
     add(name: string) {

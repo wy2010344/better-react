@@ -2,7 +2,7 @@ import { startTransition, useEffect } from "better-react";
 import { renderContent, useDom } from "better-react-dom";
 import { useEvent, useState, renderMap, renderFragment, useMemo } from "better-react-helper";
 import { normalPanel } from "./panel/PanelContext";
-import { useInput } from "better-react-dom-helper";
+import { renderInput } from "better-react-dom-helper";
 
 let lastRenderTime = performance.now()
 
@@ -66,7 +66,7 @@ export default normalPanel(function (operate, id) {
               setRenderValue(value)
             }
           }
-          useInput("input", {
+          renderInput("input", {
             value: value + '',
             type: "range",
             min: 0,
@@ -76,7 +76,7 @@ export default normalPanel(function (operate, id) {
               changeValue(v)
             },
           })
-          useInput("input", {
+          renderInput("input", {
             type: "range",
             min: 0,
             max: 600,

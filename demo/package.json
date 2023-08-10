@@ -15,13 +15,13 @@
   },
   "dependencies": {
     "@types/prismjs": "^1.26.0",
-    "better-react": "^1.2.0",
+    "better-react": "file:.yalc/better-react",
     "better-react-dom": "file:.yalc/better-react-dom",
     "better-react-dom-helper": "file:.yalc/better-react-dom-helper",
-    "better-react-helper": "^1.2.0",
+    "better-react-helper": "file:.yalc/better-react-helper",
     "jsstore": "^4.5.4",
     "motion": "^10.11.0",
-    "stylis-creater": "^1.2.0",
+    "stylis-creater": "file:.yalc/stylis-creater",
     "xml-js": "^1.6.11",
     "xml-reader": "^2.4.3"
   }

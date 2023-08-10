@@ -13,6 +13,7 @@ export * from './useTransition'
 export * from './usePrevious'
 export * from './useVersion'
 export * from './usePromise'
+export * from './Promise'
 export * from './useState'
 export * from './useCallback'
 export * from './useInit'
@@ -21,6 +22,8 @@ export * from './renderMap'
 export * from './renderOne'
 export * from './renderFragment'
 export * from './Lock'
+export * from './useAsyncPaginate'
+export * from './usePortal'
 export { compileSimpleRule, createMatch, pathExactly, pathStartWith, toAbsolutePath } from "./routes/util"
 export { RouteContext, routeMatch, routeMathWithOther } from "./routes"
 

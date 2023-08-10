@@ -1,6 +1,6 @@
-import { render, AskNextTimeWork, VirtualDomOperator, RenderWithDep, renderFiber, useAttrEffect } from "better-react";
+import { render, AskNextTimeWork, VirtualDomOperator, RenderWithDep, renderFiber, useAttrEffect, emptyArray } from "better-react";
 import { DomAttribute, DomElement, DomElementType, SvgAttribute, SvgElement, SvgElementType } from "./html";
-import { EMPTYPROPS, FiberNode, FiberText, emptyFun } from "./updateDom";
+import { EMPTYPROPS, FiberNode, FiberText, emptyFun, updatePorps } from "./updateDom";
 export { getScheduleAskTime } from './schedule'
 export { StyleNode, isSVG, FiberNode, FiberText, StyleContext, underlineToCamel } from './updateDom'
 export { getAliasOfAttribute, getAttributeAlias } from './getAttributeAlias'
@@ -13,7 +13,7 @@ export * from './html'
  */
 export function createRoot(node: Node, reconcile: () => void, getAsk: AskNextTimeWork) {
   return render(
-    FiberNode.create(node),
+    FiberNode.create(node, updatePorps),
     EMPTYPROPS,
     reconcile,
     emptyFun,
@@ -140,14 +140,12 @@ export class DomCreater<T extends DomElementType, M>{
     const text = arguments[1]
     const as = arguments[2]
     const dom = renderFiber(
-      <VirtualDomOperator<any>>[this.create, {
-        ...this.props,
-        contentEditable
-      }, this.createArg],
+      <VirtualDomOperator<any>>[this.create, this.props, this.createArg],
       emptyFun
     ) as FiberNode
     const node = dom.node as unknown as DomElement<T>
     useAttrEffect(() => {
+      node.contentEditable = contentEditable || "true"
       if (text) {
         if (as == "html") {
           node.innerHTML = text
@@ -155,7 +153,7 @@ export class DomCreater<T extends DomElementType, M>{
           node.textContent = text
         }
       }
-    }, [])
+    }, emptyArray)
     return node
   }
   render<M extends readonly any[]>(...vs: RenderWithDep<M>): DomElement<T>
@@ -177,6 +175,12 @@ export function domOf<T extends DomElementType>(type: T, props?: DomAttribute<T>
 }
 export function domExistOf<T extends DomElementType>(node: DomElement<T>, props?: DomAttribute<T>) {
   return new DomCreater(props, FiberNode.createDomWith, node);
+}
+export function portalDomOf<T extends DomElementType>(type: T, props?: DomAttribute<T>) {
+  return new DomCreater(props, FiberNode.portalCreateDom, type)
+}
+export function portalDomExistOf<T extends DomElementType>(node: DomElement<T>, props?: DomAttribute<T>) {
+  return new DomCreater(props, FiberNode.portalCreateDomWith, node);
 }
 export class SvgCreater<T extends SvgElementType, M>{
   constructor(
@@ -215,4 +219,11 @@ export function svgOf<T extends SvgElementType>(type: T, props?: SvgAttribute<T>
 }
 export function svgExistOf<T extends SvgElementType>(node: SvgElement<T>, props?: SvgAttribute<T>) {
   return new SvgCreater(props, FiberNode.createSvgWith, node);
+}
+
+export function portalSvgOf<T extends SvgElementType>(type: T, props?: SvgAttribute<T>) {
+  return new SvgCreater(props, FiberNode.portalCreateSvg, type)
+}
+export function portalSvgExistOf<T extends SvgElementType>(node: SvgElement<T>, props?: SvgAttribute<T>) {
+  return new SvgCreater(props, FiberNode.portalCreateSvgWith, node);
 }
