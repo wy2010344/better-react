@@ -5,8 +5,8 @@ import dsl from "./dsl";
 import ExpensiveView from "./ExpensiveView";
 import FlexAbc from "./FlexAbc";
 import motionOne from "./motion-one";
-import { CountContext, PanelContext } from "./panel/PanelContext";
-import usePanel from "./panel/usePanel";
+import { CountContext, PanelContext, normalPanel } from "./panel/PanelContext";
+import usePanel from "./panel/renderPanel";
 import popup from "./popup";
 import scrollPage from "./scrollPage";
 import dragDemo from "./test/dragDemo";
@@ -29,216 +29,198 @@ import 测试flushSync from "./测试flushSync";
 import JserPopOver from "./测试tooltip/JserPopOver";
 
 
-export default function FirstPage() {
-  const operate = PanelContext.useConsumer()
-  useEffect(() => {
-    const id = operate.push(function () {
-      usePanel({
-        close() {
-          console.log('v')
-          operate.close(id)
-        },
-        children() {
-          renderContent("root")
-          renderFragment(TestButtonPage, [])
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              dsl(operate)
-            },
-            children() {
-              renderContent("进入DSL")
-            }
-          })
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              ExpensiveView(operate)
-            },
-            children() {
-              renderContent("进入ExpansiveView")
-            }
-          })
-          domOf("button", {
-            onClick(e) {
-              e.stopPropagation()
-              测试appendAsPortal(operate)
-            }
-          }).renderTextContent("测试appendAsPortal")
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              FlexAbc(operate)
-            },
-            children() {
-              renderContent("FlexAbc")
-            }
-          })
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              sReact(operate)
-            },
-            textContent: "s-react"
-          })
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              测试其它(operate)
-            },
-            textContent: "测试其它"
-          })
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              vote(operate)
-            },
-            children() {
-              renderContent("vote")
-            }
-          })
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              typeSystem(operate)
-            },
-            textContent: "typeSystem"
-          })
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              figmaClone(operate)
-            },
-            textContent: "figmaClone"
-          })
+export default normalPanel(function (operate) {
 
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              xmlToBetter(operate)
-            },
-            textContent: "xmlToBetter"
-          })
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              设计系统(operate)
-            },
-            textContent: "设计系统"
-          })
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              todoList(operate)
-            },
-            children() {
-              renderContent("todoList")
-            }
-          })
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              motionOne(operate)
-            },
-            children() {
-              renderContent("motion-one")
-            }
-          })
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              scrollPage(operate)
-            },
-            children() {
-              renderContent("scroll-page")
-            }
-          })
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              popup(operate)
-            },
-            children() {
-              renderContent("popup")
-            }
-          })
-
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              测试Input(operate)
-            },
-            textContent: "测试input"
-          })
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              测试renderOne(operate)
-            },
-            children() {
-              renderContent("测试renderOne")
-            }
-          })
-          Demo()
-          // Action()
-          //console.log("在这里")
-
-          const value = CountContext.useConsumer()
-          renderContent(`在这里${value}`)
-
-
-          useDom("button", {
-            onClick(e) {
-              e.stopPropagation()
-              dragDemo(operate)
-            },
-            children() {
-              renderContent("drag-demo")
-            }
-          })
-          useDom("button", {
-            onClick(event) {
-              event.stopPropagation()
-              文件系统整理(operate)
-            },
-            textContent: "文件系统整理"
-          })
-          useDom("button", {
-            onClick(event) {
-              event.stopPropagation()
-              logic(operate)
-            },
-            textContent: "逻辑编程"
-          })
-          domOf("button", {
-            onClick(event) {
-              event.stopPropagation()
-              测试tooltip(operate)
-            },
-          }).renderTextContent("测试tooltip")
-          domOf("button", {
-            onClick(event) {
-              event.stopPropagation()
-              测试flushSync(operate)
-            },
-          }).renderTextContent("测试flushsync")
-          domOf("button", {
-            onClick(event) {
-              event.stopPropagation()
-              JserPopOver(operate)
-            },
-          }).renderTextContent("JserPopOver")
-        },
-        moveFirst() {
-          operate.moveToFirst(id)
-        }
-      })
-    })
-    return () => {
-      operate.close(id)
+  renderContent("root")
+  renderFragment(TestButtonPage, [])
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      dsl(operate)
+    },
+    children() {
+      renderContent("进入DSL")
     }
-  }, [])
-}
+  })
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      ExpensiveView(operate)
+    },
+    children() {
+      renderContent("进入ExpansiveView")
+    }
+  })
+  domOf("button", {
+    onClick(e) {
+      e.stopPropagation()
+      测试appendAsPortal(operate)
+    }
+  }).renderTextContent("测试appendAsPortal")
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      FlexAbc(operate)
+    },
+    children() {
+      renderContent("FlexAbc")
+    }
+  })
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      sReact(operate)
+    },
+    textContent: "s-react"
+  })
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      测试其它(operate)
+    },
+    textContent: "测试其它"
+  })
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      vote(operate)
+    },
+    children() {
+      renderContent("vote")
+    }
+  })
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      typeSystem(operate)
+    },
+    textContent: "typeSystem"
+  })
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      figmaClone(operate)
+    },
+    textContent: "figmaClone"
+  })
+
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      xmlToBetter(operate)
+    },
+    textContent: "xmlToBetter"
+  })
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      设计系统(operate)
+    },
+    textContent: "设计系统"
+  })
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      todoList(operate)
+    },
+    children() {
+      renderContent("todoList")
+    }
+  })
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      motionOne(operate)
+    },
+    children() {
+      renderContent("motion-one")
+    }
+  })
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      scrollPage(operate)
+    },
+    children() {
+      renderContent("scroll-page")
+    }
+  })
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      popup(operate)
+    },
+    children() {
+      renderContent("popup")
+    }
+  })
+
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      测试Input(operate)
+    },
+    textContent: "测试input"
+  })
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      测试renderOne(operate)
+    },
+    children() {
+      renderContent("测试renderOne")
+    }
+  })
+  Demo()
+  // Action()
+  //console.log("在这里")
+
+  const value = CountContext.useConsumer()
+  renderContent(`在这里${value}`)
+
+
+  useDom("button", {
+    onClick(e) {
+      e.stopPropagation()
+      dragDemo(operate)
+    },
+    children() {
+      renderContent("drag-demo")
+    }
+  })
+  useDom("button", {
+    onClick(event) {
+      event.stopPropagation()
+      文件系统整理(operate)
+    },
+    textContent: "文件系统整理"
+  })
+  useDom("button", {
+    onClick(event) {
+      event.stopPropagation()
+      logic(operate)
+    },
+    textContent: "逻辑编程"
+  })
+  domOf("button", {
+    onClick(event) {
+      event.stopPropagation()
+      测试tooltip(operate)
+    },
+  }).renderTextContent("测试tooltip")
+  domOf("button", {
+    onClick(event) {
+      event.stopPropagation()
+      测试flushSync(operate)
+    },
+  }).renderTextContent("测试flushsync")
+  domOf("button", {
+    onClick(event) {
+      event.stopPropagation()
+      JserPopOver(operate)
+    },
+  }).renderTextContent("JserPopOver")
+})
 
 function TestButtonPage() {
   const operate = PanelContext.useConsumer()

@@ -1,7 +1,6 @@
 import { Fiber, VirtaulDomNode } from "./Fiber"
 import { AskNextTimeWork, BatchWork, getReconcile } from "./reconcile"
 import { EnvModel } from "./commitWork"
-import { emptyObject } from "./util"
 export { startTransition } from './reconcile'
 export type { REAL_WORK } from './reconcile'
 export {
@@ -20,7 +19,7 @@ export {
   expandFunCall,
   expandFunReturn
 } from './util'
-export type { ReducerResult, ReducerFun, ValueNotify } from './fc'
+export type { ReducerResult, ReducerFun } from './fc'
 export type {
   Fiber, Props,
   VirtaulDomNode,
@@ -57,7 +56,7 @@ export function render<T>(
   const reconcile = getReconcile(batchWork, envModel, getAsk)
   envModel.reconcile = reconcile
   //开始执行
-  reconcile(emptyObject)
+  reconcile()
   return function () {
     batchWork.destroy()
   }

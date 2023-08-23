@@ -6,7 +6,7 @@ type StoreRef<T> = {
 }
 
 export function useMemoGet<T, V extends readonly any[] = readonly any[]>(effect: (deps: V) => T, deps: V) {
-  return useBaseMemoGet(undefined, effect, deps)
+  return useBaseMemoGet(effect, deps)
 }
 
 export function useMemo<T, V extends readonly any[] = readonly any[]>(effect: (deps: V) => T, deps: V): T {

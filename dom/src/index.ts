@@ -1,6 +1,6 @@
 import { render, AskNextTimeWork, VirtualDomOperator, RenderWithDep, renderFiber, useAttrEffect, emptyArray } from "better-react";
 import { DomAttribute, DomElement, DomElementType, SvgAttribute, SvgElement, SvgElementType } from "./html";
-import { EMPTYPROPS, FiberNode, FiberText, emptyFun, updatePorps } from "./updateDom";
+import { EMPTYPROPS, FiberNode, FiberText, emptyFun, updateProps } from "./updateDom";
 export { getScheduleAskTime } from './schedule'
 export { StyleNode, isSVG, FiberNode, FiberText, StyleContext, underlineToCamel } from './updateDom'
 export { getAliasOfAttribute, getAttributeAlias } from './getAttributeAlias'
@@ -10,10 +10,12 @@ export * from './html'
  * 目前无需求.
  * 比如移动,其实一些dom状态会丢失,如scrollTop
  * 可能有一些三方组件的封装,配置参数却需要自定义,而不是dom参数
+ * 这个事件提供的node节点是会被销毁的——可以不限制是svg或dom
+ * updateProps虽然只处理dom,事实上永远不会起作用
  */
 export function createRoot(node: Node, reconcile: () => void, getAsk: AskNextTimeWork) {
   return render(
-    FiberNode.create(node, updatePorps),
+    FiberNode.create(node, updateProps, true),
     EMPTYPROPS,
     reconcile,
     emptyFun,
@@ -173,14 +175,8 @@ export class DomCreater<T extends DomElementType, M>{
 export function domOf<T extends DomElementType>(type: T, props?: DomAttribute<T>) {
   return new DomCreater(props, FiberNode.createDom, type)
 }
-export function domExistOf<T extends DomElementType>(node: DomElement<T>, props?: DomAttribute<T>) {
-  return new DomCreater(props, FiberNode.createDomWith, node);
-}
 export function portalDomOf<T extends DomElementType>(type: T, props?: DomAttribute<T>) {
   return new DomCreater(props, FiberNode.portalCreateDom, type)
-}
-export function portalDomExistOf<T extends DomElementType>(node: DomElement<T>, props?: DomAttribute<T>) {
-  return new DomCreater(props, FiberNode.portalCreateDomWith, node);
 }
 export class SvgCreater<T extends SvgElementType, M>{
   constructor(
@@ -217,13 +213,6 @@ export class SvgCreater<T extends SvgElementType, M>{
 export function svgOf<T extends SvgElementType>(type: T, props?: SvgAttribute<T>) {
   return new SvgCreater(props, FiberNode.createSvg, type)
 }
-export function svgExistOf<T extends SvgElementType>(node: SvgElement<T>, props?: SvgAttribute<T>) {
-  return new SvgCreater(props, FiberNode.createSvgWith, node);
-}
-
 export function portalSvgOf<T extends SvgElementType>(type: T, props?: SvgAttribute<T>) {
   return new SvgCreater(props, FiberNode.portalCreateSvg, type)
-}
-export function portalSvgExistOf<T extends SvgElementType>(node: SvgElement<T>, props?: SvgAttribute<T>) {
-  return new SvgCreater(props, FiberNode.portalCreateSvgWith, node);
 }

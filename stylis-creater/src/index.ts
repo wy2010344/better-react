@@ -104,7 +104,7 @@ function createStyledUpdate() {
  */
 export function useBodyStyleUpdate() {
   const createChangeAtom = useGetCreateChangeAtom()
-  const styledUp = useBaseMemoGet(undefined, createStyledUpdate, emptyArray)()
+  const styledUp = useBaseMemoGet(createStyledUpdate, emptyArray)()
   if (!styledUp.atom) {
     styledUp.atom = createChangeAtom<string>("", function (css) {
       styledUp.styled.textContent = css
@@ -131,7 +131,7 @@ export function useStyleMap<A extends any[], T extends {
   [key: string]: string
 }>(callback: (...args: A) => T, deps: A) {
   const update = useBodyStyleUpdate()
-  return useBaseMemoGet(undefined, () => {
+  return useBaseMemoGet(() => {
     const cssMap = callback(...deps)
     const { css, classMap } = genCssMap(cssMap)
     update(css)

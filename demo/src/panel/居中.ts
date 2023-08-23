@@ -1,6 +1,6 @@
 import { useDom } from 'better-react-dom'
 import { PanelCallback, PanelOperate } from './PanelContext'
-import { PanelParams } from './usePanel'
+import { PanelParams } from './renderPanel'
 
 
 export function use居中(body: () => void) {

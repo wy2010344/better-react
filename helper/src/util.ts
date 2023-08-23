@@ -86,3 +86,102 @@ export function useBuildSubSetArray<T>(
 export function run<T>(fun: (...vs: any[]) => T) {
   return fun()
 }
+
+
+
+
+export function serialEvent<T extends (...args: any[]) => any>(
+  ..._vs: (T | undefined | null)[]
+): T | undefined {
+  const vs = _vs.filter((x) => x) as T[];
+  if (vs.length) {
+    return function (...args) {
+      let out = vs[0](...args);
+      for (let i = 1; i < vs.length; i++) {
+        const nv = vs[i];
+        out = nv(...args);
+      }
+      return out;
+    } as T;
+  }
+}
+
+export function objectDeepEqual(a: any, b: any) {
+  if (a == b) {
+    //内存相等,或相同的值
+    return true;
+  }
+  if (Array.isArray(a)) {
+    if (Array.isArray(b)) {
+      //都是列表
+      if (a.length == b.length) {
+        for (let i = 0; i < a.length; i++) {
+          if (!objectDeepEqual(a[i], b[i])) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return false;
+    }
+    return false;
+  }
+  if (Array.isArray(b)) {
+    return false;
+  }
+  if (a && b && typeof a == "object" && typeof b == "object") {
+    const akeys = Object.keys(a).sort();
+    const bkeys = Object.keys(b).sort();
+    if (akeys.length == bkeys.length) {
+      for (let i = 0; i < akeys.length; i++) {
+        const aKey = akeys[i];
+        const bkey = bkeys[i];
+        if (aKey != bkey) {
+          return false;
+        }
+        if (!objectDeepEqual(a[aKey], b[bkey])) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+export function objectClone<T>(a: T): T {
+  if (Array.isArray(a)) {
+    return a.map(objectClone) as unknown as T;
+  } else if (a && typeof a == "object") {
+    const b: any = {};
+    for (const key in a) {
+      b[key] = objectClone(a[key]);
+    }
+    return b;
+  }
+  return a;
+}
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; // 英文字母表
+export function numberToLetterBase(number: number) {
+  let result = "";
+  while (number > 0) {
+    const remainder = (number - 1) % letters.length; // 获取余数，范围为 0 到 25
+    result = letters[remainder] + result; // 将对应的字母添加到结果字符串的前面
+    number = Math.floor((number - 1) / letters.length); // 更新 number
+  }
+  return result;
+}
+
+export function findIndexFrom<T>(
+  list: T[],
+  predicate: (v: T, i: number) => any,
+  from: number
+) {
+  for (let i = from; i < list.length; i++) {
+    const row = list[i];
+    if (predicate(row, i)) {
+      return i;
+    }
+  }
+  return -1;
+}

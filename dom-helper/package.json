@@ -50,7 +50,7 @@
   ],
   "devDependencies": {
     "@size-limit/preset-small-lib": "^7.0.8",
-    "better-react": "^1.2.2",
+    "better-react": "file:.yalc/better-react",
     "better-react-dom": "^1.2.3",
     "better-react-helper": "^1.2.3",
     "husky": "^7.0.4",

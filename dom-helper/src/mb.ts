@@ -141,7 +141,8 @@ export const mb = {
       return pos;
     },
 
-    setSelectionRange(editor: HTMLElement, pos: MbRange) {
+    setSelectionRange(editor: HTMLElement, _pos: MbRange) {
+      const pos = { ..._pos }
       const s = getSelection(editor)
       let startNode: Node | undefined, startOffset = 0
       let endNode: Node | undefined, endOffset = 0

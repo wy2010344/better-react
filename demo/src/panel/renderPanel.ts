@@ -21,13 +21,7 @@ export type PanelParams = {
   moveFirst(): void
 }
 
-
-/**
- * desktop-panel和portal是不同的
- * desktop-panel是模型为中心,所以不是render控制的,而是状态控制的
- * portal是状态控制的
- */
-export default ({
+function renderPanel({
   initWidth = 400,
   initHeight = 600,
   initTop = 100,
@@ -38,7 +32,7 @@ export default ({
   close,
   moveFirst,
   // portalTarget
-}: PanelParams) => {
+}: PanelParams) {
 
   const [top, setTop] = useState(initTop)
   const [left, setLeft] = useState(initLeft)
@@ -60,7 +54,6 @@ export default ({
   }), [])
 
   const titleHeight = 32
-
   return useDom("div", {
     // portalTarget,
     style: {
@@ -155,3 +148,10 @@ export default ({
     }
   })
 }
+
+/**
+ * desktop-panel和portal是不同的
+ * desktop-panel是模型为中心,所以不是render控制的,而是状态控制的
+ * portal是状态控制的
+ */
+export default renderPanel

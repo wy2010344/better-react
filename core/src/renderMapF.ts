@@ -1,6 +1,6 @@
 import { Fiber, VirtaulDomNode, VirtualDomOperator } from "./Fiber"
 import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemoGet, useBeforeAttrEffect, useParentFiber } from "./fc"
-import { emptyArray, emptyObject, storeRef } from "./util"
+import { emptyArray, storeRef } from "./util"
 
 ////////****useMap****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 export type Translate<M, T> = {
@@ -53,7 +53,7 @@ export function renderMapF<M, K>(
   deps?: readonly any[]
 ) {
   return renderBaseFiber(dom, true, function () {
-    const mapRef = useBaseMemoGet(undefined, createMapRef, emptyArray)();
+    const mapRef = useBaseMemoGet(createMapRef, emptyArray)();
     const oldMap = cloneMap(mapRef.get())
     const newMap = new Map<any, Fiber[]>()
     useBeforeAttrEffect(function () {

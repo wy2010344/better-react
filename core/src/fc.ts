@@ -46,7 +46,7 @@ export function updateFunctionComponent(envModel: EnvModel, fiber: Fiber) {
 }
 
 export type ReducerFun<F, T> = (old: T, action: F) => T
-export type ReducerResult<F, T> = [T, HookValueSet<F, T>];
+export type ReducerResult<F, T> = [T, HookValueSet<F>];
 
 /**
  * 依赖外部初始值
@@ -55,28 +55,24 @@ export type ReducerResult<F, T> = [T, HookValueSet<F, T>];
  * @param v 
  * @param init 
  */
-export function useBaseReducer<F, M, T>(didCommit: undefined | ValueNotify<T>, reducer: ReducerFun<F, T>, init: M, initFun: (m: M) => T): ReducerResult<F, T>
-export function useBaseReducer<F, T>(didCommit: undefined | ValueNotify<T>, reducer: ReducerFun<F, T>, init: T, initFun?: (m: T) => T): ReducerResult<F, T>
-export function useBaseReducer<F, T = undefined>(didCommit: undefined | ValueNotify<T>, reducer: ReducerFun<F, T>, init?: T, initFun?: (m: T) => T): ReducerResult<F, T>
+export function useBaseReducer<F, M, T>(reducer: ReducerFun<F, T>, init: M, initFun: (m: M) => T): ReducerResult<F, T>
+export function useBaseReducer<F, T>(reducer: ReducerFun<F, T>, init: T, initFun?: (m: T) => T): ReducerResult<F, T>
+export function useBaseReducer<F, T = undefined>(reducer: ReducerFun<F, T>, init?: T, initFun?: (m: T) => T): ReducerResult<F, T>
 export function useBaseReducer() {
-  const [didCommit, reducer, init, initFun] = arguments
+  const [reducer, init, initFun] = arguments
   const [envModel, parentFiber] = useParentFiber()
   if (parentFiber.effectTag.get() == 'PLACEMENT') {
     //新增
     const hookValues = parentFiber.hookValue || []
     parentFiber.hookValue = hookValues
     const trans = initFun || quote
-    const value = envModel.createChangeAtom(trans(init), didCommit ? (v) => {
-      didCommit(v)
-      return v
-    } : undefined)
+    const value = envModel.createChangeAtom(trans(init))
     const hook: HookValue<any, any> = {
       value,
       set: buildSetValue(value, envModel, parentFiber, reducer),
       reducer,
       init,
-      initFun,
-      didCommit,
+      initFun
     }
     hookValues.push(hook)
     return [value.get(), hook.set]
@@ -99,14 +95,10 @@ export function useBaseReducer() {
     if (hook.initFun != initFun) {
       console.warn("useReducer的initFun变化")
     }
-    // if (hook.didCommit != didCommit) {
-    //   console.warn("useReducer的didCommit变化")
-    // }
     hookIndex.state++
     return [hook.value.get(), hook.set]
   }
 }
-export type ValueNotify<T> = (v: T) => void
 /**
  * setState需要做成异步提交
  * 提交的时候,只是在一个副本树上修改
@@ -127,24 +119,19 @@ function buildSetValue<T, F>(atom: StoreRef<T>,
   parentFiber: Fiber,
   reducer: (old: T, action: F) => T
 ) {
-  return function (temp: F, after?: ValueNotify<T>) {
+  return function (temp: F) {
     if (parentFiber.destroyed) {
       console.log("更新已经销毁的fiber")
       return
     }
-    envModel.reconcile({
-      beforeLoop() {
-        //这里如果多次设置值,则会改动多次,依前一次结果累积.
-        const oldValue = atom.get()
-        const newValue = reducer(oldValue, temp)
-        if (newValue != oldValue) {
-          parentFiber.effectTag.set("UPDATE")
-          atom.set(newValue)
-        }
-      },
-      afterLoop: after ? () => {
-        after(atom.get())
-      } : undefined
+    envModel.reconcile(function () {
+      //这里如果多次设置值,则会改动多次,依前一次结果累积.
+      const oldValue = atom.get()
+      const newValue = reducer(oldValue, temp)
+      if (newValue != oldValue) {
+        parentFiber.effectTag.set("UPDATE")
+        atom.set(newValue)
+      }
     })
   }
 }
@@ -218,7 +205,6 @@ export function useGetCreateChangeAtom() {
  * @returns 
  */
 export function useBaseMemoGet<T, V extends readonly any[] = readonly any[]>(
-  didCommit: undefined | ((v: T) => void),
   effect: (deps: V) => T,
   deps: V,
 ): () => T {
@@ -234,10 +220,7 @@ export function useBaseMemoGet<T, V extends readonly any[] = readonly any[]>(
     }
     revertParentFiber()
 
-    const hook = envModel.createChangeAtom(state, didCommit ? (v) => {
-      didCommit(v.value);
-      return v
-    } : undefined)
+    const hook = envModel.createChangeAtom(state)
     const get = () => hook.get().value
     hookMemos.push({
       value: hook,

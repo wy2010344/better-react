@@ -1786,7 +1786,6 @@ type DomElements = {
 export type DomElementType = keyof DomElements
 export type DomAttribute<T extends DomElementType> = DomElements[T]['attributes']
 export type DomElement<T extends DomElementType> = DomElements[T]['element']
-
 //58个svg
 type SvgElements = {
   svg: React.SVGProps<SVGSVGElement>;
@@ -1857,3 +1856,4 @@ type SvgElements = {
 export type SvgElementType = keyof SvgElements
 export type SvgAttribute<T extends SvgElementType> = SvgElements[T]['attributes']
 export type SvgElement<T extends SvgElementType> = SvgElements[T]['element']
+

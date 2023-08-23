@@ -42,7 +42,7 @@ export function renderOneF<M>(
 
     let commitWork: (() => void) | void = undefined
     const [envModel, parentFiber] = useParentFiber()
-    const cache = useBaseMemoGet(undefined, initCache, emptyArray)()
+    const cache = useBaseMemoGet(initCache, emptyArray)()
     if (cache.key == key && cache.fiber) {
       //key相同复用
       cache.fiber.changeRender(render as any, deps)

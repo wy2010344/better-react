@@ -1,14 +1,13 @@
 import { StoreRef, EnvModel, FindParentAndBefore } from "./commitWork"
 import { arrayNotEqualDepsWithEmpty, storeRef } from "./util"
 
-export type HookValueSet<F, T> = (v: F, after?: (v: T) => void) => void
+export type HookValueSet<F> = (v: F) => void
 export type HookValue<F, T> = {
   value: StoreRef<T>
-  readonly set: HookValueSet<F, T>
+  readonly set: HookValueSet<F>
   reducer: any,
   init: any,
-  initFun: any,
-  didCommit: any,
+  initFun: any
 }
 export type HookMemo<T> = {
   deps: readonly any[]

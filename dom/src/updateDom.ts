@@ -69,10 +69,7 @@ export class FiberNode implements FiberAbsNode {
     )
   }
   static createDomWith(node: Node, isPortal?: boolean) {
-    return new FiberNode(node, updatePorps, isPortal)
-  }
-  static portalCreateDomWith(node: Node) {
-    return FiberNode.createDomWith(node, true)
+    return new FiberNode(node, updateProps, isPortal)
   }
   static createDom(type: string, isPortal?: boolean) {
     return FiberNode.createDomWith(
@@ -89,9 +86,6 @@ export class FiberNode implements FiberAbsNode {
       updateSVGProps,
       isPortal
     )
-  }
-  static portalCreateSvgWith(node: Node) {
-    return FiberNode.createSvgWith(node, true)
   }
   static createSvg(type: string, isPortal?: boolean) {
     return FiberNode.createSvgWith(
@@ -312,16 +306,19 @@ function isGone(prev: Props, next: Props) {
   }
 }
 
-export function updatePorps(node: any, key: string, value: any) {
+export function updateProps(node: any, key: string, value: any) {
   if (key.includes('-')) {
     node.setAttribute(key, value)
   } else {
     node[key] = value
+    if (key == 'href' && !value) {
+      node.removeAttribute(key)
+    }
   }
 }
 export function updateSVGProps(node: any, key: string, value: any) {
   if (key == 'innerHTML' || key == 'textContent') {
-    updatePorps(node, key, value)
+    updateProps(node, key, value)
   } else {
     if (value) {
       if (key == 'className') {

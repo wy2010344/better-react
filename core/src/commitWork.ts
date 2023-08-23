@@ -4,23 +4,17 @@ import { EmptyFun, ManageValue, quote, removeEqual, storeRef } from "./util"
 
 
 export type CreateChangeAtom<T> = (v: T, didCommit?: (v: T) => T) => StoreRef<T>
-export type Reconcile = ({
-  beforeLoop,
-  afterLoop
-}: {
-  beforeLoop?: EmptyFun
-  afterLoop?: EmptyFun
-}) => void
+export type Reconcile = (work?: EmptyFun) => void
 export class EnvModel {
   realTime = storeRef(false)
   flushSync(fun: EmptyFun) {
-    const realTime = this.realTime
-    realTime.set(true)
+    const that = this
+    that.realTime.set(true)
     fun()
-    this.reconcile({
-      afterLoop() {
-        realTime.set(false)
-      }
+    this.reconcile(function () {
+      that.updateEffect(function () {
+        that.realTime.set(false)
+      }, 0)
     })
   }
 
@@ -36,8 +30,8 @@ export class EnvModel {
   addDelect(fiber: Fiber) {
     this.deletions.push(fiber)
   }
-  private updateEffects: [UpdateEffect[], UpdateEffect[], UpdateEffect[]] = [[], [], []]
-  updateEffect(set: UpdateEffect, level: UpdateEffectLevel) {
+  private updateEffects: [EmptyFun[], EmptyFun[], EmptyFun[]] = [[], [], []]
+  updateEffect(set: EmptyFun, level: UpdateEffectLevel) {
     this.updateEffects[level].push(set)
   }
   /**批量提交需要最终确认的atoms */
@@ -78,9 +72,10 @@ export class EnvModel {
     /**最新更新所有注册的*/
     this.changeAtoms.forEach(atom => atom.commit())
     this.changeAtoms.length = 0
+    this.runUpdateEffect(0)
+    /******清理删除********************************************************/
     /******清理所有的draft********************************************************/
     this.draftConsumers.length = 0
-    /******清理删除********************************************************/
     // checkRepeat(deletions)
     this.deletions.forEach(function (fiber) {
       //清理effect
@@ -89,7 +84,6 @@ export class EnvModel {
       commitDeletion(fiber)
     })
     this.deletions.length = 0
-    this.runUpdateEffect(0)
     /******更新属性********************************************************/
     this.runUpdateEffect(1)
     /******遍历修补********************************************************/
@@ -125,10 +119,8 @@ export type LoopWork = {
   type: "loop"
   //是否是低优先级
   isLow?: boolean
-  beforeWork?: EmptyFun
-  afterWork?: EmptyFun
+  work?: EmptyFun
 }
-export type UpdateEffect = () => void
 /**本次所有需要执行的effects 
  * 分为3个等级,更新属性前,更新属性中,更新属性后
 */

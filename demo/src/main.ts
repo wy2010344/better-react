@@ -8,6 +8,7 @@ import { StylisCreater } from "stylis-creater";
 import test from './test'
 import cssHasCursor from "./learn/css-has-cursor";
 import 测试sharePortal from "./测试sharePortal";
+import contentEditableReact from "./contentEditableReact";
 const destroy = createRoot(
   document.getElementById("app")!,
   function () {
@@ -83,10 +84,10 @@ const destroy = createRoot(
       }
     }, [])
     PanelContext.useProvider(operate)
-    renderFragment(App, [])
-
     useEffect(() => {
-      cssHasCursor(operate)
+      App(operate)
+      contentEditableReact(operate)
+      // cssHasCursor(operate)
       //learn(operate)
       //jsonRender(operate)
     }, [])

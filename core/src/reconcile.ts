@@ -2,23 +2,16 @@ import { EnvModel, LoopWork, StoreRef } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
 import { Fiber } from "./Fiber"
 import { deepTravelFiber } from "./findParentAndBefore"
-import { EmptyFun, storeRef } from "./util"
+import { EmptyFun } from "./util"
 
 function getRec1(askNextTimeWork: EmptyFun, appendWork: (work: WorkUnit) => void) {
   let batchUpdateOn = false
   const batchUpdateWorks: LoopWork[] = []
-  return function ({
-    beforeLoop,
-    afterLoop
-  }: {
-    beforeLoop?: EmptyFun
-    afterLoop?: EmptyFun
-  }): void {
+  return function (work?: EmptyFun): void {
     batchUpdateWorks.push({
       type: "loop",
       isLow: currentTaskIsLow,
-      beforeWork: beforeLoop,
-      afterWork: afterLoop
+      work
     })
     if (!batchUpdateOn) {
       batchUpdateOn = true
@@ -90,10 +83,10 @@ export class BatchWork {
     if (this.rootFiber) {
       const that = this
       this.envModel.addDelect(that.rootFiber)
-      this.envModel.reconcile({
-        afterLoop() {
+      this.envModel.reconcile(function () {
+        that.envModel.updateEffect(function () {
           that.rootFiber = undefined as any
-        }
+        }, 2)
       })
     }
   }
@@ -103,7 +96,7 @@ function buildWorkUnits(
   envModel: EnvModel,
   batchWork: BatchWork
 ) {
-  const workList: WorkUnit[] = []
+  let workList: WorkUnit[] = []
   const currentTick = new CurrentTick(function (work) {
     workList.unshift(work)
   })
@@ -112,8 +105,8 @@ function buildWorkUnits(
     const index = workList.findIndex(v => v.type == 'batchCollect')
     if (index > -1) {
       return function () {
-        (workList[index] as any).work()
-        workList.splice(index, 1)
+        const work = workList.splice(index, 1)[0] as BatchCollectWork
+        work.work()
       }
     }
   }
@@ -132,35 +125,20 @@ function buildWorkUnits(
         const realWork: REAL_WORK = function () {
           currentTick.open(isLow)
           //寻找渲染前的任务
-          for (let i = 0; i < workList.length; i++) {
-            const work = workList[i]
+          workList = workList.filter(function (work, i) {
             if (work.type == 'loop' && shouldAdd(work)) {
-              if (work.beforeWork) {
-                renderWorks.appendWork(work.beforeWork)
+              if (work.work) {
+                renderWorks.appendWork(work.work)
               }
               currentTick.appendLowRollback(work)
+              return false
             }
-          }
+            return true
+          })
           //动态添加渲染任务
           renderWorks.appendWork(() => {
             batchWork.beginRender(currentTick, renderWorks)
           })
-          //寻找渲染后的任务
-          for (let i = 0; i < workList.length; i++) {
-            const work = workList[i]
-            if (work.type == 'loop' && shouldAdd(work)) {
-              if (work.afterWork) {
-                renderWorks.appendWork(work.afterWork)
-              }
-            }
-          }
-          //清空渲染任务
-          for (let i = workList.length - 1; i > -1; i--) {
-            const work = workList[i]
-            if (work.type == 'loop' && shouldAdd(work)) {
-              workList.splice(i, 1)
-            }
-          }
         }
         realWork.isRender = true
         return realWork
@@ -261,9 +239,7 @@ class CurrentTick {
   }
 }
 
-//相当于往线程池中添加一个任务
-
-export type WorkUnit = {
+export type BatchCollectWork = {
   /**
    * 任务收集不能停止,会动态增加loop和afterLoop
    * loop可以跳过
@@ -273,7 +249,9 @@ export type WorkUnit = {
    */
   type: "batchCollect"
   work: EmptyFun
-} | LoopWork
+}
+//相当于往线程池中添加一个任务
+export type WorkUnit = BatchCollectWork | LoopWork
 
 export type AskNextTimeWork = (data: {
   realTime: StoreRef<boolean>
