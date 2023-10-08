@@ -1,4 +1,4 @@
-import { renderMap } from "./renderMap";
+import { renderArray } from "./renderMap";
 import { getOnlyId } from "./useOnlyId";
 import { useStoreTriggerRender, valueCenterOf } from "./ValueCenter";
 
@@ -29,7 +29,7 @@ export function createSharePop() {
   return {
     useProvider() {
       const notifys = useStoreTriggerRender(notifyCenter)
-      return renderMap(notifys, getId, renderContent)
+      return renderArray(notifys, getId, renderContent)
     },
     /**返回销毁事件*/
     add(render: () => void) {

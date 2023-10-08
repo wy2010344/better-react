@@ -1,4 +1,4 @@
-import { getAliasOfAttribute, isSVG, renderContent, useDom, useSvg } from "better-react-dom";
+import { domOf, getAliasOfAttribute, isSVG, renderContent, svgOf, useDom, useSvg } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
 import { useState } from "better-react-helper";
 import { XmlNode, parseSync } from "xml-reader";
@@ -26,7 +26,20 @@ export default normalPanel(function (operate, id) {
       }
     }
   })
-
+  svgOf("svg", {
+    width: "133",
+    height: "43",
+    viewBox: "0 0 133 43",
+    fill: "none",
+    xmlns: "http://www.w3.org/2000/svg",
+  }).render(function () {
+    const text = svgOf("text", {
+      stroke: "black",
+      alignmentBaseline: "hanging"
+    }).render(function () {
+      renderContent("abcd")
+    })
+  })
   useDom('pre', {
     textContent: target
   })

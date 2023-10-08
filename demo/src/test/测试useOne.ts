@@ -1,7 +1,7 @@
 import { render } from "better-react";
 import { useDom } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
-import { renderGuardString, useState, renderMap, renderOne, renderBaseGuard } from "better-react-helper"
+import { renderGuardString, useState, renderArray, renderOne, renderBaseGuard } from "better-react-helper"
 
 export default normalPanel(function (operate, id) {
 
@@ -19,7 +19,7 @@ export default normalPanel(function (operate, id) {
       })
 
       //测试renderOne()
-      // 测试renderMap()
+      // 测试renderArray()
       // 测试renderMapString()
       测试useBaseGuard()
     }
@@ -102,7 +102,7 @@ const map = {
   }
 }
 
-function 测试renderMap() {
+function 测试renderArray() {
 
   const [list, setList] = useState<IndexModel[]>([])
   useDom("button", {
@@ -126,7 +126,7 @@ function 测试renderMap() {
       setList(list => JSON.parse(JSON.stringify(list)))
     }
   })
-  renderMap(list, quoteOne, renderOneFun)
+  renderArray(list, quoteOne, renderOneFun)
 }
 
 function 测试useBaseGuard() {

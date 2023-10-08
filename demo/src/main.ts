@@ -2,13 +2,16 @@ import App from "./App";
 import { AskNextTimeWork, useEffect } from "better-react";
 import { renderContent, useDom, getScheduleAskTime, StyleContext, createRoot, domOf } from "better-react-dom";
 import { CountContext, PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
-import { useStoreTriggerRender, renderMap, useState, valueCenterOf, renderFragment, useMemo } from "better-react-helper";
+import { useStoreTriggerRender, renderArray, useState, valueCenterOf, renderFragment, useMemo } from "better-react-helper";
 import { StylisCreater } from "stylis-creater";
-
-import test from './test'
 import cssHasCursor from "./learn/css-has-cursor";
 import 测试sharePortal from "./测试sharePortal";
 import contentEditableReact from "./contentEditableReact";
+import ktable from "./ktable";
+import d3Learn from "./d3-learn";
+import FourierSeries from "./FourierSeries/index";
+import numberAnalysis from "./FourierSeries/numberAnalysis";
+import logic from "./logic";
 const destroy = createRoot(
   document.getElementById("app")!,
   function () {
@@ -45,8 +48,6 @@ const destroy = createRoot(
     })
     CountContext.useProvider(count)
     测试sharePortal()
-
-    test()
     const { panels, operate } = useMemo(() => {
       const panels = valueCenterOf<PanelCollection>([])
       const oldSet = panels.set
@@ -86,7 +87,12 @@ const destroy = createRoot(
     PanelContext.useProvider(operate)
     useEffect(() => {
       App(operate)
-      contentEditableReact(operate)
+      logic(operate, null)
+      // FourierSeries(operate, null)
+      // numberAnalysis(operate, null)
+      // contentEditableReact(operate)
+      // ktable(operate, null)
+      // d3Learn(operate, null)
       // cssHasCursor(operate)
       //learn(operate)
       //jsonRender(operate)
@@ -95,7 +101,7 @@ const destroy = createRoot(
     renderFragment(function () {
       const vs = useStoreTriggerRender(panels)
       console.log("render-out")
-      renderMap(vs, v => v.id, v => {
+      renderArray(vs, v => v.id, v => {
         renderFragment(function () {
           v.callback(v.id)
         }, [v.callback, v.id])

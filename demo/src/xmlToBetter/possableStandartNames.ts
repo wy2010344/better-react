@@ -145,7 +145,7 @@ const possibleStandardNames = {
   target: 'target',
   title: 'title',
   type: 'type',
-  usemap: 'renderMap',
+  usemap: 'renderArray',
   value: 'value',
   width: 'width',
   wmode: 'wmode',

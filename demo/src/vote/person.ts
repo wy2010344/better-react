@@ -1,5 +1,5 @@
 import { domOf, renderContent, useDom } from "better-react-dom";
-import { useRef, renderMap } from "better-react-helper";
+import { useRef, renderArray } from "better-react-helper";
 import { useUser } from "../dbStore";
 import { normalPanel } from "../panel/PanelContext";
 import { renderInput } from "better-react-dom-helper";
@@ -46,7 +46,7 @@ export default normalPanel(function (operate, id) {
           })
           useDom("tbody", {
             children() {
-              renderMap(users, v => v.name, user => {
+              renderArray(users, v => v.name, user => {
                 useDom("tr", {
                   children() {
                     useDom("td", {

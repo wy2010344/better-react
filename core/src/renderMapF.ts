@@ -3,16 +3,14 @@ import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemoGet, u
 import { emptyArray, storeRef } from "./util"
 
 ////////****useMap****////////////////////////////////////////////////////////////////////////////////////////////////////////////
-export type Translate<M, T> = {
-  size(m: M): number
-  get(m: M, i: number): T
-}
-export type MapRowRender<T extends any[]> = readonly [
+export type MapRowRender<C, T extends any[]> = readonly [
+  C,
   any,
   VirtaulDomNode | undefined,
   (v: T) => void,
   T,
 ] | readonly [
+  C,
   any,
   VirtaulDomNode | undefined,
   () => void
@@ -28,28 +26,31 @@ function createMapRef() {
  * @param render 
  * @param deps 
  */
-export function renderMapF<M, K>(
+export function renderMapF<M, C>(
   dom: VirtualDomOperator,
   data: M,
-  translate: Translate<M, K>,
+  initCache: C,
+  hasValue: (v: M, c: C) => boolean,
   /**中间不允许hooks,应该处理一下*/
-  render: (row: K, i: number) => MapRowRender<any>,
+  render: (v: M, c: C) => MapRowRender<C, any>,
   deps?: readonly any[]
 ): VirtaulDomNode
-export function renderMapF<M, K>(
+export function renderMapF<M, C>(
   dom: void,
   data: M,
-  translate: Translate<M, K>,
+  initCache: C,
+  hasValue: (v: M, c: C) => boolean,
   /**中间不允许hooks,应该处理一下*/
-  render: (row: K, i: number) => MapRowRender<any>,
+  render: (row: M, c: C) => MapRowRender<C, any>,
   deps?: readonly any[]
 ): void
-export function renderMapF<M, K>(
+export function renderMapF<M, C>(
   dom: any,
   data: M,
-  translate: Translate<M, K>,
+  initCache: C,
+  hasValue: (v: M, c: C) => boolean,
   /**中间不允许hooks,应该处理一下*/
-  render: (row: K, i: number) => MapRowRender<any>,
+  render: (row: M, c: C) => MapRowRender<C, any>,
   deps?: readonly any[]
 ) {
   return renderBaseFiber(dom, true, function () {
@@ -66,12 +67,12 @@ export function renderMapF<M, K>(
     parentFiber.firstChild.set(undefined!)
     parentFiber.lastChild.set(undefined!)
 
-    const maxSize = translate.size(data)
-    for (let i = 0; i < maxSize; i++) {
-      const v = translate.get(data, i)
 
+    let cache = initCache
+    while (hasValue(data, cache)) {
       draftParentFiber()
-      const [key, dom, rowRender, deps,] = render(v, i)
+      const [nextCache, key, dom, rowRender, deps] = render(data, cache)
+      cache = nextCache
       revertParentFiber()
 
       const oldFibers = oldMap.get(key)

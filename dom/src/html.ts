@@ -172,7 +172,7 @@ export namespace React {
   type NativeFocusEvent = FocusEvent;
   type NativeWheelEvent = WheelEvent;
   type NativeTransitionEvent = TransitionEvent;
-  interface CompositionEvent<T = Element> extends SyntheticEvent<T, NativeCompositionEvent> {
+  export interface CompositionEvent<T = Element> extends SyntheticEvent<T, NativeCompositionEvent> {
     data: string;
   }
   // All the WAI-ARIA 1.1 role attribute values from https://www.w3.org/TR/wai-aria-1.1/#role_definitions
@@ -474,15 +474,15 @@ export namespace React {
     clipboardData: DataTransfer;
   }
 
-  interface CompositionEvent<T = Element> extends SyntheticEvent<T, NativeCompositionEvent> {
+  export interface CompositionEvent<T = Element> extends SyntheticEvent<T, NativeCompositionEvent> {
     data: string;
   }
 
-  interface DragEvent<T = Element> extends MouseEvent<T, NativeDragEvent> {
+  export interface DragEvent<T = Element> extends MouseEvent<T, NativeDragEvent> {
     dataTransfer: DataTransfer;
   }
 
-  interface PointerEvent<T = Element> extends MouseEvent<T, NativePointerEvent> {
+  export interface PointerEvent<T = Element> extends MouseEvent<T, NativePointerEvent> {
     pointerId: number;
     pressure: number;
     tangentialPressure: number;
@@ -495,19 +495,19 @@ export namespace React {
     isPrimary: boolean;
   }
 
-  interface FocusEvent<Target = Element, RelatedTarget = Element> extends SyntheticEvent<Target, NativeFocusEvent> {
+  export interface FocusEvent<Target = Element, RelatedTarget = Element> extends SyntheticEvent<Target, NativeFocusEvent> {
     relatedTarget: (EventTarget & RelatedTarget) | null;
     target: EventTarget & Target;
   }
 
-  interface FormEvent<T = Element> extends SyntheticEvent<T> {
+  export interface FormEvent<T = Element> extends SyntheticEvent<T> {
   }
 
   interface InvalidEvent<T = Element> extends SyntheticEvent<T> {
     target: EventTarget & T;
   }
 
-  interface ChangeEvent<T = Element> extends SyntheticEvent<T> {
+  export interface ChangeEvent<T = Element> extends SyntheticEvent<T> {
     target: EventTarget & T;
   }
 
@@ -560,7 +560,7 @@ export namespace React {
     shiftKey: boolean;
   }
 
-  interface TouchEvent<T = Element> extends UIEvent<T, NativeTouchEvent> {
+  export interface TouchEvent<T = Element> extends UIEvent<T, NativeTouchEvent> {
     altKey: boolean;
     changedTouches: TouchList;
     ctrlKey: boolean;
@@ -584,20 +584,20 @@ export namespace React {
     view: AbstractView;
   }
 
-  interface WheelEvent<T = Element> extends MouseEvent<T, NativeWheelEvent> {
+  export interface WheelEvent<T = Element> extends MouseEvent<T, NativeWheelEvent> {
     deltaMode: number;
     deltaX: number;
     deltaY: number;
     deltaZ: number;
   }
 
-  interface AnimationEvent<T = Element> extends SyntheticEvent<T, NativeAnimationEvent> {
+  export interface AnimationEvent<T = Element> extends SyntheticEvent<T, NativeAnimationEvent> {
     animationName: string;
     elapsedTime: number;
     pseudoElement: string;
   }
 
-  interface TransitionEvent<T = Element> extends SyntheticEvent<T, NativeTransitionEvent> {
+  export interface TransitionEvent<T = Element> extends SyntheticEvent<T, NativeTransitionEvent> {
     elapsedTime: number;
     propertyName: string;
     pseudoElement: string;

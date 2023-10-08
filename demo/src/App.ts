@@ -20,7 +20,6 @@ import figmaClone from "./figmaClone";
 import sReact from "./s-react";
 import 文件系统整理 from "./文件系统整理";
 import xmlToBetter from "./xmlToBetter";
-import logic from "./logic";
 import 测试Input from "./test/测试Input";
 import 测试appendAsPortal from "./测试appendAsPortal";
 import 测试sharePortal from "./测试sharePortal";
@@ -194,13 +193,6 @@ export default normalPanel(function (operate) {
       文件系统整理(operate)
     },
     textContent: "文件系统整理"
-  })
-  useDom("button", {
-    onClick(event) {
-      event.stopPropagation()
-      logic(operate)
-    },
-    textContent: "逻辑编程"
   })
   domOf("button", {
     onClick(event) {

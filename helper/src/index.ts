@@ -24,6 +24,7 @@ export * from './renderFragment'
 export * from './Lock'
 export * from './useAsyncPaginate'
 export * from './usePortal'
+export * from './renderHasValue'
 export { compileSimpleRule, createMatch, pathExactly, pathStartWith, toAbsolutePath } from "./routes/util"
 export { RouteContext, routeMatch, routeMathWithOther } from "./routes"
 

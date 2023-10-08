@@ -1,5 +1,5 @@
 import { createContext } from "better-react"
-import usePanel, { PanelParams } from "./renderPanel"
+import usePanel, { PanelParams, Size } from "./renderPanel"
 
 export type PanelCollection = {
   id: number
@@ -36,7 +36,7 @@ export function panelWith<T>({
   children,
   ...args
 }: {
-  children: (operate: PanelOperate, id: number, arg: T) => void,
+  children: (operate: PanelOperate, id: number, arg: T, size: Size, div: HTMLElement) => void,
 } & Omit<PanelParams, "close" | "children" | "moveFirst">): PanelCallback<T> {
 
   return function (operate, value) {
@@ -46,8 +46,8 @@ export function panelWith<T>({
         close() {
           operate.close(id)
         },
-        children() {
-          children(operate, id, value)
+        children(size, div) {
+          children(operate, id, value, size, div)
         },
         moveFirst() {
           operate.moveToFirst(id)

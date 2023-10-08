@@ -1,5 +1,5 @@
 import { renderContent, useDom } from "better-react-dom";
-import { useState, renderMap } from "better-react-helper";
+import { useState, renderArray } from "better-react-helper";
 import { useTopic } from "../dbStore";
 import { normalPanel } from "../panel/PanelContext";
 import topicPanel from "./topic";
@@ -41,7 +41,7 @@ export default normalPanel(function (operate, id) {
     }
   })
 
-  renderMap(topic.topics, v => v.description, function (v, i) {
+  renderArray(topic.topics, v => v.description, function (v, i) {
     useDom("div", {
       css: `
       cursor:pointer;

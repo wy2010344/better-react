@@ -1,7 +1,7 @@
 import { EmptyFun, emptyArray, renderMapF, useEffect } from "better-react";
 import { ValueCenter, useStoreTriggerRender, useValueCenter } from "./ValueCenter";
 import { renderFragment } from "./renderFragment";
-import { defaultTranslate, renderMap } from "./renderMap";
+import { arrayHasValue } from "./renderMap";
 
 
 
@@ -11,8 +11,9 @@ export function renderSharePortal(store: ValueCenter<SharePortalModel>) {
   return renderFragment(function () {
     const list = useStoreTriggerRender(store)
     // console.log("--list改变--")
-    renderMapF(undefined, list, defaultTranslate, function (row: ValueCenter<EmptyFun>, i) {
-      return [row, undefined, function () {
+    renderMapF(undefined, list, 0 as number, arrayHasValue, function (data, i) {
+      const row = data[i]
+      return [i + 1, row, undefined, function () {
         const value = useStoreTriggerRender(row)
         // console.log("--内容改变--")
         return value()

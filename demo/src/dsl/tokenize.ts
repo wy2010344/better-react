@@ -1,5 +1,5 @@
 import { Range } from './vscode'
-import { andMatch, getRange, manyMatch, manyRuleGet, match, notMathChar, orMatch, orRuleGet, ParseFun, Que, ruleGet, ruleGetString, whiteList, whiteSpaceRule } from './tokenParser'
+import { andMatch, getRange, LineCharQue, manyMatch, manyRuleGet, match, notMathChar, orMatch, orRuleGet, ParseFun, Que, ruleGet, ruleGetString, whiteList, whiteSpaceRule } from './tokenParser'
 
 /**
  * 第一步,变成列表
@@ -78,27 +78,27 @@ const blockRule = orMatch(
   manyMatch(blockCharRule, 1)
 )
 
-const tokenRuleGet = manyRuleGet<TlcToken>(orRuleGet(
+const tokenRuleGet = manyRuleGet<LineCharQue, TlcToken>(orRuleGet(
   ruleGet(whiteSpaceRule, function (begin, end) {
     return {
       type: "white"
     }
   }),
-  ruleGet<TlcToken>(stringRule, function (begin, end) {
+  ruleGet<LineCharQue, TlcToken>(stringRule, function (begin, end) {
     return {
       type: "string",
       value: ruleGetString(begin, end),
       range: getRange(begin, end)
     }
   }),
-  ruleGet<TlcToken>(commitRule, function (begin, end) {
+  ruleGet(commitRule, function (begin, end) {
     return {
       type: "comment",
       value: ruleGetString(begin, end),
       range: getRange(begin, end)
     }
   }),
-  ruleGet<TlcToken>(errorStringRule, function (begin, end) {
+  ruleGet(errorStringRule, function (begin, end) {
     return {
       type: "string",
       error: true,
@@ -106,7 +106,7 @@ const tokenRuleGet = manyRuleGet<TlcToken>(orRuleGet(
       range: getRange(begin, end)
     }
   }),
-  ruleGet<TlcToken>(errorCommitRule, function (begin, end) {
+  ruleGet(errorCommitRule, function (begin, end) {
     return {
       type: "comment",
       error: true,
@@ -114,7 +114,7 @@ const tokenRuleGet = manyRuleGet<TlcToken>(orRuleGet(
       range: getRange(begin, end)
     }
   }),
-  ruleGet<TlcToken>(blockRule, function (begin, end) {
+  ruleGet(blockRule, function (begin, end) {
     return {
       type: "block",
       value: ruleGetString(begin, end),
@@ -122,14 +122,13 @@ const tokenRuleGet = manyRuleGet<TlcToken>(orRuleGet(
     }
   }),
 ))
-
 /**
  * 拆分词
  * @param uri 
  * @param content 
  */
 export function tokenize(content: string): TlcToken[] {
-  const result = tokenRuleGet(new Que(content))
+  const result = tokenRuleGet(new LineCharQue(content))
   if (result) {
     return result.value
   } else {

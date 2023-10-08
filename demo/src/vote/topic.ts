@@ -1,4 +1,4 @@
-import { renderMap } from "better-react-helper";
+import { renderArray } from "better-react-helper";
 import { renderContent, useDom } from "better-react-dom";
 import { getTextColor } from "../colorUtil";
 import { TopicModel, useUser } from "../dbStore";
@@ -52,7 +52,7 @@ export default panelWith({
                         renderContent("提出建议")
                       }
                     })
-                    renderMap(topic.votes, v => v.description, vote => {
+                    renderArray(topic.votes, v => v.description, vote => {
                       const user = vote.creater ? users.find(v => v.name == vote.creater) : undefined
                       useDom("th", {
                         style: user ? {
@@ -68,7 +68,7 @@ export default panelWith({
             })
             useDom("tbody", {
               children() {
-                renderMap(users, v => v.name, user => {
+                renderArray(users, v => v.name, user => {
                   useDom("tr", {
                     children() {
                       useDom("td", {
@@ -117,7 +117,7 @@ export default panelWith({
                             })
                         }
                       })
-                      renderMap(topic.votes, v => v.description, (vote, i) => {
+                      renderArray(topic.votes, v => v.description, (vote, i) => {
                         useDom("td", {
                           children() {
                             renderIf(

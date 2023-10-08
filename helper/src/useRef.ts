@@ -1,4 +1,4 @@
-import { useBaseMemoGet, storeRef, quote } from 'better-react';
+import { useBaseMemoGet, storeRef, quote, emptyArray } from 'better-react';
 
 type StoreRef<T> = {
   get(): T
@@ -29,7 +29,7 @@ export function useRef() {
     ref.get = ref.get.bind(ref)
     ref.set = ref.set.bind(ref)
     return ref
-  }, [])
+  }, emptyArray)
 }
 export function useRefFun<T>(init: () => T) {
   return useRef(undefined, init)

@@ -1,6 +1,6 @@
 import { startTransition, useEffect } from "better-react";
 import { renderContent, useDom } from "better-react-dom";
-import { useEvent, useState, renderMap, renderFragment, useMemo } from "better-react-helper";
+import { useEvent, useState, renderArray, renderFragment, useMemo } from "better-react-helper";
 import { normalPanel } from "./panel/PanelContext";
 import { renderInput } from "better-react-dom-helper";
 
@@ -154,7 +154,7 @@ function ExpensiveView(count: number) {
       renderFragment(PartView, [])
       useDom("hr")
       //console.log("render-mvvvv")
-      renderMap(
+      renderArray(
         Array.from(Array(length).keys()).reverse(),
         v => v,
         v => {

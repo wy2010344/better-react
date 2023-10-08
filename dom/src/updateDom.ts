@@ -3,7 +3,7 @@ import {
   Props, VirtaulDomNode, createContext, useAttrEffect
 } from "better-react"
 import { getAttributeAlias } from "./getAttributeAlias"
-import { SvgElementType } from "./html"
+import { DomElementType, React, SvgElementType } from "./html"
 
 /**
  * 这只是一种dom的更新css方式,将css属性交给外部处理
@@ -156,7 +156,7 @@ export class FiberText implements FiberAbsNode {
 }
 export const emptyFun = () => { }
 
-function purifyStyle(style: object) {
+export function stringifyStyle(style: React.CSSProperties) {
   const s = Object.entries(style).map(function (v) {
     return `${underlineToCamel(v[0])}:${v[1]};`
   }).join("")
@@ -218,7 +218,7 @@ function updateDom(
   if (style && typeof (style) == 'object') {
     //转化成字符串。会造成对style的全覆盖，所以不能单独修改元素
     //单独个性style属性,允许驼峰与短线,但是这种化驼峰为短线,比较危险.
-    props.style = purifyStyle(style)
+    props.style = stringifyStyle(style)
   }
   prevKeys
     .filter(isEvent)
@@ -439,4 +439,124 @@ export const svgTagNames: SvgElementType[] = [
   "tspan",
   "use",
   "view"
+]
+
+export const domTagNames: DomElementType[] = [
+  "a",
+  "abbr",
+  "address",
+  "area",
+  "article",
+  "aside",
+  "audio",
+  "b",
+  "base",
+  "bdi",
+  "bdo",
+  "big",
+  "blockquote",
+  "body",
+  "br",
+  "button",
+  "canvas",
+  "caption",
+  "cite",
+  "code",
+  "col",
+  "colgroup",
+  "data",
+  "datalist",
+  "dd",
+  "del",
+  "details",
+  "dfn",
+  "dialog",
+  "div",
+  "dl",
+  "dt",
+  "em",
+  "embed",
+  "fieldset",
+  "figcaption",
+  "figure",
+  "footer",
+  "form",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "head",
+  "header",
+  "hgroup",
+  "hr",
+  "html",
+  "i",
+  "iframe",
+  "img",
+  "input",
+  "ins",
+  "kbd",
+  "keygen",
+  "label",
+  "legend",
+  "li",
+  "link",
+  "main",
+  "map",
+  "mark",
+  "menu",
+  "menuitem",
+  "meta",
+  "meter",
+  "nav",
+  "noindex",
+  "noscript",
+  "object",
+  "ol",
+  "optgroup",
+  "option",
+  "output",
+  "p",
+  "param",
+  "picture",
+  "pre",
+  "progress",
+  "q",
+  "rp",
+  "rt",
+  "ruby",
+  "s",
+  "samp",
+  "slot",
+  "script",
+  "section",
+  "select",
+  "small",
+  "source",
+  "span",
+  "strong",
+  "style",
+  "sub",
+  "summary",
+  "sup",
+  "table",
+  "template",
+  "tbody",
+  "td",
+  "textarea",
+  "tfoot",
+  "th",
+  "thead",
+  "time",
+  "title",
+  "tr",
+  "track",
+  "u",
+  "ul",
+  "var",
+  "video",
+  "wbr",
+  "webview"
 ]

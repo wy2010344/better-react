@@ -1,8 +1,8 @@
 import { render, AskNextTimeWork, VirtualDomOperator, RenderWithDep, renderFiber, useAttrEffect, emptyArray } from "better-react";
 import { DomAttribute, DomElement, DomElementType, SvgAttribute, SvgElement, SvgElementType } from "./html";
-import { EMPTYPROPS, FiberNode, FiberText, emptyFun, updateProps } from "./updateDom";
+import { EMPTYPROPS, FiberNode, FiberText, domTagNames, emptyFun, svgTagNames, updateProps } from "./updateDom";
 export { getScheduleAskTime } from './schedule'
-export { StyleNode, isSVG, FiberNode, FiberText, StyleContext, underlineToCamel } from './updateDom'
+export { StyleNode, isSVG, FiberNode, FiberText, StyleContext, underlineToCamel, stringifyStyle } from './updateDom'
 export { getAliasOfAttribute, getAttributeAlias } from './getAttributeAlias'
 export * from './html'
 /***
@@ -27,6 +27,16 @@ export function renderContent(content: string) {
   return dom.node
 }
 
+
+export function genTemplateString(ts: TemplateStringsArray, vs: (string | number)[]) {
+  const xs: any[] = []
+  for (let i = 0; i < vs.length; i++) {
+    xs.push(ts[i])
+    xs.push(vs[i])
+  }
+  xs.push(ts[vs.length])
+  return xs.join('')
+}
 
 type MEMONode = () => void
 export type DomWithChildren<T extends DomElementType> = DomAttribute<T> & ({
@@ -135,6 +145,12 @@ export class DomCreater<T extends DomElementType, M>{
     ) as FiberNode
     return dom.node as unknown as DomElement<T>
   }
+  html(ts: TemplateStringsArray, ...vs: (string | number)[]) {
+    return this.renderInnerHTML(genTemplateString(ts, vs))
+  }
+  text(ts: TemplateStringsArray, ...vs: (string | number)[]) {
+    return this.renderTextContent(genTemplateString(ts, vs))
+  }
   renderContentEditable(contentEditable: true | "inherit" | "plaintext-only", text: string, as: "html" | "text"): void
   renderContentEditable(contentEditable?: true | "inherit" | "plaintext-only"): void
   renderContentEditable() {
@@ -198,6 +214,13 @@ export class SvgCreater<T extends SvgElementType, M>{
     return dom.node as unknown as SvgElement<T>
   }
 
+  /**
+   * svg的text可以用textContent与innerHTML,不能contentEditable
+   * 但这里innerHTML主要是用来嵌套svg代码片段
+   * textContent还可以用renderText来实现
+   * @param innerHTML 
+   * @returns 
+   */
   renderInnerHTML(innerHTML: string) {
     const dom = renderFiber(
       <VirtualDomOperator<any>>[this.create, {
@@ -208,6 +231,22 @@ export class SvgCreater<T extends SvgElementType, M>{
     ) as FiberNode
     return dom.node as unknown as SvgElement<T>
   }
+  renderTextContent(textContent: string) {
+    const dom = renderFiber(
+      <VirtualDomOperator<any>>[this.create, {
+        ...this.props,
+        textContent
+      }, this.createArg],
+      emptyFun
+    ) as FiberNode
+    return dom.node as unknown as SvgElement<T>
+  }
+  html(ts: TemplateStringsArray, ...vs: (string | number)[]) {
+    return this.renderInnerHTML(genTemplateString(ts, vs))
+  }
+  text(ts: TemplateStringsArray, ...vs: (string | number)[]) {
+    return this.renderTextContent(genTemplateString(ts, vs))
+  }
 }
 
 export function svgOf<T extends SvgElementType>(type: T, props?: SvgAttribute<T>) {
@@ -215,4 +254,64 @@ export function svgOf<T extends SvgElementType>(type: T, props?: SvgAttribute<T>
 }
 export function portalSvgOf<T extends SvgElementType>(type: T, props?: SvgAttribute<T>) {
   return new SvgCreater(props, FiberNode.portalCreateSvg, type)
+}
+
+
+
+
+let dom: {
+  readonly [key in DomElementType]: (props?: DomAttribute<key>) => DomCreater<key, key>
+}
+let svg: {
+  readonly [key in SvgElementType]: (props?: SvgAttribute<key>) => SvgCreater<key, key>
+}
+if ('Proxy' in globalThis) {
+  const cacheDomMap = new Map<string, any>()
+  dom = new Proxy({} as any, {
+    get(_target, p, _receiver) {
+      const oldV = cacheDomMap.get(p as any)
+      if (oldV) {
+        return oldV
+      }
+      const newV = function (args: any) {
+        return domOf(p as DomElementType, args)
+      }
+      cacheDomMap.set(p as any, newV)
+      return newV
+    }
+  })
+  const cacheSvgMap = new Map<string, any>()
+  svg = new Proxy({} as any, {
+    get(_target, p, _receiver) {
+      const oldV = cacheSvgMap.get(p as any)
+      if (oldV) {
+        return oldV
+      }
+      const newV = function (args: any) {
+        return svgOf(p as SvgElementType, args)
+      }
+      cacheSvgMap.set(p as any, newV)
+      return newV
+    }
+  })
+} else {
+  const cacheDom = {} as any
+  dom = cacheDom
+  domTagNames.forEach(function (tag) {
+    cacheDom[tag] = function (args: any) {
+      return domOf(tag, args)
+    }
+  })
+  const cacheSvg = {} as any
+  svg = cacheSvg
+  svgTagNames.forEach(function (tag) {
+    cacheSvg[tag] = function (args: any) {
+      return svgOf(tag, args)
+    }
+  })
+}
+
+export {
+  dom,
+  svg
 }

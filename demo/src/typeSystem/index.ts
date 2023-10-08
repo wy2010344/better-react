@@ -1,5 +1,5 @@
 import { useDom } from "better-react-dom";
-import { useBuildSubSetArray, useBuildSubSetObject, useState, renderMap } from "better-react-helper";
+import { useBuildSubSetArray, useBuildSubSetObject, useState, renderArray } from "better-react-helper";
 import { normalPanel } from "../panel/PanelContext";
 import { alertWith, use居中 } from "../panel/居中";
 import { useClickOutside, renderInput } from "better-react-dom-helper";
@@ -37,7 +37,7 @@ export default normalPanel(function (operate, id) {
       })
     },
   })
-  renderMap(list, v => v.metaType + "-" + v.name, type => {
+  renderArray(list, v => v.metaType + "-" + v.name, type => {
     useDom("div", {
       css: `
           >*{
@@ -132,7 +132,7 @@ const structAlert = alertWith<{
       display: "inline-block"
     },
     children() {
-      renderMap(list, v => v.id, function (row, i) {
+      renderArray(list, v => v.id, function (row, i) {
         const setRow = useBuildSubSetArray(setList, v => v.id == row.id)
         const setKey = useBuildSubSetObject(setRow, 'key')
         const setValue = useBuildSubSetObject(setRow, 'value')
@@ -175,7 +175,7 @@ const structAlert = alertWith<{
                     const [filterValue, setFilterValue] = useState('')
                     const button = useDom("div", {
                       children() {
-                        renderMap(row.value, v => v, function (row) {
+                        renderArray(row.value, v => v, function (row) {
                           useDom("button", {
                             textContent: row,
                             onClick() {
@@ -203,7 +203,7 @@ const structAlert = alertWith<{
                       },
                       children() {
                         const { list } = useTypeDB()
-                        renderMap(list.filter(v => {
+                        renderArray(list.filter(v => {
                           return v.metaType == 'type' && !row.value.includes(v.name) && v.name.includes(filterValue)
                         }), v => v.name, function (type) {
                           useDom("button", {

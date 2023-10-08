@@ -2,7 +2,7 @@ import { useDom } from "better-react-dom";
 import { initJsStore } from "../jsStore";
 import { normalPanel } from "../panel/PanelContext";
 import { renderInput } from "better-react-dom-helper";
-import { useChange, useVersion, PromiseResult, useInit, renderGuard, renderIf, defaultTranslate, useState, useCallbackPromiseCall } from "better-react-helper";
+import { useChange, useVersion, PromiseResult, useInit, renderGuard, renderIf, useState, useCallbackPromiseCall, arrayHasValue } from "better-react-helper";
 import { TodoModel, todoService } from "../jsStore/todo";
 import { renderMapF } from "better-react";
 import Counter from "../test/Counter";
@@ -103,9 +103,10 @@ export default normalPanel(function (operate, id) {
           (v) => {
             console.log("外部render")
             const vs = v?.value! as TodoModel[]
-            renderMapF(undefined, vs, defaultTranslate, function (row, i) {
+            renderMapF(undefined, vs, 0 as number, arrayHasValue, function (data, i) {
               console.log("map-render")
-              return [row.id, undefined, function () {
+              const row = data[i]
+              return [i + 1, row.id, undefined, function () {
                 console.log("row-render", row.id)
 
                 const [ct, setCt] = useState(0);

@@ -1,5 +1,5 @@
 import { DomElementType, renderContent, useDom } from "better-react-dom";
-import { useRef, renderMap, renderIf, useState } from "better-react-helper";
+import { useRef, renderArray, renderIf, useState } from "better-react-helper";
 import { usePortalPanel } from "../panel/PanelContext";
 
 export default function index() {
@@ -158,7 +158,7 @@ function MapList() {
     index: number,
     key: string
   }[]>(() => [])
-  renderMap(list, v => v.index, (row, i) => {
+  renderArray(list, v => v.index, (row, i) => {
     useDom("div", {
       children() {
         useDom("div", {
