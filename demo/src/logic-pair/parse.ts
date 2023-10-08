@@ -195,19 +195,14 @@ export function parse(tokens: LToken[]) {
     const head = list[0]
     const body = list[1]
     if (head) {
-      const headExp = parseExp(head, errorAreas)
-      if (headExp) {
-        init.push({
-          type: "rule",
-          isCut: isCutRule,
-          head: headExp,
-          begin: rule.begin,
-          end: rule.end!,
-          body: body?.length ? parseExp(body, errorAreas) : undefined
-        })
-      } else {
-        rule.children[0].errors.push("无法正确地解析规则头")
-      }
+      init.push({
+        type: "rule",
+        isCut: isCutRule,
+        head: parseExp(head, errorAreas),
+        begin: rule.begin,
+        end: rule.end!,
+        body: body?.length ? parseExp(body, errorAreas) : undefined
+      })
     } else {
       rule.children[0].errors.push("没有对的规则头")
     }
@@ -221,29 +216,9 @@ export function parse(tokens: LToken[]) {
 }
 
 //括号优先级最高,然后是冒号、空格、逗号,然后是;
-function parseExp(rules: FilterType[], errorAreas: ErrorArea[]) {
+function parseExp(rules: FilterType[], errorAreas: ErrorArea[]): LExp {
   const treeList = parseBracketTree(rules, errorAreas)
-  return infixJoinNoBracket(treeList, errorAreas)
-}
-
-function infixJoinNoBracket(bracket: BracketList, errorAreas: ErrorArea[]) {
-  //再用分号区分或语句
-  return leftJoinExp(
-    bracket.list,
-    isOrCutExp,
-    function (leftExp, rightExp, centerFlag) {
-      const orExp: LOrExp = {
-        type: "or",
-        isCut: centerFlag.value == '|',
-        begin: leftExp.begin,
-        end: rightExp.end,
-        left: leftExp,
-        right: rightExp
-      }
-      return orExp
-    }, function (list) {
-      return toAndExp(list, errorAreas)!
-    })
+  return infixJoin(treeList, errorAreas)
 }
 /**
  * 假设在一种括号中
@@ -266,7 +241,23 @@ function infixJoin(bracket: BracketList, errorAreas: ErrorArea[]): LExp {
       end: bracket.end,
     } as LList
   }
-  const content = infixJoinNoBracket(bracket, errorAreas)
+  //再用分号区分或语句
+  const content = leftJoinExp(
+    bracket.list,
+    isOrCutExp,
+    function (leftExp, rightExp, centerFlag) {
+      const orExp: LOrExp = {
+        type: "or",
+        isCut: centerFlag.value == '|',
+        begin: leftExp.begin,
+        end: rightExp.end,
+        left: leftExp,
+        right: rightExp
+      }
+      return orExp
+    }, function (list) {
+      return toAndExp(list, errorAreas)!
+    })
   if (content) {
     if (bracket.bType == '(') {
       return {
@@ -472,7 +463,7 @@ type BracketList = {
 function parseBracketTree(rules: FilterType[], errorAreas: ErrorArea[]) {
   const top: BracketList = {
     type: "bracket",
-    bType: "[",
+    bType: "(",
     from: null as any,
     begin: rules[0].begin,
     end: rules.at(-1)!.end,

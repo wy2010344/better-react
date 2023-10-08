@@ -13,8 +13,6 @@ export function stringifyLog(v: KType): string {
     return `{${v.flag}}`
   } else if (v instanceof Pair) {
     return pairToList(v)
-  } else if (Array.isArray(v)) {
-    return `${v.map(x => stringifyLog(x)).join(' ')}`
   } else if (typeof (v) == 'string') {
     const trans = v.replace(/\\/g, '\\\\').replace(/'/g, "\\\'")
     const notBlock = includeBlockNotChar(trans)

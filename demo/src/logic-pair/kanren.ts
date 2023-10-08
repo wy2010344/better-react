@@ -66,7 +66,7 @@ export class KVar {
   }
 }
 /**所有类型 */
-export type KType = KVar | string | null | KType[] | Pair<KType, KType>
+export type KType = KVar | string | null | Pair<KType, KType>
 type NotNullList<T> = Pair<T, List<T>>
 export type List<T> = NotNullList<T> | null
 type KVPair = Pair<KVar, KType>
@@ -100,8 +100,6 @@ export function walk(v: KType, sub: KSubsitution): KType {
     return v
   } else if (v instanceof Pair) {
     return Pair.of(walk(v.left, sub), walk(v.right, sub))
-  } else if (Array.isArray(v)) {
-    return v.map(x => walk(x, sub))
   } else {
     return v
   }
@@ -130,20 +128,6 @@ export function unify(a: KType, b: KType, sub: KSubsitution): [boolean, KSubsitu
       return [true, sub]
     }
     return [true, extendSubsitution(b, a, sub)]
-  }
-  if (Array.isArray(a) && Array.isArray(b)) {
-    if (a.length == b.length) {
-      let tempSub = sub
-      for (let i = 0; i < a.length; i++) {
-        const [success, sub] = unify(a[i], b[i], tempSub)
-        if (success) {
-          tempSub = sub
-        } else {
-          return [false, null]
-        }
-      }
-      return [true, tempSub]
-    }
   }
   if (a instanceof Pair && b instanceof Pair) {
     const [success, sub1] = unify(a.left, b.left, sub)

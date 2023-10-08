@@ -9,9 +9,9 @@ export default panelWith({
   initWidth: 800,
   children(operate, id, arg) {
     // renderColorPie()
-    // renderPopulartation()
+    renderPopulartation()
     // renderScatter()
-    renderWorldMap()
+    // renderWorldMap()
   },
 })
 
@@ -53,66 +53,65 @@ function renderPopulartation() {
       })
     }, [out])
 
-    const xValue =
-      svgOf("svg", {
-        width,
-        height
+    svgOf("svg", {
+      width,
+      height
+    }).render(function () {
+      const yScale = scaleBand()
+        .domain(list.map(d => d.Country))
+        .range([0, innerHeight])
+        .paddingInner(0.5)
+      const xScale = scaleLinear().domain([0, max(list, d => d.Population) || 0]).range([0, innerWidth])
+
+      svgOf("g", {
+        transform: `translate(${margin.left},${margin.top})`
       }).render(function () {
-        const yScale = scaleBand()
-          .domain(list.map(d => d.Country))
-          .range([0, innerHeight])
-          .paddingInner(0.5)
-        const xScale = scaleLinear().domain([0, max(list, d => d.Population) || 0]).range([0, innerWidth])
 
-        svgOf("g", {
-          transform: `translate(${margin.left},${margin.top})`
-        }).render(function () {
-
-          //AxisLeft
-          renderArray(yScale.domain(), v => v, function (tick) {
-            svgOf("text", {
-              x: -3,
-              dy: '0.32em',
-              textAnchor: "end",
-              y: (yScale(tick) || 0) + (yScale.bandwidth() / 2)
-            }).renderTextContent(tick)
-          })
+        //AxisLeft
+        renderArray(yScale.domain(), v => v, function (tick) {
           svgOf("text", {
-            x: innerWidth / 2,
-            y: innerHeight + 35,
-            textAnchor: "middle",
-            style: `
+            x: -3,
+            dy: '0.32em',
+            textAnchor: "end",
+            y: (yScale(tick) || 0) + (yScale.bandwidth() / 2)
+          }).renderTextContent(tick)
+        })
+        svgOf("text", {
+          x: innerWidth / 2,
+          y: innerHeight + 35,
+          textAnchor: "middle",
+          style: `
               font-size:1em;
               fill:#689943;
               `
-          }).renderTextContent("Population")
-          //AxisBottom
-          renderArray(xScale.ticks(), v => v, function (tick) {
-            svgOf("g", {
-              transform: `translate(${xScale(tick)},0)`
-            }).render(function () {
-              svgOf("line", {
-                y2: innerHeight,
-                stroke: "black"
-              }).render()
-              svgOf("text", {
-                textAnchor: "middle",
-                dy: "0.71em",
-                y: innerHeight + 3
-              }).renderTextContent(format('.2s')(tick))
-            })
-          })
-
-          //marker
-          renderArray(list, v => v.Country, function (row) {
-            svgOf("rect", {
-              y: yScale(row.Country),
-              width: xScale(row.Population),
-              height: yScale.bandwidth()
+        }).renderTextContent("Population")
+        //AxisBottom
+        renderArray(xScale.ticks(), v => v, function (tick) {
+          svgOf("g", {
+            transform: `translate(${xScale(tick)},0)`
+          }).render(function () {
+            svgOf("line", {
+              y2: innerHeight,
+              stroke: "black"
             }).render()
+            svgOf("text", {
+              textAnchor: "middle",
+              dy: "0.71em",
+              y: innerHeight + 3
+            }).renderTextContent(format('.2s')(tick))
           })
         })
+
+        //marker
+        renderArray(list, v => v.Country, function (row) {
+          svgOf("rect", {
+            y: yScale(row.Country),
+            width: xScale(row.Population),
+            height: yScale.bandwidth()
+          }).render()
+        })
       })
+    })
   })
 }
 

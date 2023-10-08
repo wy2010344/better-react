@@ -3,7 +3,7 @@ import { ContentEditableModel, initContentEditableModel } from "../contentEditab
 import { emptyArray, useEffect } from "better-react";
 import { useRenderCode } from "./renderCode";
 import { dom, domOf } from "better-react-dom";
-import { DelayStream, KSubsitution, Stream, walk } from "./kanren";
+import { KSubsitution, Stream, walk } from "./kanren";
 import { VarPool, evalLExp, queryResult } from "./evalExp";
 import { renderIf, renderArray, useMemo, useReducer, renderMap } from "better-react-helper";
 import { useDragdownX } from "./dragPanel";
@@ -150,17 +150,15 @@ export default panelWith({
               border-bottom:1px solid gray;
               `
             }).renderTextContent(row.query)
-            const [model, getMore] = useReducer(reducerGetMore, '', () => {
-              const subs: KSubsitution[] = []
-              if (row.stream?.left) {
-                subs.push(row.stream.left)
-              }
-              return {
-                subs,
-                next: row.stream?.right
-              }
+            const [model, getMore] = useReducer(reducerGetMore, {
+              subs: emptyArray as KSubsitution[],
+              stream: row.stream
             })
+            useEffect(() => {
+              getMore(undefined)
+            }, emptyArray)
             renderArray(model.subs, getIndex, function (sub) {
+
               const value = useMemo(() => {
                 const out = getResult(sub, row.queryPool)
                 return out
@@ -174,7 +172,7 @@ export default panelWith({
                 })
               }
             })
-            renderIf(model.next, function () {
+            renderIf(model.stream, function () {
               domOf("button", {
                 onClick() {
                   getMore(undefined)
@@ -258,18 +256,13 @@ function getIndex(_: any, i: number) {
 
 function reducerGetMore(model: {
   subs: KSubsitution[]
-  next?: DelayStream<KSubsitution>
+  stream: Stream<KSubsitution>
 }) {
-  const { next, subs } = model
-  if (next) {
-    const nextV = next()
-    const newSubs = subs.slice()
-    if (nextV?.left) {
-      newSubs.push(nextV.left)
-    }
+  const { stream, subs } = model
+  if (stream?.left) {
     return {
-      subs: newSubs,
-      next: nextV?.right
+      subs: [...subs, stream.left],
+      stream: stream.right()
     }
   }
   return model

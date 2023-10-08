@@ -21,20 +21,12 @@ export class VarPool {
     return Object.entries(this.pool)
   }
 }
-export function evalLExp(exp: LExp, pool: VarPool): KType {
+export function evalLExp(exp: LExp, pool: VarPool, pairAsList?: boolean): KType {
   if (exp.type == "()") {
-    if (exp.content.type == 'pairs') {
-      return kanren.toListTrans(exp.content.children, v => evalLExp(v, pool))
-    } else {
-      return evalLExp(exp.content, pool)
-    }
+    return evalLExp(exp.content, pool)
   } else if (exp.type == "[]") {
     if (exp.content) {
-      if (exp.content.type == "pairs") {
-        return kanren.toListTrans(exp.content.children, v => evalLExp(v, pool), true)
-      } else {
-        return evalLExp(exp.content, pool)
-      }
+      return evalLExp(exp.content, pool, true)
     }
     return null
   } else if (exp.type == "and") {
@@ -45,7 +37,7 @@ export function evalLExp(exp: LExp, pool: VarPool): KType {
     return exp.value
   } else if (exp.type == "pairs") {
     //这里变量注入的顺序是反的
-    return exp.children.map(v => evalLExp(v, pool))
+    return kanren.toListTrans(exp.children, v => evalLExp(v, pool), pairAsList)
   } else if (exp.type == "string") {
     return exp.value
   } else if (exp.type == "var") {
@@ -64,11 +56,11 @@ export function evalLExp(exp: LExp, pool: VarPool): KType {
  * and与or,提供出来也是前结合,计算后的结果是后结合
  */
 function evalAndOr(exp: LAndExp | LOrExp, pool: VarPool): KType {
-  return [
+  return kanren.toList([
     evalLExp(exp.left, pool),
     exp.type == 'or' ? exp.isCut ? '|' : ';' : ',',
     evalLExp(exp.right, pool)
-  ]
+  ])
 }
 
 
@@ -109,6 +101,7 @@ function toCustomRule(rule: LRule): EvalRule {
         const head = evalLExp(rule.head, pool)
         return kanren.toUnify(sub, exp, head)
       }
+      console.log("topE-custom", exp)
       if (rule.body) {
         return kanren.toAnd<KSubsitution>(sub, unifyHead, function (sub) {
           const body = evalLExp(rule.body!, pool)
@@ -149,10 +142,11 @@ const defineRules: EvalRule[] = [
     query(sub, exp, topRules) {
       const left = kanren.fresh()
       const right = kanren.fresh()
-      const head = [left, ',', right]
+      const head = kanren.toList([left, ',', right])
       return kanren.toAnd<KSubsitution>(sub, function (sub) {
         return kanren.toUnify(sub, exp, head)
       }, function (sub) {
+        console.log("and", stringifyLog(walk(left, sub)), stringifyLog(walk(right, sub)))
         return kanren.toAnd<KSubsitution>(
           sub,
           topEvalExpGoal(topRules, left),
@@ -163,16 +157,20 @@ const defineRules: EvalRule[] = [
   },
   {
     query(sub, exp, topRules) {
-      return kanren.toAnd<KSubsitution>(sub, function (sub) {
-        const display = kanren.fresh()
-        const head = ['write', display]
-        const out = kanren.toUnify(sub, exp, head)
-        if (out) {
-          console.log("write", stringifyLog(walk(display, out.left)))
-        }
-        return out
-      }, kanren.success)
-      // return out
+      const display = kanren.fresh()
+      const head = kanren.toList(['write', display])
+      const out = kanren.toUnify(sub, exp, head)
+      if (out) {
+        console.log("write", stringifyLog(walk(display, out.left)), stringifyLog(walk(exp, sub)))
+      }
+      return out
+      // return kanren.toAnd<KSubsitution>(sub, function (sub) {
+      //   return 
+      // }, function (sub) {
+      //   const value = walk(display, sub)
+      //   console.log('write', value)
+      //   return kanren.success(sub)
+      // })
     },
   }
 ]
@@ -193,10 +191,11 @@ function toOrExp(
 ) {
   const left = kanren.fresh()
   const right = kanren.fresh()
-  const head = [left, isCut ? '|' : ';', right]
+  const head = kanren.toList([left, isCut ? '|' : ';', right])
   return kanren.toAnd<KSubsitution>(sub, function (sub) {
     return kanren.toUnify(sub, head, exp)
   }, function (sub) {
+    console.log("m-or", stringifyLog(walk(exp, sub)))
     return (isCut ? kanren.toCut : kanren.toOr)<KSubsitution>(
       sub,
       topEvalExpGoal(topRules, left),
@@ -211,6 +210,7 @@ function topEvalExpGoal(
 ): Goal<KSubsitution> {
   return function (sub) {
     const log = stringifyLog(walk(exp, sub))
+    console.log("topE", exp, log)
     return toEvalExp(sub, topRules, exp)
   }
 }
