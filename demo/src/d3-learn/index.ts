@@ -9,9 +9,9 @@ export default panelWith({
   initWidth: 800,
   children(operate, id, arg) {
     // renderColorPie()
-    renderPopulartation()
+    // renderPopulartation()
     // renderScatter()
-    // renderWorldMap()
+    renderWorldMap()
   },
 })
 
@@ -26,6 +26,13 @@ function renderScatter() {
 }
 
 
+/**
+ * 数是国家下的人口
+ * 图有四边距离
+ * 但只在中间绘制
+ * 中间设置左右偏移距离
+ * x轴
+ */
 function renderPopulartation() {
 
   const { data } = useCallbackPromiseState(function () {

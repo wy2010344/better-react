@@ -71,13 +71,6 @@ function initFun(storeKey: string): ContentEditableModel {
  * 绝对不冲突的方法,也许需要像prolog一样提取出关键字与顺序.
  * 从含义上说,意外的合一不是预期的
  * 
- * 
- * 可能需要更多的表达式,自然表达中没有这种复杂的嵌套表达
- * 比如构建pair,也许应该用 {a}pair{b}等于{c}
- * 这样c就与a与b构造的pair进行合一,效果是一样的.
- * pair-list与Array的转化,是需要断言的——不能一一映射,只能取临时状态.
- * 自然语言不方便表达结构——需要DSL来构造,DSL从字符串里面读取.
- * 因此不特殊注重prolog中的pair,只是匹配上然后执行的prolog,无法回退的需要断言
  */
 export default panelWith({
   initWidth: 800,

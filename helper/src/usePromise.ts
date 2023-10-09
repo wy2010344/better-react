@@ -15,6 +15,11 @@ export type PromiseResult<T> = {
   type: "error",
   value: any
 }
+export type PromiseResultSuccessValue<T> = T extends {
+  type: "success"
+  value: infer V
+} ? V : never
+
 export type GetPromise<T> = {
   request(...vs: any[]): Promise<T>
   version: number

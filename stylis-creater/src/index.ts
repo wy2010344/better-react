@@ -68,7 +68,7 @@ export function cssMap<T extends {
   return classMap
 }
 
-export function genCSS(ts: TemplateStringsArray, ...vs: (string | number)[]) {
+export function genCSS(ts: TemplateStringsArray, vs: (string | number)[]) {
   const xs: any[] = []
   for (let i = 0; i < vs.length; i++) {
     xs.push(ts[i])
@@ -86,7 +86,7 @@ export function genCSS(ts: TemplateStringsArray, ...vs: (string | number)[]) {
  */
 export function css(ts: TemplateStringsArray, ...vs: (string | number)[]) {
   const body = StylisCreater()
-  body.update(genCSS(ts, ...vs))
+  body.update(genCSS(ts, vs))
   return body.className
 }
 

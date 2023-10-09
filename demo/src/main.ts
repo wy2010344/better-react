@@ -73,7 +73,6 @@ const destroy = createRoot(
           const vs = panels.get()
           const oldIndex = vs.findIndex(v => v.id == id)
           if (oldIndex > -1 && oldIndex != vs.length - 1) {
-            console.log(oldIndex, vs.length, "cxxxx---")
             const [old] = vs.splice(oldIndex, 1)
             panels.set([...vs, old])
           }
