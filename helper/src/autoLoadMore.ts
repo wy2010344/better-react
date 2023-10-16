@@ -1,8 +1,8 @@
-import { useEffect } from "better-react";
+import { EmptyFun, useEffect } from "better-react";
 import { useEvent } from "./useEvent";
-import { PromiseResult } from "./usePromise";
+import { PromiseResult, createAndFlushAbortController } from "./usePromise";
 import { useCallback } from "./useCallback";
-import { useAlways } from "./useRef";
+import { useAlways, useRef } from "./useRef";
 import { useVersionLock } from "./Lock";
 import { useReducer } from "./useReducer";
 
@@ -18,6 +18,7 @@ type DataType<T, K> = {
 }
 
 type GetAfter<T, K> = (key: K) => Promise<LoadAfterResult<T, K>>;
+type GetAfterEffect<T, K> = (key: K, signal?: AbortSignal) => Promise<LoadAfterResult<T, K>>;
 type AutoLoadMoreModel<T, K> =
   | {
     getAfter: GetAfter<T, K>;
@@ -122,13 +123,16 @@ function emptyWhenError(err: any) { }
  * @returns
  */
 export function useAutoLoadMore<T, K>(
-  effect: GetAfter<T, K>,
+  effect: GetAfterEffect<T, K>,
   deps: readonly any[]
 ) {
   const [data, dispatch] = useReducer<AutoLoadMoreAction<T, K>, AutoLoadMoreModel<T, K>>(
     reducerAutoLoadMore,
   );
-  const getAfter = useCallback(effect, deps);
+  const lastCancelRef = useRef<EmptyFun | undefined>(undefined)
+  const getAfter = useCallback(function (key: K) {
+    return effect(key, createAndFlushAbortController(lastCancelRef))
+  }, deps);
   const judge = useAlways({
     shouldDispatchReload(version: number, oldGetAfter: GetAfter<T, K>) {
       //版本号相同,且重载函数没发生改变:仍然要对比getAfter,因为getAfter可能先于version变化,因为getAfter是version的原因(如reload)
@@ -244,7 +248,7 @@ export function useMemoAutoLoadMore<T, K>({
   body,
 }: {
   initKey: K;
-  body: GetAfter<T, K>;
+  body: GetAfterEffect<T, K>;
 }, deps: readonly any[]) {
   const { data, reload, reloading, loadMore, setList } = useAutoLoadMore(body, deps);
   useEffect(() => {

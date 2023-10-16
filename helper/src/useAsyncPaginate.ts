@@ -1,10 +1,11 @@
-import { emptyFun, useEffect } from "better-react";
-import { PromiseResult } from "./usePromise";
+import { EmptyFun, emptyFun, useEffect } from "better-react";
+import { PromiseResult, createAndFlushAbortController } from "./usePromise";
 import { useChange, useState } from "./useState";
 import { useCallback } from "./useCallback";
 import { useEvent } from "./useEvent";
 import { useBuildSubSetObject } from "./util";
 import { useVersionLock } from "./Lock";
+import { useRef } from "./useRef";
 
 /**
  * 所有页数
@@ -16,7 +17,7 @@ export function getTotalPage(size: number, count: number) {
   return Math.ceil(count / size);
 }
 
-type GetPage<T, K> = (page: K) => Promise<T>;
+type GetPage<T, K> = (page: K, signal?: AbortSignal) => Promise<T>;
 type AsyncPaginateModel<T, K> =
   | {
     page: K;
@@ -28,6 +29,7 @@ function useAsyncPaginate3<T, K>(getPage: GetPage<T, K>) {
   const [data, setData] = useState<AsyncPaginateModel<T, K>>();
   const [getVersion, updateVersion] = useVersionLock()
   const [version, setVersion] = useState<number>();
+  const lastCancelRef = useRef<EmptyFun | undefined>(undefined)
   return {
     data,
     loading: version != data?.version,
@@ -52,7 +54,7 @@ function useAsyncPaginate3<T, K>(getPage: GetPage<T, K>) {
       //可以重复请求,后覆盖前
       const version = updateVersion()
       setVersion(version);
-      return toPromise(getPage, page).then((data) => {
+      return toPromise(getPage, page, createAndFlushAbortController(lastCancelRef)).then((data) => {
         if (getVersion() == version) {
           if (data.type == "error") {
             onError(data.value);
@@ -119,10 +121,11 @@ export function useAsyncPaginate<T>(
 
 async function toPromise<T, K>(
   getPage: GetPage<T, K>,
-  key: K
+  key: K,
+  signal?: AbortSignal
 ): Promise<PromiseResult<T>> {
   try {
-    const value = await getPage(key);
+    const value = await getPage(key, signal);
     return {
       type: "success",
       value,

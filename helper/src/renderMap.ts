@@ -20,6 +20,13 @@ export function renderArray<T>(
   })
 }
 
+function getIndexKey(_: any, i: number) {
+  return i
+}
+
+export function renderArrayWithIndexAsKey<T>(vs: ReadArray<T>, render: (v: T, i: number) => void) {
+  return renderArray(vs, getIndexKey, render)
+}
 
 function iterableHasValue<T>(m: IterableIterator<T>, v: IteratorResult<T, any>) {
   return !v.done

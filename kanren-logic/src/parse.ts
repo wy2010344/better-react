@@ -1,5 +1,4 @@
-import { quote } from "better-react";
-import { LToken, keywords } from "./tokenize";
+import { LToken } from "./tokenize"
 
 type LString = {
   type: "string"
@@ -25,6 +24,7 @@ type LBlock = {
   errors: string[]
 }
 /**
+ * 有明显的括号,或叶子节点
  * [a b c]
  * []
  */
@@ -32,29 +32,14 @@ export type LList = {
   type: "[]"
   begin: number
   end: number
-  content?: LExp
+  children: AtomExp[]
 }
 
-/**
- * (a) (a b c)
- */
-export type LBracket = {
-  type: "()"
-  begin: number
-  end: number
-  content: LExp
-}
-/**
- * 就是默认的a b c d
- */
-export type LPairs = {
-  type: "pairs"
-  begin: number
-  end: number
-  children: LExp[]
-}
+type FilterType = LString | LBlock | LVar
+/**叶子节点的原子 */
+export type AtomExp = LList | FilterType
 /**表达式 */
-export type LExp = LAndExp | LOrExp | LBlock | LVar | LString | LList | LBracket | LPairs
+export type LExp = LAndExp | LOrExp | AtomExp
 export type LAndExp = {
   type: "and",
   begin: number
@@ -74,10 +59,10 @@ export type LOrExp = {
 export type LRule = {
   type: "rule",
   isCut?: boolean
-  head: LExp,
+  head: LList,
   begin: number
   end: number
-  body?: LExp
+  body?: LAndExp | LOrExp | LList
 }
 
 export type ErrorArea = {
@@ -86,10 +71,8 @@ export type ErrorArea = {
   end: number
 }
 
-type FilterType = LString | LBlock | LVar
-export function parse(tokens: LToken[]) {
-  const errorAreas: ErrorArea[] = []
-  const filterTokens = tokens.reduce<FilterType[]>((init, v, i) => {
+function getFilterTokens(tokens: LToken[]) {
+  return tokens.reduce<FilterType[]>((init, v, i) => {
     if (v.type == 'block') {
       init.push({
         type: "block",
@@ -132,6 +115,12 @@ export function parse(tokens: LToken[]) {
     }
     return init
   }, [])
+}
+
+export function parseRules(tokens: LToken[]) {
+  const errorAreas: ErrorArea[] = []
+
+  const filterTokens = getFilterTokens(tokens)
   // //区分成规则集合
   const splitRules = filterTokens.reduce<{
     begin: number
@@ -196,7 +185,7 @@ export function parse(tokens: LToken[]) {
     const body = list[1]
     if (head) {
       const headExp = parseExp(head, errorAreas)
-      if (headExp) {
+      if (headExp && headExp.type == '[]') {
         init.push({
           type: "rule",
           isCut: isCutRule,
@@ -220,15 +209,33 @@ export function parse(tokens: LToken[]) {
   }
 }
 
+export function parseQuery(tokens: LToken[]) {
+  const errorAreas: ErrorArea[] = []
+  const filterTokens = getFilterTokens(tokens)
+  const last = filterTokens.at(-1)
+  if (last?.type == 'block' && last.value == '.') {
+    filterTokens.pop()
+  }
+  return {
+    query: parseExp(filterTokens, errorAreas),
+    errorAreas
+  }
+}
 //括号优先级最高,然后是冒号、空格、逗号,然后是;
 function parseExp(rules: FilterType[], errorAreas: ErrorArea[]) {
   const treeList = parseBracketTree(rules, errorAreas)
   return infixJoinNoBracket(treeList, errorAreas)
 }
 
-function infixJoinNoBracket(bracket: BracketList, errorAreas: ErrorArea[]) {
+/**
+ * 作为or-exp来解析
+ * @param bracket 
+ * @param errorAreas 
+ * @returns 
+ */
+function infixJoinNoBracket(bracket: BracketList, errorAreas: ErrorArea[]): LOrExp | LAndExp | LList | undefined {
   //再用分号区分或语句
-  return leftJoinExp(
+  return leftJoinExp<LOrExp, LOrExp | LAndExp | LList>(
     bracket.list,
     isOrCutExp,
     function (leftExp, rightExp, centerFlag) {
@@ -245,55 +252,8 @@ function infixJoinNoBracket(bracket: BracketList, errorAreas: ErrorArea[]) {
       return toAndExp(list, errorAreas)!
     })
 }
-/**
- * 假设在一种括号中
- * @param bracket 
- * @param errorAreas 
- * @returns 
- */
-function infixJoin(bracket: BracketList, errorAreas: ErrorArea[]): LExp {
-  if (!bracket.list.length) {
-    if (bracket.bType == '(') {
-      errorAreas.push({
-        begin: bracket.begin,
-        end: bracket.end,
-        error: "不允许空的列表"
-      })
-    }
-    return {
-      type: "[]",
-      begin: bracket.begin,
-      end: bracket.end,
-    } as LList
-  }
-  const content = infixJoinNoBracket(bracket, errorAreas)
-  if (content) {
-    if (bracket.bType == '(') {
-      return {
-        type: "()",
-        begin: bracket.begin,
-        end: bracket.end,
-        content
-      } as LBracket
-    } else {
-      return {
-        type: "[]",
-        begin: bracket.begin,
-        end: bracket.end,
-        content
-      } as LList
-    }
-  }
-  //默认走到这里
-  console.log("不会走到这里")
-  return {
-    type: "[]",
-    begin: bracket.begin,
-    end: bracket.end,
-  } as LList
-}
 function toAndExp(exps: BracketRow[], errorAreas: ErrorArea[]) {
-  return leftJoinExp(exps, isAndExp, function (leftExp, rightExp) {
+  return leftJoinExp<LAndExp, LList | LAndExp | LOrExp>(exps, isAndExp, function (leftExp, rightExp) {
     const andExp: LAndExp = {
       type: "and",
       begin: leftExp.begin,
@@ -303,42 +263,73 @@ function toAndExp(exps: BracketRow[], errorAreas: ErrorArea[]) {
     }
     return andExp
   }, function (list) {
-    return toPairExp(list, errorAreas)
+    if (list.length == 1) {
+      const first = list[0]
+      if (first.type == "bracket" && first.bType == '(') {
+        //优先级
+        const centerExp = infixJoinNoBracket(first, errorAreas)
+        if (centerExp?.type != 'and' && centerExp?.type != 'or') {
+          errorAreas.push({
+            begin: first.begin,
+            end: first.end,
+            error: "小括号中间必须是and或or表达式"
+          })
+        } else {
+          centerExp.begin = first.begin
+          centerExp.end = first.end
+        }
+        return centerExp || {
+          type: "[]",
+          begin: first.begin,
+          end: first.end,
+          children: []
+        }
+      }
+    }
+    return toListExp(list, errorAreas)
   })
 }
-function toPairExp(exps: BracketRow[], errorAreas: ErrorArea[]) {
+
+function toListExp(exps: BracketRow[], errorAreas: ErrorArea[]): LList {
   const children = exps.map(v => {
     if (v.type == "bracket") {
-      return infixJoin(v, errorAreas)
+      if (v.bType == '(') {
+        errorAreas.push({
+          begin: v.begin,
+          end: v.end,
+          error: "中括号里不允许小括号"
+        })
+      }
+      const outExp = toListExp(v.list, errorAreas)
+      outExp.begin = v.begin
+      outExp.end = v.end
+      return outExp
     }
     return v
   })
-  if (children.length == 1) {
-    return children[0]
-  }
-  const pairs: LPairs = {
-    type: "pairs",
+  const pairs: LList = {
+    type: "[]",
     children,
-    begin: children[0].begin,
+    begin: children[0]?.begin,
     end: children.at(-1)?.end!
   }
   return pairs
 }
 
-function leftJoinExp(
+function leftJoinExp<A, B>(
   list: BracketRow[],
   isSplit: (v: BracketRow) => v is LBlock,
   buildBindExp: (
-    leftExp: LExp,
-    rightExp: LExp,
+    leftExp: B,
+    rightExp: B | A,
     centerFlag: LBlock
-  ) => LExp,
-  buildInitExp: (list: BracketRow[]) => LExp
+  ) => A,
+  buildInitExp: (list: BracketRow[]) => B
 ) {
 
   const out = list.reduce<{
     list: {
-      exp: LExp
+      exp: B
       //后继的split
       split: LBlock
     }[]
@@ -363,7 +354,7 @@ function leftJoinExp(
     cache: []
   })
 
-  let lastExp = out.cache.length ? buildInitExp(out.cache) : out.list.pop()?.exp
+  let lastExp: A | B | undefined = out.cache.length ? buildInitExp(out.cache) : out.list.pop()?.exp
   if (lastExp) {
     for (let i = out.list.length - 1; i > -1; i--) {
       const row = out.list[i]
@@ -372,80 +363,6 @@ function leftJoinExp(
     return lastExp
   }
 }
-function rightJoinExp(
-  list: BracketRow[],
-  isSplit: (v: BracketRow) => v is LBlock,
-  buildBindExp: (
-    leftExp: LExp,
-    rightList: BracketRow[],
-    centerFlag: LBlock
-  ) => LExp,
-  buildInitExp: (list: BracketRow[]) => LExp
-) {
-  const orOut = list.reduce<{
-    leftExp: LExp,
-    centerFlag: LBlock,
-    rightList: BracketRow[]
-  } | {
-    leftExp?: never
-    centerFlag?: never
-    rightList: BracketRow[]
-  }>(function (init, row) {
-    if (isSplit(row)) {
-      if (init.leftExp) {
-        //已经有左边的表达式
-        if (init.rightList.length) {
-          //有前面的列表
-          return {
-            leftExp: buildBindExp(init.leftExp, init.rightList, init.centerFlag),
-            centerFlag: row,
-            infix: row.value,
-            rightList: []
-          }
-        } else {
-          row.errors.push("需要左边的内容")
-        }
-      } else {
-        //没有左边的内容
-        if (init.rightList.length) {
-          //将rightList变成第一个leftExp
-          return {
-            leftExp: buildInitExp(init.rightList),
-            infix: row.value,
-            centerFlag: row,
-            rightList: []
-          }
-        } else {
-          row.errors.push("需要左边的内容")
-        }
-      }
-    } else {
-      init.rightList.push(row)
-    }
-    return init
-  }, {
-    rightList: []
-  })
-
-  let content: LExp | undefined = undefined
-  if (orOut.centerFlag) {
-    if (orOut.rightList.length) {
-      content = buildBindExp(orOut.leftExp, orOut.rightList, orOut.centerFlag)
-    } else {
-      orOut.centerFlag.errors.push("需要右边的内容")
-      content = orOut.leftExp
-    }
-  } else {
-    if (orOut.rightList.length) {
-      content = buildInitExp(orOut.rightList)
-    } else {
-      //没有表达式
-      console.log("不会出现这个条件")
-    }
-  }
-  return content
-}
-
 function isAndExp(v: BracketRow): v is LBlock {
   return v.type == 'block' && v.value == ','
 }
@@ -474,8 +391,8 @@ function parseBracketTree(rules: FilterType[], errorAreas: ErrorArea[]) {
     type: "bracket",
     bType: "[",
     from: null as any,
-    begin: rules[0].begin,
-    end: rules.at(-1)!.end,
+    begin: rules[0]?.begin,
+    end: rules.at(-1)?.end!,
     list: []
   }
   const stacks: BracketList[] = [top]
@@ -531,20 +448,6 @@ function parseBracketTree(rules: FilterType[], errorAreas: ErrorArea[]) {
   }
   return top
 }
-function listSplit<T>(list: T[], isSplit: (v: T) => boolean) {
-  return listSplitTrans(list, isSplit, quote)
-}
-function listSplitTrans<T, V>(list: T[], isSplit: (v: T) => boolean, trans: (v: T) => V) {
-  return list.reduce<V[][]>(function (init, row) {
-    if (isSplit(row)) {
-      init.push([])
-    } else {
-      init.at(-1)?.push(trans(row))
-    }
-    return init
-  }, [[]])
-}
-
 function toStringEscape(str: string, quote: string, errors: string[]) {
   const vs: string[] = []
   let i = 0

@@ -1,8 +1,8 @@
-import { useEffect } from "better-react"
+import { StoreRef, useEffect } from "better-react"
 import { useEvent } from "./useEvent"
 import { useChange, useState } from "./useState"
 import { useMemo, useRef } from "./useRef"
-import { FalseType, emptyArray, storeRef } from "better-react/dist/util"
+import { EmptyFun, FalseType, emptyArray, storeRef } from "better-react/dist/util"
 import { useVersionInc, useVersionLock } from "./Lock"
 import { useCallback } from "./useCallback"
 import { ReduceState } from "./ValueCenter"
@@ -20,8 +20,9 @@ export type PromiseResultSuccessValue<T> = T extends {
   value: infer V
 } ? V : never
 
+type GetPromiseRequest<T> = (signal?: AbortSignal, ...vs: any[]) => Promise<T>;
 export type GetPromise<T> = {
-  request(...vs: any[]): Promise<T>
+  request: GetPromiseRequest<T>
   version: number
 }
 type GetPromiseResult<T> = PromiseResult<T> & {
@@ -42,17 +43,44 @@ function usePromise<T>(
   })
   useEffect(doGetPromise as any, [getPromise, onFinally])
 }
+function createAbortController() {
+  if ("AbortController" in globalThis) {
+    const signal = new AbortController();
+    return {
+      signal: signal.signal,
+      cancel() {
+        signal.abort();
+      },
+    };
+  }
+  return {
+    signal: undefined,
+    cancel() { },
+  };
+}
+export function createAndFlushAbortController(ref: StoreRef<EmptyFun | undefined>) {
+  const controller = createAbortController()
+  const last = ref.get()
+  if (last) {
+    last()
+  }
+  ref.set(controller.cancel)
+  return controller.signal
+}
+
 function doGetPromise<T>([getPromise, onFinally]: [GetPromise<T> | FalseType, (data: GetPromiseResult<T>) => void]) {
   if (getPromise) {
-    getPromise.request().then(data => {
+    const signal = createAbortController();
+    getPromise.request(signal.signal).then(data => {
       onFinally({ type: "success", value: data, getPromise })
     }).catch(err => {
       onFinally({ type: "error", value: err, getPromise })
     })
+    return signal.cancel
   }
 }
 
-type OutPromiseOrFalse<T> = (() => Promise<T>) | FalseType;
+type OutPromiseOrFalse<T> = (GetPromiseRequest<T>) | FalseType;
 export function useMemoPromiseCall<T, Deps extends readonly any[]>(
   onFinally: OnFinally<T>,
   effect: (deps: Deps, ...vs: any[]) => OutPromiseOrFalse<T>,
@@ -74,7 +102,7 @@ export function useMemoPromiseCall<T, Deps extends readonly any[]>(
 }
 export function useCallbackPromiseCall<T, Deps extends readonly any[]>(
   onFinally: OnFinally<T>,
-  callback: (deps: Deps, ...vs: any[]) => Promise<T>,
+  request: GetPromiseRequest<T>,
   deps: Deps
 ) {
   const inc = useVersionInc()
@@ -82,9 +110,7 @@ export function useCallbackPromiseCall<T, Deps extends readonly any[]>(
     const version = inc()
     return {
       version,
-      request() {
-        return callback(dep)
-      }
+      request
     }
   }, deps)
   usePromise(getPromise, onFinally)
@@ -146,7 +172,7 @@ export function useMemoPromiseState<T, Deps extends readonly any[]>(
 }
 export function useBaseCallbackPromiseState<T, Deps extends readonly any[]>(
   onFinally: undefined | OnFinally<T>,
-  effect: (deps: Deps, ...vs: any[]) => Promise<T>,
+  effect: GetPromiseRequest<T>,
   deps: Deps
 ) {
   const [data, updateData] = useState<PromiseResult<T> & {
@@ -165,7 +191,7 @@ export function useBaseCallbackPromiseState<T, Deps extends readonly any[]>(
 }
 
 export function useCallbackPromiseState<T, Deps extends readonly any[]>(
-  effect: (deps: Deps, ...vs: any[]) => Promise<T>,
+  effect: GetPromiseRequest<T>,
   deps: Deps
 ) {
   return useBaseCallbackPromiseState(undefined, effect, deps)

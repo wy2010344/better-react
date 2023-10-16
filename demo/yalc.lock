@@ -7,7 +7,7 @@
       "replaced": "^1.2.0"
     },
     "better-react-dom-helper": {
-      "signature": "4c73e8338bb2d811730433ab3b914919",
+      "signature": "3a6c6756326af1cb89c1d4f5118e9ccd",
       "file": true,
       "replaced": "^1.2.0"
     },
@@ -25,6 +25,10 @@
       "signature": "51eb09243473e5cfb6767bfbf310e6cb",
       "file": true,
       "replaced": "^1.2.0"
+    },
+    "kanren-logic": {
+      "signature": "845a998d8ba747f04de5d2e002bae554",
+      "file": true
     }
   }
 }

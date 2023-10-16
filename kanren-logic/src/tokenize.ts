@@ -1,7 +1,5 @@
-import { LineCharQue, Que, andMatch, manyMatch, manyRuleGet, match, matchEnd, notMathChar, orMatch, orRuleGet, ruleGet, whiteList, whiteSpaceRule } from "../dsl/tokenParser";
 
-
-
+import { Que, andMatch, manyMatch, manyRuleGet, match, matchEnd, notMathChar, orMatch, orRuleGet, ruleGet, whiteList, whiteSpaceRule } from "./tokenParser";
 
 export type LToken = ({
   value: string
@@ -148,28 +146,6 @@ export function tokenize(content: string): LToken[] {
   if (result) {
     const tokens = result.value
     return tokens
-    // return tokens.reduce<LToken[]>(function (init, v) {
-    //   if (v.type == 'block') {
-    //     const infix = init.at(-1)
-    //     const before = init.at(-2)
-    //     if (infix
-    //       && before
-    //       && before.type == 'block'
-    //       && notKeyWord(before.value)
-    //       && notKeyWord(v.value)
-    //       && infix.value == ' ') {
-    //       before.end = v.end
-    //       before.value = `${before.value} ${v.value}`
-    //       //去除空格
-    //       init.pop()
-    //     } else {
-    //       init.push(v)
-    //     }
-    //   } else {
-    //     init.push(v)
-    //   }
-    //   return init
-    // }, [])
   } else {
     return []
   }

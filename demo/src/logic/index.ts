@@ -1,13 +1,14 @@
 import { panelWith } from "../panel/PanelContext";
 import { ContentEditableModel, initContentEditableModel } from "../contentEditableReact/useContentEditable";
 import { emptyArray, useEffect } from "better-react";
-import { useRenderCode } from "./renderCode";
 import { dom, domOf } from "better-react-dom";
-import { DelayStream, KSubsitution, Stream, walk } from "./kanren";
-import { VarPool, evalLExp, queryResult } from "./evalExp";
-import { renderIf, renderArray, useMemo, useReducer, renderMap } from "better-react-helper";
+import {
+  VarPool, evalLExp, queryResult, DelayStream,
+  KSubsitution, Stream, getPairLeft, getPairRight, walk, stringifyLog,
+  useRenderCodeData, useRenderQuery
+} from 'kanren-logic';
+import { renderIf, renderArray, useMemo, useReducer } from "better-react-helper";
 import { useDragdownX } from "./dragPanel";
-import { stringifyLog } from "./stringify";
 
 
 
@@ -78,6 +79,9 @@ function initFun(storeKey: string): ContentEditableModel {
  * pair-list与Array的转化,是需要断言的——不能一一映射,只能取临时状态.
  * 自然语言不方便表达结构——需要DSL来构造,DSL从字符串里面读取.
  * 因此不特殊注重prolog中的pair,只是匹配上然后执行的prolog,无法回退的需要断言
+ * 
+ * 往下是数据结构array,没有优先级与结合,只有[]的嵌入套.
+ * Pair的本质也是Array[2]的相互嵌套
  */
 export default panelWith({
   initWidth: 800,
@@ -99,7 +103,7 @@ export default panelWith({
       value: libValue,
       rules,
       renderContent: renderCodeLibrary
-    } = useRenderCode(storeKey, initFun)
+    } = useRenderCodeData(storeKey, initFun)
     useEffect(() => {
       localStorage.setItem(storeKey, JSON.stringify(libValue))
     }, [libValue])
@@ -159,13 +163,7 @@ export default panelWith({
             }).renderTextContent(row.query)
             const [model, getMore] = useReducer(reducerGetMore, '', () => {
               const subs: KSubsitution[] = []
-              if (row.stream?.left) {
-                subs.push(row.stream.left)
-              }
-              return {
-                subs,
-                next: row.stream?.right
-              }
+              return toSubs(subs, row.stream)
             })
             renderArray(model.subs, getIndex, function (sub) {
               const value = useMemo(() => {
@@ -197,9 +195,9 @@ export default panelWith({
       const {
         value: queryValue,
         current: currentQuery,
-        rules: querys,
+        query,
         renderContent
-      } = useRenderCode(storeQueryKey, initFun)
+      } = useRenderQuery(storeQueryKey, initFun)
       useEffect(() => {
         localStorage.setItem(storeQueryKey, JSON.stringify(queryValue))
       }, [queryValue])
@@ -213,11 +211,10 @@ export default panelWith({
       }).render(function () {
         domOf("button", {
           onClick() {
-            if (querys.length == 0) {
-              console.log("没有查询内容")
+            if (!query) {
+              alert("没有查询内容")
               return
             }
-            const query = querys[0].head
             const queryPool = new VarPool()
             const queryAst = evalLExp(query, queryPool)
             const stream = queryResult(rules, queryAst)
@@ -271,13 +268,18 @@ function reducerGetMore(model: {
   if (next) {
     const nextV = next()
     const newSubs = subs.slice()
-    if (nextV?.left) {
-      newSubs.push(nextV.left)
-    }
-    return {
-      subs: newSubs,
-      next: nextV?.right
-    }
+    return toSubs(newSubs, nextV)
   }
   return model
+}
+
+function toSubs(subs: KSubsitution[], stream?: Stream<KSubsitution>) {
+  const left = stream ? getPairLeft(stream) : undefined
+  if (left) {
+    subs.push(left)
+  }
+  return {
+    subs,
+    next: stream ? getPairRight(stream) : undefined
+  }
 }

@@ -12,3 +12,4 @@ export * from "./useCodeJar"
 export * from "./observerIntersection"
 export * from "./useRequestAnimationFrame"
 export * from './dragMove'
+export * from './useContentEditable'

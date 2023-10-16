@@ -1,4 +1,4 @@
-import { ErrorArea, LExp, LPairs, LRule } from "./parse"
+import { AtomExp, ErrorArea, LExp, LRule } from "./parse"
 import { LToken } from "./tokenize"
 
 
@@ -25,10 +25,9 @@ export function isAreaCode(v: AreaAtom): v is AreaCode {
 
 export function buildViewPairs(
   tokens: LToken[],
-  rules: LRule[],
+  buildContent: (areaCode: AreaCode[]) => void,
   errorAreas: ErrorArea[],
 ) {
-
   const areaCodes: AreaCode[] = []
   errorAreas.forEach(ea => {
     let old: AreaCodeError = areaCodes.find(v => v.type == 'error' && (v.begin == ea.begin || v.end == ea.end)) as AreaCodeError
@@ -44,7 +43,7 @@ export function buildViewPairs(
     }
     old.errors.push(ea.error)
   })
-  getAreaList(rules, areaCodes)
+  buildContent(areaCodes)
   const cacheTokens: LToken[] = []
   for (const token of tokens) {
     const acs = areaCodes.filter(x => x.begin <= token.begin && x.end >= token.end).sort(sortAreaCodeAsc)
@@ -109,7 +108,7 @@ function sortAreaCode(acs: AreaAtom[]) {
   return acs
 }
 
-function getAreaList(rules: LRule[], areaCodes: AreaCode[]) {
+export function getAreaList(rules: LRule[], areaCodes: AreaCode[]) {
   rules.forEach(rule => {
     areaCodes.push({
       type: "rule",
@@ -125,19 +124,19 @@ function getAreaList(rules: LRule[], areaCodes: AreaCode[]) {
   })
 }
 
-function buildPairs(list: LPairs, areaCodes: AreaCode[], flagExp: LExp = list) {
+function buildPairs(list: AtomExp[], areaCodes: AreaCode[], flagExp: LExp) {
   areaCodes.push({
     type: "list",
     begin: flagExp.begin,
     end: flagExp.end,
     children: []
   })
-  list.children.forEach(row => {
+  list.forEach(row => {
     buildExp(row, areaCodes)
   })
 }
 
-function buildExp(body: LExp, areaCodes: AreaCode[], flagExp = body) {
+export function buildExp(body: LExp, areaCodes: AreaCode[], flagExp = body) {
   if (body.type == 'and' || body.type == 'or') {
     areaCodes.push({
       cut: body.type == 'or' && body.isCut ? true : false,
@@ -149,12 +148,8 @@ function buildExp(body: LExp, areaCodes: AreaCode[], flagExp = body) {
     buildExp(body.left, areaCodes)
     buildExp(body.right, areaCodes)
   } else {
-    if (body.type == "()" || body.type == "[]") {
-      if (body.content) {
-        buildExp(body.content, areaCodes, body)
-      }
-    } else if (body.type == "pairs") {
-      buildPairs(body, areaCodes, flagExp)
+    if (body.type == "[]") {
+      buildPairs(body.children, areaCodes, body)
     }
   }
 }

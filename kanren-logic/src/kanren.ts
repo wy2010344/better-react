@@ -1,13 +1,15 @@
 import { quote } from "better-react"
 
-export class Pair<L, R>{
-  private constructor(
-    public readonly left: L,
-    public readonly right: R
-  ) { }
-  static of<L, R>(left: L, right: R) {
-    return new Pair(left, right)
-  }
+
+type Pair<L, R> = [L, R]
+export function getPairLeft<L, R>(a: Pair<L, R>) {
+  return a[0]
+}
+export function getPairRight<L, R>(a: Pair<L, R>) {
+  return a[1]
+}
+function pairOf<L, R>(l: L, r: R): Pair<L, R> {
+  return [l, r]
 }
 /**
  * 平行可能行->所有作用域
@@ -28,8 +30,8 @@ export function streamAppendStream<V>(a: Stream<V>, b: DelayStream<V>): Stream<V
     return b()
   } else {
     //如果a有后继，追加到后继之后
-    return Pair.of(a.left, function () {
-      return streamAppendStream(a.right(), b)
+    return pairOf(getPairLeft(a), function () {
+      return streamAppendStream(getPairRight(a)(), b)
     })
   }
 }
@@ -50,8 +52,8 @@ export function streamBindGoal<V>(a: Stream<V>, b: Goal<V>): Stream<V> {
     return null
   } else {
     //如果a有后继流，则递归处理
-    return streamAppendStream(b(a.left), function () {
-      return streamBindGoal(a.right(), b)
+    return streamAppendStream(b(getPairLeft(a)), function () {
+      return streamBindGoal(getPairRight(a)(), b)
     })
   }
 }
@@ -66,9 +68,8 @@ export class KVar {
   }
 }
 /**所有类型 */
-export type KType = KVar | string | null | Pair<KType, KType>
-type NotNullList<T> = Pair<T, List<T>>
-export type List<T> = NotNullList<T> | null
+export type KType = KVar | string | null | KType[]
+export type List<T> = [T, List<T>] | null
 type KVPair = Pair<KVar, KType>
 /**
  * 作用域链表,key为KVar,value变具体类型,或仍为KVar
@@ -81,11 +82,12 @@ export type KSubsitution = List<KVPair>
  */
 export function findVarDefine(v: KVar, sub: KSubsitution): KVPair | null {
   while (sub != null) {
-    const kv = sub.left
-    if (kv.left == v || v.equals(kv.left)) {
+    const kv = getPairLeft(sub)
+    const theV = getPairLeft(kv)
+    if (theV == v || v.equals(theV)) {
       return kv
     }
-    sub = sub.right
+    sub = getPairRight(sub)
   }
   return null
 }
@@ -95,21 +97,21 @@ export function walk(v: KType, sub: KSubsitution): KType {
     const val = findVarDefine(v, sub)
     if (val) {
       //如果找到定义,对定义递归寻找
-      return walk(val.right, sub)
+      return walk(getPairRight(val), sub)
     }
     return v
-  } else if (v instanceof Pair) {
-    return Pair.of(walk(v.left, sub), walk(v.right, sub))
+  } else if (Array.isArray(v)) {
+    return v.map(x => walk(x, sub))
   } else {
     return v
   }
 }
-function extendSubsitution<K, V>(
+export function extendSubsitution<K, V>(
   key: K,
   value: V,
   parent: List<Pair<K, V>>
 ) {
-  return Pair.of(Pair.of(key, value), parent)
+  return pairOf(pairOf(key, value), parent)
 }
 export function unify(a: KType, b: KType, sub: KSubsitution): [boolean, KSubsitution] {
   a = walk(a, sub)
@@ -129,10 +131,18 @@ export function unify(a: KType, b: KType, sub: KSubsitution): [boolean, KSubsitu
     }
     return [true, extendSubsitution(b, a, sub)]
   }
-  if (a instanceof Pair && b instanceof Pair) {
-    const [success, sub1] = unify(a.left, b.left, sub)
-    if (success) {
-      return unify(a.right, b.right, sub1)
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length == b.length) {
+      let tempSub = sub
+      for (let i = 0; i < a.length; i++) {
+        const [success, sub] = unify(a[i], b[i], tempSub)
+        if (success) {
+          tempSub = sub
+        } else {
+          return [false, null]
+        }
+      }
+      return [true, tempSub]
     }
   }
   return [false, null]
@@ -147,7 +157,7 @@ export const kanren = {
     return null
   },
   success: <Goal<any>>function (sub) {
-    return Pair.of(sub, emptyDelayStream)
+    return pairOf(sub, emptyDelayStream)
   },
   toUnify(sub: KSubsitution, a: KType, b: KType): Stream<KSubsitution> {
     const [success, sub1] = unify(a, b, sub)
@@ -187,7 +197,12 @@ export const kanren = {
       return kanren.toUnify(sub, a, b)
     }
   },
-  toListTrans<T>(vs: T[], trans: (v: T, last?: boolean) => KType, asList?: boolean) {
+  toListTrans<T>(
+    vs: T[],
+    trans: (v: T, last?: boolean) => KType,
+    asList = false,
+    endWith = null
+  ) {
     if (!vs.length) {
       if (asList) {
         return null
@@ -196,16 +211,16 @@ export const kanren = {
       }
     }
     const lastIndex = vs.length - 1
-    let ret: KType = asList ? null : trans(vs[lastIndex], true)
+    let ret: KType = asList ? endWith : trans(vs[lastIndex], true)
     for (let i = asList ? lastIndex : lastIndex - 1; i > -1; i--) {
-      ret = Pair.of(trans(vs[i], false), ret)
+      ret = pairOf(trans(vs[i], false), ret)
     }
     return ret
   },
-  toList(vs: KType[], asList?: boolean) {
-    return kanren.toListTrans(vs, quote, asList)
+  toList(vs: KType[], asList = false, endWidth: any = null) {
+    return kanren.toListTrans(vs, quote, asList, endWidth)
   },
   toAnyList<T>(vs: T[]): List<T> {
     return kanren.toList(vs as unknown[] as KType[], true) as List<T>
-  },
+  }
 }

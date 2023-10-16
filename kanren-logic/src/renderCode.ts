@@ -1,34 +1,27 @@
 import { React, domOf, portalDomOf } from "better-react-dom";
-import { panelWith } from "../panel/PanelContext";
 import { renderFragment, renderIf, useChange, useMemo } from "better-react-helper";
-import { ContentEditableModel, contentDelete, contentEnter, contentTab, getCurrentRecord, initContentEditableModel, useContentEditable } from "../contentEditableReact/useContentEditable";
-import { mb, useRequesetAnimationFrame } from "better-react-dom-helper";
+import { ContentEditableModel, contentDelete, contentEnter, contentTab, getCurrentRecord, useContentEditable } from "better-react-dom-helper";
+import { mb } from "better-react-dom-helper";
 import { LToken, keywords, tokenize } from "./tokenize";
 import { emptyArray, useEffect } from "better-react";
-import { LExp, LList, LPairs, LRule, parse } from "./parse";
-import { style } from "d3";
+import { parseQuery, parseRules } from "./parse";
 import { css } from "stylis-creater";
 import { useErrorContextProvide } from "./errorContext";
-import { AreaAtom, buildViewPairs, isAreaCode } from "./buildViewPairs";
+import { AreaAtom, buildExp, buildViewPairs, getAreaList, isAreaCode } from "./buildViewPairs";
 
 
-
-export function useRenderCode<T>(init: T, initFun: (v: T) => ContentEditableModel) {
+function useRenderCode<T>(
+  init: T,
+  initFun: (v: T) => ContentEditableModel
+) {
   const { value, dispatch, current, renderContentEditable } = useContentEditable(init, initFun)
-  const { list, rules } = useMemo(() => {
-    const tokens = tokenize(current.value)
-    const { errorAreas, rules } = parse(tokens)
-    return {
-      list: buildViewPairs(tokens, rules, errorAreas),
-      rules
-    }
-    // return []
-  }, [current.value])
   return {
     value,
     current,
-    rules,
-    renderContent(props?: React.HTMLAttributes<HTMLDivElement>) {
+    renderContent(
+      list: AreaAtom[],
+      props?: React.HTMLAttributes<HTMLDivElement>
+    ) {
       renderContentEditable(function () {
         const div = domOf("div", {
           ...props,
@@ -101,6 +94,65 @@ export function useRenderCode<T>(init: T, initFun: (v: T) => ContentEditableMode
     }
   }
 }
+export function useRenderCodeData<T>(
+  init: T,
+  initFun: (v: T) => ContentEditableModel
+) {
+  const { value, current, renderContent } = useRenderCode(init, initFun)
+  const { list, rules } = useMemo(() => {
+    const tokens = tokenize(current.value)
+    const { errorAreas, rules } = parseRules(tokens)
+    return {
+      list: buildViewPairs(tokens, (areaCodes) => {
+        getAreaList(rules, areaCodes)
+      }, errorAreas),
+      rules
+    }
+    // return []
+  }, [current.value])
+  return {
+    value,
+    current,
+    rules,
+    renderContent(
+      props?: React.HTMLAttributes<HTMLDivElement>
+    ) {
+      renderContent(list, props)
+    }
+  }
+}
+
+export function useRenderQuery<T>(
+  init: T,
+  initFun: (v: T) => ContentEditableModel
+) {
+  const { value, current, renderContent } = useRenderCode(init, initFun)
+  const { list, query } = useMemo(() => {
+    const tokens = tokenize(current.value)
+    const { errorAreas, query } = parseQuery(tokens)
+    return {
+      list: buildViewPairs(tokens, (areaCodes) => {
+        if (query) {
+          buildExp(query, areaCodes)
+        }
+      }, errorAreas),
+      query
+    }
+    // return []
+  }, [current.value])
+  return {
+    value,
+    current,
+    query,
+    renderContent(
+      props?: React.HTMLAttributes<HTMLDivElement>
+    ) {
+      renderContent(list, props)
+    }
+  }
+}
+
+
 function isCtrl(e: React.KeyboardEvent) {
   return e.metaKey || e.ctrlKey
 }

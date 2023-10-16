@@ -1,4 +1,4 @@
-import { KType, KVar, Pair } from "./kanren";
+import { KType, KVar } from "./kanren";
 import { includeBlockNotChar } from "./tokenize";
 
 
@@ -11,8 +11,8 @@ import { includeBlockNotChar } from "./tokenize";
 export function stringifyLog(v: KType): string {
   if (v instanceof KVar) {
     return `{${v.flag}}`
-  } else if (v instanceof Pair) {
-    return pairToList(v)
+  } else if (Array.isArray(v)) {
+    return `[${v.map(x => stringifyLog(x)).join(' ')}]`
   } else if (typeof (v) == 'string') {
     const trans = v.replace(/\\/g, '\\\\').replace(/'/g, "\\\'")
     const notBlock = includeBlockNotChar(trans)
@@ -26,22 +26,13 @@ export function stringifyLog(v: KType): string {
   }
 }
 
-function pairToList(v: Pair<KType, KType>): string {
-  const list: string[] = []
-  let last: KType = null
-  while (v) {
-    list.push(stringifyLog(v.left))
-    const temp = v.right
-    if (temp instanceof Pair) {
-      v = temp
-    } else {
-      last = temp
-      break
+function arrayIs(v: KType, ...centers: string[]) {
+  if (Array.isArray(v)) {
+    for (const center of centers) {
+      if (v[1] == center) {
+        return true
+      }
     }
   }
-  if (last == null) {
-    return `[${list.join(' ')}]`
-  }
-  list.push(stringifyLog(last))
-  return `(${list.join(' ')})`
+  return false
 }
