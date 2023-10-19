@@ -175,3 +175,4 @@ better-react-helper:
   usePromise等的cancel
 better-react-dom-helper:
   增加code-editable
+helper useAsyncPaginage等

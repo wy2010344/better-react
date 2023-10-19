@@ -17,7 +17,9 @@ export {
   emptyObject,
   emptyFun,
   expandFunCall,
-  expandFunReturn
+  expandFunReturn,
+  removeEqual,
+  removeWhere
 } from './util'
 export type { ReducerResult, ReducerFun } from './fc'
 export type {

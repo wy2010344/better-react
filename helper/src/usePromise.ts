@@ -5,7 +5,7 @@ import { useMemo, useRef } from "./useRef"
 import { EmptyFun, FalseType, emptyArray, storeRef } from "better-react/dist/util"
 import { useVersionInc, useVersionLock } from "./Lock"
 import { useCallback } from "./useCallback"
-import { ReduceState } from "./ValueCenter"
+import { ReduceState, SetStateAction } from "./ValueCenter"
 import { useReducer } from "./useReducer"
 
 export type PromiseResult<T> = {
@@ -116,15 +116,10 @@ export function useCallbackPromiseCall<T, Deps extends readonly any[]>(
   usePromise(getPromise, onFinally)
   return getPromise
 }
-function buildSetData<T>(
-  updateData: ReduceState<
-    | (PromiseResult<T> & {
-      getPromise: GetPromise<T>;
-    })
-    | undefined
-  >
-) {
-  return function setData(fun: T | ((v: T) => T)) {
+export function buildPromiseResultSetData<F extends PromiseResult<any>>(
+  updateData: ReduceState<F | undefined>
+): ReduceState<PromiseResultSuccessValue<F>> {
+  return function setData(fun) {
     updateData((old) => {
       if (old?.type == "success") {
         return {
@@ -161,7 +156,7 @@ export function useBaseMemoPromiseState<T, Deps extends readonly any[]>(
     data: outData,
     loading: outData?.getPromise != hasPromise,
     getPromise: hasPromise,
-    setData: buildSetData(updateData),
+    setData: buildPromiseResultSetData(updateData),
   }
 }
 export function useMemoPromiseState<T, Deps extends readonly any[]>(
@@ -186,7 +181,7 @@ export function useBaseCallbackPromiseState<T, Deps extends readonly any[]>(
     data,
     loading: data?.getPromise != hasPromise,
     getPromise: hasPromise,
-    setData: buildSetData(updateData),
+    setData: buildPromiseResultSetData(updateData),
   };
 }
 

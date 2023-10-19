@@ -1,5 +1,5 @@
 import { EmptyFun, emptyFun, useEffect } from "better-react";
-import { PromiseResult, createAndFlushAbortController } from "./usePromise";
+import { PromiseResult, buildPromiseResultSetData, createAndFlushAbortController, useSerialRequest, useSerialRequestLoading } from "./usePromise";
 import { useChange, useState } from "./useState";
 import { useCallback } from "./useCallback";
 import { useEvent } from "./useEvent";
@@ -7,6 +7,24 @@ import { useBuildSubSetObject } from "./util";
 import { useVersionLock } from "./Lock";
 import { useRef } from "./useRef";
 
+/**
+ * 分页其实没必要
+ * 使用usePromise里的一堆就可以
+ * 以page为依赖的翻页——查询参数变化:page变1;或page手动变化
+ *  查询依赖
+ *    page
+ * 或以version为依赖——可以对某一页重复刷新,即查询参数变化:page变为1、page手动变化、version手动变化
+ *  查询依赖
+ *    page
+ *      version
+ * 
+ * 这里为了减少这种依赖,直接可以刷新
+ *  查询依赖+version
+ *  手动调用page
+ * 
+ * 这种,基于串行请求:useSerialRequest、useSerialRequestWithLoading
+ * 
+ */
 /**
  * 所有页数
  * @param size 每页数量
@@ -17,59 +35,61 @@ export function getTotalPage(size: number, count: number) {
   return Math.ceil(count / size);
 }
 
+type PromiseResultWithPage<T, K> = PromiseResult<T> & {
+  page: K
+}
+/**返回里应该带有page */
 type GetPage<T, K> = (page: K, signal?: AbortSignal) => Promise<T>;
-type AsyncPaginateModel<T, K> =
-  | {
-    page: K;
-    version: number;
-    data: PromiseResult<T>;
-  }
-  | undefined;
-function useAsyncPaginate3<T, K>(getPage: GetPage<T, K>) {
-  const [data, setData] = useState<AsyncPaginateModel<T, K>>();
-  const [getVersion, updateVersion] = useVersionLock()
-  const [version, setVersion] = useState<number>();
+function useBaseAsyncPaginate<T, K>(
+  effect: (res: PromiseResultWithPage<T, K>) => void,
+  initKey: K,
+  getPage: GetPage<T, K>,
+  /**deps里可以加version来实现刷新*/
+  deps: readonly any[]
+) {
+  const [page, setPage] = useChange(initKey);
+  const [request, loading] = useSerialRequestLoading(
+    async function (page: K, signal?: AbortSignal): Promise<PromiseResultWithPage<T, K>> {
+      try {
+        const out = await getPage(page, signal)
+        return {
+          type: "success",
+          page,
+          value: out
+        }
+      } catch (err) {
+        return {
+          type: "error",
+          page,
+          value: err
+        }
+      }
+    },
+    function (res) {
+      if (res.type == 'success') {
+        effect(res.value)
+      }
+    })
   const lastCancelRef = useRef<EmptyFun | undefined>(undefined)
+  useEffect(() => {
+    setPage(initKey)
+    request(initKey, createAndFlushAbortController(lastCancelRef))
+  }, deps)
   return {
-    data,
-    loading: version != data?.version,
-    setData: useCallback(function (callback: T | ((old: T) => T)) {
-      setData((old) => {
-        if (old?.data.type == "success") {
-          return {
-            ...old,
-            data: {
-              ...old.data,
-              value:
-                typeof callback == "function"
-                  ? (callback as any)(old.data.value)
-                  : callback,
-            },
-          };
-        }
-        return old;
-      });
-    }, []),
-    getPage: useEvent(function (page: K, onError: (err: any) => void) {
-      //可以重复请求,后覆盖前
-      const version = updateVersion()
-      setVersion(version);
-      return toPromise(getPage, page, createAndFlushAbortController(lastCancelRef)).then((data) => {
-        if (getVersion() == version) {
-          if (data.type == "error") {
-            onError(data.value);
-          }
-          setData({
-            page,
-            version,
-            data,
-          });
-        }
-      });
-    }),
-  };
+    loading,
+    page,
+    /**重复调用都是刷新 */
+    setPage(page: K) {
+      setPage(page)
+      request(page, createAndFlushAbortController(lastCancelRef))
+    }
+  }
 }
 
+type NormalResult<T> = {
+  list: T[];
+  count: number;
+}
 /**
  * 任何一个deps改变都会触发强刷新
  * 或者强制reload,也会造成刷新
@@ -83,28 +103,27 @@ export function useAsyncPaginate<T>(
     onError = emptyFun,
   }: {
     body: GetPage<
-      {
-        list: T[];
-        count: number;
-      },
+      NormalResult<T>,
       number
     >;
     onError?(err: any): void;
   },
   deps: readonly any[]
 ) {
-  const { data, loading, getPage, setData } = useAsyncPaginate3(body);
-  const [page, setPage] = useChange(1);
-  useEffect(() => {
-    getPage(1, onError);
-    setPage(1);
-  }, deps);
-
+  const [data, set_Data] = useState<PromiseResultWithPage<NormalResult<T>, number>>()
+  const { page, loading, setPage } = useBaseAsyncPaginate(function (res) {
+    set_Data(res)
+    if (res.type == "error") {
+      onError(res.value)
+    }
+  }, 1 as number, body, deps);
+  const setData = buildPromiseResultSetData(set_Data)
   let count = 0;
   let list: T[] = [];
   const setList = useBuildSubSetObject(setData, "list");
-  if (data?.data.type == "success") {
-    (count = data.data.value.count), (list = data.data.value.list);
+  if (data?.type == "success") {
+    count = data.value.count
+    list = data.value.list
   }
   return {
     loading,
@@ -112,10 +131,7 @@ export function useAsyncPaginate<T>(
     count,
     page,
     setList,
-    setPage(n: number) {
-      setPage(n);
-      getPage(n, onError);
-    },
+    setPage
   };
 }
 

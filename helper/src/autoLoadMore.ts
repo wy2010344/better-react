@@ -115,6 +115,13 @@ function reducerAutoLoadMore<T, K>(
 function emptyWhenError(err: any) { }
 
 /**
+ * 
+ * 与useAsyncPaginage的同异性
+ * useAsyncPaginage不用关心历史,而这个是需要叠加到历史中
+ * 所有依赖更新都将导致从第一页重新开始,或version增加的刷新
+ * 加载下一页依赖上一页的结束标识
+ *  开始时必须是未加载状态
+ *  reduce进入时,必须和上一次的版本相同
  *
  * T 列表类型
  * K 键类型
@@ -243,13 +250,11 @@ async function didGetAfter<T, K>(getAfter: GetAfter<T, K>, fromKey: K, version: 
   return action;
 }
 
-export function useMemoAutoLoadMore<T, K>({
-  initKey,
-  body,
-}: {
-  initKey: K;
-  body: GetAfterEffect<T, K>;
-}, deps: readonly any[]) {
+export function useMemoAutoLoadMore<T, K>(
+  initKey: K,
+  body: GetAfterEffect<T, K>,
+  deps: readonly any[]
+) {
   const { data, reload, reloading, loadMore, setList } = useAutoLoadMore(body, deps);
   useEffect(() => {
     reload(initKey)

@@ -1,4 +1,4 @@
-import { emptyFun, quote, useEffect } from "better-react"
+import { HookValueSet, emptyFun, quote, useEffect } from "better-react"
 import { useMemo, useRef } from "./useRef"
 import { useRefState } from "./useRefState"
 
@@ -37,7 +37,7 @@ export function toReduceState<T>(set: (v: T) => void, get: () => T,) {
   }
 }
 export type SetStateAction<T> = T | ((v: T) => T)
-export type ReduceState<T> = (v: SetStateAction<T>, didCommit?: (v: T) => void) => void
+export type ReduceState<T> = HookValueSet<SetStateAction<T>>
 export interface ValueCenter<T> {
   get(): T
   set(v: T): void
