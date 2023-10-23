@@ -185,3 +185,40 @@ export function findIndexFrom<T>(
   }
   return -1;
 }
+
+
+export function groupToMap<T, F>(list: T[], getKey: (v: T) => F) {
+  const map = new Map<F, T[]>()
+  for (const row of list) {
+    const key = getKey(row)
+    const oldDef = map.get(key)
+    if (oldDef) {
+      oldDef.push(row)
+    } else {
+      map.set(key, [row])
+    }
+  }
+  return map
+}
+
+
+export function iteratorToList<V>(iterable: IterableIterator<V>) {
+  const list: V[] = []
+  while (true) {
+    const value = iterable.next()
+    if (value.done) {
+      break
+    }
+    list.push(value.value)
+  }
+  return list
+}
+
+
+export function objectMap<M, F>(a: Record<string, M>, fun: (v: M, key: string) => F) {
+  const out = {} as any
+  for (const key in a) {
+    out[key] = fun(a[key], key)
+  }
+  return out as Record<string, F>
+}

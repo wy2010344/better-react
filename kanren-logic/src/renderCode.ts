@@ -20,9 +20,13 @@ function useRenderCode<T>(
     current,
     renderContent(
       list: AreaAtom[],
-      props?: React.HTMLAttributes<HTMLDivElement>
+      props?: React.HTMLAttributes<HTMLDivElement> & {
+        readonly?: boolean
+      }
     ) {
-      renderContentEditable(function () {
+      renderContentEditable({
+        readonly: props?.readonly
+      }, function () {
         const div = domOf("div", {
           ...props,
           spellcheck: false,
@@ -115,7 +119,9 @@ export function useRenderCodeData<T>(
     current,
     rules,
     renderContent(
-      props?: React.HTMLAttributes<HTMLDivElement>
+      props?: React.HTMLAttributes<HTMLDivElement> & {
+        readonly?: boolean
+      }
     ) {
       renderContent(list, props)
     }
@@ -145,7 +151,9 @@ export function useRenderQuery<T>(
     current,
     query,
     renderContent(
-      props?: React.HTMLAttributes<HTMLDivElement>
+      props?: React.HTMLAttributes<HTMLDivElement> & {
+        readonly?: boolean
+      }
     ) {
       renderContent(list, props)
     }

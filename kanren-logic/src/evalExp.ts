@@ -111,13 +111,16 @@ function toCustomRule(rule: LRule): EvalRule {
   }
 }
 
-export function queryResult(rules: LRule[], exp: KType) {
-  return toEvalExp(null, kanren.toAnyList([
+export function transLateRule(rules: LRule[]) {
+  return kanren.toAnyList([
     ...defineRules,
     ...rules.map(rule => {
       return toCustomRule(rule)
     })
-  ]), exp)
+  ])
+}
+export function queryResult(allRule: List<EvalRule>, exp: KType) {
+  return toEvalExp(null, allRule, exp)
 }
 
 

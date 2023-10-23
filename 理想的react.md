@@ -173,6 +173,6 @@ useMap/useOne——组件大写,不再用use
 有更新未到npm:
 better-react-helper:
   usePromise等的cancel
+  useAsyncPaginage等
 better-react-dom-helper:
   增加code-editable
-helper useAsyncPaginage等

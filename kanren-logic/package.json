@@ -60,7 +60,7 @@
     "better-react": "^1.2.4",
     "better-react-dom": "^1.2.4",
     "better-react-dom-helper": "file:.yalc/better-react-dom-helper",
-    "better-react-helper": "^1.2.5",
+    "better-react-helper": "file:.yalc/better-react-helper",
     "stylis-creater": "^1.2.2"
   }
 }

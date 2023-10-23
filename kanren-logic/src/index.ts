@@ -7,3 +7,4 @@ export * from './renderCode'
 export * from './stringify'
 export * from './tokenize'
 export * from './tokenParser'
+export * from "./renderResult"

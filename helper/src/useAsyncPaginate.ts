@@ -1,11 +1,7 @@
-import { EmptyFun, emptyFun, useEffect } from "better-react";
-import { PromiseResult, buildPromiseResultSetData, createAndFlushAbortController, useSerialRequest, useSerialRequestLoading } from "./usePromise";
+import { emptyFun, useEffect } from "better-react";
+import { PromiseResult, buildPromiseResultSetData, useSerialRequestLoading } from "./usePromise";
 import { useChange, useState } from "./useState";
-import { useCallback } from "./useCallback";
-import { useEvent } from "./useEvent";
 import { useBuildSubSetObject } from "./util";
-import { useVersionLock } from "./Lock";
-import { useRef } from "./useRef";
 
 /**
  * 分页其实没必要
@@ -49,7 +45,7 @@ function useBaseAsyncPaginate<T, K>(
 ) {
   const [page, setPage] = useChange(initKey);
   const [request, loading] = useSerialRequestLoading(
-    async function (page: K, signal?: AbortSignal): Promise<PromiseResultWithPage<T, K>> {
+    async function ([page]: [K], signal?: AbortSignal): Promise<PromiseResultWithPage<T, K>> {
       try {
         const out = await getPage(page, signal)
         return {
@@ -70,10 +66,9 @@ function useBaseAsyncPaginate<T, K>(
         effect(res.value)
       }
     })
-  const lastCancelRef = useRef<EmptyFun | undefined>(undefined)
   useEffect(() => {
     setPage(initKey)
-    request(initKey, createAndFlushAbortController(lastCancelRef))
+    request(initKey)
   }, deps)
   return {
     loading,
@@ -81,7 +76,7 @@ function useBaseAsyncPaginate<T, K>(
     /**重复调用都是刷新 */
     setPage(page: K) {
       setPage(page)
-      request(page, createAndFlushAbortController(lastCancelRef))
+      request(page)
     }
   }
 }

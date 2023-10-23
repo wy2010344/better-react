@@ -105,12 +105,18 @@ export function useContentEditable<T>(t: T, initFun: (t: T) => ContentEditableMo
     current,
     value,
     dispatch,
-    renderContentEditable(renderContent: () => HTMLElement) {
+    renderContentEditable(args: {
+      readonly?: boolean
+    }, renderContent: () => HTMLElement) {
       renderOne(current.value, function () {
         const div = renderContent()
         useEffect(() => {
-          div.contentEditable = contentEditable.text + ''
-        }, emptyArray)
+          if (args.readonly) {
+            div.contentEditable = 'false'
+          } else {
+            div.contentEditable = contentEditable.text + ''
+          }
+        }, [args.readonly])
         useEffect(() => {
           mb.DOM.setSelectionRange(div, { ...current.range })
         }, [current.range])
