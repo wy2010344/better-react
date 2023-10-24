@@ -2,6 +2,8 @@ import { emptyFun, useEffect } from "better-react";
 import { PromiseResult, buildPromiseResultSetData, useSerialRequestLoading } from "./usePromise";
 import { useChange, useState } from "./useState";
 import { useBuildSubSetObject } from "./util";
+import { useMemo } from "./useRef";
+import { useVersionLock } from "./Lock";
 
 /**
  * 分页其实没必要
@@ -147,4 +149,59 @@ async function toPromise<T, K>(
       value: err,
     };
   }
+}
+
+
+
+export function useSyncPaginate<A, T>(
+  initPage: A,
+  get: (page: A) => T,
+  deps: readonly any[]
+) {
+  const [page, setPage] = useChange(initPage);
+  useEffect(() => {
+    setPage(initPage);
+  }, deps);
+  const data = useMemo(() => {
+    //有可能换数据的时候,page并未变(仍然是1),导致不会加载新的,所以需要将page的依赖加上
+    return get(page);
+  }, [page, ...deps]);
+  return {
+    page,
+    setPage,
+    data,
+  };
+}
+export function useListSyncPaginate<T>(
+  size: number,
+  get: () => T[],
+  deps: readonly any[]
+) {
+  const allList = useMemo(() => {
+    return get();
+  }, deps);
+  const { page, setPage, data } = useSyncPaginate(
+    1,
+    function (page) {
+      const next = page * size;
+      return allList.slice(next - size, next);
+    },
+    deps
+  );
+  return {
+    allList,
+    list: data,
+    page,
+    setPage,
+    count: allList.length,
+    totalPage: getTotalPage(size, allList.length),
+  };
+}
+
+export function usePageChangeCall<T>(page: T, call: (i: number) => void) {
+  const [get, set] = useVersionLock(0);
+  useEffect(() => {
+    call(get());
+    set()
+  }, [page]);
 }

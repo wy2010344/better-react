@@ -2,12 +2,12 @@
   "version": "v1",
   "packages": {
     "better-react-helper": {
-      "signature": "ae994038a3613924e794db36001504d7",
+      "signature": "4bfe65fa79ab35932732ccebb512b51a",
       "file": true,
       "replaced": "^1.2.0"
     },
     "better-react-dom-helper": {
-      "signature": "3a6c6756326af1cb89c1d4f5118e9ccd",
+      "signature": "42a831f97a7dfdd014b0e60ec6503c8c",
       "file": true,
       "replaced": "^1.2.0"
     },
@@ -27,7 +27,7 @@
       "replaced": "^1.2.0"
     },
     "kanren-logic": {
-      "signature": "845a998d8ba747f04de5d2e002bae554",
+      "signature": "9671be112ab653c59d65a4fb67204fff",
       "file": true
     }
   }

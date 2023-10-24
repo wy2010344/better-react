@@ -189,7 +189,10 @@ const defineRules: EvalRule[] = [
       return out
     }
   },
-  //js执行{x}[a,b,c,d]等于{z}
+  /**
+   * js执行{x}[a,b,c,d]等于{z}
+   * 这里如何不引入js的各种类型,{x}应该是字符串,则是eval函数
+   */
   {
     query(sub, exp, topRules) {
       const method = kanren.fresh()
@@ -205,6 +208,7 @@ const defineRules: EvalRule[] = [
             if (typeof realMethod == 'function') {
               try {
                 const realRet = (realMethod as any).apply(null, realParams)
+                console.log("csss", realRet)
                 return kanren.success(extendSubsitution(ret, realRet, sub))
               } catch (ex) {
                 console.log("出错", ex)
@@ -217,7 +221,10 @@ const defineRules: EvalRule[] = [
       return out
     },
   },
-  //js-eval{x}等于{y}
+  /**
+   * js-eval{x}等于{y}
+   * x是数组或字符串
+   */
   {
     query(sub, exp, topRules) {
       const method = kanren.fresh()
@@ -317,6 +324,35 @@ const defineRules: EvalRule[] = [
           const outList: KType[] = []
           circleBack(outList, realFrom)
           return kanren.success(extendSubsitution(to, outList, sub))
+        })
+      }
+      return null
+    },
+  },
+  {
+    /**
+     * 数组结合成字符串
+     * @param sub 
+     * @param exp 
+     * @param topRules 
+     * @returns 
+     */
+    query(sub, exp, topRules) {
+      const from = kanren.fresh()
+      const split = kanren.fresh()
+      const to = kanren.fresh()
+      const head = ['列表', from, '结合', split, '成功', to]
+      const out = kanren.toUnify(sub, exp, head)
+      if (out) {
+        return streamBindGoal(out, function (sub) {
+          const realFrom = walk(from, sub)
+          if (Array.isArray(realFrom) && realFrom.every(v => typeof v == 'string')) {
+            const realSplit = walk(split, sub)
+            if (typeof realSplit == 'string') {
+              return kanren.success(extendSubsitution(to, realFrom.join(realSplit), sub))
+            }
+          }
+          return null
         })
       }
       return null

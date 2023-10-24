@@ -22,7 +22,7 @@ export function stringifyLog(v: KType): string {
     }
     return v
   } else {
-    return '[]'
+    return v + ''
   }
 }
 

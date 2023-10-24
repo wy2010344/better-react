@@ -5,7 +5,7 @@ import { dom, domOf } from "better-react-dom";
 import {
   VarPool, evalLExp, queryResult, DelayStream,
   KSubsitution, Stream, getPairLeft, getPairRight, walk, stringifyLog,
-  useRenderCodeData, useRenderQuery
+  useRenderCodeData, useRenderQuery, renderResult, transLateRule
 } from 'kanren-logic';
 import { renderIf, renderArray, useMemo, useReducer } from "better-react-helper";
 import { useDragdownX } from "./dragPanel";
@@ -120,6 +120,7 @@ export default panelWith({
       renderCodeLibrary({
         style: `
         flex:1;
+        overflow-y:auto;
         `
       })
     })
@@ -143,53 +144,14 @@ export default panelWith({
     }).render(function () {
 
       domOf("b").renderTextContent("查询")
-      const [list, appendResult] = useReducer(reducerAdd, emptyArray as ResultModel[])
+      const { appendResult, renderContent: renderQueryResult } = renderResult()
       domOf("div", {
         style: `
         flex:1;
         overflow-y:auto;
         `
       }).render(function () {
-        renderArray(list, getIndex, function (row) {
-          domOf("div", {
-            style: `
-            border:1px solid gray;
-            `
-          }).render(function () {
-            domOf("div", {
-              style: `
-              border-bottom:1px solid gray;
-              `
-            }).renderTextContent(row.query)
-            const [model, getMore] = useReducer(reducerGetMore, '', () => {
-              const subs: KSubsitution[] = []
-              return toSubs(subs, row.stream)
-            })
-            renderArray(model.subs, getIndex, function (sub) {
-              const value = useMemo(() => {
-                const out = getResult(sub, row.queryPool)
-                return out
-              }, [sub])
-              if (value) {
-                value.forEach(v => {
-                  domOf("div").render(function () {
-                    domOf("label").renderTextContent(v.key)
-                    domOf("span").renderTextContent(v.value)
-                  })
-                })
-              }
-            })
-            renderIf(model.next, function () {
-              domOf("button", {
-                onClick() {
-                  getMore(undefined)
-                }
-              }).renderTextContent("更多结果")
-            }, function () {
-              domOf("div").renderTextContent("没有更多结果")
-            })
-          })
-        })
+        renderQueryResult()
       })
 
       const {
@@ -203,6 +165,10 @@ export default panelWith({
       }, [queryValue])
 
       renderContent()
+
+      const topRules = useMemo(() => {
+        return transLateRule(rules)
+      }, [rules])
       domOf("div", {
         style: `
           display:flex;
@@ -217,7 +183,8 @@ export default panelWith({
             }
             const queryPool = new VarPool()
             const queryAst = evalLExp(query, queryPool)
-            const stream = queryResult(rules, queryAst)
+            const stream = queryResult(topRules, queryAst)
+            console.log("cs", stream, queryPool)
             appendResult({
               query: currentQuery.value,
               queryPool,
@@ -229,57 +196,3 @@ export default panelWith({
     })
   },
 })
-
-type ResultModel = {
-  query: string
-  queryPool: VarPool
-  stream: Stream<KSubsitution>
-}
-function reducerAdd(data: ResultModel[], row: ResultModel) {
-  return [...data, row]
-}
-
-function getResult(sub: KSubsitution, queryPool: VarPool) {
-  if (sub) {
-    const out: {
-      key: string
-      value: string
-    }[] = []
-    queryPool.forEach(function (value, key) {
-      const data = walk(value, sub)
-      out.push({
-        key,
-        value: stringifyLog(data)
-      })
-    })
-    return out
-  }
-}
-
-function getIndex(_: any, i: number) {
-  return i
-}
-
-function reducerGetMore(model: {
-  subs: KSubsitution[]
-  next?: DelayStream<KSubsitution>
-}) {
-  const { next, subs } = model
-  if (next) {
-    const nextV = next()
-    const newSubs = subs.slice()
-    return toSubs(newSubs, nextV)
-  }
-  return model
-}
-
-function toSubs(subs: KSubsitution[], stream?: Stream<KSubsitution>) {
-  const left = stream ? getPairLeft(stream) : undefined
-  if (left) {
-    subs.push(left)
-  }
-  return {
-    subs,
-    next: stream ? getPairRight(stream) : undefined
-  }
-}
