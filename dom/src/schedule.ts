@@ -45,53 +45,63 @@ function runTask(fun: EmptyFun, realTime: boolean) {
   }
 }
 
-export const getScheduleAskTime: AskNextTimeWork = function ({ askNextWork, realTime }) {
-  let onWork = false
-  const threshold: number = 5
-  let lastRenderTime = getTime()
-  /**
-   * 执行queue中的任务
-   * 本次没执行完,下次执行.
-   * 下次一定需要在宏任务中执行
-   */
-  const flush = () => {
-    const deadline = getTime() + threshold
-    let callback = askNextWork()
-    while (callback) {
-      if (realTime.get()) {
-        callback()
-        callback = askNextWork()
-      } else {
-        if (getTime() < deadline) {
-          if (callback.isRender) {
-            const thisRenderTime = getTime()
-            if (thisRenderTime - lastRenderTime < 16) {
-              //和上次的间隔需要大于16ms,因为刷新频率,放到下一次去执行
-              runTask(flush, realTime.get())
-              break
-            }
-            callback()
-            //console.log("render", thisRenderTime - lastRenderTime)
-            lastRenderTime = thisRenderTime
-          } else {
-            callback()
-          }
+export function getScheduleAskTime({
+  taskTimeThreadhold = 5,
+  renderTimeThreadhold = 16
+}: {
+  taskTimeThreadhold?: number
+  renderTimeThreadhold?: number
+}): AskNextTimeWork {
+  return function ({
+    askNextWork,
+    realTime
+  }) {
+    let onWork = false
+    let lastRenderTime = getTime()
+    /**
+     * 执行queue中的任务
+     * 本次没执行完,下次执行.
+     * 下次一定需要在宏任务中执行
+     */
+    const flush = () => {
+      const deadline = getTime() + taskTimeThreadhold
+      let callback = askNextWork()
+      while (callback) {
+        if (realTime.get()) {
+          callback()
           callback = askNextWork()
         } else {
-          //需要中止,进入宏任务.原列表未处理完
-          runTask(flush, realTime.get())
-          break
+          if (getTime() < deadline) {
+            if (callback.isRender) {
+              const thisRenderTime = getTime()
+              if (thisRenderTime - lastRenderTime < renderTimeThreadhold) {
+                //和上次的间隔需要大于16ms,因为刷新频率,放到下一次去执行
+                runTask(flush, realTime.get())
+                break
+              }
+              callback()
+              //console.log("render", thisRenderTime - lastRenderTime)
+              lastRenderTime = thisRenderTime
+            } else {
+              callback()
+            }
+            callback = askNextWork()
+          } else {
+            //需要中止,进入宏任务.原列表未处理完
+            runTask(flush, realTime.get())
+            break
+          }
         }
       }
+      if (!callback) {
+        onWork = false
+      }
     }
-    if (!callback) {
-      onWork = false
-    }
-  }
-  return function () {
-    if (!onWork) {
-      onWork = true
-      runTask(flush, realTime.get())
+    return function () {
+      if (!onWork) {
+        onWork = true
+        runTask(flush, realTime.get())
+      }
     }
   }
 }

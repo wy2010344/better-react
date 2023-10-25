@@ -68,7 +68,7 @@ export class KVar {
   }
 }
 /**所有类型 */
-export type KType = KVar | string | null | KType[]
+export type KType = KVar | KType[] | string | number | null
 export type List<T> = [T, List<T>] | null
 type KVPair = Pair<KVar, KType>
 /**

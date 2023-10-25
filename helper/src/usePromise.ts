@@ -2,11 +2,9 @@ import { StoreRef, useEffect } from "better-react"
 import { useEvent } from "./useEvent"
 import { useChange, useState } from "./useState"
 import { useMemo, useRef } from "./useRef"
-import { EmptyFun, FalseType, emptyArray, storeRef } from "better-react/dist/util"
+import { EmptyFun, FalseType, emptyFun } from "better-react/dist/util"
 import { useVersionInc, useVersionLock } from "./Lock"
-import { useCallback } from "./useCallback"
-import { ReduceState, SetStateAction } from "./ValueCenter"
-import { useReducer } from "./useReducer"
+import { ReduceState } from "./ValueCenter"
 
 export type PromiseResult<T> = {
   type: "success",
@@ -20,29 +18,14 @@ export type PromiseResultSuccessValue<T> = T extends {
   value: infer V
 } ? V : never
 
-type GetPromiseRequest<T> = (signal?: AbortSignal, ...vs: any[]) => Promise<T>;
-export type GetPromise<T> = {
-  request: GetPromiseRequest<T>
+export type VersionPromiseResult<T> = PromiseResult<T> & {
   version: number
 }
-type GetPromiseResult<T> = PromiseResult<T> & {
-  getPromise: GetPromise<T>
-}
+export type GetPromiseRequest<T> = (signal?: AbortSignal, ...vs: any[]) => Promise<T>;
 type OnFinally<T> = (
-  data: GetPromiseResult<T>,
+  data: VersionPromiseResult<T>,
   ...vs: any[]
 ) => void
-function usePromise<T>(
-  getPromise: GetPromise<T> | FalseType,
-  initOnFinally: OnFinally<T>
-) {
-  const onFinally = useEvent(function (data: GetPromiseResult<T>) {
-    if (getPromise == data.getPromise) {
-      initOnFinally(data)
-    }
-  })
-  useEffect(doGetPromise as any, [getPromise, onFinally])
-}
 function createAbortController() {
   if ("AbortController" in globalThis) {
     const signal = new AbortController();
@@ -55,7 +38,7 @@ function createAbortController() {
   }
   return {
     signal: undefined,
-    cancel() { },
+    cancel: emptyFun,
   };
 }
 export function createAndFlushAbortController(ref: StoreRef<EmptyFun | undefined>) {
@@ -68,53 +51,48 @@ export function createAndFlushAbortController(ref: StoreRef<EmptyFun | undefined
   return controller.signal
 }
 
-function doGetPromise<T>([getPromise, onFinally]: [GetPromise<T> | FalseType, (data: GetPromiseResult<T>) => void]) {
-  if (getPromise) {
-    const signal = createAbortController();
-    getPromise.request(signal.signal).then(data => {
-      onFinally({ type: "success", value: data, getPromise })
-    }).catch(err => {
-      onFinally({ type: "error", value: err, getPromise })
-    })
-    return signal.cancel
-  }
-}
 
 type OutPromiseOrFalse<T> = (GetPromiseRequest<T>) | FalseType;
 export function useMemoPromiseCall<T, Deps extends readonly any[]>(
-  onFinally: OnFinally<T>,
+  initOnFinally: OnFinally<T>,
   effect: (deps: Deps, ...vs: any[]) => OutPromiseOrFalse<T>,
   deps: Deps
 ) {
   const inc = useVersionInc()
-  const getPromise = useMemo(() => {
-    const request = effect(deps)
-    if (request) {
-      const version = inc()
-      return {
-        request,
-        version
-      }
+  const mout = useMemo(() => {
+    return {
+      version: inc(),
+      request: effect(deps)
     }
   }, deps)
-  usePromise(getPromise, onFinally)
-  return getPromise
+  const {
+    version,
+    request
+  } = mout
+  const onFinally = useEvent(function (data: VersionPromiseResult<T>) {
+    if (version == data.version) {
+      initOnFinally(data)
+    }
+  })
+  useEffect(() => {
+    if (request) {
+      const signal = createAbortController();
+      request(signal.signal).then(data => {
+        onFinally({ type: "success", value: data, version })
+      }).catch(err => {
+        onFinally({ type: "error", value: err, version })
+      })
+      return signal.cancel
+    }
+  }, [version, request, onFinally])
+  return mout
 }
 export function useCallbackPromiseCall<T, Deps extends readonly any[]>(
   onFinally: OnFinally<T>,
   request: GetPromiseRequest<T>,
   deps: Deps
 ) {
-  const inc = useVersionInc()
-  const getPromise = useMemo((dep) => {
-    const version = inc()
-    return {
-      version,
-      request
-    }
-  }, deps)
-  usePromise(getPromise, onFinally)
-  return getPromise
+  return useMemoPromiseCall(onFinally, () => request, deps)
 }
 export function buildPromiseResultSetData<F extends PromiseResult<any>>(
   updateData: ReduceState<F | undefined>
@@ -144,16 +122,16 @@ export function useBaseMemoPromiseState<T, Deps extends readonly any[]>(
   effect: (deps: Deps, ...vs: any[]) => OutPromiseOrFalse<T>,
   deps: Deps
 ) {
-  const [data, updateData] = useState<GetPromiseResult<T>>()
-  const hasPromise = useMemoPromiseCall((data) => {
+  const [data, updateData] = useState<VersionPromiseResult<T>>()
+  const { version, request } = useMemoPromiseCall((data) => {
     onFinally?.(data)
     updateData(data)
   }, effect, deps)
-  const outData = hasPromise ? data : undefined
+  const outData = request ? data : undefined
   return {
     data: outData,
-    loading: outData?.getPromise != hasPromise,
-    getPromise: hasPromise,
+    version,
+    loading: outData?.version != version,
     setData: buildPromiseResultSetData(updateData),
   }
 }
@@ -168,17 +146,7 @@ export function useBaseCallbackPromiseState<T, Deps extends readonly any[]>(
   effect: GetPromiseRequest<T>,
   deps: Deps
 ) {
-  const [data, updateData] = useState<GetPromiseResult<T>>()
-  const hasPromise = useCallbackPromiseCall((data) => {
-    onFinally?.(data)
-    updateData(data)
-  }, effect, deps)
-  return {
-    data,
-    loading: data?.getPromise != hasPromise,
-    getPromise: hasPromise,
-    setData: buildPromiseResultSetData(updateData),
-  };
+  return useBaseMemoPromiseState(onFinally, () => effect, deps)
 }
 
 export function useCallbackPromiseState<T, Deps extends readonly any[]>(
@@ -213,10 +181,6 @@ export function useMutationWithLoading<Req extends any[], Res>(effect: (...vs: R
       })
     }
   }, loading] as const
-}
-
-export type VersionPromiseResult<T> = PromiseResult<T> & {
-  version: number
 }
 /**
  * 因为要访问UI上的状态来阻塞,所以useEvent来锁定
@@ -329,14 +293,6 @@ export function buildRefreshPromise<T>(shouldNotify: (a: T, old: T) => boolean) 
     };
   }
 }
-/**
- * 将上面的usePromise转换成promise
- * @param getPromise
- * @returns
- */
-export const useRefreshPromise = buildRefreshPromise<GetPromise<any>>(function (a, old) {
-  return a.version > old.version
-})
 /**
  * 如果是仅用数字的VersionPromiseResult
  */

@@ -225,6 +225,12 @@ white-space: normal;
     color:hsl(180, 75%, 30%);
     /* color:hsl(240, 100%, 30%); */
   }
+  &.number{
+    color:#a8aed3;
+  }
+  &.special{
+    color:#e9ce9d;
+  }
 }
 `
 function renderAreaCode(child: AreaAtom) {
@@ -261,6 +267,10 @@ function renderLToken(row: LToken) {
       if (row.value == '=' || row.value == ':') {
         cname = 'define'
       }
+    } else if (row.value.startsWith('$')) {
+      cname = 'special'
+    } else if (!isNaN(Number(row.value))) {
+      cname = 'number'
     }
   }
 

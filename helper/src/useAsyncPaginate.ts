@@ -132,26 +132,6 @@ export function useAsyncPaginate<T>(
   };
 }
 
-async function toPromise<T, K>(
-  getPage: GetPage<T, K>,
-  key: K,
-  signal?: AbortSignal
-): Promise<PromiseResult<T>> {
-  try {
-    const value = await getPage(key, signal);
-    return {
-      type: "success",
-      value,
-    };
-  } catch (err) {
-    return {
-      type: "error",
-      value: err,
-    };
-  }
-}
-
-
 
 export function useSyncPaginate<A, T>(
   initPage: A,

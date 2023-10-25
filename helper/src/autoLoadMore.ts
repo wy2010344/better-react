@@ -1,4 +1,4 @@
-import { EmptyFun, useEffect } from "better-react";
+import { EmptyFun, emptyFun, useEffect } from "better-react";
 import { useEvent } from "./useEvent";
 import { PromiseResult, createAndFlushAbortController } from "./usePromise";
 import { useCallback } from "./useCallback";
@@ -11,12 +11,6 @@ export type LoadAfterResult<T, K> = {
   nextKey: K
   hasMore: boolean
 }
-type DataType<T, K> = {
-  hasMore: boolean,
-  nextKey: K
-  list: T[]
-}
-
 type GetAfter<T, K> = (key: K) => Promise<LoadAfterResult<T, K>>;
 type GetAfterEffect<T, K> = (key: K, signal?: AbortSignal) => Promise<LoadAfterResult<T, K>>;
 type AutoLoadMoreModel<T, K> =
@@ -111,9 +105,6 @@ function reducerAutoLoadMore<T, K>(
   debugLog("更新失败", action);
   return old;
 }
-
-function emptyWhenError(err: any) { }
-
 /**
  * 
  * 与useAsyncPaginage的同异性
@@ -158,7 +149,7 @@ export function useAutoLoadMore<T, K>(
   return {
     reloading: getAfter != data?.getAfter,
     data: data?.data,
-    reload: useEvent(async function (initKey: K, whenError = emptyWhenError) {
+    reload: useEvent(async function (initKey: K, whenError = emptyFun) {
       const version = updateLockVersion()
       let action: AutoLoadMoreActionReload<T, K>;
       try {
@@ -192,7 +183,7 @@ export function useAutoLoadMore<T, K>(
         return action;
       }
     }),
-    loadMore: useEvent(function (whenError = emptyWhenError) {
+    loadMore: useEvent(function (whenError = emptyFun) {
       debugLog("触发更新", lockVersionRef());
       if (data?.data.type == "success" && data.data.value.hasMore) {
         if (lockVersionRef() != data.data.value.version) {

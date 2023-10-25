@@ -2,9 +2,9 @@
   "version": "v1",
   "packages": {
     "better-react-dom": {
-      "signature": "cbc07aeb003607135d20441d44f00c94",
+      "signature": "8f66fa685dcb5d8024e587aadbcf7a96",
       "file": true,
-      "replaced": "^1.1.3"
+      "replaced": "^1.2.4"
     },
     "better-react": {
       "signature": "ca1a1bee2a5a6daacc4a8b930a43f61d",

@@ -11,16 +11,12 @@ import { DomElementType, React, SvgElementType } from "./html"
  */
 export type StyleNode = {
   className: string
-  update(css: string): void
   destroy(): void
 }
-export type CreateStyleNode = () => StyleNode
+export type CreateStyleNode = (css: string) => StyleNode
 const DefaultStyleCreater: CreateStyleNode = () => {
   return {
     className: "un expected",
-    update() {
-      throw `un expected`
-    },
     destroy() {
       throw `un expected`
     }
@@ -180,33 +176,37 @@ function updateDom(
 ) {
   let addClass = ''
   let removeClass = ''
+  let shouldAddCss = ''
   //先执行全局css可能发生的突变
   if (oldProps.css) {
-    if (!dom.style) {
-      throw `请传入oldStyle`
-    }
+    let shouldRemove = false
     if (props.css) {
       //更新
       if (props.css != oldProps.css) {
-        dom.style.update(props.css)
+        //删除与新增
+        shouldRemove = true
+        shouldAddCss = props.css
       }
     } else {
       //删除
+      shouldRemove = true
+    }
+    if (shouldRemove && dom.style) {
       dom.style.destroy();
       removeClass = dom.style.className
       dom.style = undefined
     }
-  } else {
-    if (props.css) {
-      //新增
-      if (styleCreater) {
-        const style = styleCreater()
-        style.update(props.css)
-        dom.style = style
-        addClass = style.className
-      } else {
-        throw `使用css但没有找到styleCreater`
-      }
+  } else if (props.css) {
+    //新增
+    shouldAddCss = props.css
+  }
+  if (shouldAddCss && shouldAddCss.trim()) {
+    if (styleCreater) {
+      const style = styleCreater(shouldAddCss)
+      dom.style = style
+      addClass = style.className
+    } else {
+      throw `使用css但没有找到styleCreater`
     }
   }
 

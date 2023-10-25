@@ -5,7 +5,7 @@ import { dom, domOf } from "better-react-dom";
 import {
   VarPool, evalLExp, queryResult, DelayStream,
   KSubsitution, Stream, getPairLeft, getPairRight, walk, stringifyLog,
-  useRenderCodeData, useRenderQuery, renderResult, transLateRule
+  useRenderCodeData, useRenderQuery, useRenderResult, transLateRule
 } from 'kanren-logic';
 import { renderIf, renderArray, useMemo, useReducer } from "better-react-helper";
 import { useDragdownX } from "./dragPanel";
@@ -144,7 +144,7 @@ export default panelWith({
     }).render(function () {
 
       domOf("b").renderTextContent("查询")
-      const { appendResult, renderContent: renderQueryResult } = renderResult()
+      const { appendResult, renderContent: renderQueryResult } = useRenderResult()
       domOf("div", {
         style: `
         flex:1;

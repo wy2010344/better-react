@@ -6,7 +6,7 @@ import { stringifyLog } from "./stringify";
 import { domOf } from "better-react-dom";
 
 
-export function renderResult() {
+export function useRenderResult() {
   const [list, appendResult] = useReducer(reducerAdd, emptyArray as ResultModel[])
   return {
     appendResult,
@@ -32,13 +32,15 @@ export function renderResult() {
               const out = getResult(sub, row.queryPool)
               return out
             }, [sub])
-            if (value) {
+            if (value?.length) {
               value.forEach(v => {
                 domOf("div").render(function () {
                   domOf("label").renderTextContent(v.key)
                   domOf("span").renderTextContent(v.value)
                 })
               })
+            } else {
+              domOf("div").renderTextContent("成功")
             }
           })
           renderIf(model.next, function () {

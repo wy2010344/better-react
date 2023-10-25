@@ -7,7 +7,11 @@
       "replaced": "^1.2.2"
     },
     "better-react-dom": {
-      "signature": "d9ca58eb7089ff4ed033f15506ce575d",
+      "signature": "8f66fa685dcb5d8024e587aadbcf7a96",
+      "file": true
+    },
+    "stylis-creater": {
+      "signature": "904e0a1c1ae46e04b04519c10d6344ae",
       "file": true
     }
   }

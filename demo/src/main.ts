@@ -3,7 +3,7 @@ import { AskNextTimeWork, useEffect } from "better-react";
 import { renderContent, useDom, getScheduleAskTime, StyleContext, createRoot, domOf } from "better-react-dom";
 import { CountContext, PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
 import { useStoreTriggerRender, renderArray, useState, valueCenterOf, renderFragment, useMemo } from "better-react-helper";
-import { StylisCreater } from "stylis-creater";
+import { reuseStylisCreater } from "stylis-creater";
 import cssHasCursor from "./learn/css-has-cursor";
 import 测试sharePortal from "./测试sharePortal";
 import contentEditableReact from "./contentEditableReact";
@@ -12,10 +12,13 @@ import d3Learn from "./d3-learn";
 import FourierSeries from "./FourierSeries/index";
 import numberAnalysis from "./FourierSeries/numberAnalysis";
 import logic from "./logic";
+const stylisCreater = reuseStylisCreater({
+  autoRemove: true
+})
 const destroy = createRoot(
   document.getElementById("app")!,
   function () {
-    StyleContext.useProvider(StylisCreater)
+    StyleContext.useProvider(stylisCreater)
     console.log("root-render")
     useDom("button", {
       className: "abddc",
@@ -110,6 +113,6 @@ const destroy = createRoot(
   //askTimeWork,
   //askIdleTimeWork,
   // askTimeWork,
-  getScheduleAskTime
+  getScheduleAskTime({})
 );
 

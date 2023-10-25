@@ -31,7 +31,21 @@ export function evalLExp(exp: LExp, pool: VarPool): KType {
   } else if (exp.type == "or") {
     return evalAndOr(exp, pool)
   } else if (exp.type == "block") {
-    return exp.value
+    const ev = exp.value
+    if (ev.startsWith('$')) {
+      //特殊定义
+      if (ev == '$nil') {
+        return null
+      } else {
+        throw `未知特殊符号${ev}`
+      }
+    } else {
+      const nx = Number(ev)
+      if (!isNaN(nx)) {
+        return nx
+      }
+      return ev
+    }
   } else if (exp.type == "string") {
     return exp.value
   } else if (exp.type == "var") {
@@ -204,12 +218,16 @@ const defineRules: EvalRule[] = [
         return streamBindGoal(out, function (sub) {
           const realMethod = walk(method, sub)
           const realParams = walk(params, sub)
+          const realRet = walk(ret, sub)
           if (Array.isArray(realParams)) {
             if (typeof realMethod == 'function') {
               try {
-                const realRet = (realMethod as any).apply(null, realParams)
-                console.log("csss", realRet)
-                return kanren.success(extendSubsitution(ret, realRet, sub))
+                const theRet = (realMethod as any).apply(null, realParams)
+                if (realRet instanceof KVar) {
+                  return kanren.success(extendSubsitution(realRet, theRet, sub))
+                } else if (realRet == theRet) {
+                  return kanren.success(sub)
+                }
               } catch (ex) {
                 console.log("出错", ex)
               }
@@ -234,10 +252,15 @@ const defineRules: EvalRule[] = [
       if (out) {
         return streamBindGoal(out, function (sub) {
           const realMethod = walk(method, sub)
+          const realVal = walk(val, sub)
           if (typeof realMethod == 'string') {
             try {
               const vax = eval(realMethod)
-              return kanren.success(extendSubsitution(val, vax, sub))
+              if (realVal instanceof KVar) {
+                return kanren.success(extendSubsitution(realVal, vax, sub))
+              } else if (realVal == vax) {
+                return kanren.success(sub)
+              }
             } catch (ex) {
               console.log("出错", ex)
             }
@@ -260,14 +283,21 @@ const defineRules: EvalRule[] = [
     query(sub, exp, topRules) {
       const from = kanren.fresh()
       const to = kanren.fresh()
-      const head = [from, '转为pairs', to]
+      const head = ['数组', from, '转为pairs', to]
       const out = kanren.toUnify(sub, exp, head)
       if (out) {
         return streamBindGoal(out, function (sub) {
           const realFrom = walk(from, sub)
-          if (Array.isArray(realFrom)) {
+          const realTo = walk(to, sub)
+          if (Array.isArray(realFrom) && realTo instanceof KVar) {
             return kanren.success(
               extendSubsitution(to, kanren.toList(realFrom), sub)
+            )
+          } else if (realFrom instanceof KVar) {
+            const list: KType[] = []
+            circlePairBack(list, realTo)
+            return kanren.success(
+              extendSubsitution(realFrom, list, sub)
             )
           }
           return null
@@ -288,42 +318,25 @@ const defineRules: EvalRule[] = [
     query(sub, exp, topRules) {
       const from = kanren.fresh()
       const to = kanren.fresh()
-      const head = [from, '转为list', to]
+      const head = ['数组', from, '转为list', to]
       const out = kanren.toUnify(sub, exp, head)
       if (out) {
         return streamBindGoal(out, function (sub) {
           const realFrom = walk(from, sub)
-          if (Array.isArray(realFrom)) {
+          const realTo = walk(to, sub)
+          if (Array.isArray(realFrom) && realTo instanceof KVar) {
             return kanren.success(
-              extendSubsitution(to, kanren.toList(realFrom, true, []), sub)
+              extendSubsitution(to, kanren.toList(realFrom, true, null), sub)
             )
+          } else if (realFrom instanceof KVar) {
+            const list: KType[] = []
+            if (circleListBack(list, realTo, null)) {
+              return kanren.success(
+                extendSubsitution(realFrom, list, sub)
+              )
+            }
           }
           return null
-        })
-      }
-      return null
-    },
-  },
-  {
-    /**
-     * 来源 [a,[b,[c,d]]]
-     * 目标 [a,b,c,d]
-     * @param sub 
-     * @param exp 
-     * @param topRules 
-     * @returns 
-     */
-    query(sub, exp, topRules) {
-      const from = kanren.fresh()
-      const to = kanren.fresh()
-      const head = [from, '转回数组', to]
-      const out = kanren.toUnify(sub, exp, head)
-      if (out) {
-        return streamBindGoal(out, function (sub) {
-          const realFrom = walk(from, sub)
-          const outList: KType[] = []
-          circleBack(outList, realFrom)
-          return kanren.success(extendSubsitution(to, outList, sub))
         })
       }
       return null
@@ -349,7 +362,13 @@ const defineRules: EvalRule[] = [
           if (Array.isArray(realFrom) && realFrom.every(v => typeof v == 'string')) {
             const realSplit = walk(split, sub)
             if (typeof realSplit == 'string') {
-              return kanren.success(extendSubsitution(to, realFrom.join(realSplit), sub))
+              const realTo = walk(to, sub)
+              const joinStr = realFrom.join(realSplit)
+              if (realTo instanceof KVar) {
+                return kanren.success(extendSubsitution(realTo, joinStr, sub))
+              } else if (realTo == joinStr) {
+                return kanren.success(sub)
+              }
             }
           }
           return null
@@ -360,13 +379,23 @@ const defineRules: EvalRule[] = [
   }
 ]
 
-function circleBack(list: KType[], data: KType) {
+function circlePairBack(list: KType[], data: KType) {
   if (Array.isArray(data) && data.length == 2) {
     list.push(data[0])
-    circleBack(list, data[1])
+    circlePairBack(list, data[1])
   } else {
     list.push(data)
   }
+}
+
+function circleListBack(list: KType[], data: KType, endFlag: any = null): boolean {
+  if (Array.isArray(data) && data.length == 2) {
+    list.push(data[0])
+    return circleListBack(list, data[1], endFlag)
+  } else if (data == endFlag) {
+    return true
+  }
+  return false
 }
 
 function toEvalExp(

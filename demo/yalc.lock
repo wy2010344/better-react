@@ -17,17 +17,17 @@
       "replaced": "^1.2.0"
     },
     "better-react-dom": {
-      "signature": "262d4cfbdb4991eda448a3e21795097b",
+      "signature": "86175ca527ce8e3cda0ac0b0e2e3e616",
       "file": true,
       "replaced": "^1.2.0"
     },
     "stylis-creater": {
-      "signature": "51eb09243473e5cfb6767bfbf310e6cb",
+      "signature": "1c0e0313387b87decc68015e0d4baf91",
       "file": true,
       "replaced": "^1.2.0"
     },
     "kanren-logic": {
-      "signature": "9671be112ab653c59d65a4fb67204fff",
+      "signature": "6295adc803277098972aca0b3573a46c",
       "file": true
     }
   }

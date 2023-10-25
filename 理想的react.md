@@ -171,8 +171,12 @@ useMap/useOne——组件大写,不再用use
 
 
 有更新未到npm:
+better-react-dom:
+  getScheduleAskTime和CreateStyleNode
 better-react-helper:
   usePromise等的cancel
   useAsyncPaginage等
 better-react-dom-helper:
   增加code-editable
+stylis-creater:
+  改变了useStylisCreater

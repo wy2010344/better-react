@@ -21,18 +21,55 @@ export function createBodyStyleTag() {
  * 这里在内嵌css中,一定是在最终渲染界面是调用
  * @returns 
  */
-export function StylisCreater(): StyleNode {
-  const className = newClassName()
-  const styled = createBodyStyleTag()
-  styled.id = className
+export function stylisCreater(css: string): StyleNode {
+  const styled = createStyled(css)
   return {
-    className,
-    update(css) {
-      styled.textContent = toCssFragment(className, css)
-    },
+    className: styled.id,
     destroy() {
       styled.remove()
     }
+  }
+}
+function createStyled(css: string) {
+  const className = newClassName()
+  const styled = createBodyStyleTag()
+  styled.textContent = toCssFragment(className, css)
+  styled.id = className
+  return styled
+}
+
+type StyleNodeWithRef = StyleNode & {
+  count: StoreRef<number>
+}
+export function reuseStylisCreater({
+  autoRemove
+}: {
+  autoRemove?: boolean
+}) {
+  const map = new Map<string, StyleNodeWithRef>()
+  return function (css: string): StyleNode {
+    const oldStyle = map.get(css)
+    if (oldStyle) {
+      const count = oldStyle.count
+      count.set(count.get() + 1)
+      return oldStyle
+    }
+    const styled = createStyled(css)
+    const count = storeRef(1)
+    const newStyle: StyleNodeWithRef = {
+      className: styled.id,
+      count,
+      destroy() {
+        const c = count.get() - 1
+        count.set(c)
+        if (!c && autoRemove) {
+          styled.remove()
+          map.delete(css)
+        }
+      }
+    }
+    map.set(css, newStyle)
+    return newStyle
   }
 }
 export function genCssMap<T extends {
@@ -85,12 +122,11 @@ export function genCSS(ts: TemplateStringsArray, vs: (string | number)[]) {
  * @returns 
  */
 export function css(ts: TemplateStringsArray, ...vs: (string | number)[]) {
-  const body = StylisCreater()
-  body.update(genCSS(ts, vs))
+  const body = stylisCreater(genCSS(ts, vs))
   return body.className
 }
 
-import { useBaseMemoGet, useEffect, useGetCreateChangeAtom, emptyArray, StoreRef } from 'better-react'
+import { useBaseMemoGet, useEffect, useGetCreateChangeAtom, emptyArray, StoreRef, storeRef } from 'better-react'
 
 function createStyledUpdate() {
   return {

@@ -21,6 +21,8 @@ export function stringifyLog(v: KType): string {
       return `'${trans}'`
     }
     return v
+  } else if (v == null) {
+    return '$nil'
   } else {
     return v + ''
   }
