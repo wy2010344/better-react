@@ -11,7 +11,7 @@
       "file": true
     },
     "better-react-helper": {
-      "signature": "4bfe65fa79ab35932732ccebb512b51a",
+      "signature": "faf1e1da6735f0af99eab659c4a75825",
       "file": true,
       "replaced": "^1.2.5"
     }

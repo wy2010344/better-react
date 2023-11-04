@@ -1,4 +1,5 @@
 
+import { buildRemoveWhere } from 'better-react'
 import { ReduceState, SetStateAction } from './ValueCenter'
 import { useMemo } from './useRef'
 /**
@@ -221,4 +222,29 @@ export function objectMap<M, F>(a: Record<string, M>, fun: (v: M, key: string) =
     out[key] = fun(a[key], key)
   }
   return out as Record<string, F>
+}
+
+
+export function getOutResolvePromise<T>() {
+  let resolve: (v: T) => void
+  let reject: (v?: any) => void
+  const promise = new Promise(function (_resolve, _reject) {
+    resolve = _resolve
+    reject = _reject
+  })
+  return [
+    promise,
+    resolve!,
+    reject!
+  ] as const
+}
+
+
+
+export const removeWhere = buildRemoveWhere(function <T>(fun: (v: T, i: number) => any, v: T, i: number) {
+  return fun(v, i)
+})
+
+export function createEmptyArray<T>(): T[] {
+  return []
 }

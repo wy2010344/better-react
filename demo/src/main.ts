@@ -12,6 +12,7 @@ import d3Learn from "./d3-learn";
 import FourierSeries from "./FourierSeries/index";
 import numberAnalysis from "./FourierSeries/numberAnalysis";
 import logic from "./logic";
+import 开发AnimatePreference from "./开发AnimatePereference";
 const stylisCreater = reuseStylisCreater({
   autoRemove: true
 })
@@ -89,7 +90,8 @@ const destroy = createRoot(
     PanelContext.useProvider(operate)
     useEffect(() => {
       App(operate)
-      logic(operate, null)
+      开发AnimatePreference(operate)
+      // logic(operate, null)
       // FourierSeries(operate, null)
       // numberAnalysis(operate, null)
       // contentEditableReact(operate)

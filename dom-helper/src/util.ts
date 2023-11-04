@@ -76,3 +76,10 @@ export function useGetUrl(file: File | Blob) {
   }, emptyArray);
   return url;
 }
+
+
+export function delayAnimationFrame() {
+  return new Promise(resolve => {
+    requestAnimationFrame(resolve)
+  })
+}

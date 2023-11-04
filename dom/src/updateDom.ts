@@ -174,8 +174,6 @@ function updateDom(
   oldProps: Props,
   styleCreater?: CreateStyleNode
 ) {
-  let addClass = ''
-  let removeClass = ''
   let shouldAddCss = ''
   //先执行全局css可能发生的突变
   if (oldProps.css) {
@@ -193,7 +191,6 @@ function updateDom(
     }
     if (shouldRemove && dom.style) {
       dom.style.destroy();
-      removeClass = dom.style.className
       dom.style = undefined
     }
   } else if (props.css) {
@@ -204,10 +201,13 @@ function updateDom(
     if (styleCreater) {
       const style = styleCreater(shouldAddCss)
       dom.style = style
-      addClass = style.className
     } else {
       throw `使用css但没有找到styleCreater`
     }
+  }
+
+  if (dom.style) {
+    props.className = `${props.className || ''} ${dom.style.className}`
   }
 
   const node = dom.node
@@ -257,12 +257,12 @@ function updateDom(
       }
     })
 
-  if (removeClass) {
-    (dom.node as HTMLElement).classList.remove(removeClass)
-  }
-  if (addClass) {
-    (dom.node as HTMLElement).classList.add(addClass)
-  }
+  // if (removeClass) {
+  //   (dom.node as HTMLElement).classList.remove(removeClass)
+  // }
+  // if (addClass) {
+  //   (dom.node as HTMLElement).classList.add(addClass)
+  // }
 }
 
 const Capture = "capture"

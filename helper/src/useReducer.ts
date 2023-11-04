@@ -1,4 +1,4 @@
-import { ReducerFun, ReducerResult, useBaseReducer } from "better-react";
+import { ReducerFun, ReducerResult, quote, useBaseReducer } from "better-react";
 
 
 export function useReducer<F, M, T>(reducer: ReducerFun<F, T>, init: M, initFun: (m: M) => T): ReducerResult<F, T>;
@@ -10,4 +10,22 @@ export function useReducer(reducer: any, init: any, initFun: any) {
 
 export function useReducerFun<F, T>(reducer: ReducerFun<F, T>, init: () => T) {
   return useReducer(reducer, undefined, init)
+}
+
+
+export function createUseReducer<A, M, I = M>(
+  reducer: ReducerFun<A, M>,
+  initFun?: (i: I) => M
+) {
+  return function (init: I) {
+    return useReducer(reducer, init, initFun || quote as any)
+  }
+}
+
+export function createUseReducerFun<A, M>(
+  reducer: ReducerFun<A, M>,
+) {
+  return function (initFun: () => M) {
+    return useReducer(reducer, undefined, initFun)
+  }
 }

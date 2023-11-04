@@ -35,17 +35,17 @@ export function arrayNotEqualDepsWithEmpty(a?: readonly any[], b?: readonly any[
   return !(a && b && arrayEqual(a, b, simpleEqual))
 }
 
-export function removeWhere<T, M>(vs: T[], equal: (m: M, a: T, idx: number) => boolean, m: M) {
-  for (let i = vs.length - 1; i > -1; i--) {
-    const row = vs[i]
-    if (equal(m, row, i)) {
-      vs.splice(i, 1)
+export function buildRemoveWhere<T, M>(equal: (m: M, a: T, idx: number) => any) {
+  return function (vs: T[], m: M) {
+    for (let i = vs.length - 1; i > -1; i--) {
+      const row = vs[i]
+      if (equal(m, row, i)) {
+        vs.splice(i, 1)
+      }
     }
   }
 }
-export function removeEqual<T>(vs: T[], v: T) {
-  removeWhere(vs, simpleEqual, v)
-}
+export const removeEqual = buildRemoveWhere(simpleEqual)
 
 class StoreRefImpl<T> implements StoreRef<T>{
   constructor(

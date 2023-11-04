@@ -16,6 +16,7 @@
     "vite": "^2.9.9"
   },
   "dependencies": {
+    "@faker-js/faker": "^8.2.0",
     "@types/prismjs": "^1.26.0",
     "better-react": "file:.yalc/better-react",
     "better-react-dom": "file:.yalc/better-react-dom",

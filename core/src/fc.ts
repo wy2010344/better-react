@@ -92,9 +92,9 @@ export function useBaseReducer() {
     // if (hook.init != init) {
     //   console.warn("useReducer的init变化")
     // }
-    if (hook.initFun != initFun) {
-      console.warn("useReducer的initFun变化")
-    }
+    // if (hook.initFun != initFun) {
+    //   console.warn("useReducer的initFun变化")
+    // }
     hookIndex.state++
     return [hook.value.get(), hook.set]
   }

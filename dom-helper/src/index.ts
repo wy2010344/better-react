@@ -14,3 +14,4 @@ export * from "./useRequestAnimationFrame"
 export * from './dragMove'
 export * from './useContentEditable'
 export * from './useOnLine'
+export * from './useTransitionValue'

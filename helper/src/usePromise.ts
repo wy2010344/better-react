@@ -2,7 +2,7 @@ import { StoreRef, useEffect } from "better-react"
 import { useEvent } from "./useEvent"
 import { useChange, useState } from "./useState"
 import { useMemo, useRef } from "./useRef"
-import { EmptyFun, FalseType, emptyFun } from "better-react/dist/util"
+import { EmptyFun, FalseType, emptyFun } from "better-react"
 import { useVersionInc, useVersionLock } from "./Lock"
 import { ReduceState } from "./ValueCenter"
 

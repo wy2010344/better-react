@@ -19,7 +19,7 @@ export {
   expandFunCall,
   expandFunReturn,
   removeEqual,
-  removeWhere
+  buildRemoveWhere
 } from './util'
 export type { ReducerResult, ReducerFun } from './fc'
 export type {

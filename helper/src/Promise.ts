@@ -3,9 +3,3 @@ export function delay(n: number) {
     setTimeout(resolve, n)
   })
 }
-
-export function delayAnimationFrame() {
-  return new Promise(resolve => {
-    requestAnimationFrame(resolve)
-  })
-}

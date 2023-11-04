@@ -171,12 +171,16 @@ useMap/useOne——组件大写,不再用use
 
 
 有更新未到npm:
+better-react:
+  buildRemoveWhere等工具函数
 better-react-dom:
   getScheduleAskTime和CreateStyleNode
 better-react-helper:
   usePromise等的cancel
   useAsyncPaginage等
+  listAnimate模块
 better-react-dom-helper:
   增加code-editable
+  增加useTransitionValue
 stylis-creater:
   改变了useStylisCreater
