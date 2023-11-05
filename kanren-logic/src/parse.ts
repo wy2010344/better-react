@@ -1,3 +1,5 @@
+import { KPair, KType, List, KSymbol, kanren, toList, toPairs } from "./kanren"
+import { BaseQue, ParseFunGet, QueArray, andRuleGet, manyRuleGet, matchEnd, matchVS, orRuleGet, ruleGet, ruleGetSelf } from "./tokenParser"
 import { LToken } from "./tokenize"
 
 type LString = {
@@ -23,47 +25,32 @@ type LBlock = {
   value: string
   errors: string[]
 }
+type FilterType = LString | LBlock | LVar
 /**
  * 有明显的括号,或叶子节点
  * [a b c]
- * []
+ * [a b c | d]
  */
 export type LList = {
   type: "[]"
   begin: number
   end: number
   children: AtomExp[]
+  last?: AtomExp
+  errors: string[]
 }
-
-type FilterType = LString | LBlock | LVar
+/**
+ * (a b c)
+ */
+export type LTerm = {
+  type: '()'
+  begin: number
+  end: number
+  children: AtomExp[]
+  errors: string[]
+}
 /**叶子节点的原子 */
-export type AtomExp = LList | FilterType
-/**表达式 */
-export type LExp = LAndExp | LOrExp | AtomExp
-export type LAndExp = {
-  type: "and",
-  begin: number
-  end: number
-  left: LExp
-  right: LExp
-}
-export type LOrExp = {
-  type: "or"
-  isCut?: boolean
-  begin: number
-  end: number
-  left: LExp
-  right: LExp
-}
-/**规则 */
-export type LRule = {
-  type: "rule",
-  isCut?: boolean
-  head: LList,
-  begin: number
-  end: number
-  body?: LAndExp | LOrExp | LList
-}
+export type AtomExp = LList | LTerm | FilterType
 
 export type ErrorArea = {
   error: string
@@ -117,93 +104,307 @@ function getFilterTokens(tokens: LToken[]) {
   }, [])
 }
 
-export function parseRules(tokens: LToken[]) {
-  const errorAreas: ErrorArea[] = []
+const ruleGetString = ruleGetSelf(function (v: FilterType) {
+  return v.type == 'string'
+})
+const ruleGetVar = ruleGetSelf(function (v: FilterType) {
+  return v.type == 'var'
+})
 
-  const filterTokens = getFilterTokens(tokens)
-  // //区分成规则集合
-  const splitRules = filterTokens.reduce<{
-    begin: number
-    end: number
-    children: FilterType[]
-  }[]>(function (init, row) {
-    const last = init.at(-1)!
-    if (row.type == 'block' && row.value == ".") {
-      last.end = row.end
-      init.push({
-        begin: 0,
-        end: 0,
-        children: []
-      })
-    } else {
-      if (!last.children.length) {
-        last.begin = row.begin
-      }
-      last.children.push(row)
+const ruleGetEnd = ruleGet(matchEnd, function (begin, end) {
+  return end.content[end.i - 1]
+})
+
+/**
+ * 在小括号内,不能是结束括号
+ */
+const ruleGetAll = orRuleGet(
+  function (que) {
+    return termRule(que)
+  },
+  function (que) {
+    return listRule(que)
+  },
+  ruleGetString,
+  ruleGetVar,
+  ruleGetSelf(function (v: FilterType) {
+    return v.type == 'block' && v.value != ')'
+  }),
+)
+
+/**
+ * 在中括号内的,不能是结束符号
+ */
+const ruleGetAllNotSplit = orRuleGet(
+  function (que) {
+    return termRule(que)
+  },
+  function (que) {
+    return listRule(que)
+  },
+  ruleGetString,
+  ruleGetVar,
+  ruleGetSelf(function (v: FilterType) {
+    return v.type == 'block' && v.value != '|' && v.value != ']'
+  }),
+)
+
+function isLastTermBlock(v: FilterType) {
+  return v.type == 'block' && v.value == ')'
+}
+const queryRuleGet = manyRuleGet(ruleGetAll)
+
+const termRule: ParseFunGet<BaseQue<FilterType, QueArray<FilterType>>, LTerm> = andRuleGet(
+  [
+    ruleGetSelf(function (v: FilterType) {
+      return v.type == 'block' && v.value == '('
+    }),
+    queryRuleGet,
+    orRuleGet(
+      ruleGetSelf(isLastTermBlock),
+      ruleGetEnd
+    )
+  ],
+  function (a, vs, b) {
+    let end = b.end
+    const errors: string[] = []
+    if (!isLastTermBlock(b)) {
+      errors.push("缺少对应的括号)")
     }
-    return init
-  }, [{
-    begin: 0,
-    end: 0,
-    children: []
-  }])
-
-  if (splitRules.at(-1)?.children.length) {
-    //最后不能.结尾
-    splitRules.at(-1)!.end = filterTokens.at(-1)!.end
-  } else {
-    //最后以点结尾
-    splitRules.pop()
+    return {
+      type: "()",
+      begin: a.begin,
+      end,
+      children: vs,
+      errors
+    }
   }
+)
 
-  const rules = splitRules.reduce<LRule[]>(function (init, rule) {
-    //规则用等号分割
-    const list: FilterType[][] = [[]]
-    let will = true
-    let i = 0
-    let isCutRule = false
-    while (will && i < rule.children.length) {
-      const block = rule.children[i]
-      if (block.type == 'block' && block.value == '=' || block.value == ':') {
-        isCutRule = block.value == ':'
-        if (list.length == 2) {
-          will = false
-          errorAreas.push({
-            error: "过多的等号后的内容",
-            begin: block.begin,
-            end: rule.end
-          })
-        } else {
-          list.push([])
+function isLastListBlock(v: FilterType) {
+  return v.type == 'block' && v.value == ']'
+}
+const listEndRule: ParseFunGet<BaseQue<FilterType, QueArray<FilterType>>, FilterType> = orRuleGet(
+  ruleGetSelf(isLastListBlock),
+  ruleGetEnd
+)
+
+const listRule: ParseFunGet<BaseQue<FilterType, QueArray<FilterType>>, LList> = andRuleGet(
+  [
+    ruleGetSelf(function (v) {
+      return v.type == 'block' && v.value == '['
+    }),
+    manyRuleGet(ruleGetAllNotSplit),
+    orRuleGet(
+      andRuleGet(
+        [
+          ruleGetSelf(function (v) {
+            return v.type == 'block' && v.value == '|'
+          }),
+          ruleGetAllNotSplit,
+          listEndRule
+        ],
+        function (split, last, end) {
+          return {
+            type: "last",
+            split,
+            last,
+            end
+          }
+        }
+      ) as ParseFunGet<BaseQue<FilterType, QueArray<FilterType>>, {
+        type: "last",
+        split: FilterType
+        last: AtomExp,
+        end: FilterType
+      }>,
+      listEndRule
+    )
+  ],
+  function (a, b, c) {
+    let last = undefined
+    const errors: string[] = []
+    let end = 0
+    if (c.type == 'last') {
+      end = c.end.end
+      if (!isLastListBlock(c.end)) {
+        errors.push("缺少对应的括号]")
+      }
+      last = c.last
+    } else {
+      end = c.end
+      if (!isLastListBlock(c)) {
+        errors.push("缺少对应的括号]")
+      }
+    }
+    return {
+      type: "[]",
+      begin: a.begin,
+      end,
+      children: b,
+      last,
+      errors
+    }
+  }
+)
+const topRuleGet = manyRuleGet(termRule)
+
+
+export type LRule = {
+  type: "rule"
+  begin: number
+  end: number
+  head: CacheValue
+  body?: CacheValue
+  isCut?: boolean
+}
+function mergeErrorAreas(item: AtomExp, errorAreas: ErrorArea[]) {
+
+}
+
+
+type PureCacheValue = {
+  type: "value",
+  value: any
+} | {
+  type: "var"
+  value: string
+} | null
+export type CacheValue = KPair<CacheValue, CacheValue> | PureCacheValue
+
+function evalToTerm(children: AtomExp[]): CacheValue {
+  const list = toList(children.map(evalToExp))
+  return KPair.of(KPair.of(
+    {
+      type: "value",
+      value: children.length
+    },
+    {
+      type: "value",
+      value: KSymbol.term
+    }
+  ), list)
+}
+
+
+function evalToExp(v: AtomExp): CacheValue {
+  if (v.type == '()') {
+    //函子
+    return evalToTerm(v.children)
+  } else if (v.type == '[]') {
+    let last = v.last ? evalToExp(v.last) : null
+    return toPairs(v.children.map(evalToExp), last)
+  } else if (v.type == 'block') {
+    const ev = v.value
+    if (ev.startsWith("$")) {
+      //特殊定义
+      if (ev == '$nil') {
+        return {
+          type: "value",
+          value: null
+        }
+      } else if (ev == '$term') {
+        return {
+          type: "value",
+          value: KSymbol.term
+        }
+      } else if (ev == '$nat') {
+        return {
+          type: "value",
+          value: KSymbol.nat
         }
       } else {
-        list.at(-1)?.push(block)
-      }
-      i++
-    }
-    const head = list[0]
-    const body = list[1]
-    if (head) {
-      const headExp = parseExp(head, errorAreas)
-      if (headExp && headExp.type == '[]') {
-        init.push({
-          type: "rule",
-          isCut: isCutRule,
-          head: headExp,
-          begin: rule.begin,
-          end: rule.end!,
-          body: body?.length ? parseExp(body, errorAreas) : undefined
-        })
-      } else {
-        rule.children[0].errors.push("无法正确地解析规则头")
+        throw `未知特殊符号${ev}`
       }
     } else {
-      rule.children[0].errors.push("没有对的规则头")
+      const nx = Number(ev)
+      if (!isNaN(nx)) {
+        return {
+          type: "value",
+          value: nx
+        }
+      }
+      return {
+        type: "value",
+        value: ev
+      }
     }
-    return init
-  }, [])
+  } else if (v.type == 'string') {
+    return {
+      type: "value",
+      value: v.value
+    }
+  } else {
+    return {
+      type: "var",
+      value: v.value
+    }
+  }
+}
 
+
+
+const ruleGetEndNull = ruleGet(matchEnd, function (begin, end) {
+  return null
+})
+const ruleRuleGet: ParseFunGet<BaseQue<AtomExp, QueArray<AtomExp>>, LRule> = andRuleGet(
+  [
+    ruleGetSelf(function (v: AtomExp) {
+      return v.type == '()'
+    }),
+    orRuleGet(
+      ruleGetSelf(function (v: AtomExp) {
+        return v.type == '()'
+      }),
+      ruleGetEndNull
+    ),
+    orRuleGet(
+      ruleGetSelf(function (v: AtomExp) {
+        return v.type == 'block' && v.value == '!'
+      }),
+      ruleGetEndNull
+    )
+  ],
+  function (a, b, c) {
+    return {
+      type: "rule",
+      begin: a.begin,
+      end: c ? c.end : b ? b.end : a.end,
+      head: evalToExp(a),
+      body: b ? evalToExp(b) : undefined,
+      isCut: !!c,
+    }
+  }
+)
+
+export function parseRules(tokens: LToken[]) {
+  const errorAreas: ErrorArea[] = []
+  /**
+   * a b [daf ds ] (d aew aw)
+   */
+  const filterTokens = getFilterTokens(tokens)
+  const result = topRuleGet(new BaseQue(filterTokens))
+  const rules: LRule[] = []
+  let asts: LTerm[] = []
+  if (result) {
+    asts = result.value
+    for (const row of result.value) {
+      mergeErrorAreas(row, errorAreas)
+      const cs = row.children
+      const out = ruleRuleGet(new BaseQue(cs))
+      if (out) {
+        rules.push(out.value)
+      } else {
+        errorAreas.push({
+          begin: row.begin,
+          end: row.end,
+          error: "不是合法的规则"
+        })
+      }
+    }
+  }
   return {
+    asts,
     rules,
     errorAreas
   }
@@ -212,242 +413,24 @@ export function parseRules(tokens: LToken[]) {
 export function parseQuery(tokens: LToken[]) {
   const errorAreas: ErrorArea[] = []
   const filterTokens = getFilterTokens(tokens)
-  const last = filterTokens.at(-1)
-  if (last?.type == 'block' && last.value == '.') {
-    filterTokens.pop()
+  const result = queryRuleGet(new BaseQue(filterTokens))
+
+  let asts: AtomExp[] = []
+  let query: CacheValue = null
+  if (result) {
+    asts = result.value
+    for (const cell of result.value) {
+      mergeErrorAreas(cell, errorAreas)
+    }
+    query = evalToTerm(result.value)
   }
   return {
-    query: parseExp(filterTokens, errorAreas),
+    asts,
+    query,
     errorAreas
   }
 }
-//括号优先级最高,然后是冒号、空格、逗号,然后是;
-function parseExp(rules: FilterType[], errorAreas: ErrorArea[]) {
-  const treeList = parseBracketTree(rules, errorAreas)
-  return infixJoinNoBracket(treeList, errorAreas)
-}
 
-/**
- * 作为or-exp来解析
- * @param bracket 
- * @param errorAreas 
- * @returns 
- */
-function infixJoinNoBracket(bracket: BracketList, errorAreas: ErrorArea[]): LOrExp | LAndExp | LList | undefined {
-  //再用分号区分或语句
-  return leftJoinExp<LOrExp, LOrExp | LAndExp | LList>(
-    bracket.list,
-    isOrCutExp,
-    function (leftExp, rightExp, centerFlag) {
-      const orExp: LOrExp = {
-        type: "or",
-        isCut: centerFlag.value == '|',
-        begin: leftExp.begin,
-        end: rightExp.end,
-        left: leftExp,
-        right: rightExp
-      }
-      return orExp
-    }, function (list) {
-      return toAndExp(list, errorAreas)!
-    })
-}
-function toAndExp(exps: BracketRow[], errorAreas: ErrorArea[]) {
-  return leftJoinExp<LAndExp, LList | LAndExp | LOrExp>(exps, isAndExp, function (leftExp, rightExp) {
-    const andExp: LAndExp = {
-      type: "and",
-      begin: leftExp.begin,
-      end: rightExp.end,
-      left: leftExp,
-      right: rightExp
-    }
-    return andExp
-  }, function (list) {
-    if (list.length == 1) {
-      const first = list[0]
-      if (first.type == "bracket" && first.bType == '(') {
-        //优先级
-        const centerExp = infixJoinNoBracket(first, errorAreas)
-        if (centerExp?.type != 'and' && centerExp?.type != 'or') {
-          errorAreas.push({
-            begin: first.begin,
-            end: first.end,
-            error: "小括号中间必须是and或or表达式"
-          })
-        } else {
-          centerExp.begin = first.begin
-          centerExp.end = first.end
-        }
-        return centerExp || {
-          type: "[]",
-          begin: first.begin,
-          end: first.end,
-          children: []
-        }
-      }
-    }
-    return toListExp(list, errorAreas)
-  })
-}
-
-function toListExp(exps: BracketRow[], errorAreas: ErrorArea[]): LList {
-  const children = exps.map(v => {
-    if (v.type == "bracket") {
-      if (v.bType == '(') {
-        errorAreas.push({
-          begin: v.begin,
-          end: v.end,
-          error: "中括号里不允许小括号"
-        })
-      }
-      const outExp = toListExp(v.list, errorAreas)
-      outExp.begin = v.begin
-      outExp.end = v.end
-      return outExp
-    }
-    return v
-  })
-  const pairs: LList = {
-    type: "[]",
-    children,
-    begin: children[0]?.begin,
-    end: children.at(-1)?.end!
-  }
-  return pairs
-}
-
-function leftJoinExp<A, B>(
-  list: BracketRow[],
-  isSplit: (v: BracketRow) => v is LBlock,
-  buildBindExp: (
-    leftExp: B,
-    rightExp: B | A,
-    centerFlag: LBlock
-  ) => A,
-  buildInitExp: (list: BracketRow[]) => B
-) {
-
-  const out = list.reduce<{
-    list: {
-      exp: B
-      //后继的split
-      split: LBlock
-    }[]
-    cache: BracketRow[]
-  }>(function (init, row) {
-    if (isSplit(row)) {
-      if (init.cache.length) {
-        init.list.push({
-          exp: buildInitExp(init.cache),
-          split: row
-        })
-        init.cache.length = 0
-      } else {
-        row.errors.push("需要有右边内容")
-      }
-    } else {
-      init.cache.push(row)
-    }
-    return init
-  }, {
-    list: [],
-    cache: []
-  })
-
-  let lastExp: A | B | undefined = out.cache.length ? buildInitExp(out.cache) : out.list.pop()?.exp
-  if (lastExp) {
-    for (let i = out.list.length - 1; i > -1; i--) {
-      const row = out.list[i]
-      lastExp = buildBindExp(row.exp, lastExp, row.split)
-    }
-    return lastExp
-  }
-}
-function isAndExp(v: BracketRow): v is LBlock {
-  return v.type == 'block' && v.value == ','
-}
-function isOrCutExp(v: BracketRow): v is LBlock {
-  return v.type == 'block' && (v.value == ';' || v.value == '|')
-}
-
-type BracketRow = BracketList | FilterType
-type BracketList = {
-  type: "bracket"
-  bType: "(" | "["
-  from: FilterType
-  begin: number
-  end: number
-  list: BracketRow[]
-}
-
-/**
- * 解析成括号的层级
- * @param rules 
- * @param errorAreas 
- * @returns 
- */
-function parseBracketTree(rules: FilterType[], errorAreas: ErrorArea[]) {
-  const top: BracketList = {
-    type: "bracket",
-    bType: "[",
-    from: null as any,
-    begin: rules[0]?.begin,
-    end: rules.at(-1)?.end!,
-    list: []
-  }
-  const stacks: BracketList[] = [top]
-  let i = 0
-  while (i < rules.length) {
-    const rule = rules[i]
-    if (rule.type == 'block') {
-      if (rule.value == '(' || rule.value == '[') {
-        const newStack: BracketList = {
-          type: "bracket",
-          bType: rule.value,
-          from: rule,
-          begin: rule.begin,
-          end: 0,
-          list: []
-        }
-        stacks.at(-1)?.list.push(newStack)
-        stacks.push(newStack)
-      } else if (rule.value == ')' || rule.value == ']') {
-        const pop = stacks.pop()
-        if (pop && pop != top) {
-          pop.end = rule.end
-          if (pop.from.value == '(' && rule.value == ']') {
-            rule.errors.push('需要括号),不匹配')
-          } else if (pop.from.value == '[' && rule.value == ')') {
-            rule.errors.push('需要括号],不匹配')
-          }
-        } else {
-          //过多的括号
-          errorAreas.push({
-            error: "过多的括号之外的内容",
-            begin: rule.begin,
-            end: rules.at(-1)?.end!
-          })
-          return top
-        }
-      } else {
-        stacks.at(-1)?.list.push(rule)
-      }
-    } else {
-      stacks.at(-1)?.list.push(rule)
-    }
-    i++
-  }
-  if (stacks.length != 1) {
-    //缺少括号
-    const last = rules.at(-1)?.end
-    for (let x = 1; x < stacks.length; x++) {
-      const stack = stacks[x]
-      stack.end = last!
-      stack.from.errors.push('缺少对应的括号')
-    }
-  }
-  return top
-}
 function toStringEscape(str: string, quote: string, errors: string[]) {
   const vs: string[] = []
   let i = 0

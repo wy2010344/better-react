@@ -1,7 +1,7 @@
 import { emptyArray } from "better-react";
 import { renderArray, renderArrayWithIndexAsKey, renderIf, useMemo, useReducer } from "better-react-helper";
 import { VarPool } from "./evalExp";
-import { DelayStream, KSubsitution, Stream, getPairLeft, getPairRight, walk } from "./kanren";
+import { DelayStream, KSubsitution, Stream, walk } from "./kanren";
 import { stringifyLog } from "./stringify";
 import { domOf } from "better-react-dom";
 
@@ -99,12 +99,12 @@ function reducerGetMore(model: {
 
 
 function toSubs(subs: KSubsitution[], stream?: Stream<KSubsitution>) {
-  const left = stream ? getPairLeft(stream) : undefined
+  const left = stream ? stream.left : undefined
   if (left) {
     subs.push(left)
   }
   return {
     subs,
-    next: stream ? getPairRight(stream) : undefined
+    next: stream ? stream.right : undefined
   }
 }

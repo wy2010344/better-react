@@ -1,13 +1,13 @@
 import { panelWith } from "../panel/PanelContext";
 import { ContentEditableModel, initContentEditableModel } from "../contentEditableReact/useContentEditable";
-import { emptyArray, useEffect } from "better-react";
+import { useEffect } from "better-react";
 import { dom, domOf } from "better-react-dom";
 import {
-  VarPool, evalLExp, queryResult, DelayStream,
-  KSubsitution, Stream, getPairLeft, getPairRight, walk, stringifyLog,
+  VarPool, evalLExp, queryResult,
+
   useRenderCodeData, useRenderQuery, useRenderResult, transLateRule
-} from 'kanren-logic';
-import { renderIf, renderArray, useMemo, useReducer } from "better-react-helper";
+} from '@/kanren-logic';
+import { useMemo } from "better-react-helper";
 import { useDragdownX } from "./dragPanel";
 
 
@@ -121,6 +121,7 @@ export default panelWith({
         style: `
         flex:1;
         overflow-y:auto;
+        align-self:stretch;
         `
       })
     })
@@ -184,7 +185,6 @@ export default panelWith({
             const queryPool = new VarPool()
             const queryAst = evalLExp(query, queryPool)
             const stream = queryResult(topRules, queryAst)
-            console.log("cs", stream, queryPool)
             appendResult({
               query: currentQuery.value,
               queryPool,

@@ -2,7 +2,7 @@
   "version": "v1",
   "packages": {
     "better-react-helper": {
-      "signature": "5b06aa8cb682dc807a52b3e54d721735",
+      "signature": "26697410aa4fa4c56f494288198c3952",
       "file": true,
       "replaced": "^1.2.0"
     },
@@ -27,7 +27,7 @@
       "replaced": "^1.2.0"
     },
     "kanren-logic": {
-      "signature": "6295adc803277098972aca0b3573a46c",
+      "signature": "b5e4461667a0c5a6c05bee5243ed3de2",
       "file": true
     }
   }

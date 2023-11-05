@@ -1,6 +1,6 @@
-import { Goal, KSubsitution, KType, KVar, List, Stream, extendSubsitution, getPairLeft, getPairRight, kanren, streamBindGoal, walk } from "./kanren"
-import { LAndExp, LExp, LOrExp, LRule } from "./parse"
-import { stringifyLog } from "./stringify"
+import { Goal, KPair, KSubsitution, KType, KVar, List, Stream, KSymbol, extendSubsitution, kanren, streamBindGoal, toList, walk } from "./kanren"
+import { CacheValue, LRule } from "./parse"
+import { stringifyLog, tryParsePair } from "./stringify"
 
 
 
@@ -21,60 +21,35 @@ export class VarPool {
     return Object.entries(this.pool)
   }
 }
-export function evalLExp(exp: LExp, pool: VarPool): KType {
-  if (exp.type == "[]") {
-    return exp.children.map(vx => {
-      return evalLExp(vx, pool)
-    })
-  } else if (exp.type == "and") {
-    return evalAndOr(exp, pool)
-  } else if (exp.type == "or") {
-    return evalAndOr(exp, pool)
-  } else if (exp.type == "block") {
-    const ev = exp.value
-    if (ev.startsWith('$')) {
-      //特殊定义
-      if (ev == '$nil') {
-        return null
-      } else {
-        throw `未知特殊符号${ev}`
-      }
+export function evalLExp(exp: CacheValue, pool: VarPool): KType {
+  if (exp) {
+    if (exp instanceof KPair) {
+      return KPair.of(
+        evalLExp(exp.left, pool),
+        evalLExp(exp.right, pool)
+      )
     } else {
-      const nx = Number(ev)
-      if (!isNaN(nx)) {
-        return nx
+      if (exp.type == 'value') {
+        //值
+        return exp.value
+      } else {
+        //变量
+        if (exp.value) {
+          const oldV = pool.get(exp.value)
+          if (oldV) {
+            return oldV
+          }
+          const newV = kanren.fresh()
+          pool.set(exp.value, newV)
+          return newV
+        }
+        //忽略型变量
+        return kanren.fresh()
       }
-      return ev
     }
-  } else if (exp.type == "string") {
-    return exp.value
-  } else if (exp.type == "var") {
-    if (exp.value) {
-      const oldV = pool.get(exp.value)
-      if (oldV) {
-        return oldV
-      }
-      const newV = kanren.fresh()
-      pool.set(exp.value, newV)
-      return newV
-    }
-    //忽略型变量
-    return kanren.fresh()
-  } else {
-    throw `unknown exp type ${exp}`
   }
+  return exp
 }
-/**
- * and与or,提供出来也是前结合,计算后的结果是后结合
- */
-function evalAndOr(exp: LAndExp | LOrExp, pool: VarPool): KType {
-  return [
-    evalLExp(exp.left, pool),
-    exp.type == 'or' ? exp.isCut ? '|' : ';' : ',',
-    evalLExp(exp.right, pool)
-  ]
-}
-
 
 
 function toEvalRules(
@@ -83,8 +58,8 @@ function toEvalRules(
   exp: KType,
   topRules: List<EvalRule>): Stream<KSubsitution> {
   if (rules) {
-    const first = getPairLeft(rules)
-    const right = getPairRight(rules)
+    const first = rules.left
+    const right = rules.right
     return (first.isCut ? kanren.toCut : kanren.toOr)<KSubsitution>(sub, function (sub) {
       return first.query(sub, exp, topRules)
     }, function (sub) {
@@ -126,7 +101,7 @@ function toCustomRule(rule: LRule): EvalRule {
 }
 
 export function transLateRule(rules: LRule[]) {
-  return kanren.toAnyList([
+  return toList([
     ...defineRules,
     ...rules.map(rule => {
       return toCustomRule(rule)
@@ -137,7 +112,15 @@ export function queryResult(allRule: List<EvalRule>, exp: KType) {
   return toEvalExp(null, allRule, exp)
 }
 
-
+function termToPairs<T>(list: T[]) {
+  return KPair.of(
+    KPair.of(
+      list.length,
+      KSymbol.term
+    ),
+    toList(list)
+  )
+}
 const defineRules: EvalRule[] = [
   //orRule
   {
@@ -156,7 +139,7 @@ const defineRules: EvalRule[] = [
     query(sub, exp, topRules) {
       const left = kanren.fresh()
       const right = kanren.fresh()
-      const head = [left, ',', right]
+      const head = termToPairs([left, ',', right])
       const out = kanren.toUnify(sub, exp, head)
       if (out) {
         return streamBindGoal(out, function (sub) {
@@ -174,7 +157,7 @@ const defineRules: EvalRule[] = [
   {
     query(sub, exp, topRules) {
       const va = kanren.fresh()
-      const head = [va, '是变量']
+      const head = termToPairs([va, '是变量'])
       const out = kanren.toUnify(sub, exp, head)
       if (out) {
         return streamBindGoal(out, function (sub) {
@@ -193,7 +176,7 @@ const defineRules: EvalRule[] = [
     query(sub, exp) {
       const va = kanren.fresh()
       const vb = kanren.fresh()
-      const head = [va, '是', vb]
+      const head = termToPairs([va, '是', vb])
       const out = kanren.toUnify(sub, exp, head)
       if (out) {
         return streamBindGoal(out, function (sub) {
@@ -212,24 +195,27 @@ const defineRules: EvalRule[] = [
       const method = kanren.fresh()
       const params = kanren.fresh()
       const ret = kanren.fresh()
-      const head = ['js执行', method, params, "等于", ret]
+      const head = termToPairs(['js执行', method, params, "等于", ret])
       const out = kanren.toUnify(sub, exp, head)
       if (out) {
         return streamBindGoal(out, function (sub) {
           const realMethod = walk(method, sub)
           const realParams = walk(params, sub)
           const realRet = walk(ret, sub)
-          if (Array.isArray(realParams)) {
-            if (typeof realMethod == 'function') {
-              try {
-                const theRet = (realMethod as any).apply(null, realParams)
-                if (realRet instanceof KVar) {
-                  return kanren.success(extendSubsitution(realRet, theRet, sub))
-                } else if (realRet == theRet) {
-                  return kanren.success(sub)
+          if (realParams instanceof KPair) {
+            const out = tryParsePair(realParams)
+            if (out.type == 'term') {
+              if (typeof realMethod == 'function') {
+                try {
+                  const theRet = (realMethod as any).apply(null, out.list)
+                  if (realRet instanceof KVar) {
+                    return kanren.success(extendSubsitution(realRet, theRet, sub))
+                  } else if (realRet == theRet) {
+                    return kanren.success(sub)
+                  }
+                } catch (ex) {
+                  console.log("出错", ex)
                 }
-              } catch (ex) {
-                console.log("出错", ex)
               }
             }
           }
@@ -247,7 +233,7 @@ const defineRules: EvalRule[] = [
     query(sub, exp, topRules) {
       const method = kanren.fresh()
       const val = kanren.fresh()
-      const head = ['js-eval', method, '等于', val]
+      const head = termToPairs(['js-eval', method, '等于', val])
       const out = kanren.toUnify(sub, exp, head)
       if (out) {
         return streamBindGoal(out, function (sub) {
@@ -273,77 +259,6 @@ const defineRules: EvalRule[] = [
   },
   {
     /**
-     * 来源[a,b,c,d]
-     * 目标 [a,[b,[c,d]]]
-     * @param sub 
-     * @param exp 
-     * @param topRules 
-     * @returns 
-     */
-    query(sub, exp, topRules) {
-      const from = kanren.fresh()
-      const to = kanren.fresh()
-      const head = ['数组', from, '转为pairs', to]
-      const out = kanren.toUnify(sub, exp, head)
-      if (out) {
-        return streamBindGoal(out, function (sub) {
-          const realFrom = walk(from, sub)
-          const realTo = walk(to, sub)
-          if (Array.isArray(realFrom) && realTo instanceof KVar) {
-            return kanren.success(
-              extendSubsitution(to, kanren.toList(realFrom), sub)
-            )
-          } else if (realFrom instanceof KVar) {
-            const list: KType[] = []
-            circlePairBack(list, realTo)
-            return kanren.success(
-              extendSubsitution(realFrom, list, sub)
-            )
-          }
-          return null
-        })
-      }
-      return null
-    },
-  },
-  {
-    /**
-     * 来源[a,b,c,d]
-     * 目标 [a,[b,[c,d]]]
-     * @param sub 
-     * @param exp 
-     * @param topRules 
-     * @returns 
-     */
-    query(sub, exp, topRules) {
-      const from = kanren.fresh()
-      const to = kanren.fresh()
-      const head = ['数组', from, '转为list', to]
-      const out = kanren.toUnify(sub, exp, head)
-      if (out) {
-        return streamBindGoal(out, function (sub) {
-          const realFrom = walk(from, sub)
-          const realTo = walk(to, sub)
-          if (Array.isArray(realFrom) && realTo instanceof KVar) {
-            return kanren.success(
-              extendSubsitution(to, kanren.toList(realFrom, true, null), sub)
-            )
-          } else if (realFrom instanceof KVar) {
-            const list: KType[] = []
-            if (circleListBack(list, realTo, null)) {
-              return kanren.success(
-                extendSubsitution(realFrom, list, sub)
-              )
-            }
-          }
-          return null
-        })
-      }
-      return null
-    },
-  },
-  {
-    /**
      * 数组结合成字符串
      * @param sub 
      * @param exp 
@@ -354,20 +269,23 @@ const defineRules: EvalRule[] = [
       const from = kanren.fresh()
       const split = kanren.fresh()
       const to = kanren.fresh()
-      const head = ['列表', from, '结合', split, '成功', to]
+      const head = termToPairs(['列表', from, '结合', split, '成功', to])
       const out = kanren.toUnify(sub, exp, head)
       if (out) {
         return streamBindGoal(out, function (sub) {
           const realFrom = walk(from, sub)
-          if (Array.isArray(realFrom) && realFrom.every(v => typeof v == 'string')) {
-            const realSplit = walk(split, sub)
-            if (typeof realSplit == 'string') {
-              const realTo = walk(to, sub)
-              const joinStr = realFrom.join(realSplit)
-              if (realTo instanceof KVar) {
-                return kanren.success(extendSubsitution(realTo, joinStr, sub))
-              } else if (realTo == joinStr) {
-                return kanren.success(sub)
+          if (realFrom instanceof KPair) {
+            const out = tryParsePair(realFrom)
+            if (out.type == 'term' && out.list.every(v => typeof v == 'string')) {
+              const realSplit = walk(split, sub)
+              if (typeof realSplit == 'string') {
+                const realTo = walk(to, sub)
+                const joinStr = out.list.join(realSplit)
+                if (realTo instanceof KVar) {
+                  return kanren.success(extendSubsitution(realTo, joinStr, sub))
+                } else if (realTo == joinStr) {
+                  return kanren.success(sub)
+                }
               }
             }
           }
@@ -378,26 +296,6 @@ const defineRules: EvalRule[] = [
     },
   }
 ]
-
-function circlePairBack(list: KType[], data: KType) {
-  if (Array.isArray(data) && data.length == 2) {
-    list.push(data[0])
-    circlePairBack(list, data[1])
-  } else {
-    list.push(data)
-  }
-}
-
-function circleListBack(list: KType[], data: KType, endFlag: any = null): boolean {
-  if (Array.isArray(data) && data.length == 2) {
-    list.push(data[0])
-    return circleListBack(list, data[1], endFlag)
-  } else if (data == endFlag) {
-    return true
-  }
-  return false
-}
-
 function toEvalExp(
   sub: KSubsitution,
   topRules: List<EvalRule>,
@@ -414,7 +312,7 @@ function toOrExp(
 ) {
   const left = kanren.fresh()
   const right = kanren.fresh()
-  const head = [left, isCut ? '|' : ';', right]
+  const head = termToPairs([left, isCut ? '|' : ';', right])
   const out = kanren.toUnify(sub, head, exp)
   if (out) {
     return streamBindGoal(out, function (sub) {
@@ -433,7 +331,7 @@ function topEvalExpGoal(
   exp: KType
 ): Goal<KSubsitution> {
   return function (sub) {
-    const log = stringifyLog(walk(exp, sub))
+    // const log = stringifyLog(walk(exp, sub))
     return toEvalExp(sub, topRules, exp)
   }
 }

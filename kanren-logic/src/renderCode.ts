@@ -7,7 +7,7 @@ import { emptyArray, useEffect } from "better-react";
 import { parseQuery, parseRules } from "./parse";
 import { css } from "stylis-creater";
 import { useErrorContextProvide } from "./errorContext";
-import { AreaAtom, buildExp, buildViewPairs, getAreaList, isAreaCode } from "./buildViewPairs";
+import { AreaAtom, buildViewPairs, isAreaCode } from "./buildViewPairs";
 
 
 function useRenderCode<T>(
@@ -105,11 +105,9 @@ export function useRenderCodeData<T>(
   const { value, current, renderContent } = useRenderCode(init, initFun)
   const { list, rules } = useMemo(() => {
     const tokens = tokenize(current.value)
-    const { errorAreas, rules } = parseRules(tokens)
+    const { errorAreas, rules, asts } = parseRules(tokens)
     return {
-      list: buildViewPairs(tokens, (areaCodes) => {
-        getAreaList(rules, areaCodes)
-      }, errorAreas),
+      list: buildViewPairs(tokens, asts, errorAreas),
       rules
     }
     // return []
@@ -135,13 +133,9 @@ export function useRenderQuery<T>(
   const { value, current, renderContent } = useRenderCode(init, initFun)
   const { list, query } = useMemo(() => {
     const tokens = tokenize(current.value)
-    const { errorAreas, query } = parseQuery(tokens)
+    const { errorAreas, query, asts } = parseQuery(tokens)
     return {
-      list: buildViewPairs(tokens, (areaCodes) => {
-        if (query) {
-          buildExp(query, areaCodes)
-        }
-      }, errorAreas),
+      list: buildViewPairs(tokens, asts, errorAreas),
       query
     }
     // return []
@@ -194,7 +188,7 @@ white-space: normal;
   &.keyword{
 	  color: hsl(75, 70%, 60%);
   }
-  &.bracket{
+  &.term{
     color:hsl(213.98deg 83.37% 63.34%);
   }
   &.list{
@@ -212,19 +206,6 @@ white-space: normal;
     color:slategray;
     /* color: hsl(30, 10%, 15%) */
   }
-  &.define{
-    color: hsl(75, 70%, 60%);
-    /* color:hsl(240, 100%, 50%); */
-    /* color: hsl(180, 75%, 50%); */
-  }
-  &.or{
-    color: hsl(180, 75%, 40%);
-    /* color: hsl(240, 100%, 40%); */
-  }
-  &.and{
-    color:hsl(180, 75%, 30%);
-    /* color:hsl(240, 100%, 30%); */
-  }
   &.number{
     color:#a8aed3;
   }
@@ -240,7 +221,7 @@ function renderAreaCode(child: AreaAtom) {
         useErrorContextProvide(child.errors)
       }
       domOf("span", {
-        className: `${child.type} ${(child.type == 'or' || child.type == 'rule') && child.cut ? 'cut' : ''}`,
+        className: `${child.type} ${child.type == 'rule' && child.cut ? 'cut' : ''}`,
       }).render(function () {
         child.children.forEach(renderAreaCode)
       })
@@ -255,17 +236,12 @@ function renderLToken(row: LToken) {
   if (row.type == 'block') {
     if (keywords.includes(row.value)) {
       cname = 'keyword'
-      if (row.value == '[' || row.value == ']' || row.value == '(' || row.value == ')') {
+      if (row.value == '[' || row.value == ']') {
         cname = "list"
-      }
-      if (row.value == '|' || row.value == ';') {
-        cname = 'or'
-      }
-      if (row.value == ',') {
-        cname = 'and'
-      }
-      if (row.value == '=' || row.value == ':') {
-        cname = 'define'
+      } else if (row.value == '(' || row.value == ')') {
+        cname = 'term'
+      } else if (row.value == '|') {
+        cname = 'keyword'
       }
     } else if (row.value.startsWith('$')) {
       cname = 'special'

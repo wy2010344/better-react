@@ -58,11 +58,13 @@ const varRule = andMatch(
   )
 )
 /**
- * 默认以pair相连,小括号优先级,大括号变成列表,最后自动增加空,
- * : 表示规则的cut
- * | 表示条件的cut
+ * []表示列表,中间以|分割pair
+ * ()表示表达式(a b c)即为列表[3 a b c]
+ * {x}表示变量
+ * 'abc'是字符串
+ * ""是注释
  */
-export const keywords = ['(', ')', '[', ']', '=', ',', ';', '.', ':', '|']
+export const keywords = ['(', ')', '[', ']', '|']
 const blockCharNotList = '"\'{}'.split("").concat(whiteList).concat(keywords)
 export function includeBlockNotChar(v: string) {
   for (const c of blockCharNotList) {

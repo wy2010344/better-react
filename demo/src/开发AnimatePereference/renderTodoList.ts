@@ -73,8 +73,8 @@ export function renderTodoList() {
     getKey(v) {
       return v.id
     },
-    // mode: "wait",
-    mode: "pop"
+    mode: "wait",
+    // mode: "pop"
   }, function (v, arg) {
     const className = useTransitionValue(!arg.exiting, {
       beforeEnter: 'before-enter',

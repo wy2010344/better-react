@@ -361,10 +361,9 @@ better-react-helper@^1.2.5, "better-react-helper@file:.yalc/better-react-helper"
   version "1.2.5"
   resolved "file:.yalc/better-react-helper"
 
-better-react@^1.2.4:
+better-react@^1.2.4, "better-react@file:.yalc/better-react":
   version "1.2.4"
-  resolved "https://registry.npmjs.org/better-react/-/better-react-1.2.4.tgz"
-  integrity sha512-L38yHL6kCBDmOWGhzWKnyui1TKssxoG2OHjB/N9bMkIlnGLEq733Fw86p+2feyR+YaZoDoRgAv/LQJ+o43+/rw==
+  resolved "file:.yalc/better-react"
 
 commander@2:
   version "2.20.3"
@@ -697,6 +696,11 @@ iconv-lite@0.6:
   dependencies:
     safer-buffer ">= 2.1.2 < 3.0.0"
 
+inherits@2.0.3:
+  version "2.0.3"
+  resolved "https://registry.npmjs.org/inherits/-/inherits-2.0.3.tgz"
+  integrity sha512-x00IRNXNy63jwGkJmzPigoySHbaqpNuzKbBOmzK+g2OdZpQ9w+sxCN+VSB3ja7IAge2OP2qpfxTjeNcyjmW1uw==
+
 "internmap@1 - 2":
   version "2.0.3"
   resolved "https://registry.npmjs.org/internmap/-/internmap-2.0.3.tgz"
@@ -746,6 +750,14 @@ path-parse@^1.0.7:
   resolved "https://registry.npmjs.org/path-parse/-/path-parse-1.0.7.tgz"
   integrity sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==
 
+path@^0.12.7:
+  version "0.12.7"
+  resolved "https://registry.npmjs.org/path/-/path-0.12.7.tgz"
+  integrity sha512-aXXC6s+1w7otVF9UletFkFcDsJeO7lSZBPUQhtb5O0xJe8LtYhj/GxldoL09bBj9+ZmE2hNoHqQSFMN5fikh4Q==
+  dependencies:
+    process "^0.11.1"
+    util "^0.10.3"
+
 picocolors@^1.0.0:
   version "1.0.0"
   resolved "https://registry.npmjs.org/picocolors/-/picocolors-1.0.0.tgz"
@@ -759,6 +771,11 @@ postcss@^8.4.13:
     nanoid "^3.3.3"
     picocolors "^1.0.0"
     source-map-js "^1.0.2"
+
+process@^0.11.1:
+  version "0.11.10"
+  resolved "https://registry.npmjs.org/process/-/process-0.11.10.tgz"
+  integrity sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==
 
 resolve@^1.22.0:
   version "1.22.0"
@@ -801,7 +818,7 @@ source-map-js@^1.0.2:
   resolved "https://registry.npmjs.org/source-map-js/-/source-map-js-1.0.2.tgz"
   integrity sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==
 
-stylis-creater@^1.2.2, "stylis-creater@file:.yalc/stylis-creater":
+"stylis-creater@file:.yalc/stylis-creater":
   version "1.2.2"
   resolved "file:.yalc/stylis-creater"
   dependencies:
@@ -864,6 +881,13 @@ typescript@^4.5.4:
   version "4.6.4"
   resolved "https://registry.npmjs.org/typescript/-/typescript-4.6.4.tgz"
   integrity sha512-9ia/jWHIEbo49HfjrLGfKbZSuWo9iTMwXO+Ca3pRsSpbsMbc7/IU8NKdCZVRRBafVPGnoJeFL76ZOAA84I9fEg==
+
+util@^0.10.3:
+  version "0.10.4"
+  resolved "https://registry.npmjs.org/util/-/util-0.10.4.tgz"
+  integrity sha512-0Pm9hTQ3se5ll1XihRic3FDIku70C+iHUdT/W926rSgHV5QgXsYbKZN8MSC3tJtSkhuROzvsQjAaFENRXr+19A==
+  dependencies:
+    inherits "2.0.3"
 
 vite@^2.9.9:
   version "2.9.9"

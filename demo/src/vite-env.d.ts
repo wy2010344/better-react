@@ -1,5 +1,4 @@
 /// <reference types="vite/client" />
-
 declare module "xml-reader" {
   export type XmlElement = {
     name: string; // element name (empty for text nodes)

@@ -1,12 +1,32 @@
+import { ReadArray } from "better-react-helper"
 
-export class Que {
+export type QueArray<T> = ReadArray<T> & {
+  slice(begin?: number, end?: number): QueArray<T>
+}
+
+type Match<V> = (v: V) => boolean
+export class BaseQue<V, VS extends QueArray<V>> {
   constructor(
-    public readonly content: string,
+    public readonly content: VS,
     //下标
     public readonly i = 0,
   ) { }
+  step1(callback: Match<V>) {
+    if (this.i < this.content.length) {
+      if (callback(this.content[this.i])) {
+        return this.stepQue(this.i + 1)
+      }
+    }
+  }
+  protected stepQue(step: number) {
+    return new BaseQue<V, VS>(this.content, step)
+  }
+  toString() {
+    return JSON.stringify(this)
+  }
+}
 
-
+export class Que extends BaseQue<string, string>{
   match(vs: string[]) {
     for (const v of vs) {
       if (this.content.startsWith(v, this.i)) {
@@ -14,23 +34,15 @@ export class Que {
       }
     }
   }
-  step1(callback: (v: number) => boolean) {
-    if (this.i < this.content.length) {
-      if (callback(this.content.charCodeAt(this.i))) {
-        return this.stepQue(this.i + 1)
-      }
-    }
-  }
-
-  protected stepQue(step: number) {
+  protected stepQue(step: number): Que {
     return new Que(this.content, step)
   }
-
-  toString() {
-    return JSON.stringify(this)
+  step1Code(callback: (v: number) => boolean) {
+    return this.step1(function (v) {
+      return callback(v.charCodeAt(0))
+    })
   }
 }
-
 
 export class LineCharQue extends Que {
   constructor(
@@ -62,15 +74,27 @@ export class LineCharQue extends Que {
 /**
  * 解析,如果解析成功,返回正数.解析失败,返回负数
  */
-export type ParseFun<Q extends Que> = (que: Q) => (Q | void)
-
+export type ParseFun<Q extends BaseQue<any, any>> = (que: Q) => (Q | void)
+export function matchVS<V, VS extends QueArray<V>>(...vs: Match<V>[]): ParseFun<BaseQue<V, VS>> {
+  return function (que) {
+    for (const v of vs) {
+      const next = que.step1(v)
+      if (next) {
+        que = next
+      } else {
+        return
+      }
+    }
+    return que
+  }
+}
 export function match<Q extends Que>(...vs: string[]): ParseFun<Q> {
   return function (que) {
     return que.match(vs) as Q | undefined
   }
 }
 
-export function matchEnd<Q extends Que>(que: Q) {
+export function matchEnd<Q extends BaseQue<any, any>>(que: Q) {
   return que.i == que.content.length ? que : undefined
 }
 
@@ -87,12 +111,13 @@ export function orMatch(...rules: ParseFun<any>[]) {
 
 export function notMathChar<Q extends Que>(...charCodes: number[]): ParseFun<Q> {
   return function (que) {
-    return que.step1(code => !charCodes.includes(code)) as Q | undefined
+    return que.step1Code(code => !charCodes.includes(code)) as Q | undefined
   }
 }
 
+
 export function andMatch(...rules: ParseFun<any>[]) {
-  return function <Q extends Que>(que: Q) {
+  return function <Q extends BaseQue<any, any>>(que: Q) {
     let last = que
     for (const rule of rules) {
       const nlast = rule(last)
@@ -107,7 +132,7 @@ export function andMatch(...rules: ParseFun<any>[]) {
 }
 
 export function manyMatch(rule: ParseFun<any>, min = 0) {
-  return function <Q extends Que>(que: Q) {
+  return function <Q extends BaseQue<any, any>>(que: Q) {
     let last = que
     let count = 0
     while (true) {
@@ -125,22 +150,22 @@ export function manyMatch(rule: ParseFun<any>, min = 0) {
   }
 }
 
-class ParserSuccess<Q extends Que, T>{
+export class ParserSuccess<Q extends BaseQue<any, any>, T>{
   constructor(
     public readonly value: T,
     public readonly end: Q
   ) { }
 }
-function success<Q extends Que, T>(v: T, que: Q) {
+function success<Q extends BaseQue<any, any>, T>(v: T, que: Q) {
   return new ParserSuccess(v, que)
 }
 
 
-type ParseFunGet<Q extends Que, T> = (que: Q) => (ParserSuccess<Q, T> | void)
+export type ParseFunGet<Q extends BaseQue<any, any>, T> = (que: Q) => (ParserSuccess<Q, T> | void)
 
 
-type RuleCallback<Q extends Que, T> = (begin: Q, end: Q) => T
-export function ruleGet<Q extends Que, T>(
+type RuleCallback<Q extends BaseQue<any, any>, T> = (begin: Q, end: Q) => T
+export function ruleGet<Q extends BaseQue<any, any>, T>(
   rule: ParseFun<Q>,
   callback: RuleCallback<Q, T>
 ): ParseFunGet<Q, T> {
@@ -154,7 +179,75 @@ export function ruleGet<Q extends Que, T>(
 
 
 
-export function orRuleGet<Q extends Que, T>(...rules: ParseFunGet<Q, T>[]): ParseFunGet<Q, T> {
+export function ruleGetSelf<V>(fun: Match<V>) {
+  return ruleGet(matchVS(fun), function (begin, end) {
+    return begin.content.slice(begin.i, end.i)[0]
+  })
+}
+export function andRuleGet<Q extends BaseQue<any, any>, T, T1, T2>(
+  args: [
+    ParseFunGet<Q, T1>,
+    ParseFunGet<Q, T2>,
+  ],
+  merge: (...vs: [T1, T2]) => T
+): ParseFunGet<Q, T>
+export function andRuleGet<Q extends BaseQue<any, any>, T, T1, T2, T3>(
+  args: [
+    ParseFunGet<Q, T1>,
+    ParseFunGet<Q, T2>,
+    ParseFunGet<Q, T3>,
+  ],
+  merge: (...vs: [T1, T2, T3]) => T
+): ParseFunGet<Q, T>
+export function andRuleGet<Q extends BaseQue<any, any>, T>(
+  args: ParseFunGet<Q, any>[],
+  merge: (...vs: any) => T
+): ParseFunGet<Q, T> {
+  return function (que) {
+    const values: any[] = []
+    for (const rg of args) {
+      const end = rg(que)
+      if (end) {
+        que = end.end
+        values.push(end.value)
+      } else {
+        return
+      }
+    }
+    return success(merge.apply(null, values), que)
+  }
+}
+export function orRuleGet<Q extends BaseQue<any, any>, T1, T2>(
+  ...rules: [
+    ParseFunGet<Q, T1>,
+    ParseFunGet<Q, T2>
+  ]
+): ParseFunGet<Q, T1 | T2>
+export function orRuleGet<Q extends BaseQue<any, any>, T1, T2, T3>(
+  ...rules: [
+    ParseFunGet<Q, T1>,
+    ParseFunGet<Q, T2>,
+    ParseFunGet<Q, T3>
+  ]
+): ParseFunGet<Q, T1 | T2 | T3>
+export function orRuleGet<Q extends BaseQue<any, any>, T1, T2, T3, T4>(
+  ...rules: [
+    ParseFunGet<Q, T1>,
+    ParseFunGet<Q, T2>,
+    ParseFunGet<Q, T3>,
+    ParseFunGet<Q, T4>
+  ]
+): ParseFunGet<Q, T1 | T2 | T3 | T4>
+export function orRuleGet<Q extends BaseQue<any, any>, T1, T2, T3, T4, T5>(
+  ...rules: [
+    ParseFunGet<Q, T1>,
+    ParseFunGet<Q, T2>,
+    ParseFunGet<Q, T3>,
+    ParseFunGet<Q, T4>,
+    ParseFunGet<Q, T5>
+  ]
+): ParseFunGet<Q, T1 | T2 | T3 | T4 | T5>
+export function orRuleGet<Q extends BaseQue<any, any>>(...rules: ParseFunGet<Q, any>[]): ParseFunGet<Q, any> {
   return function (que) {
     for (const rule of rules) {
       const v = rule(que)
@@ -165,7 +258,7 @@ export function orRuleGet<Q extends Que, T>(...rules: ParseFunGet<Q, T>[]): Pars
   }
 }
 
-export function manyRuleGet<Q extends Que, T>(rule: ParseFunGet<Q, T>, min = 0): ParseFunGet<Q, T[]> {
+export function manyRuleGet<Q extends BaseQue<any, any>, T>(rule: ParseFunGet<Q, T>, min = 0): ParseFunGet<Q, T[]> {
   return function (que) {
     const vs: T[] = []
     let last = que

@@ -1,4 +1,4 @@
-import { LineCharQue } from "kanren-logic"
+import { LineCharQue } from "@/kanren-logic"
 import { Range } from "./vscode"
 export function getRange(begin: LineCharQue, end: LineCharQue): Range {
   return {

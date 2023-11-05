@@ -1,6 +1,6 @@
 import { getRange } from './tokenParser'
 import { Range } from './vscode'
-import { andMatch, LineCharQue, manyMatch, manyRuleGet, match, notMathChar, orMatch, orRuleGet, ParseFun, Que, ruleGet, ruleGetString, whiteList, whiteSpaceRule } from 'kanren-logic'
+import { andMatch, LineCharQue, manyMatch, manyRuleGet, match, notMathChar, orMatch, orRuleGet, ParseFun, Que, ruleGet, ruleGetString, whiteList, whiteSpaceRule } from '@/kanren-logic'
 
 
 

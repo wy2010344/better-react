@@ -1,10 +1,10 @@
-import { AtomExp, ErrorArea, LExp, LRule } from "./parse"
+import { AtomExp, ErrorArea, LRule } from "./parse"
 import { LToken } from "./tokenize"
 
 
 export type AreaAtom = AreaCode | LToken
 export type AreaCode = {
-  type: "and" | "or" | "rule" | "list"
+  type: "rule" | "term" | "list"
   cut?: boolean
   begin: number
   end: number
@@ -18,14 +18,14 @@ type AreaCodeError = {
   children: (LToken | AreaCode)[]
 }
 
-const areaCodeTypes = ["and", "or", "rule", "list", "error"]
+const areaCodeTypes = ["rule", "term", "list", "error"]
 export function isAreaCode(v: AreaAtom): v is AreaCode {
   return areaCodeTypes.includes(v.type)
 }
 
 export function buildViewPairs(
   tokens: LToken[],
-  buildContent: (areaCode: AreaCode[]) => void,
+  asts: AtomExp[],
   errorAreas: ErrorArea[],
 ) {
   const areaCodes: AreaCode[] = []
@@ -43,7 +43,7 @@ export function buildViewPairs(
     }
     old.errors.push(ea.error)
   })
-  buildContent(areaCodes)
+  buildAsts(asts, areaCodes)
   const cacheTokens: LToken[] = []
   for (const token of tokens) {
     const acs = areaCodes.filter(x => x.begin <= token.begin && x.end >= token.end).sort(sortAreaCodeAsc)
@@ -108,48 +108,30 @@ function sortAreaCode(acs: AreaAtom[]) {
   return acs
 }
 
-export function getAreaList(rules: LRule[], areaCodes: AreaCode[]) {
-  rules.forEach(rule => {
+function buildOneAst(ast: AtomExp, areaCodes: AreaCode[]) {
+  if (ast.type == '()') {
     areaCodes.push({
-      type: "rule",
-      cut: rule.isCut,
-      begin: rule.begin,
-      end: rule.end,
+      type: "term",
+      begin: ast.begin,
+      end: ast.end,
       children: []
     })
-    buildExp(rule.head, areaCodes)
-    if (rule.body) {
-      buildExp(rule.body, areaCodes)
-    }
-  })
-}
-
-function buildPairs(list: AtomExp[], areaCodes: AreaCode[], flagExp: LExp) {
-  areaCodes.push({
-    type: "list",
-    begin: flagExp.begin,
-    end: flagExp.end,
-    children: []
-  })
-  list.forEach(row => {
-    buildExp(row, areaCodes)
-  })
-}
-
-export function buildExp(body: LExp, areaCodes: AreaCode[], flagExp = body) {
-  if (body.type == 'and' || body.type == 'or') {
+    buildAsts(ast.children, areaCodes)
+  } else if (ast.type == '[]') {
     areaCodes.push({
-      cut: body.type == 'or' && body.isCut ? true : false,
-      type: body.type,
-      begin: flagExp.begin,
-      end: flagExp.end,
+      type: "list",
+      begin: ast.begin,
+      end: ast.end,
       children: []
     })
-    buildExp(body.left, areaCodes)
-    buildExp(body.right, areaCodes)
-  } else {
-    if (body.type == "[]") {
-      buildPairs(body.children, areaCodes, body)
+    buildAsts(ast.children, areaCodes)
+    if (ast.last) {
+      buildOneAst(ast.last, areaCodes)
     }
+  }
+}
+function buildAsts(asts: AtomExp[], areaCodes: AreaCode[]) {
+  for (const ast of asts) {
+    buildOneAst(ast, areaCodes)
   }
 }

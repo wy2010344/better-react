@@ -1,6 +1,6 @@
 import { getRange } from './tokenParser'
 import { Range } from './vscode'
-import { andMatch, LineCharQue, manyMatch, manyRuleGet, match, notMathChar, orMatch, orRuleGet, ParseFun, Que, ruleGet, ruleGetString, whiteList, whiteSpaceRule } from 'kanren-logic'
+import { andMatch, LineCharQue, manyMatch, manyRuleGet, match, notMathChar, orMatch, orRuleGet, ParseFun, Que, ruleGet, ruleGetString, whiteList, whiteSpaceRule } from '@/kanren-logic'
 
 /**
  * 第一步,变成列表
@@ -115,13 +115,13 @@ const tokenRuleGet = manyRuleGet<LineCharQue, TlcToken>(orRuleGet(
       range: getRange(begin, end)
     }
   }),
-  ruleGet(blockRule, function (begin, end) {
-    return {
-      type: "block",
-      value: ruleGetString(begin, end),
-      range: getRange(begin, end)
-    }
-  }),
+  // ruleGet(blockRule, function (begin, end) {
+  //   return {
+  //     type: "block",
+  //     value: ruleGetString(begin, end),
+  //     range: getRange(begin, end)
+  //   }
+  // }),
 ))
 /**
  * 拆分词
