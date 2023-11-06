@@ -5,11 +5,13 @@ import { dom, domOf } from "better-react-dom";
 import {
   VarPool, evalLExp, queryResult,
 
-  useRenderCodeData, useRenderQuery, useRenderResult, transLateRule
+  useRenderCodeData, useRenderQuery, useRenderResult, transLateRule, defineColors, ThemeColors
 } from '@/kanren-logic';
-import { useMemo } from "better-react-helper";
+import { useChange, useMemo, useState } from "better-react-helper";
 import { useDragdownX } from "./dragPanel";
-
+import { renderInput } from "better-react-dom-helper";
+import renderColorConfig from "./colorConfig";
+import chroma from "chroma-js";
 
 
 const storeKey = 'test-logic-editable'
@@ -107,6 +109,11 @@ export default panelWith({
     useEffect(() => {
       localStorage.setItem(storeKey, JSON.stringify(libValue))
     }, [libValue])
+
+    const colorTheme = renderColorConfig()
+    const primaryColor = useMemo(() => {
+      return chroma(colorTheme.primaryColor || "#ffffff")
+    }, [colorTheme.primaryColor])
     //左边
     domOf("div", {
       style: `
@@ -116,13 +123,37 @@ export default panelWith({
       flex-direction:column;
       `
     }).render(function () {
-      domOf("b").renderTextContent("规则")
+      dom.div({
+        style: `
+        display:flex;
+        align-items:center;
+        `
+      }).render(function () {
+        domOf("b").renderTextContent("规则")
+
+      })
       renderCodeLibrary({
         style: `
         flex:1;
         overflow-y:auto;
         align-self:stretch;
-        `
+        `,
+        css: `
+        .bracket{
+          padding:0.1rem;
+        }
+        white-space:pre-wrap;
+        .pre-wrap{
+          white-space:pre-wrap;
+        }
+        *{
+          display:inline-block;
+        }
+        `,
+        getBackgroundColor(v) {
+          return primaryColor.darken(v).hex()
+        },
+        themeColors: colorTheme.colorTheme
       })
     })
     //分割

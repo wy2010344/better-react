@@ -9,6 +9,60 @@ import { css } from "stylis-creater";
 import { useErrorContextProvide } from "./errorContext";
 import { AreaAtom, buildViewPairs, isAreaCode } from "./buildViewPairs";
 
+type ColorWithBack = {
+  background?: string
+  color?: string
+}
+export type CodeProps = React.HTMLAttributes<HTMLDivElement> & {
+  readonly?: boolean
+
+  themeColors?: ThemeColors
+  getBackgroundColor?(v: number): string
+}
+
+export type ThemeColors = {
+  list?: ColorWithBack
+  term?: ColorWithBack
+  keyword?: ColorWithBack
+  special?: ColorWithBack
+  number?: ColorWithBack
+  comment?: ColorWithBack
+  string?: ColorWithBack
+  var?: ColorWithBack
+  block?: ColorWithBack
+}
+export const defineColors: ThemeColors = {
+  var: {
+    color: "hsl(40, 90%, 60%)",
+    background: "#231926"
+  },
+  block: {
+    color: "hsl(0, 0%, 70%)",
+    background: "#231926"
+  },
+  keyword: {
+    color: "hsl(75, 70%, 60%)"
+  },
+  term: {
+    color: "hsl(213.98deg 83.37% 63.34%)"
+  },
+  list: {
+    color: "hsl(151.88deg 81.87% 63.63%)"
+  },
+  string: {
+    color: "#690",
+    background: "#231926"
+  },
+  comment: {
+    color: "slategray"
+  },
+  number: {
+    color: "#a8aed3"
+  },
+  special: {
+    color: "#e9ce9d"
+  }
+}
 
 function useRenderCode<T>(
   init: T,
@@ -20,17 +74,45 @@ function useRenderCode<T>(
     current,
     renderContent(
       list: AreaAtom[],
-      props?: React.HTMLAttributes<HTMLDivElement> & {
-        readonly?: boolean
-      }
+      props?: CodeProps
     ) {
       renderContentEditable({
         readonly: props?.readonly
       }, function () {
+
+
         const div = domOf("div", {
           ...props,
           spellcheck: false,
-          className: `${codeAreaStyle} ${props?.className || ''}`,
+          className: `${props?.className || ''}`,
+          css: `
+min-height:30px;
+.error{
+  outline:1px solid red;//text-decoration: red wavy underline;
+}
+
+background: hsl(30, 20%, 25%);
+padding: .15em .2em .05em;
+border-radius: .3em;
+border: .13em solid hsl(30, 20%, 40%);
+box-shadow: 1px 1px .3em -.1em black inset;
+white-space: normal;
+${props?.css}
+.token{
+  margin-inline:0.1em;
+  line-height: 100%;
+  ${Object.entries(defineColors).map(function ([key, color]) {
+            color = props?.themeColors?.[key as keyof ThemeColors] || color
+            console.log("dc", color)
+            return `
+    &.${key}{
+      ${color.color && `color:${color.color};`}
+      ${color.background && `background:${color.background};`}
+    }
+    `
+          }).join('\n')}
+}
+`,
           onInput(event: any) {
             if (event.isComposing) {
               return
@@ -91,7 +173,9 @@ function useRenderCode<T>(
             }
           },
         }).render(function () {
-          list.forEach(renderAreaCode)
+          list.forEach(function (child) {
+            renderAreaCode(child, 0, props?.getBackgroundColor)
+          })
         })
         return div
       })
@@ -117,9 +201,7 @@ export function useRenderCodeData<T>(
     current,
     rules,
     renderContent(
-      props?: React.HTMLAttributes<HTMLDivElement> & {
-        readonly?: boolean
-      }
+      props?: CodeProps
     ) {
       renderContent(list, props)
     }
@@ -145,9 +227,7 @@ export function useRenderQuery<T>(
     current,
     query,
     renderContent(
-      props?: React.HTMLAttributes<HTMLDivElement> & {
-        readonly?: boolean
-      }
+      props?: CodeProps
     ) {
       renderContent(list, props)
     }
@@ -159,71 +239,21 @@ function isCtrl(e: React.KeyboardEvent) {
   return e.metaKey || e.ctrlKey
 }
 
-
-const codeAreaStyle = css`
-min-height:30px;
-.error{
-  outline:1px solid red;//text-decoration: red wavy underline;
-}
-
-background: hsl(30, 20%, 25%);
-padding: .15em .2em .05em;
-border-radius: .3em;
-border: .13em solid hsl(30, 20%, 40%);
-box-shadow: 1px 1px .3em -.1em black inset;
-white-space: normal;
-.token{
-  margin-inline:0.1em;
-  line-height: 1.5em;
-  &.var{
-  	color: hsl(40, 90%, 60%);
-    background-color: #231926;
-    /* color:hsl(30, 50%, 40%); */
-  }
-  &.block{
-    /* color: hsl(350, 40%, 70%);
-    background-color: #231926; */
-    color:hsl(0, 0%, 70%);
-  }
-  &.keyword{
-	  color: hsl(75, 70%, 60%);
-  }
-  &.term{
-    color:hsl(213.98deg 83.37% 63.34%);
-  }
-  &.list{
-    color:hsl(151.88deg 81.87% 63.63%);
-    /* color:hsl(0, 0%, 60%); */
-  }
-  &.string{
-    color:#690;
-    background-color: #231926;
-
-    /* color:hsl(180, 75%, 50%); */
-    /* color:hsl(240, 100%, 50%); */
-  }
-  &.comment{
-    color:slategray;
-    /* color: hsl(30, 10%, 15%) */
-  }
-  &.number{
-    color:#a8aed3;
-  }
-  &.special{
-    color:#e9ce9d;
-  }
-}
-`
-function renderAreaCode(child: AreaAtom) {
+function renderAreaCode(child: AreaAtom, i: number, getBackgroundColor?: (v: number) => string) {
   renderFragment(function () {
     if (isAreaCode(child)) {
       if (child.type == 'error') {
         useErrorContextProvide(child.errors)
       }
       domOf("span", {
-        className: `${child.type} ${child.type == 'rule' && child.cut ? 'cut' : ''}`,
+        className: `${child.type} ${child.type != 'error' && 'bracket'} ${child.type == 'rule' && child.cut ? 'cut' : ''}`,
+        style: {
+          background: getBackgroundColor?.(i)
+        }
       }).render(function () {
-        child.children.forEach(renderAreaCode)
+        child.children.forEach(function (child) {
+          renderAreaCode(child, i + 1, getBackgroundColor)
+        })
       })
     } else {
       renderLToken(child as LToken)
@@ -250,6 +280,9 @@ function renderLToken(row: LToken) {
     }
   }
 
+  if (row.value.includes('\n')) {
+    cname += ' pre-wrap'
+  }
 
   const errors = useErrorContextProvide(row.errors)
   const [hover, setHover] = useChange(false)

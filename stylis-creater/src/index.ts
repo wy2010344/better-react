@@ -126,7 +126,27 @@ export function css(ts: TemplateStringsArray, ...vs: (string | number)[]) {
   return body.className
 }
 
-import { useBaseMemoGet, useEffect, useGetCreateChangeAtom, emptyArray, StoreRef, storeRef } from 'better-react'
+
+function createEmptyStyle() {
+  return createStyled('')
+}
+
+
+export function useCss(ts: TemplateStringsArray, ...vs: (string | number)[]) {
+  const css = genCSS(ts, vs)
+  const style = useBaseMemoGet(createEmptyStyle, emptyArray)()
+  useBeforeAttrEffect(() => {
+    style.textContent = toCssFragment(style.id, css)
+  }, [css])
+  useEffect(() => {
+    return function () {
+      style.remove()
+    }
+  }, emptyArray)
+  return style.id
+}
+
+import { useBaseMemoGet, useEffect, useGetCreateChangeAtom, emptyArray, StoreRef, storeRef, useBeforeAttrEffect } from 'better-react'
 
 function createStyledUpdate() {
   return {
@@ -156,9 +176,10 @@ export function useBodyStyleUpdate() {
     styledUp.atom?.set(css)
   }
 }
-
 /**
  * 使用deps通知更新css
+ * 这里因为className是可能动态变化的——所以需要提前决定
+ * 每次都在变,并不如useCss方便,className一开始就固定下来
  * @param callback 
  * @param deps 
  * @returns 

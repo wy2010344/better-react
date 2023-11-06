@@ -1,5 +1,5 @@
 import { useEffect } from "better-react"
-import { domOf, useDom, useSvg } from "better-react-dom"
+import { domOf, portalDomOf, useDom, useSvg } from "better-react-dom"
 import { initDrag, resizeHelper } from "./drag"
 import useResize from "./useResize"
 import { useState, useMemo } from "better-react-helper"
@@ -20,6 +20,7 @@ export type PanelParams = {
   children(p: Size, body: HTMLElement): void
   close(): void
   moveFirst(): void
+  asPortal?: boolean
 }
 
 function renderPanel({
@@ -32,6 +33,7 @@ function renderPanel({
   children,
   close,
   moveFirst,
+  asPortal
   // portalTarget
 }: PanelParams) {
 
@@ -55,7 +57,7 @@ function renderPanel({
   }), [])
 
   const titleHeight = 32
-  return domOf("div", {
+  return (asPortal ? portalDomOf : domOf)("div", {
     // portalTarget,
     style: `
       left: ${left}px;
@@ -148,7 +150,6 @@ function renderPanel({
     }).render(function () {
       children({ width, height }, div)
     })
-
   })
 }
 
