@@ -1,8 +1,9 @@
 import { React, domOf } from "better-react-dom"
 import { renderRowTable } from "./rowTable"
 import { defaultBoxShadow, renderKColumns } from "./util"
+import { CSSProperties, stringifyStyle } from "better-react-dom-helper"
 
-const cellStyle: React.CSSProperties = {
+const cellStyle: CSSProperties = {
   // display: "table-cell",
   display: "inline-flex",
   width: '100px'
@@ -16,11 +17,11 @@ const cellStyle: React.CSSProperties = {
 export function renderRowTableDemo() {
 
   domOf("div", {
-    style: {
+    style: stringifyStyle({
       width: '100%',
       height: '100%',
       overflow: "auto",
-    }
+    })
   }).render(function () {
     renderRowTable({
       dataSize: 100,

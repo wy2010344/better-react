@@ -1,8 +1,8 @@
-import { render, AskNextTimeWork, VirtualDomOperator, RenderWithDep, renderFiber, useAttrEffect, emptyArray } from "better-react";
+import { render, AskNextTimeWork, VirtualDomOperator, RenderWithDep, renderFiber, emptyArray, useEffect } from "better-react";
 import { DomAttribute, DomElement, DomElementType, SvgAttribute, SvgElement, SvgElementType } from "./html";
 import { EMPTYPROPS, FiberNode, FiberText, domTagNames, emptyFun, svgTagNames, updateProps } from "./updateDom";
 export { getScheduleAskTime } from './schedule'
-export { StyleNode, isSVG, FiberNode, FiberText, StyleContext, underlineToCamel, stringifyStyle } from './updateDom'
+export { isSVG, FiberNode, FiberText } from './updateDom'
 export { getAliasOfAttribute, getAttributeAlias } from './getAttributeAlias'
 export * from './html'
 /***
@@ -162,7 +162,7 @@ export class DomCreater<T extends DomElementType, M>{
       emptyFun
     ) as FiberNode
     const node = dom.node as unknown as DomElement<T>
-    useAttrEffect(() => {
+    useEffect(() => {
       node.contentEditable = contentEditable || "true"
       if (text) {
         if (as == "html") {

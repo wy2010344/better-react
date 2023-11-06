@@ -1,6 +1,7 @@
 import { useState } from "better-react-helper";
 import { renderContent, useDom, useSvg } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
+import { stringifyStyle } from "better-react-dom-helper";
 
 export default normalPanel(function (operate, id) {
   useDom("div", {
@@ -35,9 +36,9 @@ export default normalPanel(function (operate, id) {
     },
   })
   useDom("input", {
-    style: {
+    style: stringifyStyle({
       minHeight: "1rem"
-    },
+    }),
     //contentEditable: "plaintext-only",
     onChange(event) {
       console.log("change")
@@ -47,9 +48,9 @@ export default normalPanel(function (operate, id) {
     },
   })
   useDom("div", {
-    style: {
+    style: stringifyStyle({
       minHeight: "1rem"
-    },
+    }),
     contentEditable: "plaintext-only",
     // onChange(event) {
     //   console.log("change")
@@ -82,13 +83,13 @@ function 测试css动画() {
         onTransitionEnd(event) {
           console.log("end--", width)
         },
-        style: {
+        style: stringifyStyle({
           width: width + 'px',
           height: width + 'px',
           background: "green",
           // transform: `scaleY(${scaleY})`,
           transition: 'all ease 2s'
-        }
+        })
       })
     },
   })

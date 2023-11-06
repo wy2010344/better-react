@@ -10,7 +10,7 @@ export default normalPanel(function (operate, id) {
   useDom("div", {
     children() {
       const textarea = useDom("textarea", {
-        css: `
+        style: `
         width:100%;
         min-height:1rem;
         border:none;
@@ -43,7 +43,7 @@ export default normalPanel(function (operate, id) {
 
   renderArray(topic.topics, v => v.description, function (v, i) {
     useDom("div", {
-      css: `
+      style: `
       cursor:pointer;
       `,
       onClick(e) {

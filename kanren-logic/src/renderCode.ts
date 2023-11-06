@@ -5,7 +5,7 @@ import { mb } from "better-react-dom-helper";
 import { LToken, keywords, tokenize } from "./tokenize";
 import { emptyArray, useEffect } from "better-react";
 import { parseQuery, parseRules } from "./parse";
-import { css } from "stylis-creater";
+import { css, useCss } from "stylis-creater";
 import { useErrorContextProvide } from "./errorContext";
 import { AreaAtom, buildViewPairs, isAreaCode } from "./buildViewPairs";
 
@@ -14,6 +14,7 @@ type ColorWithBack = {
   color?: string
 }
 export type CodeProps = React.HTMLAttributes<HTMLDivElement> & {
+  css?: string
   readonly?: boolean
 
   themeColors?: ThemeColors
@@ -79,13 +80,7 @@ function useRenderCode<T>(
       renderContentEditable({
         readonly: props?.readonly
       }, function () {
-
-
-        const div = domOf("div", {
-          ...props,
-          spellcheck: false,
-          className: `${props?.className || ''}`,
-          css: `
+        const className = useCss`
 min-height:30px;
 .error{
   outline:1px solid red;//text-decoration: red wavy underline;
@@ -102,17 +97,21 @@ ${props?.css}
   margin-inline:0.1em;
   line-height: 100%;
   ${Object.entries(defineColors).map(function ([key, color]) {
-            color = props?.themeColors?.[key as keyof ThemeColors] || color
-            console.log("dc", color)
-            return `
+          color = props?.themeColors?.[key as keyof ThemeColors] || color
+          console.log("dc", color)
+          return `
     &.${key}{
-      ${color.color && `color:${color.color};`}
-      ${color.background && `background:${color.background};`}
+      ${color?.color && `color:${color.color};`}
+      ${color?.background && `background:${color.background};`}
     }
     `
-          }).join('\n')}
+        }).join('\n')}
 }
-`,
+`
+        const div = domOf("div", {
+          ...props,
+          spellcheck: false,
+          className: `${props?.className || ''}  ${className}`,
           onInput(event: any) {
             if (event.isComposing) {
               return
@@ -247,9 +246,9 @@ function renderAreaCode(child: AreaAtom, i: number, getBackgroundColor?: (v: num
       }
       domOf("span", {
         className: `${child.type} ${child.type != 'error' && 'bracket'} ${child.type == 'rule' && child.cut ? 'cut' : ''}`,
-        style: {
-          background: getBackgroundColor?.(i)
-        }
+        style: `
+        background:${getBackgroundColor?.(i)};
+        `
       }).render(function () {
         child.children.forEach(function (child) {
           renderAreaCode(child, i + 1, getBackgroundColor)

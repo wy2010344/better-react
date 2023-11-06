@@ -4,7 +4,7 @@ import { domOf, renderContent, useDom } from "better-react-dom";
 import dsl from "./dsl";
 import ExpensiveView from "./ExpensiveView";
 import FlexAbc from "./FlexAbc";
-import motionOne from "./motion-one";
+// import motionOne from "./motion-one";
 import { CountContext, PanelContext, normalPanel } from "./panel/PanelContext";
 import usePanel from "./panel/renderPanel";
 import popup from "./popup";
@@ -126,15 +126,15 @@ export default normalPanel(function (operate) {
       renderContent("todoList")
     }
   })
-  useDom("button", {
-    onClick(e) {
-      e.stopPropagation()
-      motionOne(operate)
-    },
-    children() {
-      renderContent("motion-one")
-    }
-  })
+  // useDom("button", {
+  //   onClick(e) {
+  //     e.stopPropagation()
+  //     motionOne(operate)
+  //   },
+  //   children() {
+  //     renderContent("motion-one")
+  //   }
+  // })
   useDom("button", {
     onClick(e) {
       e.stopPropagation()
@@ -254,7 +254,7 @@ function TestButtonPage() {
 
 export function App() {
   useDom("div", {
-    css: `
+    style: `
     width:800px;
     height:800px;
     display:flex;
@@ -268,7 +268,7 @@ export function App() {
     `,
     children() {
       useDom("div", {
-        css: `
+        style: `
         width:200px;
         height:400px;
         border-radius:10px;
@@ -281,7 +281,7 @@ export function App() {
         }
       })
       useDom("div", {
-        css: `
+        style: `
         width:200px;
         height:400px;
         border-radius:10px;
@@ -303,7 +303,7 @@ export function App() {
   })
 
   useDom("div", {
-    css: ` 
+    style: ` 
       width:100px;
       height:100px;
       border:4px solid aquamarine;
@@ -326,7 +326,7 @@ export function App() {
     `,
     children() {
       useDom("div", {
-        css: ` 
+        style: ` 
         width:1em;
         height:1em;
         transform:translate(0px,0px);
@@ -343,14 +343,14 @@ function Demo() {
     onClick() {
       console.log("点击")
     },
-    style: {
-      width: "100px",
-      height: "100px",
-      backgroundColor: "green"
-    },
+    style: `
+      width: 100px;
+      height: 100px;
+      background-color: green;
+    `,
     children() {
       useDom("div", {
-        css: `
+        style: `
           width:20px;
           height:30px;
           background-color:green;
@@ -390,7 +390,7 @@ function Demo() {
       )
 
       useDom("div", {
-        css: `
+        style: `
           background:yellow;
           `,
         children() {

@@ -1,4 +1,5 @@
 import { emptyArray, useEffect } from "better-react"
+import { React } from "better-react-dom"
 import { useMemo } from "better-react-helper"
 
 
@@ -82,4 +83,28 @@ export function delayAnimationFrame() {
   return new Promise(resolve => {
     requestAnimationFrame(resolve)
   })
+}
+
+export function stringifyStyle(style: React.CSSProperties) {
+  const s = Object.entries(style).map(function (v) {
+    return `${underlineToCamel(v[0])}:${v[1]};`
+  }).join("")
+  return s
+}
+
+export function underlineToCamel(str: string) {
+  return str.replace(/\B([A-Z])/g, '-$1').toLowerCase()
+}
+
+
+import * as CSS from 'csstype';
+export interface CSSProperties extends CSS.Properties<string | number> {
+  /**
+   * The index signature was removed to enable closed typing for style
+   * using CSSType. You're able to use type assertion or module augmentation
+   * to add properties or an index signature of your own.
+   *
+   * For examples and more information, visit:
+   * https://github.com/frenic/csstype#what-should-i-do-when-i-get-type-errors
+   */
 }

@@ -2,6 +2,7 @@ import { React, domOf } from "better-react-dom";
 import { KColumn, getKColumnKey } from "./util";
 import { renderArray, renderMax } from "better-react-helper";
 import { emptyArray } from "better-react";
+import { CSSProperties, stringifyStyle } from "better-react-dom-helper";
 
 /**
  * 
@@ -18,40 +19,40 @@ export function renderRowTable({
   columns,
   right
 }: {
-  style?: React.CSSProperties,
+  style?: CSSProperties,
   dataSize: number,
   getKey(i: number): any
-  rowStyle?: React.CSSProperties
+  rowStyle?: CSSProperties
   left?: {
-    style?: React.CSSProperties
+    style?: CSSProperties
     columns: KColumn[]
   }
   columns: KColumn[]
   right?: {
-    style?: React.CSSProperties
+    style?: CSSProperties
     columns: KColumn[]
   }
 }) {
   domOf("div", {
-    style
+    style: stringifyStyle(style)
   }).render(function () {
     //顶部
     domOf("div", {
-      style: {
+      style: stringifyStyle({
         ...rowStyle,
         position: "sticky",
         top: 0,
         zIndex: 2
-      }
+      })
     }).render(function () {
       //左边
       domOf("div", {
-        style: {
+        style: stringifyStyle({
           ...left?.style,
           position: "sticky",
           left: 0,
           zIndex: 1
-        }
+        })
       }).render(function () {
         renderArray(left?.columns || emptyArray, getKColumnKey, function (column, i) {
           //中间
@@ -64,12 +65,12 @@ export function renderRowTable({
       })
       //右边
       domOf("div", {
-        style: {
+        style: stringifyStyle({
           ...right?.style,
           position: "sticky",
           right: 0,
           zIndex: 1
-        }
+        })
       }).render(function () {
         renderArray(right?.columns || emptyArray, getKColumnKey, function (column, i) {
           //中间
@@ -81,16 +82,16 @@ export function renderRowTable({
 
     renderMax(dataSize, getKey, function (i) {
       domOf("div", {
-        style: rowStyle,
+        style: stringifyStyle(rowStyle),
       }).render(function () {
         //左边
         domOf("div", {
-          style: {
+          style: stringifyStyle({
             ...left?.style,
             position: "sticky",
             left: 0,
             zIndex: 1
-          }
+          })
         }).render(function () {
           renderArray(left?.columns || emptyArray, getKColumnKey, function (column, c) {
             //中间
@@ -103,12 +104,12 @@ export function renderRowTable({
         })
         //右边
         domOf("div", {
-          style: {
+          style: stringifyStyle({
             ...right?.style,
             position: "sticky",
             right: 0,
             zIndex: 1
-          }
+          })
         }).render(function () {
           renderArray(right?.columns || emptyArray, getKColumnKey, function (column, c) {
             //中间
@@ -120,21 +121,21 @@ export function renderRowTable({
 
     //底部
     domOf("div", {
-      style: {
+      style: stringifyStyle({
         ...rowStyle,
         position: "sticky",
         bottom: 0,
         zIndex: 1
-      }
+      })
     }).render(function () {
       //左边
       domOf("div", {
-        style: {
+        style: stringifyStyle({
           ...left?.style,
           position: "sticky",
           left: 0,
           zIndex: 1
-        }
+        })
       }).render(function () {
         renderArray(left?.columns || emptyArray, getKColumnKey, function (column, i) {
           //中间
@@ -147,12 +148,12 @@ export function renderRowTable({
       })
       //右边
       domOf("div", {
-        style: {
+        style: stringifyStyle({
           ...right?.style,
           position: "sticky",
           right: 0,
           zIndex: 1
-        }
+        })
       }).render(function () {
         renderArray(right?.columns || emptyArray, getKColumnKey, function (column, i) {
           //中间

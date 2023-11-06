@@ -21,9 +21,7 @@ export function revertParentFiber() {
 }
 const hookIndex = {
   state: 0,
-  effect: [
-    0, 0, 0
-  ],
+  effect: 0,
   memo: 0,
   beforeFiber: undefined as (Fiber | undefined),
   cusomer: 0
@@ -35,7 +33,7 @@ export function updateFunctionComponent(envModel: EnvModel, fiber: Fiber) {
   wipFiber[1] = fiber
 
   hookIndex.state = 0
-  hookIndex.effect = [0, 0, 0]
+  hookIndex.effect = 0
   hookIndex.memo = 0
 
   hookIndex.beforeFiber = undefined
@@ -137,62 +135,54 @@ function buildSetValue<T, F>(atom: StoreRef<T>,
 }
 
 export type EffectResult<T> = (void | ((deps: T) => void))
-
-function buildUseEffect(level: UpdateEffectLevel) {
-  /**
-   * 必须有个依赖项,如果没有依赖项,如果组件有useFragment,则会不执行,造成不一致.
-   * useMemo如果无依赖,则不需要使用useMemo,但useEffect没有依赖,仍然有意义.有依赖符合幂等,无依赖不需要幂等.
-   * @param effect 
-   * @param deps 
-   */
-  function useEffect<T extends readonly any[] = readonly any[]>(effect: (args: T) => EffectResult<T>, deps: T): void
-  function useEffect(effect: () => EffectResult<any[]>, deps?: readonly any[]): void
-  function useEffect(effect: any, deps?: any) {
-    const [envModel, parentFiber] = useParentFiber()
-    if (parentFiber.effectTag.get() == 'PLACEMENT') {
-      //新增
-      const hookEffects = parentFiber.hookEffects || [[], [], []]
-      parentFiber.hookEffects = hookEffects
-      const state: HookEffect = {
+/**
+ * 必须有个依赖项,如果没有依赖项,如果组件有useFragment,则会不执行,造成不一致.
+ * useMemo如果无依赖,则不需要使用useMemo,但useEffect没有依赖,仍然有意义.有依赖符合幂等,无依赖不需要幂等.
+ * @param effect 
+ * @param deps 
+ */
+export function useEffect<T extends readonly any[] = readonly any[]>(effect: (args: T) => EffectResult<T>, deps: T): void
+export function useEffect(effect: () => EffectResult<any[]>, deps?: readonly any[]): void
+export function useEffect(effect: any, deps?: any) {
+  const [envModel, parentFiber] = useParentFiber()
+  if (parentFiber.effectTag.get() == 'PLACEMENT') {
+    //新增
+    const hookEffects = parentFiber.hookEffects || []
+    parentFiber.hookEffects = hookEffects
+    const state: HookEffect = {
+      deps
+    }
+    const hookEffect = envModel.createChangeAtom(state)
+    hookEffects.push(hookEffect)
+    envModel.updateEffect(() => {
+      state.destroy = effect(deps)
+    })
+  } else {
+    const hookEffects = parentFiber.hookEffects
+    if (!hookEffects) {
+      throw new Error("原组件上不存在hookEffects")
+    }
+    const index = hookIndex.effect
+    const hookEffect = hookEffects[index]
+    if (!hookEffect) {
+      throw new Error("出现了更多的effect")
+    }
+    const state = hookEffect.get()
+    hookIndex.effect = index + 1
+    if (arrayNotEqualDepsWithEmpty(state.deps, deps)) {
+      const newState: HookEffect = {
         deps
       }
-      const hookEffect = envModel.createChangeAtom(state)
-      hookEffects[level].push(hookEffect)
+      hookEffect.set(newState)
       envModel.updateEffect(() => {
-        state.destroy = effect(deps)
-      }, level)
-    } else {
-      const hookEffects = parentFiber.hookEffects
-      if (!hookEffects) {
-        throw new Error("原组件上不存在hookEffects")
-      }
-      const index = hookIndex.effect[level]
-      const hookEffect = hookEffects[level][index]
-      if (!hookEffect) {
-        throw new Error("出现了更多的effect")
-      }
-      const state = hookEffect.get()
-      hookIndex.effect[level] = index + 1
-      if (arrayNotEqualDepsWithEmpty(state.deps, deps)) {
-        const newState: HookEffect = {
-          deps
+        if (state.destroy) {
+          state.destroy(state.deps)
         }
-        hookEffect.set(newState)
-        envModel.updateEffect(() => {
-          if (state.destroy) {
-            state.destroy(state.deps)
-          }
-          newState.destroy = effect(deps)
-        }, level)
-      }
+        newState.destroy = effect(deps)
+      })
     }
   }
-  return useEffect
 }
-
-export const useBeforeAttrEffect = buildUseEffect(0)
-export const useAttrEffect = buildUseEffect(1)
-export const useEffect = buildUseEffect(2)
 
 export function useGetCreateChangeAtom() {
   const [envModel] = useParentFiber()

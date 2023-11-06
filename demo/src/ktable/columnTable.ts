@@ -2,6 +2,7 @@ import { emptyArray } from "better-react"
 import { React, domOf } from "better-react-dom"
 import { renderArray, renderMax } from "better-react-helper"
 import { KColumn, getKColumnKey } from "./util"
+import { CSSProperties, stringifyStyle } from "better-react-dom-helper"
 
 
 export function renderColumnTable({
@@ -14,40 +15,40 @@ export function renderColumnTable({
   dataSize: number,
   getKey(i: number): any
   left?: {
-    style?: React.CSSProperties
+    style?: CSSProperties
     columns: KColumn[]
   }
   columns: KColumn[]
   right?: {
-    style?: React.CSSProperties
+    style?: CSSProperties
     columns: KColumn[]
   }
 }) {
   domOf("div", {
-    style: {
+    style: stringifyStyle({
       position: "relative",
       whiteSpace: "nowrap",
       width: '100%',
       height: '100%',
       overflow: "auto"
-    }
+    })
   }).render(function () {
     //left
     domOf("div", {
-      style: {
+      style: stringifyStyle({
         ...left?.style,
         display: 'inline-block',
         zIndex: 1,
         left: 0,
         position: 'sticky',
         whiteSpace: 'nowrap'
-      }
+      })
     }).render(function () {
       renderArray(left?.columns || emptyArray as KColumn[], getKColumnKey, function (column, i) {
         domOf("div", {
-          style: {
+          style: stringifyStyle({
             display: 'inline-block'
-          }
+          })
         }).render(function () {
           column.renderHeader("left", i)
           renderMax(dataSize, getKey, function (row) {
@@ -60,9 +61,9 @@ export function renderColumnTable({
     //center
     renderArray(columns, getKColumnKey, function (column, i) {
       domOf("div", {
-        style: {
+        style: stringifyStyle({
           display: 'inline-block'
-        }
+        })
       }).render(function () {
         column.renderHeader("center", i)
         renderMax(dataSize, getKey, function (row) {
@@ -73,20 +74,20 @@ export function renderColumnTable({
     })
     //right
     domOf("div", {
-      style: {
+      style: stringifyStyle({
         ...right?.style,
         display: 'inline-block',
         zIndex: 1,
         right: 0,
         position: 'sticky',
         whiteSpace: 'nowrap'
-      }
+      })
     }).render(function () {
       renderArray(right?.columns || emptyArray as KColumn[], getKColumnKey, function (column, i) {
         domOf("div", {
-          style: {
+          style: stringifyStyle({
             display: 'inline-block',
-          }
+          })
         }).render(function () {
           column.renderHeader("right", i)
           renderMax(dataSize, getKey, function (row) {

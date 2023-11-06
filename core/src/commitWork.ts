@@ -14,7 +14,7 @@ export class EnvModel {
     this.reconcile(function () {
       that.updateEffect(function () {
         that.realTime.set(false)
-      }, 0)
+      })
     })
   }
 
@@ -30,9 +30,9 @@ export class EnvModel {
   addDelect(fiber: Fiber) {
     this.deletions.push(fiber)
   }
-  private updateEffects: [EmptyFun[], EmptyFun[], EmptyFun[]] = [[], [], []]
-  updateEffect(set: EmptyFun, level: UpdateEffectLevel) {
-    this.updateEffects[level].push(set)
+  private updateEffects: EmptyFun[] = []
+  updateEffect(set: EmptyFun) {
+    this.updateEffects.push(set)
   }
   /**批量提交需要最终确认的atoms */
   private readonly changeAtoms: ChangeAtom<any>[]
@@ -62,9 +62,7 @@ export class EnvModel {
     this.draftConsumers.forEach(draft => draft.destroy())
     this.draftConsumers.length = 0
     this.deletions.length = 0
-    for (const updateEffect of this.updateEffects) {
-      updateEffect.length = 0
-    }
+    this.updateEffects.length = 0
     // appends.length = 0
     // appendAsPortals.length = 0
   }
@@ -72,7 +70,6 @@ export class EnvModel {
     /**最新更新所有注册的*/
     this.changeAtoms.forEach(atom => atom.commit())
     this.changeAtoms.length = 0
-    this.runUpdateEffect(0)
     /******清理删除********************************************************/
     /******清理所有的draft********************************************************/
     this.draftConsumers.length = 0
@@ -85,22 +82,14 @@ export class EnvModel {
     })
     this.deletions.length = 0
     /******更新属性********************************************************/
-    this.runUpdateEffect(1)
-    /******遍历修补********************************************************/
-    // appendAsPortals.forEach(v => v.appendAsPortal())
-    // appendAsPortals.length = 0
-    // appends.forEach(v => v[0].appendAfter(v[1]))
-    // appends.length = 0
     updateFixDom(rootFiber)
-    layout()
-    /******执行所有的effect********************************************************/
-    this.runUpdateEffect(2)
-  }
 
-  private runUpdateEffect(level: UpdateEffectLevel) {
-    const updateEffect = this.updateEffects[level]
+    //执行所有effect
+    const updateEffect = this.updateEffects
     updateEffect.forEach(effect => effect())
     updateEffect.length = 0
+
+    layout()
   }
   /**
  * 在commit期间修改后,都是最新值,直到commit前,都可以回滚
@@ -274,12 +263,10 @@ function destroyFiber(fiber: Fiber) {
   const effects = fiber.hookEffects
   if (effects) {
     for (const effect of effects) {
-      for (const ef of effect) {
-        const state = ef.get()
-        const destroy = state.destroy
-        if (destroy) {
-          destroy(state.deps)
-        }
+      const state = effect.get()
+      const destroy = state.destroy
+      if (destroy) {
+        destroy(state.deps)
       }
     }
   }

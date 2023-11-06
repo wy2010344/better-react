@@ -2,7 +2,7 @@ import { useDom } from "better-react-dom";
 import { useBuildSubSetArray, useBuildSubSetObject, useState, renderArray } from "better-react-helper";
 import { normalPanel } from "../panel/PanelContext";
 import { alertWith, use居中 } from "../panel/居中";
-import { useClickOutside, renderInput } from "better-react-dom-helper";
+import { useClickOutside, renderInput, stringifyStyle } from "better-react-dom-helper";
 import { AllType, SubStructTypeModel, useTypeDB } from "./model";
 
 
@@ -39,7 +39,8 @@ export default normalPanel(function (operate, id) {
   })
   renderArray(list, v => v.metaType + "-" + v.name, type => {
     useDom("div", {
-      css: `
+      style: `
+      display:table-row;
           >*{
             display:table-cell;
           }
@@ -62,14 +63,12 @@ export default normalPanel(function (operate, id) {
             }
           }
           `,
-      style: {
-        display: "table-row"
-      },
       children() {
         useDom("div", {
-          style: {
-            color: type.metaType == 'type' ? "green" : "blue"
-          },
+          style: `
+            color: ${type.metaType == 'type' ? "green" : "blue"};
+          `
+          ,
           textContent: type.name
         })
         useDom("div", {
@@ -128,23 +127,23 @@ const structAlert = alertWith<{
     })
   })
   useDom("div", {
-    style: {
-      display: "inline-block"
-    },
+    style: `
+    display:inline-block;
+    `,
     children() {
       renderArray(list, v => v.id, function (row, i) {
         const setRow = useBuildSubSetArray(setList, v => v.id == row.id)
         const setKey = useBuildSubSetObject(setRow, 'key')
         const setValue = useBuildSubSetObject(setRow, 'value')
         useDom("div", {
-          style: {
-            display: "table-row"
-          },
+          style: `
+          display:table-row;
+          `,
           children() {
             useDom("div", {
-              style: {
-                display: "table-cell"
-              },
+              style: `
+              display:table-cell;
+              `,
               children() {
                 renderInput("input", {
                   value: row.key || '',
@@ -155,14 +154,14 @@ const structAlert = alertWith<{
               },
             })
             useDom("div", {
-              style: {
-                display: "table-cell"
-              },
+              style: `
+              display:table-cell;
+              `,
               children() {
                 useDom("div", {
-                  style: {
-                    position: "relative"
-                  },
+                  style: `
+              position:relative;
+              `,
                   children() {
                     const [show, setShow] = useState(false)
                     useClickOutside(e => {
@@ -195,12 +194,12 @@ const structAlert = alertWith<{
                       },
                     })
                     const panel = useDom("div", {
-                      style: {
+                      style: stringifyStyle({
                         display: show ? "" : "none",
                         position: "absolute",
                         backgroundColor: "white",
                         zIndex: 1
-                      },
+                      }),
                       children() {
                         const { list } = useTypeDB()
                         renderArray(list.filter(v => {
@@ -222,9 +221,9 @@ const structAlert = alertWith<{
               },
             })
             useDom("div", {
-              style: {
+              style: stringifyStyle({
                 display: "table-cell"
-              },
+              }),
               children() {
                 useDom("button", {
                   textContent: "删除",
@@ -238,14 +237,14 @@ const structAlert = alertWith<{
         })
       })
       useDom("div", {
-        style: {
+        style: stringifyStyle({
           display: "table-row"
-        },
+        }),
         children() {
           useDom("div", {
-            style: {
+            style: stringifyStyle({
               display: "table-cell"
-            },
+            }),
             children() {
               useDom("button", {
                 textContent: "取消",
@@ -256,9 +255,9 @@ const structAlert = alertWith<{
             },
           })
           useDom("div", {
-            style: {
+            style: stringifyStyle({
               display: "table-cell"
-            },
+            }),
             children() {
               useDom("button", {
                 textContent: "确定",
@@ -281,9 +280,9 @@ const structAlert = alertWith<{
             },
           })
           useDom("div", {
-            style: {
+            style: stringifyStyle({
               display: "table-cell"
-            },
+            }),
             children() {
               useDom("button", {
                 textContent: "添加",

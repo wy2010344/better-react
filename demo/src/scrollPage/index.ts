@@ -9,7 +9,7 @@ export default normalPanel(function (operate, id) {
     children() {
       const [selected, setSelected] = useState<TabKey>("A")
       useDom("div", {
-        css: `
+        style: `
         display:flex;
         `,
         children() {
@@ -19,22 +19,20 @@ export default normalPanel(function (operate, id) {
               onClick() {
                 setSelected(key)
               },
-              css: `
+              style: `
               flex:1;
               text-align:center;
-              ${isSelected ? `
+              ${isSelected && `
                 background:blue;
                 color:white;
                 position:relative;
-              `: `
-              
               `}
               `,
               children() {
                 renderContent(key)
                 renderIf(isSelected, () => {
                   useDom("div", {
-                    css: `
+                    style: `
                     height:1px;
                     width:100%;
                     position:absolute;
@@ -51,7 +49,7 @@ export default normalPanel(function (operate, id) {
         }
       })
       ScrollTabPane<TabKey>({
-        // containerCSS: `
+        // containerstyle: `
         // height:200px;
         // `,
         shouldPage(width, x) {

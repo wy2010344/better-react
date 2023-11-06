@@ -5,7 +5,7 @@ export { startTransition } from './reconcile'
 export type { REAL_WORK } from './reconcile'
 export {
   useGetCreateChangeAtom,
-  useBaseReducer, useEffect, useAttrEffect, useBeforeAttrEffect, useBaseMemoGet,
+  useBaseReducer, useEffect, useBaseMemoGet,
   createContext, renderFiber, useGetFlushSync
 } from './fc'
 export {

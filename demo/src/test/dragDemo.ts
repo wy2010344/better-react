@@ -18,17 +18,16 @@ export default normalPanel(function (operate, id) {
           console.log("drag-end")
           setOnDrag(false)
         },
-        css: `
+        style: `
         width:100px;
         height:20px;
         border:1px solid black;
+          background: ${onDrag ? "blue" : "yellow"};
         `,
-        style: {
-          background: onDrag ? "blue" : "yellow",
-          //visibility: onDrag ? "hidden" : "visible"
-          //opacity: onDrag ? 0.5 : 1,
-          //display: onDrag ? "none" : ""
-        }
+
+        //visibility: onDrag ? "hidden" : "visible"
+        //opacity: onDrag ? 0.5 : 1,
+        //display: onDrag ? "none" : ""
       })
 
       useDom("div", {
@@ -39,7 +38,7 @@ export default normalPanel(function (operate, id) {
         onDrop(e) {
           e.preventDefault()
         },
-        css: `
+        style: `
         background:green;
         width:200px;
         height:200px;

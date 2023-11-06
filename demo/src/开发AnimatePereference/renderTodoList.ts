@@ -3,6 +3,8 @@ import { useTransitionValue } from "better-react-dom-helper";
 
 import { dom } from "better-react-dom";
 import { faker } from '@faker-js/faker';
+import { css } from "stylis-creater";
+import { cns } from "better-react-dom-helper";
 
 
 
@@ -82,23 +84,11 @@ export function renderTodoList() {
       leave: 'leave'
     })
     dom.div({
-      className,
+      className: cns(className, rowClsName),
       style: `
       height:50px;
       display:flex;
       align-items:center;
-      `,
-      css: `
-      transition:all ease 1s;
-      &.before-enter{
-        transform:translateX(100%);
-      }
-      &.enter{
-        transform:translateX(0);
-      }
-      &.leave{
-        transform:translateX(100%);
-      }
       `,
       onTransitionEnd(event) {
         arg.resolve()
@@ -125,3 +115,16 @@ export function renderTodoList() {
     })
   })
 }
+
+const rowClsName = css`
+transition:all ease 1s;
+&.before-enter{
+  transform:translateX(100%);
+}
+&.enter{
+  transform:translateX(0);
+}
+&.leave{
+  transform:translateX(100%);
+}
+`

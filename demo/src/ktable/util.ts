@@ -1,4 +1,5 @@
 import { React, domOf } from "better-react-dom"
+import { CSSProperties, stringifyStyle } from "better-react-dom-helper"
 export type KColumnPosition = "left" | "center" | "right"
 export type KColumn = {
   key: any
@@ -20,7 +21,7 @@ export type XPosition = 'leftPanel' | 'centerFirst' | false
 
 
 
-export function renderKColumns(size: number, style?: React.CSSProperties): KColumn[] {
+export function renderKColumns(size: number, style?: CSSProperties): KColumn[] {
   return Array(size).fill(1).map((_, i) => {
     return {
       key: "a" + i,
@@ -56,10 +57,10 @@ export function renderHeader({
   style: outStyle,
   xPosition
 }: {
-  style?: React.CSSProperties
+  style?: CSSProperties
   xPosition?: XPosition
 }, i: number) {
-  const style: React.CSSProperties = {
+  const style: CSSProperties = {
     ...outStyle,
     boxShadow: defaultBoxShadow,
     height: '30px',
@@ -75,7 +76,7 @@ export function renderHeader({
     style.borderLeft = '1px solid black'
   }
   domOf("div", {
-    style
+    style: stringifyStyle(style)
   }).renderTextContent("header--" + i)
 }
 
@@ -85,7 +86,7 @@ export function renderCell({
   isFirstRow,
   xPosition
 }: {
-  style?: React.CSSProperties
+  style?: CSSProperties
   /**是否是第一行 */
   isFirstRow: boolean
   /**
@@ -100,7 +101,7 @@ export function renderCell({
   column: number,
   row: number,
 }) {
-  const style: React.CSSProperties = {
+  const style: CSSProperties = {
     ...outStyle,
     height: '30px',
     padding: '5px',
@@ -115,7 +116,7 @@ export function renderCell({
     style.borderTop = '1px solid black'
   }
   domOf("div", {
-    style
+    style: stringifyStyle(style)
   }).renderTextContent(column + ' ' + row)
 }
 
@@ -124,10 +125,10 @@ export function renderFooter({
   style: outStyle,
   xPosition
 }: {
-  style?: React.CSSProperties
+  style?: CSSProperties
   xPosition?: XPosition
 }, i: number) {
-  const style: React.CSSProperties = {
+  const style: CSSProperties = {
     ...outStyle,
     boxShadow: defaultBoxShadow,
     height: '30px',
@@ -143,6 +144,6 @@ export function renderFooter({
     style.borderLeft = '1px solid black'
   }
   domOf("div", {
-    style
+    style: stringifyStyle(style)
   }).renderTextContent("footer--" + i)
 }

@@ -5,6 +5,7 @@ import ComplexNumber, { radianToDegree } from "./ComplexNumber";
 import { useEffect } from "better-react";
 import fastFourierTransform from "./fft";
 import dft from "./dft";
+import { stringifyStyle } from "better-react-dom-helper";
 
 /**
  * 参考源
@@ -154,9 +155,9 @@ export default panelWith({
     const canvas = domOf("canvas", {
       width: 600,
       height: 500,
-      style: {
+      style: stringifyStyle({
         background: "black"
-      },
+      }),
       onPointerDown(event) {
         const rect = canvas.getBoundingClientRect()
         dispatch({

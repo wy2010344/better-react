@@ -1,8 +1,8 @@
-import { renderOne, useChange, useMemo, useReducer } from "better-react-helper";
+import { useMemo } from "better-react-helper";
 import { normalPanel } from "../panel/PanelContext";
-import { MbRange, afterCursor, beforeCursor, contentEditable, findBeforePadding, mb } from "better-react-dom-helper";
+import { mb } from "better-react-dom-helper";
 import { React, domOf } from "better-react-dom";
-import { emptyArray, useBaseReducer, useBeforeAttrEffect, useEffect, useGetFlushSync } from "better-react";
+import { useEffect } from "better-react";
 import { ContentEditableModel, contentDelete, contentEnter, contentTab, getCurrentRecord, initContentEditableModel, useContentEditable } from "./useContentEditable";
 
 
@@ -27,11 +27,12 @@ export default normalPanel(function (operate) {
   }, [value])
   renderContentEditable(function () {
     const div = domOf("div", {
-      style: {
-        minHeight: '100px',
-        backgroundColor: 'gray',
-        whiteSpace: "pre"
-      },
+
+      style: `
+      min-height: 100px;
+      background-color: gray;
+      white-space: pre;
+    `,
       onInput(event: any) {
         if (event.isComposing) {
           return
@@ -104,11 +105,11 @@ export default normalPanel(function (operate) {
 
   domOf("div").renderTextContent('原生')
   domOf("div", {
-    style: {
-      minHeight: '100px',
-      backgroundColor: 'gray',
-      whiteSpace: "pre"
-    }
+    style: `
+      min-height: 100px;
+      background-color: gray;
+      white-space: pre;
+    `
   }).renderContentEditable(true)//'plaintext-only')
 })
 

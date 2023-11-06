@@ -2,7 +2,7 @@ import { startTransition, useEffect } from "better-react";
 import { renderContent, useDom } from "better-react-dom";
 import { useEvent, useState, renderArray, renderFragment, useMemo } from "better-react-helper";
 import { normalPanel } from "./panel/PanelContext";
-import { renderInput } from "better-react-dom-helper";
+import { renderInput, stringifyStyle } from "better-react-dom-helper";
 
 let lastRenderTime = performance.now()
 
@@ -32,11 +32,11 @@ export default normalPanel(function (operate, id) {
   }, [onTrans])
 
   useDom("div", {
-    style: {
+    style: stringifyStyle({
       height: '100%',
       display: 'flex',
       flexDirection: 'column'
-    },
+    }),
     children() {
       useDom("div", {
         children() {
@@ -120,10 +120,10 @@ export default normalPanel(function (operate, id) {
       })
       useDom("hr")
       useDom("div", {
-        style: {
+        style: stringifyStyle({
           flex: "1",
           overflow: "auto"
-        },
+        }),
         children() {
 
           renderFragment(() => {
@@ -168,7 +168,7 @@ function ExpensiveView(count: number) {
             margin: "2px"
           };
           useDom("div", {
-            style,
+            style: stringifyStyle(style),
             children() {
               renderContent(`${v}`)
             }

@@ -14,7 +14,7 @@ export default normalPanel(function (operate, id) {
 
 
   useDom("div", {
-    css: `
+    style: `
     padding:20px;
     display:flex;
     flex-direction:column;
@@ -24,7 +24,7 @@ export default normalPanel(function (operate, id) {
     children() {
 
       useDom("div", {
-        css: `
+        style: `
         position: relative;
         display: inline-block;
         cursor: pointer;
@@ -44,7 +44,7 @@ export default normalPanel(function (operate, id) {
           renderContent('Click me to toggle the popup!')
           useDom("div", {
             className: 'popup',
-            css: `
+            style: `
               width: 160px;
               background-color: #555;
               color: #fff;
@@ -79,7 +79,7 @@ export default normalPanel(function (operate, id) {
 
 
   useDom("div", {
-    css: `
+    style: `
     padding:20px;
     display:flex;
     flex-direction:column;
@@ -89,7 +89,7 @@ export default normalPanel(function (operate, id) {
     children() {
 
       useDom("div", {
-        css: `
+        style: `
         position: relative;
         display: inline-flex;
         flex-direction:column;
@@ -107,7 +107,7 @@ export default normalPanel(function (operate, id) {
         children() {
           useDom("div", {
             className: 'popup',
-            css: `
+            style: `
               width: 160px;
               background-color: #555;
               color: #fff;
@@ -136,7 +136,7 @@ export default normalPanel(function (operate, id) {
             },
           })
           useDom("div", {
-            css: ` 
+            style: ` 
             width:20px;
             height:20px;
             background:green;

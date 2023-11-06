@@ -47,13 +47,13 @@ export default function ScrollTabPane<T>({
 }) {
 
   const container = useDom("div", {
-    css: `
+    style: `
     ${css || ''}
     overflow:hidden;
     `,
     children() {
       const tabContainer = useDom("div", {
-        css: `
+        style: `
         ${containerCSS || ''}
         width:300%;
         display:flex;
@@ -193,7 +193,7 @@ export default function ScrollTabPane<T>({
 
           renderArray([before, current, after], v => v.realKey, function (row, i) {
             useDom("div", {
-              css: `
+              style: `
               ${row.css || ''}
               flex:1;
               min-width:0;

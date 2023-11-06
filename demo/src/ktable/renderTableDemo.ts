@@ -1,14 +1,15 @@
 import { React, domOf } from "better-react-dom";
 import { renderDisplayTable, renderTable } from "./renderTable";
 import { defaultBoxShadow } from "./util";
+import { CSSProperties, stringifyStyle } from "better-react-dom-helper";
 
 export function renderTableDemo() {
   domOf("div", {
-    style: {
+    style: stringifyStyle({
       width: '100%',
       height: '100%',
       overflow: "auto"
-    }
+    })
   }).render(function () {
     renderTable({
       dataSize: 100,
@@ -16,7 +17,7 @@ export function renderTableDemo() {
         return i
       },
       columns: Array(30).fill(1).map((_, i) => {
-        let style: React.CSSProperties | undefined = undefined
+        let style: CSSProperties | undefined = undefined
         if (i == 0) {
           style = {
             position: 'sticky',
@@ -43,29 +44,29 @@ export function renderTableDemo() {
           key: i,
           renderHeader(c) {
             return domOf("th", {
-              style: {
+              style: stringifyStyle({
                 ...style,
                 background: "white",
                 borderBottom: "1px solid gray"
-              }
+              })
             }).renderTextContent(`${c}---header`)
           },
           renderCell(i, c) {
             return domOf("td", {
-              style: {
+              style: stringifyStyle({
                 ...style,
                 background: "white",
                 borderTop: i != 0 ? "1px solid gray" : ''
-              }
+              })
             }).renderTextContent(`${c}---${i}`)
           },
           renderFooter(c) {
             return domOf("td", {
-              style: {
+              style: stringifyStyle({
                 ...style,
                 background: "white",
                 borderTop: "1px solid gray"
-              }
+              })
             }).renderTextContent(`${c}---footer`)
           },
         }
@@ -81,11 +82,11 @@ export function renderTableDemo() {
  */
 export function renderDisplayTableDemo() {
   domOf("div", {
-    style: {
+    style: stringifyStyle({
       width: '100%',
       height: '100%',
       overflow: "auto",
-    }
+    })
   }).render(function () {
     renderDisplayTable({
       dataSize: 100,
@@ -100,7 +101,7 @@ export function renderDisplayTableDemo() {
         // display: "table-row"
       },
       columns: Array(30).fill(1).map((_, i) => {
-        const style: React.CSSProperties = {
+        const style: CSSProperties = {
           display: 'inline-flex',
           width: '100px'
           // display: "table-cell"
@@ -127,29 +128,29 @@ export function renderDisplayTableDemo() {
           key: i,
           renderHeader(c) {
             return domOf("div", {
-              style: {
+              style: stringifyStyle({
                 ...style,
                 background: "white",
                 borderBottom: "1px solid gray"
-              }
+              })
             }).renderTextContent(`${c}---header`)
           },
           renderCell(i, c) {
             return domOf("div", {
-              style: {
+              style: stringifyStyle({
                 ...style,
                 background: "white",
                 borderTop: i != 0 ? "1px solid gray" : ''
-              }
+              })
             }).renderTextContent(`${c}---${i}`)
           },
           renderFooter(c) {
             return domOf("div", {
-              style: {
+              style: stringifyStyle({
                 ...style,
                 background: "white",
                 borderTop: "1px solid gray"
-              }
+              })
             }).renderTextContent(`${c}---footer`)
           },
         }

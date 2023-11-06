@@ -1,5 +1,5 @@
-import { EmptyFun, RenderWithDep, emptyArray, useAttrEffect, useBeforeAttrEffect } from "better-react";
-import { DomAttribute, DomElement, DomElementType, React, SvgAttribute, SvgElement, SvgElementType, domOf, isSVG, stringifyStyle, svgOf } from "better-react-dom";
+import { EmptyFun, RenderWithDep, emptyArray, useEffect } from "better-react";
+import { DomAttribute, DomElement, DomElementType, React, SvgAttribute, SvgElement, SvgElementType, domOf, isSVG, svgOf } from "better-react-dom";
 
 type contentEditable = true | "inherit" | "plaintext-only"
 export type DomMeta<T extends DomElementType> = {
@@ -88,35 +88,9 @@ function renderWith(a: HTMLType) {
 
 export function remderHTML(a: HTMLType) {
   const node = renderWith(a)
-  useBeforeAttrEffect(() => {
+  useEffect(() => {
     if (a.ref) {
       a.ref(node)
     }
   }, emptyArray)
-}
-
-/**
- * 合并style
- * @param a 
- * @param b 
- * @returns 
- */
-export function mergeStyleToStringify(a: undefined | string | React.CSSProperties, b: string | React.CSSProperties) {
-  if (a) {
-    if (typeof (a) == 'string') {
-      if (typeof (b) == 'string') {
-        return a + b
-      }
-      return a + stringifyStyle(b)
-    } else {
-      if (typeof (b) == 'string') {
-        return stringifyStyle(a) + b
-      }
-      return {
-        ...a,
-        ...b
-      }
-    }
-  }
-  return b
 }

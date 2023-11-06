@@ -8,9 +8,10 @@ export default normalPanel(function (operate, id) {
   const [target, setTarget] = useState('')
   useDom("button", {
     textContent: "转化",
-    style: {
-      background: 'red'
-    },
+    style: `
+    
+      background: red;
+    `,
     async onClick() {
       try {
         const text = await navigator.clipboard.readText()

@@ -1,5 +1,5 @@
 import { Fiber, VirtaulDomNode, VirtualDomOperator } from "./Fiber"
-import { draftParentFiber, revertParentFiber, renderBaseFiber, useBeforeAttrEffect, useBaseMemoGet, useParentFiber } from "./fc"
+import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemoGet, useParentFiber, useEffect } from "./fc"
 import { emptyArray } from "./util"
 ////////****single****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type OneProps<T extends readonly any[] = readonly any[]> = readonly [
@@ -62,7 +62,7 @@ export function renderOneF<M>(
       parentFiber.firstChild.set(placeFiber)
     }
 
-    useBeforeAttrEffect(() => {
+    useEffect(() => {
       if (commitWork) {
         commitWork()
       }

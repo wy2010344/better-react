@@ -1,6 +1,6 @@
 import { domOf, portalDomOf } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
-import { EmptyFun, useAttrEffect, useEffect, useGetFlushSync } from "better-react";
+import { EmptyFun, useEffect, useGetFlushSync } from "better-react";
 import { renderIf, useChange, useInit } from "better-react-helper";
 
 export default normalPanel(function () {
@@ -15,9 +15,9 @@ export default normalPanel(function () {
     }
   )
   domOf("div", {
-    style: {
-      height: 50
-    }
+    style: `
+     height: 50;
+    `
   }).render()
   ButtonWithToolTip(
     "Hover over me (tooltip below)",
@@ -28,9 +28,9 @@ export default normalPanel(function () {
     }
   )
   domOf("div", {
-    style: {
-      height: 50
-    }
+    style: `
+     height: 50;
+    `
   }).render()
   ButtonWithToolTip(
     "Hover over me (tooltip below)",
@@ -80,15 +80,15 @@ function ButtonWithToolTip(
       document.body.appendChild(tooltip)
     }, [tooltipHeight])
     const tooltip = portalDomOf("div", {
-      style: {
-        position: 'absolute',
-        pointerEvents: 'none',
-        left: 0,
-        top: 0,
-        transform: `translate3d(${x}px, ${y}px, 0)`,
-        backgroundColor: "black",
-        color: "white"
-      }
+      style: `
+        position: absolute;
+        pointerEvents: none;
+        left: 0;
+        top: 0;
+        transform: translate3d(${x}px, ${y}px, 0);
+        backgroundColor: black;
+        color: white;
+      `
     }).render(function () {
       const flushSync = useGetFlushSync()
       useEffect(() => {

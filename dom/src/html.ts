@@ -155,8 +155,6 @@ interface TouchList { }
 interface WebGLRenderingContext { }
 interface WebGL2RenderingContext { }
 */
-
-import * as CSS from 'csstype';
 export namespace React {
 
   type NativeAnimationEvent = AnimationEvent;
@@ -263,16 +261,6 @@ export namespace React {
     persist(): void;
     timeStamp: number;
     type: string;
-  }
-  export interface CSSProperties extends CSS.Properties<string | number> {
-    /**
-     * The index signature was removed to enable closed typing for style
-     * using CSSType. You're able to use type assertion or module augmentation
-     * to add properties or an index signature of your own.
-     *
-     * For examples and more information, visit:
-     * https://github.com/frenic/csstype#what-should-i-do-when-i-get-type-errors
-     */
   }
   interface AriaAttributes {
     /** Identifies the currently active element when DOM focus is on a composite widget, textbox, group, or application. */
@@ -819,9 +807,9 @@ export namespace React {
     /**作为转移到别的父节点下 */
     // portalTarget?(): Node
     /**加一个css属性，作为全局的类配置*/
-    css?: string
+    // css?: string
     /**增加一个退出类型 */
-    exit?(e: T): Promise<void>
+    // exit?(e: T): Promise<void>
   }
 
   export type DetailedHTMLProps<E extends HTMLAttributes<T>, T> = {
@@ -850,7 +838,7 @@ export namespace React {
     method?: string | undefined;
     min?: number | string | undefined;
     name?: string | undefined;
-    style?: CSSProperties | undefined | string;
+    style?: undefined | string;
     target?: string | undefined;
     type?: string | undefined;
     width?: number | string | undefined;
@@ -1130,7 +1118,7 @@ export namespace React {
     slot?: string | undefined;
     spellcheck?: Booleanish | undefined;
     //增加一个string类型
-    style?: CSSProperties | undefined | string;
+    style?: undefined | string;
     tabIndex?: number | undefined;
     title?: string | undefined;
     translate?: 'yes' | 'no' | undefined;
@@ -1660,8 +1648,6 @@ export namespace React {
     webpreferences?: string | undefined;
   }
 }
-
-export type CSSProperties = React.CSSProperties
 //117个
 type DomElements = {
   a: React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement>;

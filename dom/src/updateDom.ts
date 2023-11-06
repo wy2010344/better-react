@@ -1,28 +1,9 @@
 import {
   FindParentAndBefore,
-  Props, VirtaulDomNode, createContext, useAttrEffect
+  Props, VirtaulDomNode, createContext, useEffect
 } from "better-react"
 import { getAttributeAlias } from "./getAttributeAlias"
 import { DomElementType, React, SvgElementType } from "./html"
-
-/**
- * 这只是一种dom的更新css方式,将css属性交给外部处理
- * 如果是自定义的其它dom元素,应该内置着css处理
- */
-export type StyleNode = {
-  className: string
-  destroy(): void
-}
-export type CreateStyleNode = (css: string) => StyleNode
-const DefaultStyleCreater: CreateStyleNode = () => {
-  return {
-    className: "un expected",
-    destroy() {
-      throw `un expected`
-    }
-  }
-}
-export const StyleContext = createContext<CreateStyleNode>(DefaultStyleCreater)
 
 interface FiberAbsNode extends VirtaulDomNode {
   node: Node
@@ -41,14 +22,12 @@ export class FiberNode implements FiberAbsNode {
   private oldProps: Props = EMPTYPROPS
   useUpdate(props: Props): void {
     this.props = props
-    const createStyle = StyleContext.useConsumer()
     const that = this
-    useAttrEffect(() => {
+    useEffect(() => {
       const props = that.props
       updateDom(that,
         props,
-        that.oldProps,
-        createStyle
+        that.oldProps
       )
       that.oldProps = props
     })
@@ -96,30 +75,25 @@ export class FiberNode implements FiberAbsNode {
     appendAfter(this, value as any)
   }
   destroy(): void {
-    if (this.style) {
-      this.style.destroy()
-    }
     if (this.isPortal) {
       this.removeFromParent()
     }
   }
-  private realRemove() {
-    this.node.parentElement?.removeChild(this.node)
-  }
+  // private realRemove() {
+  // }
 
   removeFromParent() {
     const props = this.props
-    if (props.exit) {
-      const that = this
-      props.exit(this.node).then(() => {
-        that.realRemove()
-      })
-    } else {
-      this.realRemove()
-    }
+    this.node.parentElement?.removeChild(this.node)
+    // if (props.exit) {
+    //   const that = this
+    //   props.exit(this.node).then(() => {
+    //     that.realRemove()
+    //   })
+    // } else {
+    //   this.realRemove()
+    // }
   }
-  style?: StyleNode
-
   updateProp(key: string, value: any) {
     this._updateProp(this.node, key, value)
   }
@@ -152,16 +126,6 @@ export class FiberText implements FiberAbsNode {
 }
 export const emptyFun = () => { }
 
-export function stringifyStyle(style: React.CSSProperties) {
-  const s = Object.entries(style).map(function (v) {
-    return `${underlineToCamel(v[0])}:${v[1]};`
-  }).join("")
-  return s
-}
-
-export function underlineToCamel(str: string) {
-  return str.replace(/\B([A-Z])/g, '-$1').toLowerCase()
-}
 /**
  * 更新节点
  * @param dom 
@@ -171,55 +135,12 @@ export function underlineToCamel(str: string) {
 function updateDom(
   dom: FiberNode,
   props: Props,
-  oldProps: Props,
-  styleCreater?: CreateStyleNode
+  oldProps: Props
 ) {
-  let shouldAddCss = ''
-  //先执行全局css可能发生的突变
-  if (oldProps.css) {
-    let shouldRemove = false
-    if (props.css) {
-      //更新
-      if (props.css != oldProps.css) {
-        //删除与新增
-        shouldRemove = true
-        shouldAddCss = props.css
-      }
-    } else {
-      //删除
-      shouldRemove = true
-    }
-    if (shouldRemove && dom.style) {
-      dom.style.destroy();
-      dom.style = undefined
-    }
-  } else if (props.css) {
-    //新增
-    shouldAddCss = props.css
-  }
-  if (shouldAddCss && shouldAddCss.trim()) {
-    if (styleCreater) {
-      const style = styleCreater(shouldAddCss)
-      dom.style = style
-    } else {
-      throw `使用css但没有找到styleCreater`
-    }
-  }
-
-  if (dom.style) {
-    props.className = `${props.className || ''} ${dom.style.className}`
-  }
-
   const node = dom.node
   //移除旧事件：新属性中不存在相应事件，或者事件不一样
   const prevKeys = Object.keys(oldProps)
   const nextKeys = Object.keys(props)
-  const style = props.style
-  if (style && typeof (style) == 'object') {
-    //转化成字符串。会造成对style的全覆盖，所以不能单独修改元素
-    //单独个性style属性,允许驼峰与短线,但是这种化驼峰为短线,比较危险.
-    props.style = stringifyStyle(style)
-  }
   prevKeys
     .filter(isEvent)
     .filter(key => !(key in props) || isNew(oldProps, props)(key))
@@ -281,7 +202,7 @@ function isEvent(key: string) {
  * @returns 
  */
 function isProperty(key: string) {
-  return key != 'children' && key != 'css' && key != 'exit' && !isEvent(key) && key != 'appendAsPortal'
+  return key != 'children' && !isEvent(key) //&&  key != 'css' && key != 'exit'&& key != 'appendAsPortal'
 }
 /**
  * 属性发生变更

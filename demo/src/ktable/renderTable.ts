@@ -2,6 +2,7 @@ import { EmptyFun } from "better-react";
 import { React, domOf } from "better-react-dom";
 import { renderArray, renderMax } from "better-react-helper";
 import { defaultBoxShadow } from "./util";
+import { CSSProperties, stringifyStyle } from "better-react-dom-helper";
 
 
 type TableColumn = {
@@ -31,11 +32,11 @@ export function renderTable({
     cellPadding: 0
   }).render(function () {
     domOf("tr", {
-      style: {
+      style: stringifyStyle({
         position: "sticky",
         top: 0,
         zIndex: 2
-      }
+      })
     }).render(function () {
       renderArray(columns, getTableColumnKey, function (column, c) {
         column.renderHeader(c)
@@ -49,11 +50,11 @@ export function renderTable({
       })
     })
     domOf("tr", {
-      style: {
+      style: stringifyStyle({
         position: "sticky",
         bottom: 0,
         zIndex: 2
-      }
+      })
     }).render(function () {
       renderArray(columns, getTableColumnKey, function (column, c) {
         column.renderFooter(c)
@@ -70,43 +71,43 @@ export function renderDisplayTable({
   dataSize,
   getKey
 }: {
-  style?: React.CSSProperties
-  rowStyle?: React.CSSProperties
+  style?: CSSProperties
+  rowStyle?: CSSProperties
   dataSize: number
   getKey(i: number): any
   columns: TableColumn[]
 }) {
   domOf("div", {
-    style
+    style: stringifyStyle(style)
   }).render(function () {
     domOf("div", {
-      style: {
+      style: stringifyStyle({
         ...rowStyle,
         boxShadow: defaultBoxShadow,
         position: "sticky",
         top: 0,
         zIndex: 2
-      }
+      })
     }).render(function () {
       renderArray(columns, getTableColumnKey, function (column, c) {
         column.renderHeader(c)
       })
     })
     renderMax(dataSize, getKey, function (row) {
-      domOf("div", { style: rowStyle }).render(function () {
+      domOf("div", { style: stringifyStyle(rowStyle) }).render(function () {
         renderArray(columns, getTableColumnKey, function (column, c) {
           column.renderCell(row, c)
         })
       })
     })
     domOf("div", {
-      style: {
+      style: stringifyStyle({
         ...rowStyle,
         boxShadow: defaultBoxShadow,
         position: "sticky",
         bottom: 0,
         zIndex: 2
-      }
+      })
     }).render(function () {
       renderArray(columns, getTableColumnKey, function (column, c) {
         column.renderFooter(c)

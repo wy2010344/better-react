@@ -58,7 +58,7 @@
   },
   "dependencies": {
     "better-react": "file:.yalc/better-react",
-    "better-react-dom": "^1.2.4",
+    "better-react-dom": "file:.yalc/better-react-dom",
     "better-react-dom-helper": "file:.yalc/better-react-dom-helper",
     "better-react-helper": "file:.yalc/better-react-helper",
     "stylis-creater": "file:.yalc/stylis-creater"

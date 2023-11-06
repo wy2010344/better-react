@@ -5,6 +5,7 @@ import { TopicModel, useUser } from "../dbStore";
 import { panelWith } from "../panel/PanelContext";
 import { renderIf, useState } from "better-react-helper"
 import person from "./person";
+import { stringifyStyle } from "better-react-dom-helper";
 
 
 
@@ -55,10 +56,10 @@ export default panelWith({
                     renderArray(topic.votes, v => v.description, vote => {
                       const user = vote.creater ? users.find(v => v.name == vote.creater) : undefined
                       useDom("th", {
-                        style: user ? {
+                        style: user ? stringifyStyle({
                           backgroundColor: user.color,
                           color: getTextColor((user.color || "#000000").slice(1))
-                        } : undefined,
+                        }) : undefined,
                         textContent: vote.description
                       })
                     })
@@ -72,10 +73,10 @@ export default panelWith({
                   useDom("tr", {
                     children() {
                       useDom("td", {
-                        style: {
+                        style: stringifyStyle({
                           backgroundColor: user.color,
                           color: getTextColor((user.color || "#000000").slice(1))
-                        },
+                        }),
                         textContent: user.name
                       })
                       useDom("td", {
@@ -85,10 +86,10 @@ export default panelWith({
                             !!vote,
                             () => {
                               useDom("div", {
-                                style: {
+                                style: stringifyStyle({
                                   backgroundColor: user.color,
                                   color: getTextColor((user.color || "#000000").slice(1))
-                                },
+                                }),
                                 textContent: vote!.description
                               })
                             },
@@ -127,10 +128,10 @@ export default panelWith({
                               },
                               () => {
                                 useDom("button", {
-                                  style: {
+                                  style: stringifyStyle({
                                     width: "20px",
                                     height: "30px"
-                                  },
+                                  }),
                                   onClick() {
                                     //console.log("set-top-before", topic.votes.map(v => v.whoVotes.join('-')).join("|"))
                                     const votes = topic.votes.slice()

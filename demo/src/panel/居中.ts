@@ -1,21 +1,22 @@
 import { useDom } from 'better-react-dom'
 import { PanelCallback, PanelOperate } from './PanelContext'
 import { PanelParams } from './renderPanel'
+import { stringifyStyle } from 'better-react-dom-helper'
 
 
 export function use居中(body: () => void) {
 	return useDom("div", {
-		style: {
+		style: stringifyStyle({
 			position: "fixed",
 			width: "100%",
 			height: "100%",
 			top: "0",
 			left: "0"
-		},
+		}),
 		children() {
 			/**遮罩 */
 			useDom("div", {
-				style: {
+				style: stringifyStyle({
 					position: "absolute",
 					width: "100%",
 					height: "100%",
@@ -23,26 +24,26 @@ export function use居中(body: () => void) {
 					left: "0",
 					background: "gray",
 					opacity: "0.1"
-				}
+				})
 			})
 			//主界面
 			useDom("div", {
-				style: {
+				style: stringifyStyle({
 					position: "absolute",
 					width: "100%",
 					height: "100%",
 					top: "0",
 					left: "0",
 					display: "table"
-				},
+				}),
 				children() {
 					//中心区块
 					useDom("div", {
-						style: {
+						style: stringifyStyle({
 							display: "table-cell",
 							textAlign: "center",
 							verticalAlign: "middle"
-						},
+						}),
 						children: body,
 					})
 				}
