@@ -1,4 +1,4 @@
-import { emptyArray, useEffect, useGetFlushSync } from "better-react"
+import { useEffect, useGetFlushSync } from "better-react"
 import { renderOne, useMemo, useReducer } from "better-react-helper"
 import { MbRange, contentEditable, mb } from "./mb"
 

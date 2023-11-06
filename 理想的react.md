@@ -173,8 +173,10 @@ useMap/useOne——组件大写,不再用use
 有更新未到npm:
 better-react:
   buildRemoveWhere等工具函数
+  只有一种useEfffect
 better-react-dom:
   getScheduleAskTime和CreateStyleNode
+  没有css与exit属性
 better-react-helper:
   usePromise等的cancel
   useAsyncPaginage等

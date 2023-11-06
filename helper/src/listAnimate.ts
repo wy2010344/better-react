@@ -1,10 +1,9 @@
-import { EmptyFun, StoreRef, emptyFun, useGetFlushSync } from "better-react"
+import { EmptyFun, StoreRef, emptyFun } from "better-react"
 import { arrayEqual, useEffect } from "better-react"
 import { createUseReducerFun } from "./useReducer"
 import { useRef, useRefFun } from "./useRef"
 import { createEmptyArray, getOutResolvePromise, removeWhere } from "./util"
 import { renderArray } from "./renderMap"
-import { useEvent } from "./useEvent"
 export type AnimateRow<V> = {
   key: any
   value: V

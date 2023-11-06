@@ -1,5 +1,3 @@
-import { React } from "better-react-dom"
-
 type MBKeyboard = {
   code?: string
   keyCode: number,

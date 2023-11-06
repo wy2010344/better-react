@@ -3,6 +3,6 @@ import { renderPages } from "./renderPages";
 import { renderTodoList } from "./renderTodoList";
 
 export default normalPanel(function () {
-  renderPages()
-  // renderTodoList()
+  // renderPages()
+  renderTodoList()
 })

@@ -1,4 +1,4 @@
-import { createUseReducer, renderAnimateExit } from "better-react-helper";
+import { createUseReducer, renderAnimateExit, useMemo, useVersion } from "better-react-helper";
 import { useTransitionValue } from "better-react-dom-helper";
 
 import { dom } from "better-react-dom";
@@ -76,19 +76,36 @@ export function renderTodoList() {
       return v.id
     },
     mode: "wait",
-    // mode: "pop"
+    // mode: "pop",
+    enterIgnore(v) {
+      return v.id % 2 == 0
+    },
+    exitIgnore(v) {
+      return v.id % 3 == 0
+    },
+    onAnimateComplete() {
+      console.log("动画完成")
+    },
+    onExitComplete() {
+      console.log("退出完成")
+    },
   }, function (v, arg) {
     const className = useTransitionValue(!arg.exiting, {
       beforeEnter: 'before-enter',
       enter: 'enter',
       leave: 'leave'
     })
+    const [version, updateVersion] = useVersion()
+    const opacity = useMemo(() => {
+      return Math.random()
+    }, [version])
     dom.div({
       className: cns(className, rowClsName),
       style: `
       height:50px;
       display:flex;
       align-items:center;
+      opacity:${opacity};
       `,
       onTransitionEnd(event) {
         arg.resolve()
@@ -112,6 +129,11 @@ export function renderTodoList() {
           })
         }
       }).text`替换`
+      dom.button({
+        onClick() {
+          updateVersion()
+        }
+      }).text`抖动`
     })
   })
 }

@@ -1,6 +1,5 @@
 import { compile, serialize, stringify, middleware, prefixer } from 'stylis'
 import { useBaseMemoGet, useEffect, emptyArray } from 'better-react'
-import { type } from 'os'
 let uid = 0
 function newClassName() {
   return 'stylis-' + uid++
@@ -14,21 +13,6 @@ export function createBodyStyleTag() {
   const body = document.body
   body.appendChild(styled)
   return styled
-}
-/**
- * 这个是供全局嵌入的css
- * 单个的可以使用
- * 这里在内嵌css中,一定是在最终渲染界面是调用
- * @returns 
- */
-export function stylisCreater(css: string) {
-  const styled = createStyled(css)
-  return {
-    className: styled.id,
-    destroy() {
-      styled.remove()
-    }
-  }
 }
 function createStyled(css: string) {
   const className = newClassName()
@@ -113,6 +97,6 @@ export function cssMap<T extends {
  * @returns 
  */
 export function css(ts: TemplateStringsArray, ...vs: CSSParamType[]) {
-  const body = stylisCreater(genCSS(ts, vs))
-  return body.className
+  const body = createStyled(genCSS(ts, vs))
+  return body.id
 }

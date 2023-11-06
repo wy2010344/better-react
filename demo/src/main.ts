@@ -86,8 +86,8 @@ const destroy = createRoot(
     PanelContext.useProvider(operate)
     useEffect(() => {
       // App(operate)
-      // 开发AnimatePreference(operate)
-      logic(operate, null)
+      开发AnimatePreference(operate)
+      // logic(operate, null)
       // colorDesign(operate)
       // FourierSeries(operate, null)
       // numberAnalysis(operate, null)
