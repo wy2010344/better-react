@@ -1,13 +1,16 @@
-import { React, domOf, portalDomOf } from "better-react-dom";
-import { renderFragment, renderIf, useChange, useMemo } from "better-react-helper";
+import { React, dom } from "better-react-dom";
+import { renderFragment, renderIf, useAtom, useChange, useChgAtom, useMemo, useVersionLock } from "better-react-helper";
 import { ContentEditableModel, contentDelete, contentEnter, contentTab, getCurrentRecord, useContentEditable } from "better-react-dom-helper";
 import { mb } from "better-react-dom-helper";
 import { LToken, keywords, tokenize } from "./tokenize";
 import { emptyArray, useEffect } from "better-react";
-import { parseQuery, parseRules } from "./parse";
-import { css, useCss } from "stylis-creater";
+import { LRule, parseNewQuery, parseNewRule, parseQuery, parseRules } from "./parse";
+import { css, useCss } from "better-react-dom-helper";
 import { useErrorContextProvide } from "./errorContext";
 import { AreaAtom, buildViewPairs, isAreaCode } from "./buildViewPairs";
+import { EvalRule, transLateRule } from "./evalExp";
+import { List } from "./kanren";
+import { arraySplit } from "./tokenParser";
 
 type ColorWithBack = {
   background?: string
@@ -65,14 +68,19 @@ export const defineColors: ThemeColors = {
   }
 }
 
-function useRenderCode<T>(
+export function useRenderCode<T>(
   init: T,
   initFun: (v: T) => ContentEditableModel
 ) {
   const { value, dispatch, current, renderContentEditable } = useContentEditable(init, initFun)
+  const editorRef = useChgAtom<HTMLDivElement | undefined>(undefined)
   return {
     value,
     current,
+    dispatch,
+    getEditor() {
+      return editorRef.get()
+    },
     renderContent(
       list: AreaAtom[],
       props?: CodeProps
@@ -98,7 +106,6 @@ ${props?.css}
   line-height: 100%;
   ${Object.entries(defineColors).map(function ([key, color]) {
           color = props?.themeColors?.[key as keyof ThemeColors] || color
-          console.log("dc", color)
           return `
     &.${key}{
       ${color?.color && `color:${color.color};`}
@@ -108,7 +115,7 @@ ${props?.css}
         }).join('\n')}
 }
 `
-        const div = domOf("div", {
+        const div = dom.div({
           ...props,
           spellcheck: false,
           className: `${props?.className || ''}  ${className}`,
@@ -176,63 +183,114 @@ ${props?.css}
             renderAreaCode(child, 0, props?.getBackgroundColor)
           })
         })
+        useMemo(() => {
+          editorRef.set(div)
+        }, emptyArray)
         return div
       })
     }
   }
 }
-export function useRenderCodeData<T>(
-  init: T,
-  initFun: (v: T) => ContentEditableModel
-) {
-  const { value, current, renderContent } = useRenderCode(init, initFun)
-  const { list, rules } = useMemo(() => {
-    const tokens = tokenize(current.value)
+export function useKRules(value: string) {
+  return useMemo(() => {
+    const tokens = tokenize(value)
     const { errorAreas, rules, asts } = parseRules(tokens)
     return {
       list: buildViewPairs(tokens, asts, errorAreas),
       rules
     }
-    // return []
-  }, [current.value])
-  return {
-    value,
-    current,
-    rules,
-    renderContent(
-      props?: CodeProps
-    ) {
-      renderContent(list, props)
-    }
-  }
+  }, [value])
 }
-
-export function useRenderQuery<T>(
-  init: T,
-  initFun: (v: T) => ContentEditableModel
-) {
-  const { value, current, renderContent } = useRenderCode(init, initFun)
-  const { list, query } = useMemo(() => {
-    const tokens = tokenize(current.value)
+export function useKQuery(value: string) {
+  return useMemo(() => {
+    const tokens = tokenize(value)
     const { errorAreas, query, asts } = parseQuery(tokens)
     return {
       list: buildViewPairs(tokens, asts, errorAreas),
       query
     }
-    // return []
-  }, [current.value])
-  return {
-    value,
-    current,
-    query,
-    renderContent(
-      props?: CodeProps
-    ) {
-      renderContent(list, props)
-    }
-  }
+  }, [value])
 }
 
+export function useKNewQuery(value: string) {
+  return useMemo(() => {
+    const tokens = tokenize(value)
+    const { errorAreas, query, ast } = parseNewQuery(tokens)
+    return {
+      list: buildViewPairs(tokens, ast ? [ast] : [], errorAreas),
+      query
+    }
+  }, [value])
+}
+
+export function useGetNew<T>(getCache: () => T, deps?: any[]) {
+  const [getVersion, updateVersion] = useVersionLock(1)
+  const cacheRulesRef = useAtom<{
+    version: number,
+    cache: T
+  } | undefined>(undefined)
+  useEffect(() => {
+    updateVersion()
+  }, deps)
+  return function () {
+    const version = getVersion()
+    if (cacheRulesRef.get()?.version == version) {
+      return cacheRulesRef.get()?.cache!
+    }
+    const cache = getCache()
+    cacheRulesRef.set({
+      version,
+      cache
+    })
+    return cache
+  }
+}
+export function useGetNewRules(getCaches: () => string[], deps?: any[]) {
+  return useGetNew(function () {
+    const list = getCaches().map(value => {
+      const tokens = tokenize(value)
+      const { errorAreas, rule } = parseNewRule(tokens)
+      return rule
+    }).filter(v => v) as LRule[]
+    const cache = transLateRule(list)
+  })
+}
+export function useKNewRule(value: string) {
+  return useMemo(() => {
+    const tokens = tokenize(value)
+    const { errorAreas, rule, asts } = parseNewRule(tokens)
+    return {
+      list: buildViewPairs(tokens, asts, errorAreas),
+      rule
+    }
+  }, [value])
+}
+
+export function useKNewRules(value: string) {
+  return useMemo(() => {
+    const tokens = tokenize(value)
+    const { first, rest } = arraySplit(tokens, v => v.type == 'block' && v.value == '---')
+    const { errorAreas, rule, asts } = parseNewRule(first)
+    const rules: LRule[] = []
+    if (rule) {
+      rules.push(rule)
+    }
+    let allErrorAreas = [...errorAreas]
+    let allAsts = [...asts]
+    for (let i = 0; i < rest.length; i++) {
+      const { errorAreas, rule, asts } = parseNewRule(rest[i][1])
+      if (rule) {
+        rules.push(rule)
+      }
+      allErrorAreas = [...allErrorAreas, ...errorAreas]
+      allAsts = [...allAsts, ...asts]
+    }
+    return {
+      list: buildViewPairs(tokens, allAsts, allErrorAreas),
+      rules
+    }
+  }, [value])
+}
 
 function isCtrl(e: React.KeyboardEvent) {
   return e.metaKey || e.ctrlKey
@@ -244,7 +302,7 @@ function renderAreaCode(child: AreaAtom, i: number, getBackgroundColor?: (v: num
       if (child.type == 'error') {
         useErrorContextProvide(child.errors)
       }
-      domOf("span", {
+      dom.span({
         className: `${child.type} ${child.type != 'error' && 'bracket'} ${child.type == 'rule' && child.cut ? 'cut' : ''}`,
         style: `
         background:${getBackgroundColor?.(i)};
@@ -292,18 +350,18 @@ function renderLToken(row: LToken) {
       div.style.left = box.left + 'px'
       document.body.append(div)
     }, emptyArray)
-    const div = portalDomOf("div", {
+    const div = dom.div({
       style: `
       position:fixed;
       background:white;
       `
-    }).render(function () {
+    }).asPortal().render(function () {
       errors.forEach(error => {
-        domOf("div",).renderTextContent(error)
+        dom.div().renderTextContent(error)
       })
     })
   })
-  const tdiv = domOf("span", {
+  const tdiv = dom.span({
     className: `index${row.begin} ${row.errors.length ? 'error' : ''} token ${cname}`,
     onMouseEnter(event) {
       setHover(true)

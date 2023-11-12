@@ -1,7 +1,7 @@
-import { domOf, portalDomOf } from "better-react-dom";
+import { dom, domOf } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
 import { EmptyFun, useEffect, useGetFlushSync } from "better-react";
-import { renderIf, useChange, useInit } from "better-react-helper";
+import { renderIf, useChange } from "better-react-helper";
 
 export default normalPanel(function () {
   ButtonWithToolTip(
@@ -79,7 +79,7 @@ function ButtonWithToolTip(
     useEffect(() => {
       document.body.appendChild(tooltip)
     }, [tooltipHeight])
-    const tooltip = portalDomOf("div", {
+    const tooltip = dom.div({
       style: `
         position: absolute;
         pointerEvents: none;
@@ -89,7 +89,7 @@ function ButtonWithToolTip(
         backgroundColor: black;
         color: white;
       `
-    }).render(function () {
+    }).asPortal().render(function () {
       const flushSync = useGetFlushSync()
       useEffect(() => {
         // setTooltipHeight(contentDiv.getBoundingClientRect().height)

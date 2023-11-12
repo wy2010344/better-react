@@ -1,5 +1,5 @@
 import { domOf, renderContent, useDom } from "better-react-dom";
-import { useRef, renderArray } from "better-react-helper";
+import { renderArray } from "better-react-helper";
 import { useUser } from "../dbStore";
 import { normalPanel } from "../panel/PanelContext";
 import { renderInput } from "better-react-dom-helper";

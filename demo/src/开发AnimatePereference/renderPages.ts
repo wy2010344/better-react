@@ -1,6 +1,6 @@
-import { EmptyFun, createContext } from "better-react";
-import { createUseReducer, useRefFun, AnimateRow, renderAnimateExit, } from "better-react-helper";
-import { useTransitionValue } from "better-react-dom-helper";
+import { createContext } from "better-react";
+import { createUseReducer, useAtomFun, renderExitAnimate, ExitModel, } from "better-react-helper";
+import { useLifeTransSameTime } from "better-react-dom-helper";
 import { dom } from "better-react-dom";
 import { faker } from "@faker-js/faker";
 import { HookValueSet } from "better-react";
@@ -10,7 +10,7 @@ import { css } from "stylis-creater";
 
 
 
-type Render = (v: AnimateRow<RenderPage>, className: string) => void
+type Render = (v: ExitModel<RenderPage>, className: string) => void
 type AnimationType = "line" | "3d" | undefined
 type RenderPage = {
   id: number
@@ -115,12 +115,22 @@ export function renderPages() {
     `
   }).render(function () {
     const page = model.pages.at(-1)!
-
-    renderAnimateExit([page], {
+    const config = method == 'pop' ? {
+      from: 'left',
+      show: 'center',
+      exit: 'right'
+    } : {
+      from: 'right',
+      show: 'center',
+      exit: 'left'
+    }
+    const balseClsName = animation == '3d' ? base3DClsName : baseTransClsName
+    renderExitAnimate([page], {
       getKey(v) {
         return v.id
       },
-      mode: animation == '3d' ? 'wait' : method == 'pop' ? 'pop' : 'shift',
+      mode: method == 'pop' ? 'pop' : 'shift',
+      // mode: animation == '3d' ? 'wait' : method == 'pop' ? 'pop' : 'shift',
       // onAnimateComplete() {
       //   if (method == 'pop') {
       //     //退回到第一页不对,因为使用3D的wait,退回到第一页,需要等第一页的入场动画完成
@@ -130,78 +140,44 @@ export function renderPages() {
       //     })
       //   }
       // },
-    }, function (v, arg) {
-      const className = useTransitionValue(!arg.exiting,
-        method
-          ? method == 'pop'
-            ? {
-              beforeEnter: `ease-in left-enter`,
-              enter: `ease-in enter`,
-              beforeLeave: `ease-out enter`,
-              leave: `ease-out right-leave`
-            }
-            : {
-              beforeEnter: `ease-in right-enter`,
-              enter: `ease-in enter`,
-              beforeLeave: `ease-out enter`,
-              leave: `ease-out left-leave`
-            }
-          : {
-            beforeEnter: "",
-            enter: "",
-            leave: ""
-          })
-      v.render(arg, `${animation == '3d' ? baseCls3fName : baseClsName} ${className} `)
+    }, function (v) {
+      const className = useLifeTransSameTime(v.exiting, config, v.resolve, 1000)
+      v.value.render(v, `${balseClsName} ${method && className} `)
     })
   })
 }
 
-const baseClsName = css`
+
+const baseTransClsName = css`
 transition:all ease 1s;
-&.left-enter{
-  transform:translateX(-30%);
+&.left{
+  transform:translateX(-100%);
 }
-&.right-enter{
+&.right{
   transform:translateX(100%);
 }
-&.enter{
+&.center{
   transform:translateX(0);
-}
-&.left-leave{
-  transform:translateX(-30%);
-}
-&.right-leave{
-  transform:translateX(100%);
 }
 `
 
-const baseCls3fName = css`
-&.ease-in{
-  transition:all ease-out 0.5s;
-}
-&.ease-out{
-  transition:all ease-in 0.5s;
-}
-&.left-enter{
-  transform:perspective(1000px) rotateY(-90deg);
-}
-&.right-enter{
-  transform:perspective(1000px) rotateY(90deg);
+const base3DClsName = css`
+transition:all linear 1s;
+backface-visibility: hidden;
+&.left{
+  transform:perspective(1000px) rotateY(-180deg);
 }
 &.enter{
   transform:perspective(1000px) rotateY(0deg);
 }
-&.left-leave{
-  transform:perspective(1000px) rotateY(-90deg);
-}
-&.right-leave{
-  transform:perspective(1000px) rotateY(90deg);
+&.right{
+  transform:perspective(1000px) rotateY(180deg);
 }
 `
 
-function renderPage(arg: AnimateRow<RenderPage>, className: string) {
+function renderPage(arg: ExitModel<RenderPage>, className: string) {
   const { dispatch, size, method } = pageContext.useConsumer()
-  const color = useRefFun(() => faker.color.rgb())
+  const color = useAtomFun(() => faker.color.rgb())
   dom.div({
     className,
     style: `
@@ -211,11 +187,14 @@ function renderPage(arg: AnimateRow<RenderPage>, className: string) {
     display:flex;
     flex-direction:column;
     align-items:center;
-    justify-content:center
+    justify-content:center;
+    opacity:0.9;
     `,
-    onTransitionEnd(event) {
-      arg.resolve()
-    },
+    // onTransitionEnd(event) {
+    //   if (arg.exiting) {
+    //     arg.resolve()
+    //   }
+    // },
   }).render(function () {
     dom.span().text`页数${size} -- ${method || ''}`
     dom.button({

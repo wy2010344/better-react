@@ -1,17 +1,15 @@
 import { panelWith } from "../panel/PanelContext";
-import { ContentEditableModel, initContentEditableModel } from "../contentEditableReact/useContentEditable";
 import { useEffect } from "better-react";
 import { dom, domOf } from "better-react-dom";
 import {
-  VarPool, evalLExp, queryResult,
-
-  useRenderCodeData, useRenderQuery, useRenderResult, transLateRule, defineColors, ThemeColors
+  useKNewQuery, useRenderCode,
+  VarPool, evalLExp, queryResult, useRenderResult, transLateRule, defineColors, ThemeColors, useKNewRules, useGetNewRules, useGetNew
 } from '@/kanren-logic';
 import { useChange, useMemo, useState } from "better-react-helper";
 import { useDragdownX } from "./dragPanel";
-import { renderInput } from "better-react-dom-helper";
+import { ContentEditableModel, initContentEditableModel, renderInput } from "better-react-dom-helper";
 import renderColorConfig from "./colorConfig";
-import chroma from "chroma-js";
+import chroma from "chroma-js"
 
 
 const storeKey = 'test-logic-editable'
@@ -103,9 +101,10 @@ export default panelWith({
 
     const {
       value: libValue,
-      rules,
+      current,
       renderContent: renderCodeLibrary
-    } = useRenderCodeData(storeKey, initFun)
+    } = useRenderCode(storeKey, initFun)
+    const { list, rules } = useKNewRules(current.value)
     useEffect(() => {
       localStorage.setItem(storeKey, JSON.stringify(libValue))
     }, [libValue])
@@ -130,25 +129,13 @@ export default panelWith({
         `
       }).render(function () {
         domOf("b").renderTextContent("规则")
-
       })
-      renderCodeLibrary({
+
+      renderCodeLibrary(list, {
         style: `
         flex:1;
         overflow-y:auto;
         align-self:stretch;
-        `,
-        css: `
-        .bracket{
-          padding:0.1rem;
-        }
-        white-space:pre-wrap;
-        .pre-wrap{
-          white-space:pre-wrap;
-        }
-        *{
-          display:inline-block;
-        }
         `,
         getBackgroundColor(v) {
           return primaryColor.darken(v).hex()
@@ -189,16 +176,14 @@ export default panelWith({
       const {
         value: queryValue,
         current: currentQuery,
-        query,
         renderContent
-      } = useRenderQuery(storeQueryKey, initFun)
+      } = useRenderCode(storeQueryKey, initFun)
       useEffect(() => {
         localStorage.setItem(storeQueryKey, JSON.stringify(queryValue))
       }, [queryValue])
-
-      renderContent()
-
-      const topRules = useMemo(() => {
+      const { list, query } = useKNewQuery(currentQuery.value)
+      renderContent(list)
+      const getTopRules = useGetNew(() => {
         return transLateRule(rules)
       }, [rules])
       domOf("div", {
@@ -215,7 +200,7 @@ export default panelWith({
             }
             const queryPool = new VarPool()
             const queryAst = evalLExp(query, queryPool)
-            const stream = queryResult(topRules, queryAst)
+            const stream = queryResult(getTopRules(), queryAst)
             appendResult({
               query: currentQuery.value,
               queryPool,

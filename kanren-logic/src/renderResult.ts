@@ -59,7 +59,7 @@ export function useRenderResult() {
 }
 
 
-type ResultModel = {
+export type ResultModel = {
   query: string
   queryPool: VarPool
   stream: Stream<KSubsitution>

@@ -13,6 +13,7 @@ import numberAnalysis from "./FourierSeries/numberAnalysis";
 import logic from "./logic";
 import 开发AnimatePreference from "./开发AnimatePereference";
 import colorDesign from "./color-design";
+import ExpensiveView from "./ExpensiveView";
 const destroy = createRoot(
   document.getElementById("app")!,
   function () {
@@ -86,8 +87,10 @@ const destroy = createRoot(
     PanelContext.useProvider(operate)
     useEffect(() => {
       // App(operate)
-      开发AnimatePreference(operate)
-      // logic(operate, null)
+
+      // ExpensiveView(operate)
+      // 开发AnimatePreference(operate)
+      logic(operate, null)
       // colorDesign(operate)
       // FourierSeries(operate, null)
       // numberAnalysis(operate, null)

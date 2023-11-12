@@ -2,19 +2,19 @@
   "version": "v1",
   "packages": {
     "better-react-helper": {
-      "signature": "a8361c5c1b290c11ad286a78ef3748f1",
+      "signature": "f95840564444afc0a82fd4d52599dccb",
       "file": true,
       "replaced": "^1.2.5"
     },
     "better-react": {
-      "signature": "51c0f8924f2ba345de3f91ac082d99bc",
+      "signature": "76ddc45d5242f3856105fd376e88f5d2",
       "file": true,
       "replaced": "^1.2.4"
     },
     "better-react-dom": {
-      "signature": "68018dad04b7dc10a0ad6961cc59dd55",
+      "signature": "8ee62c2cb65f1d9edb9d170e33da4aa7",
       "file": true,
-      "replaced": "^1.2.0"
+      "replaced": "^1.2.4"
     }
   }
 }

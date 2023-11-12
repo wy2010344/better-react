@@ -1,5 +1,5 @@
 import { HookValueSet, emptyFun, quote, useEffect } from "better-react"
-import { useMemo, useRef } from "./useRef"
+import { useMemo, useAtomBind } from "./useRef"
 import { useRefState } from "./useRefState"
 
 type EventHandler<T> = (v: T) => void

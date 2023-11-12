@@ -64,7 +64,7 @@ const varRule = andMatch(
  * 'abc'是字符串
  * ""是注释
  */
-export const keywords = ['(', ')', '[', ']', '|']
+export const keywords = ['(', ')', '[', ']', '|', ';', ',']
 const blockCharNotList = '"\'{}'.split("").concat(whiteList).concat(keywords)
 export function includeBlockNotChar(v: string) {
   for (const c of blockCharNotList) {

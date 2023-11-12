@@ -1,6 +1,6 @@
 import { domOf } from "better-react-dom";
 import { panelWith } from "../panel/PanelContext";
-import { useReducer, useRef } from "better-react-helper";
+import { useReducer } from "better-react-helper";
 import ComplexNumber, { radianToDegree } from "./ComplexNumber";
 import { useEffect } from "better-react";
 import fastFourierTransform from "./fft";

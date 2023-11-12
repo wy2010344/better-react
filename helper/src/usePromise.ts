@@ -1,7 +1,7 @@
 import { StoreRef, useEffect } from "better-react"
 import { useEvent } from "./useEvent"
 import { useChange, useState } from "./useState"
-import { useMemo, useRef } from "./useRef"
+import { useMemo, useAtomBind, useAtom } from "./useRef"
 import { EmptyFun, FalseType, emptyFun } from "better-react"
 import { useVersionInc, useVersionLock } from "./Lock"
 import { ReduceState } from "./ValueCenter"
@@ -157,7 +157,7 @@ export function useCallbackPromiseState<T, Deps extends readonly any[]>(
 }
 
 export function useMutation<Req extends any[], Res>(effect: (...vs: Req) => Promise<Res>) {
-  const boolLock = useRef(false)
+  const boolLock = useAtomBind(false)
   return function (...vs: Req) {
     if (boolLock.get()) {
       return
@@ -213,7 +213,7 @@ export function useSerialRequest<Req extends any[], Res>(
   callback: (vs: Req, version: number, signal?: AbortSignal) => Promise<Res>,
   effect: (res: VersionPromiseResult<Res>, version: number) => void
 ) {
-  const lastCancelRef = useRef<EmptyFun | undefined>(undefined)
+  const lastCancelRef = useAtomBind<EmptyFun | undefined>(undefined)
   const [versionLock, updateVersion] = useVersionLock();
   return [function (...vs: Req) {
     const version = updateVersion();
@@ -265,7 +265,7 @@ export function useSerialRequestLoading<Req extends any[], Res>(
 
 export function buildRefreshPromise<T>(shouldNotify: (a: T, old: T) => boolean) {
   return function useRefreshPromise(getPromise: T) {
-    const refreshFlag = useRef<{
+    const refreshFlag = useAtom<{
       getPromise: T;
       notify(): void;
     } | undefined>(undefined);

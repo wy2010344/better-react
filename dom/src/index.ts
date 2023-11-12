@@ -119,12 +119,30 @@ function getChildren(props: any) {
 }
 
 
-export class DomCreater<T extends DomElementType, M>{
+export class DomCreater<T extends DomElementType>{
   constructor(
     public readonly props: DomAttribute<T> = EMPTYPROPS,
-    public readonly create: (v: M) => FiberNode,
-    public readonly createArg: M
+    public readonly create: (v: T) => FiberNode,
+    public readonly createArg: T
   ) { }
+
+
+  setPortal(v?: boolean) {
+    if (v) {
+      if (this.create != FiberNode.portalCreateDom) {
+        return new DomCreater<T>(this.props, FiberNode.portalCreateDom, this.createArg)
+      }
+    } else {
+      if (this.create != FiberNode.createDom) {
+        return new DomCreater<T>(this.props, FiberNode.createDom, this.createArg)
+      }
+    }
+    return this
+  }
+  asPortal() {
+    return this.setPortal(true)
+  }
+
   renderInnerHTML(innerHTML: string) {
     const dom = renderFiber(
       <VirtualDomOperator<any>>[this.create, {
@@ -187,19 +205,37 @@ export class DomCreater<T extends DomElementType, M>{
     return dom.node as unknown as DomElement<T>
   }
 }
-
+/**
+ * @deprecated 使用dom['div'],dom.div
+ * @param type 
+ * @param props 
+ * @returns 
+ */
 export function domOf<T extends DomElementType>(type: T, props?: DomAttribute<T>) {
   return new DomCreater(props, FiberNode.createDom, type)
 }
-export function portalDomOf<T extends DomElementType>(type: T, props?: DomAttribute<T>) {
-  return new DomCreater(props, FiberNode.portalCreateDom, type)
-}
-export class SvgCreater<T extends SvgElementType, M>{
+export class SvgCreater<T extends SvgElementType>{
   constructor(
     public readonly props: SvgAttribute<T> = EMPTYPROPS,
-    public readonly create: (v: M) => FiberNode,
-    public readonly createArg: M
+    public readonly create: (v: T) => FiberNode,
+    public readonly createArg: T
   ) { }
+
+  setPortal(v?: boolean) {
+    if (v) {
+      if (this.create != FiberNode.portalCreateSvg) {
+        return new SvgCreater<T>(this.props, FiberNode.portalCreateSvg, this.createArg)
+      }
+    } else {
+      if (this.create != FiberNode.createSvg) {
+        return new SvgCreater<T>(this.props, FiberNode.createSvg, this.createArg)
+      }
+    }
+    return this
+  }
+  asPortal() {
+    return this.setPortal(true)
+  }
 
   render<M extends readonly any[]>(...vs: RenderWithDep<M>): SvgElement<T>
   render(): SvgElement<T>
@@ -249,21 +285,21 @@ export class SvgCreater<T extends SvgElementType, M>{
   }
 }
 
+/**
+ * @deprecated 使用svg['circle'],svg.circle
+ * @param type 
+ * @param props 
+ * @returns 
+ */
 export function svgOf<T extends SvgElementType>(type: T, props?: SvgAttribute<T>) {
   return new SvgCreater(props, FiberNode.createSvg, type)
 }
-export function portalSvgOf<T extends SvgElementType>(type: T, props?: SvgAttribute<T>) {
-  return new SvgCreater(props, FiberNode.portalCreateSvg, type)
-}
-
-
-
 
 let dom: {
-  readonly [key in DomElementType]: (props?: DomAttribute<key>) => DomCreater<key, key>
+  readonly [key in DomElementType]: (props?: DomAttribute<key>) => DomCreater<key>
 }
 let svg: {
-  readonly [key in SvgElementType]: (props?: SvgAttribute<key>) => SvgCreater<key, key>
+  readonly [key in SvgElementType]: (props?: SvgAttribute<key>) => SvgCreater<key>
 }
 if ('Proxy' in globalThis) {
   const cacheDomMap = new Map<string, any>()

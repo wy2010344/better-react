@@ -1,11 +1,12 @@
-import { startTransition, useEffect } from "better-react";
-import { renderContent, useDom } from "better-react-dom";
-import { useEvent, useState, renderArray, renderFragment, useMemo } from "better-react-helper";
+import { emptyArray, startTransition, useEffect, useGetCreateChangeAtom } from "better-react";
+import { dom, renderContent, useDom } from "better-react-dom";
+import { useEvent, useState, renderArray, renderFragment, useMemo, useAtom, useChgAtom } from "better-react-helper";
 import { normalPanel } from "./panel/PanelContext";
 import { renderInput, stringifyStyle } from "better-react-dom-helper";
 
 let lastRenderTime = performance.now()
 
+let rollbackTime = 0
 export default normalPanel(function (operate, id) {
   const [value, setValue] = useState(0);
   const [renderValue, setRenderValue] = useState(0);
@@ -20,6 +21,12 @@ export default normalPanel(function (operate, id) {
   }, [onTrans])
 
 
+  const timeRef = useAtom(0)
+  const chgTimeRef = useChgAtom(0)
+  timeRef.set(timeRef.get() + 1)
+  chgTimeRef.set(chgTimeRef.get() + 1)
+  rollbackTime = rollbackTime + 1
+
   const [isPending, startTransition] = useTransition()
   const [transition, setTransition] = useState(false)
   const thisRenderTime = performance.now()
@@ -31,6 +38,12 @@ export default normalPanel(function (operate, id) {
     setAvCount(v => v + 1)
   }, [onTrans])
 
+  useEffect(() => {
+    console.log(`回滚次数${timeRef.get()} ---${chgTimeRef.get()}---${rollbackTime}`)
+  })
+  dom.div({
+
+  }).text`回滚次数${timeRef.get()} ---${chgTimeRef.get()}---${rollbackTime}`
   useDom("div", {
     style: stringifyStyle({
       height: '100%',

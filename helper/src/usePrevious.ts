@@ -1,4 +1,4 @@
-import { useRef } from "./useRef";
+import { useAtomBind, useChgAtom } from "./useRef";
 
 /**
  * @todo 
@@ -8,7 +8,7 @@ import { useRef } from "./useRef";
  */
 export function getUsePrevious<T>(initBefore?: T) {
   return function (value: T) {
-    const getBefore = useRef(initBefore)
+    const getBefore = useChgAtom(initBefore)
     const before = getBefore.get()
     getBefore.set(value)
     return before

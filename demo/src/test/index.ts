@@ -1,5 +1,5 @@
 import { DomElementType, renderContent, useDom } from "better-react-dom";
-import { useRef, renderArray, renderIf, useState } from "better-react-helper";
+import { renderArray, renderIf, useState, useAtom } from "better-react-helper";
 import { usePortalPanel } from "../panel/PanelContext";
 
 export default function index() {
@@ -20,7 +20,7 @@ export default function index() {
   testPortalPanel()
 }
 function useRenderCount(prefix: string) {
-  const renderCount = useRef(0)
+  const renderCount = useAtom(0)
   renderCount.set(renderCount.get() + 1)
   console.log(prefix, "重新渲染", renderCount.get())
 }
@@ -73,7 +73,7 @@ function testChangeValue() {
 
 function testFlushSync() {
   const [value, setValue] = useState(1)
-  const input = useRef<HTMLInputElement | undefined>(undefined)
+  const input = useAtom<HTMLInputElement | undefined>(undefined)
   useDom("div", {
     children() {
       const input = useDom("input", {

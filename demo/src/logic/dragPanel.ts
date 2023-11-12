@@ -1,6 +1,6 @@
 import { StoreRef, emptyArray, useEffect } from "better-react";
 import { React, domOf } from "better-react-dom";
-import { useChange, useReducer, useRef } from "better-react-helper";
+import { useChange, useReducer, useAtom } from "better-react-helper";
 
 type AbsPointerEvent = {
   clientX: number
@@ -13,7 +13,7 @@ export function useBaseOnPointerdown(
   setE: (e: AbsPointerEvent, lastE: AbsPointerEvent) => void,
   onEvent?: OnEvent
 ) {
-  const lastPointerRef = useRef<AbsPointerEvent | undefined>(undefined)
+  const lastPointerRef = useAtom<AbsPointerEvent | undefined>(undefined)
   useEffect(() => {
     function onPointerMove(e: PointerEvent) {
       const lastPointer = lastPointerRef.get()

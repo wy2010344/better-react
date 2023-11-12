@@ -69,7 +69,7 @@ function toEvalRules(
   return kanren.fail(sub)
 }
 
-type EvalRule = {
+export type EvalRule = {
   isCut?: boolean
   query(sub: KSubsitution, exp: KType, topRules: List<EvalRule>): Stream<KSubsitution>
 }
@@ -187,7 +187,7 @@ const defineRules: EvalRule[] = [
     }
   },
   /**
-   * js执行{x}[a,b,c,d]等于{z}
+   * js执行{x}(a b c d)等于{z}
    * 这里如何不引入js的各种类型,{x}应该是字符串,则是eval函数
    */
   {

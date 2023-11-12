@@ -1,5 +1,5 @@
 import { StoreRef, emptyArray, storeRef, useEffect } from "better-react";
-import { useMemo, useRef } from "./useRef";
+import { useMemo, useAtomBind } from "./useRef";
 
 
 function increase(ref: StoreRef<number>) {
@@ -37,7 +37,7 @@ export function useVersionLock(init = 0) {
  * @returns 
  */
 export function useIsLaunchLock() {
-  const ref = useRef(true)
+  const ref = useAtomBind(true)
   useEffect(() => {
     ref.set(false)
   }, emptyArray)

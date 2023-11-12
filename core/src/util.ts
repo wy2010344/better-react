@@ -37,12 +37,15 @@ export function arrayNotEqualDepsWithEmpty(a?: readonly any[], b?: readonly any[
 
 export function buildRemoveWhere<T, M>(equal: (m: M, a: T, idx: number) => any) {
   return function (vs: T[], m: M) {
+    let count = 0
     for (let i = vs.length - 1; i > -1; i--) {
       const row = vs[i]
       if (equal(m, row, i)) {
         vs.splice(i, 1)
+        count++
       }
     }
+    return count
   }
 }
 export const removeEqual = buildRemoveWhere(simpleEqual)

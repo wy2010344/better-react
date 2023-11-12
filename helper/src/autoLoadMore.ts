@@ -2,7 +2,7 @@ import { EmptyFun, emptyFun, useEffect } from "better-react";
 import { useEvent } from "./useEvent";
 import { PromiseResult, createAndFlushAbortController } from "./usePromise";
 import { useCallback } from "./useCallback";
-import { useAlways, useRef } from "./useRef";
+import { useAlways, useAtomBind } from "./useRef";
 import { useVersionLock } from "./Lock";
 import { useReducer } from "./useReducer";
 
@@ -127,7 +127,7 @@ export function useAutoLoadMore<T, K>(
   const [data, dispatch] = useReducer<AutoLoadMoreAction<T, K>, AutoLoadMoreModel<T, K>>(
     reducerAutoLoadMore,
   );
-  const lastCancelRef = useRef<EmptyFun | undefined>(undefined)
+  const lastCancelRef = useAtomBind<EmptyFun | undefined>(undefined)
   const getAfter = useCallback(function (key: K) {
     return effect(key, createAndFlushAbortController(lastCancelRef))
   }, deps);

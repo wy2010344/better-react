@@ -1,20 +1,22 @@
-import { useEffect, useGetFlushSync } from "better-react"
+import { emptyArray, useEffect, useGetFlushSync } from "better-react"
 import { renderOne, useMemo, useReducer } from "better-react-helper"
 import { MbRange, contentEditable, mb } from "./mb"
 
-type ModelRecord = {
+export type EditRecord = {
   //选择区域是跟随的,但事实上也可能独立
+  scrollTop: number
+  scrollLeft: number
   range: MbRange
   value: string
 }
 export type ContentEditableModel = {
   currentIndex: number
-  history: ModelRecord[]
+  history: EditRecord[]
 }
 
-type Action = {
+export type EditAction = {
   type: "input"
-  record: ModelRecord
+  record: EditRecord
 } | {
   type: "undo"
 } | {
@@ -28,7 +30,7 @@ type Action = {
  * @param record 
  * @returns 
  */
-function appendRecord(model: ContentEditableModel, record: ModelRecord): ContentEditableModel {
+function appendRecord(model: ContentEditableModel, record: EditRecord): ContentEditableModel {
   const cdx = model.currentIndex
   const history = model.history.slice(0, cdx + 1)
   //第一条不处理
@@ -67,7 +69,7 @@ function appendRecord(model: ContentEditableModel, record: ModelRecord): Content
 function sortNum(a: number, b: number) {
   return a - b
 }
-function reducer(model: ContentEditableModel, action: Action): ContentEditableModel {
+function reducer(model: ContentEditableModel, action: EditAction): ContentEditableModel {
   if (action.type == "input") {
     return appendRecord(model, action.record)
   } else if (action.type == "undo") {
@@ -118,8 +120,29 @@ export function useContentEditable<T>(t: T, initFun: (t: T) => ContentEditableMo
           }
         }, [args.readonly])
         useEffect(() => {
-          mb.DOM.setSelectionRange(div, { ...current.range })
-        }, [current.range])
+          requestAnimationFrame(function () {
+            const selection = mb.DOM.setSelectionRange(div, { ...current.range })
+            div.scrollTop = current.scrollTop
+            div.scrollLeft = current.scrollLeft
+            // 获取光标位置
+            const range = selection.getRangeAt(0);
+            const rgag = range.endContainer == div ? div.lastElementChild : range
+            if (rgag) {
+              const rect = rgag.getBoundingClientRect()
+              // 如果光标位置超出可视区域，调整滚动位置
+              if (rect.bottom > div.clientHeight) {
+                div.scrollTop += rect.bottom - div.clientHeight;
+              } else if (rect.top < 0) {
+                div.scrollTop += rect.top;
+              }
+              if (rect.right > div.clientWidth) {
+                div.scrollLeft += rect.right - div.clientWidth;
+              } else if (rect.left < 0) {
+                div.scrollLeft += rect.left;
+              }
+            }
+          })
+        }, emptyArray)
       })
     }
   }
@@ -131,6 +154,8 @@ export function initContentEditableModel(content: string): ContentEditableModel 
     currentIndex: 0,
     history: [
       {
+        scrollLeft: 0,
+        scrollTop: 0,
         range: {
           start: content.length,
           end: content.length
@@ -143,24 +168,32 @@ export function initContentEditableModel(content: string): ContentEditableModel 
 
 
 
-export function getCurrentRecord(editor: HTMLElement): ModelRecord {
+export function getCurrentRecord(editor: HTMLElement): EditRecord {
   const value = editor.textContent || ''
   const range = mb.DOM.getSelectionRange(editor)
   return {
+    scrollTop: editor.scrollTop,
+    scrollLeft: editor.scrollLeft,
     value,
     range
   }
 }
 
-export function contentEnter(editor: HTMLElement): ModelRecord {
-  const { value, range } = getCurrentRecord(editor)
+
+export function contentEnter(editor: HTMLElement) {
+  return contentInput(editor, '\n', 1)
+}
+
+export function contentInput(editor: HTMLElement, text: string, addIdx: number): EditRecord {
+  const { value, range, ...args } = getCurrentRecord(editor)
   const [min, max] = [range.start, range.end].sort(sortNum)
   const beforeText = value.slice(0, min)
   //如果没有后继,强行加一个换行,看原生也是这么处理的
   const afterText = value.slice(max, value.length) || '\n'
-  let idx = beforeText.length + 1
+  let idx = beforeText.length + addIdx
   return {
-    value: beforeText + '\n' + afterText,
+    ...args,
+    value: beforeText + text + afterText,
     range: {
       start: idx,
       end: idx,
@@ -169,8 +202,8 @@ export function contentEnter(editor: HTMLElement): ModelRecord {
   }
 }
 
-export function contentDelete(editor: HTMLElement): ModelRecord | void {
-  const { value, range } = getCurrentRecord(editor)
+export function contentDelete(editor: HTMLElement): EditRecord | void {
+  const { value, range, ...args } = getCurrentRecord(editor)
   const [min, max] = [range.start, range.end].sort(sortNum)
   const beforeText = value.slice(0, min)
   //如果没有后继,强行加一个换行,看原生也是这么处理的
@@ -178,6 +211,7 @@ export function contentDelete(editor: HTMLElement): ModelRecord | void {
   if (min != max) {
     //删除选中区域
     return {
+      ...args,
       value: beforeText + afterText,
       range: {
         start: min,
@@ -189,6 +223,7 @@ export function contentDelete(editor: HTMLElement): ModelRecord | void {
     if (min != 0) {
       const idx = range.start - 1
       return {
+        ...args,
         value: beforeText.slice(0, beforeText.length - 1) + afterText,
         range: {
           ...range,
@@ -203,8 +238,8 @@ export function contentTab(
   editor: HTMLElement,
   shiftKey: boolean,
   tab = "\t",
-): ModelRecord | void {
-  const { value, range } = getCurrentRecord(editor)
+): EditRecord | void {
+  const { value, range, ...args } = getCurrentRecord(editor)
   //这里实时range,应该更新历史记录中的range,即如果之前是选中的tab,撤销时会恢复成选中状态.
   const [min, max] = [range.start, range.end].sort(sortNum)
   if (range.start != range.end) {
@@ -237,6 +272,7 @@ export function contentTab(
         beforeIdx = nextIdx
       }
       return {
+        ...args,
         value: newLines.join('\n'),
         range: range.start > range.end ? {
           start: range.start - (removeLine * tab.length),
@@ -272,6 +308,7 @@ export function contentTab(
         beforeIdx = nextIdx
       }
       return {
+        ...args,
         value: newLines.join('\n'),
         range: range.start > range.end ? {
           start: range.start + (addLine * tab.length),
@@ -292,6 +329,7 @@ export function contentTab(
       if (beforeText.endsWith(tab)) {
         const newIndex = beforeText.length - tab.length
         return {
+          ...args,
           value: beforeText.slice(0, beforeText.length - tab.length) + afterText,
           range: {
             start: newIndex,
@@ -302,6 +340,7 @@ export function contentTab(
     } else {
       const newIndex = beforeText.length + tab.length
       return {
+        ...args,
         value: beforeText + tab + afterText,
         range: {
           start: newIndex,

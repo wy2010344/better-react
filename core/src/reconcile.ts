@@ -69,10 +69,12 @@ export class BatchWork {
         that.workLoop(renderWork, currentTick, nextUnitOfWork)
       })
     } else {
-      renderWork.unshiftWork(function () {
+      const realWork: REAL_WORK = function () {
         currentTick.commit()
         that.finishRender()
-      })
+      }
+      realWork.isRender = true
+      renderWork.unshiftWork(realWork)
     }
   }
   private finishRender() {
@@ -122,7 +124,7 @@ function buildWorkUnits(
       const work = workList[i]
       if (work.type == 'loop' && shouldAdd(work)) {
         loopIndex = i
-        const realWork: REAL_WORK = function () {
+        return function () {
           currentTick.open(isLow)
           //寻找渲染前的任务
           workList = workList.filter(function (work, i) {
@@ -140,8 +142,6 @@ function buildWorkUnits(
             batchWork.beginRender(currentTick, renderWorks)
           })
         }
-        realWork.isRender = true
-        return realWork
       }
     }
   }
@@ -186,23 +186,25 @@ function buildWorkUnits(
   }
 }
 class RenderWorks {
-  private readonly list: EmptyFun[] = []
+  private readonly list: REAL_WORK[] = []
   rollback() {
     this.list.length = 0
   }
   getFirstWork() {
     const that = this
     if (that.list.length) {
-      return function () {
+      const retWork: REAL_WORK = function () {
         const work = that.list.shift()
         work!()
       }
+      retWork.isRender = this.list[0]?.isRender
+      return retWork
     }
   }
   appendWork(work: EmptyFun) {
     this.list.push(work)
   }
-  unshiftWork(work: EmptyFun) {
+  unshiftWork(work: REAL_WORK) {
     this.list.unshift(work)
   }
 }

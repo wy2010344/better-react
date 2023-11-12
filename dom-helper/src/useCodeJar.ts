@@ -1,7 +1,8 @@
 import { emptyArray, useEffect } from "better-react"
 import { useDom, React, DomElementType, DomElement, domOf, DomAttribute } from "better-react-dom"
-import { useMemo, useRef } from "better-react-helper"
+import { useMemo, useAtom } from "better-react-helper"
 import { mb, contentEditable, MbRange, getSelection, insertHTML, browser, afterCursor, beforeCursor } from "./mb"
+import { CSSProperties, stringifyStyle } from "./util"
 
 function shouldRecord(e: React.KeyboardEvent) {
   return !isUndo(e)
@@ -307,7 +308,7 @@ export interface CodeJarOption {
   width?: number
   readonly?: boolean
 
-  style?: React.CSSProperties,
+  style?: CSSProperties,
 }
 
 
@@ -501,14 +502,7 @@ export function useCodeJar<T extends DomElementType>(tag: T, {
     },
     contentEditable: readonly ? false : contentEditable.text,
     spellcheck,
-    async exit(e) {
-      const record = history.current()
-      if (record) {
-        record.pos = mb.DOM.getSelectionRange(editor)
-      }
-      return options.exit?.(e as any)
-    },
-    style: {
+    style: stringifyStyle({
       resize: height ? "none" : "vertical",
       width: width ? width + 'px' : '',
       height: height ? height + "px" : "",
@@ -517,7 +511,7 @@ export function useCodeJar<T extends DomElementType>(tag: T, {
       overflowWrap: "break-word",
       whiteSpace: "pre-wrap",
       textAlign: "left"
-    }
+    })
   }).render()
   return editor as DomElement<T>
 }

@@ -2,22 +2,22 @@
   "version": "v1",
   "packages": {
     "better-react-helper": {
-      "signature": "a8361c5c1b290c11ad286a78ef3748f1",
+      "signature": "f95840564444afc0a82fd4d52599dccb",
       "file": true,
       "replaced": "^1.2.0"
     },
     "better-react-dom-helper": {
-      "signature": "14ac5ee248716ab63d4f736aefa8d84b",
+      "signature": "5e5c98796a7070ca5664fe023be6adbb",
       "file": true,
       "replaced": "^1.2.0"
     },
     "better-react": {
-      "signature": "51c0f8924f2ba345de3f91ac082d99bc",
+      "signature": "76ddc45d5242f3856105fd376e88f5d2",
       "file": true,
       "replaced": "^1.2.4"
     },
     "better-react-dom": {
-      "signature": "582ebde2a3c596d2827503ea78569b3a",
+      "signature": "8ee62c2cb65f1d9edb9d170e33da4aa7",
       "file": true,
       "replaced": "^1.2.0"
     },
@@ -27,7 +27,7 @@
       "replaced": "^1.2.0"
     },
     "kanren-logic": {
-      "signature": "b5e4461667a0c5a6c05bee5243ed3de2",
+      "signature": "ccc0a33673e2762d836870b99cb4dc18",
       "file": true
     }
   }

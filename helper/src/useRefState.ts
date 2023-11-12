@@ -1,4 +1,4 @@
-import { useRef } from './useRef'
+import { useAtomBind } from './useRef'
 import { useChange } from './useState'
 import { useCallback } from './useCallback'
 import { emptyArray } from 'better-react'
@@ -8,7 +8,7 @@ export function useRefState<T>(init: T): RefState<T>
 export function useRefState() {
   const [init, trans] = arguments
   const [state, setState] = useChange(init, trans)
-  const lock = useRef(state)
+  const lock = useAtomBind(state)
 
   const setValue = useCallback((value) => {
     if (value != lock.get()) {

@@ -1,5 +1,5 @@
 import { KPair, KType, List, KSymbol, kanren, toList, toPairs } from "./kanren"
-import { BaseQue, ParseFunGet, QueArray, andRuleGet, manyRuleGet, matchEnd, matchVS, orRuleGet, ruleGet, ruleGetSelf } from "./tokenParser"
+import { BaseQue, ParseFunGet, QueArray, andRuleGet, arraySplit, manyRuleGet, matchEnd, matchVS, orRuleGet, ruleGet, ruleGetSelf } from "./tokenParser"
 import { LToken } from "./tokenize"
 
 type LString = {
@@ -430,6 +430,150 @@ export function parseQuery(tokens: LToken[]) {
     errorAreas
   }
 }
+
+
+const specialTokens = [',', ';', '|']
+export function parseNewQuery(tokens: LToken[]) {
+  const errorAreas: ErrorArea[] = []
+  const filterTokens = getFilterTokens(tokens)
+  const result = queryRuleGet(new BaseQue(filterTokens))
+  let ast: AtomExp | undefined = undefined
+  let query: CacheValue = null
+  if (result) {
+    const list = toSplitAndList(result.value)
+    ast = buildOneQuery(list)
+    if (ast) {
+      mergeErrorAreas(ast, errorAreas)
+      query = evalToExp(ast)
+    }
+  }
+  return {
+    ast,
+    query,
+    errorAreas
+  }
+}
+
+function buildOneQuery(list: [LBlock | undefined, AtomExp][], begin = 0) {
+  let ret = list[begin]?.[1]
+  for (let i = begin + 1; i < list.length; i++) {
+    const row = list[i]
+    if (row[0]) {
+      ret = {
+        type: "()",
+        begin: ret.begin,
+        end: row[1].end,
+        errors: [],
+        children: [
+          ret,
+          row[0],
+          row[1]
+        ]
+      }
+    }
+  }
+  return ret
+}
+
+
+
+export function parseNewRule(tokens: LToken[]) {
+  const errorAreas: ErrorArea[] = []
+  const filterTokens = getFilterTokens(tokens)
+  const result = queryRuleGet(new BaseQue(filterTokens))
+  let rule: LRule | null = null
+  let asts: AtomExp[] = []
+  if (result) {
+    const list = toSplitAndList(result.value)
+    const head = list[0]?.[1]
+    const splitToken = list[1]?.[0]
+    const body = buildOneQuery(list, 1)
+
+    if (splitToken?.value == ',') {
+      splitToken.errors.push('不允许使用逗号分割')
+    }
+    if (head) {
+      rule = {
+        type: "rule",
+        begin: result.value[0].begin,
+        end: result.value.at(-1)?.end!,
+        head: evalToExp(head),
+        body: body ? evalToExp(body) : undefined,
+        isCut: splitToken?.value == '|'
+      }
+      asts.push(head)
+      if (splitToken) {
+        asts.push(splitToken)
+      }
+      if (body) {
+        asts.push(body)
+      }
+    }
+    // mergeErrorAreas(ast, errorAreas)
+    // query = evalToExp(ast)
+  }
+  return {
+    asts,
+    rule,
+    errorAreas
+  }
+}
+
+
+function toSplitAndList(asts: AtomExp[]) {
+  let lasstAst: LBlock | undefined
+  let lastIdx = 0
+  const list: [LBlock | undefined, AtomExp][] = []
+  for (let i = 0; i < asts.length; i++) {
+    const ast = asts[i]
+    if (ast.type == 'block' && specialTokens.includes(ast.value)) {
+      const before = asts.slice(lastIdx, i)
+      if (!before.length) {
+        ast.errors.push('分割符号前面需要一定的内容')
+      } else {
+        const beforeExp = judgeASplit(before)
+        if (beforeExp) {
+          list.push([lasstAst, beforeExp])
+        }
+      }
+      lastIdx = i + 1
+      lasstAst = ast
+    }
+  }
+  const last = asts.slice(lastIdx)
+  if (!last.length) {
+    lasstAst?.errors.push("分割符号后面需要一定的内容")
+  } else {
+    const beforeExp = judgeASplit(last)
+    if (beforeExp) {
+      list.push([lasstAst, beforeExp])
+    }
+  }
+  return list
+}
+
+function judgeASplit(before: AtomExp[]): AtomExp | undefined {
+  if (before.length == 1 && before[0].type == '()') {
+    //优先级
+    const one = before[0]
+    const list = toSplitAndList(one.children)
+    const exp = buildOneQuery(list)
+    exp.begin = one.begin
+    exp.end = one.end
+    exp.errors = exp.errors.concat(one.errors)
+    return exp
+  } else {
+    //普通函子
+    return {
+      type: "()",
+      begin: before[0].begin,
+      end: before.at(-1)!.end,
+      children: before,
+      errors: []
+    }
+  }
+}
+
 
 function toStringEscape(str: string, quote: string, errors: string[]) {
   const vs: string[] = []

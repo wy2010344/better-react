@@ -1,10 +1,11 @@
-import { createUseReducer, renderAnimateExit, useMemo, useVersion } from "better-react-helper";
-import { useTransitionValue } from "better-react-dom-helper";
+import { createUseReducer, renderExitAnimate, useMemo, useVersion } from "better-react-helper";
+import { useLifeTrans } from "better-react-dom-helper";
 
 import { dom } from "better-react-dom";
 import { faker } from '@faker-js/faker';
 import { css } from "stylis-creater";
 import { cns } from "better-react-dom-helper";
+import { emptyFun } from "better-react";
 
 
 
@@ -71,7 +72,7 @@ export function renderTodoList() {
     }
   }).text`追加`
   const [model, dispatch] = useList(0)
-  renderAnimateExit(model.list, {
+  renderExitAnimate(model.list, {
     getKey(v) {
       return v.id
     },
@@ -89,15 +90,15 @@ export function renderTodoList() {
     onExitComplete() {
       console.log("退出完成")
     },
-  }, function (v, arg) {
-    const className = useTransitionValue(!arg.exiting, {
-      beforeEnter: 'before-enter',
-      enter: 'enter',
-      leave: 'leave'
+  }, function (v) {
+    const className = useLifeTrans(v.exiting, {
+      from: 'before-enter',
+      show: 'enter',
+      exit: 'leave'
     })
     const [version, updateVersion] = useVersion()
     const opacity = useMemo(() => {
-      return Math.random()
+      return 1// Math.random()
     }, [version])
     dom.div({
       className: cns(className, rowClsName),
@@ -107,16 +108,14 @@ export function renderTodoList() {
       align-items:center;
       opacity:${opacity};
       `,
-      onTransitionEnd(event) {
-        arg.resolve()
-      },
+      onTransitionEnd: v.resolve,
     }).render(function () {
-      dom.span().text`${v.id}---${v.value}`
+      dom.span().text`${v.value.id}---${v.value.value}`
       dom.button({
         onClick() {
           dispatch({
             method: "remove",
-            id: v.id
+            id: v.value.id
           })
         }
       }).text`删除`
@@ -124,7 +123,7 @@ export function renderTodoList() {
         onClick() {
           dispatch({
             method: "replace",
-            id: v.id,
+            id: v.value.id,
             value: faker.animal.rabbit()
           })
         }

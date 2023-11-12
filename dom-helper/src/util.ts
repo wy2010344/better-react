@@ -61,7 +61,7 @@ export function chooseFileThen({
   input.click();
 }
 
-export function cns(...vs: (string | null | undefined)[]) {
+export function cns(...vs: (string | null | undefined | boolean)[]) {
   return vs.filter((v) => v).join(" ");
 }
 
@@ -85,7 +85,7 @@ export function delayAnimationFrame() {
   })
 }
 
-export function stringifyStyle(style: React.CSSProperties) {
+export function stringifyStyle(style: CSSProperties) {
   const s = Object.entries(style).map(function (v) {
     return `${underlineToCamel(v[0])}:${v[1]};`
   }).join("")

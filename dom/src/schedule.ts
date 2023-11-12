@@ -37,7 +37,7 @@ function runTaskSync(fun: EmptyFun) {
   }
 }
 
-function runTask(fun: EmptyFun, realTime: boolean) {
+function runTask(fun: EmptyFun, realTime?: boolean) {
   if (realTime) {
     runTaskSync(fun)
   } else {
@@ -46,18 +46,15 @@ function runTask(fun: EmptyFun, realTime: boolean) {
 }
 
 export function getScheduleAskTime({
-  taskTimeThreadhold = 5,
-  renderTimeThreadhold = 16
+  taskTimeThreadhold = 5
 }: {
   taskTimeThreadhold?: number
-  renderTimeThreadhold?: number
 }): AskNextTimeWork {
   return function ({
     askNextWork,
     realTime
   }) {
     let onWork = false
-    let lastRenderTime = getTime()
     /**
      * 执行queue中的任务
      * 本次没执行完,下次执行.
@@ -71,25 +68,22 @@ export function getScheduleAskTime({
           callback()
           callback = askNextWork()
         } else {
-          if (getTime() < deadline) {
-            if (callback.isRender) {
-              const thisRenderTime = getTime()
-              if (thisRenderTime - lastRenderTime < renderTimeThreadhold) {
-                //和上次的间隔需要大于16ms,因为刷新频率,放到下一次去执行
-                runTask(flush, realTime.get())
-                break
-              }
-              callback()
-              //console.log("render", thisRenderTime - lastRenderTime)
-              lastRenderTime = thisRenderTime
-            } else {
-              callback()
-            }
-            callback = askNextWork()
+          if (callback.isRender) {
+            //主要是保证每次render与上一次render必然在不同的任务,不需要requestAnimationFrame,直接调用宏任务
+            runTask(() => {
+              (callback as any)!()
+              flush()
+            })
+            break;
           } else {
-            //需要中止,进入宏任务.原列表未处理完
-            runTask(flush, realTime.get())
-            break
+            if (getTime() < deadline) {
+              callback()
+              callback = askNextWork()
+            } else {
+              //需要中止,进入宏任务.原列表未处理完
+              runTask(flush)
+              break
+            }
           }
         }
       }

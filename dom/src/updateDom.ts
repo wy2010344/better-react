@@ -46,13 +46,13 @@ export class FiberNode implements FiberAbsNode {
   static createDomWith(node: Node, isPortal?: boolean) {
     return new FiberNode(node, updateProps, isPortal)
   }
-  static createDom(type: string, isPortal?: boolean) {
+  static createDom<T extends DomElementType>(type: T, isPortal?: boolean) {
     return FiberNode.createDomWith(
       document.createElement(type),
       isPortal
     )
   }
-  static portalCreateDom(type: string) {
+  static portalCreateDom<T extends DomElementType>(type: T) {
     return FiberNode.createDom(type, true)
   }
   static createSvgWith(node: Node, isPortal?: boolean) {
@@ -62,13 +62,13 @@ export class FiberNode implements FiberAbsNode {
       isPortal
     )
   }
-  static createSvg(type: string, isPortal?: boolean) {
+  static createSvg<T extends SvgElementType>(type: T, isPortal?: boolean) {
     return FiberNode.createSvgWith(
       document.createElementNS("http://www.w3.org/2000/svg", type),
       isPortal
     )
   }
-  static portalCreateSvg(type: string) {
+  static portalCreateSvg<T extends SvgElementType>(type: T) {
     return FiberNode.createSvg(type, true)
   }
   appendAfter(value?: FindParentAndBefore): void {

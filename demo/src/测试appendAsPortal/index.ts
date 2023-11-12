@@ -1,4 +1,4 @@
-import { domOf, portalDomOf } from "better-react-dom";
+import { dom, domOf } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
 import { EmptyFun, useEffect } from "better-react";
 import { renderIf, useVersion } from "better-react-helper";
@@ -30,11 +30,11 @@ function AComponent(children: EmptyFun) {
           document.body.appendChild(div)
         }
       }, [match])
-      const div = portalDomOf("div", {
+      const div = dom.div({
         style: `
       background:red;
       `
-      }).render(function () {
+      }).asPortal().render(function () {
         useEffect(() => {
           console.log("portal初始化")
           return function () {
