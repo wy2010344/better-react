@@ -12,6 +12,7 @@ import { useEffect } from "./useEffect"
 export interface ExitModel<V> {
   value: V
   key: any
+  enterIgnore?: boolean
   exiting?: boolean
   promise: Promise<any>
   resolve(v?: any): void
@@ -91,6 +92,7 @@ export function renderExitAnimate<V>(
         key,
         hide: mode == 'wait' && destroyCount != 0,
         needCollect: true,
+        enterIgnore: enterIgnore?.(v),
         promise,
         resolve
       })

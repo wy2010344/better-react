@@ -19,41 +19,39 @@ export type ClassAndStyle = {
  * 平等替换很简单,各自作自己的配置
  */
 type TAnimateValueTime<T> = {
-  //只创建(新增)
-  from: T
-  show: T,
-  willExit?: never
-  exit?: never
-  timeout: number
-} | {
-  //只销毁,告知销毁,并配送销毁参数
-  from?: never
-  show?: never
+  //创建与销毁的配置.在销毁时仍然生效
+  from?: T
+  show?: T
   willExit?: T
-  exit: T
+  exit?: T
   timeout: number
 }
 
 export function renderOneTAnimateTime<T>(
-  value: TAnimateValueTime<T>,
-  args: {
-    onAnimateComplete?(): void
+  show: any,
+  {
+    value,
+    ...args
+  }: {
+    value: TAnimateValueTime<T>,
+    onAnimateComplete?(): void,
+    ignore?: any
   },
   render: (
-    args: T,
+    args: T | undefined,
     ext: {
       exiting?: boolean;
       promise: Promise<any>;
     }
   ) => void
 ) {
-  renderOneExitAnimate(value.from, args, function (v) {
-    const args = useLifeTransSameTime<T>(
+  renderOneExitAnimate(show, args, function (v) {
+    const ct = useLifeTransSameTime<T>(
       v.exiting,
       value as any,
       v.resolve,
-      value.timeout)!
-    render(args, v)
+      value.timeout, args.ignore)!
+    render(!v.enterIgnore ? ct : undefined, v)
   })
 }
 
@@ -73,12 +71,17 @@ type TAnimateValue<T> = {
 }
 
 export function renderOneTAnimate<T>(
-  value: TAnimateValue<T>,
-  args: {
+  show: any,
+  {
+    value,
+    ...args
+  }: {
+    value: TAnimateValue<T>,
+    ignore?: any
     onAnimateComplete?(): void
   },
   render: (
-    args: T,
+    args: T | undefined,
     ext: {
       exiting?: boolean;
       promise: Promise<any>;
@@ -86,10 +89,12 @@ export function renderOneTAnimate<T>(
     }
   ) => void
 ) {
-  renderOneExitAnimate(value.from, args, function (v) {
-    const args = useBaseLifeTransSameTime<T>(
+  renderOneExitAnimate(show, args, function (v) {
+    const ct = useBaseLifeTransSameTime<T>(
       v.exiting,
-      value as any)!
-    render(args, v)
+      value as any, {
+      disabled: args.ignore
+    })!
+    render(!v.enterIgnore ? ct : undefined, v)
   })
 }
