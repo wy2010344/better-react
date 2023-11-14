@@ -1,5 +1,7 @@
 import { useMemo } from "better-react-helper"
 import { useDom, useSvg } from "better-react-dom"
+import { stringifyStyle } from "./util"
+import { css } from "./stylis"
 
 /**
  * 
@@ -74,28 +76,21 @@ export function ToolTip({
   }, [parentRef, anchorRef, marginLeft, marginRight])
 
   return useDom("div", {
-    css: `
-  position:absolute;
-  margin-left:0px!important;
-  margin-right:0px!important;
-  >.arrow{
-    position:absolute;
-  }
-    `,
-    style: {
+    className,
+    style: stringifyStyle({
       width: width + 'px',
       bottom: bottom + 'px',
       left: left + 'px',
       backgroundColor
-    },
+    }),
     children() {
       children()
       useSvg("svg", {
         className: "arrow",
-        style: {
+        style: stringifyStyle({
           left: arrowLeft + 'px',
           bottom: '-9px'
-        },
+        }),
         width: "17",
         height: "10",
         viewBox: "0 0 17 10",
@@ -110,7 +105,14 @@ export function ToolTip({
     },
   })
 }
-
+const className = css` 
+position:absolute;
+margin-left:0px!important;
+margin-right:0px!important;
+>.arrow{
+  position:absolute;
+}
+`
 function getElementPagePosition(element: HTMLElement, parent: HTMLElement) {
   while (!element.offsetParent) {
     element = element.parentNode as HTMLElement

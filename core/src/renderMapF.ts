@@ -1,5 +1,5 @@
 import { Fiber, VirtaulDomNode, VirtualDomOperator } from "./Fiber"
-import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemoGet, useParentFiber, useEffect } from "./fc"
+import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemoGet, useParentFiber, useLevelEffect } from "./fc"
 import { emptyArray, storeRef } from "./util"
 
 ////////****useMap****////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,7 +57,7 @@ export function renderMapF<M, C>(
     const mapRef = useBaseMemoGet(createMapRef, emptyArray)();
     const oldMap = cloneMap(mapRef.get())
     const newMap = new Map<any, Fiber[]>()
-    useEffect(function () {
+    useLevelEffect(0, function () {
       mapRef.set(newMap)
     })
     const [envModel, parentFiber] = useParentFiber()

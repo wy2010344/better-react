@@ -2,7 +2,7 @@ import { useMemo } from "better-react-helper";
 import { normalPanel } from "../panel/PanelContext";
 import { mb } from "better-react-dom-helper";
 import { React, domOf } from "better-react-dom";
-import { useEffect } from "better-react";
+import { useEffect } from "better-react-helper"
 import { ContentEditableModel, contentDelete, contentEnter, contentTab, getCurrentRecord, initContentEditableModel, useContentEditable } from "./useContentEditable";
 
 

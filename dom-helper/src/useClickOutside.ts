@@ -1,4 +1,4 @@
-import { useEffect } from "better-react"
+import { useEffect } from "better-react-helper"
 import { useEvent } from 'better-react-helper'
 
 export function useClickOutside(

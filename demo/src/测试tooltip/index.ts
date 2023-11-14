@@ -1,7 +1,7 @@
 import { dom, domOf } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
-import { EmptyFun, useEffect, useGetFlushSync } from "better-react";
-import { renderIf, useChange } from "better-react-helper";
+import { EmptyFun, useGetFlushSync } from "better-react";
+import { renderIf, useChange, useEffect } from "better-react-helper";
 
 export default normalPanel(function () {
   ButtonWithToolTip(

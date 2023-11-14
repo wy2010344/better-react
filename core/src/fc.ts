@@ -21,7 +21,7 @@ export function revertParentFiber() {
 }
 const hookIndex = {
   state: 0,
-  effect: 0,
+  effects: new Map<number, number>(),
   memo: 0,
   beforeFiber: undefined as (Fiber | undefined),
   cusomer: 0
@@ -33,7 +33,7 @@ export function updateFunctionComponent(envModel: EnvModel, fiber: Fiber) {
   wipFiber[1] = fiber
 
   hookIndex.state = 0
-  hookIndex.effect = 0
+  hookIndex.effects.clear()
   hookIndex.memo = 0
 
   hookIndex.beforeFiber = undefined
@@ -141,20 +141,32 @@ export type EffectResult<T> = (void | ((deps: T) => void))
  * @param effect 
  * @param deps 
  */
-export function useEffect<T extends readonly any[] = readonly any[]>(effect: (args: T) => EffectResult<T>, deps: T): void
-export function useEffect(effect: () => EffectResult<any[]>, deps?: readonly any[]): void
-export function useEffect(effect: any, deps?: any) {
+export function useLevelEffect<T extends readonly any[] = readonly any[]>(
+  level: number,
+  effect: (args: T) => EffectResult<T>, deps: T): void
+export function useLevelEffect(
+  level: number,
+  effect: () => EffectResult<any[]>,
+  deps?: readonly any[]): void
+export function useLevelEffect(
+  level: number,
+  effect: any, deps?: any) {
   const [envModel, parentFiber] = useParentFiber()
   if (parentFiber.effectTag.get() == 'PLACEMENT') {
     //新增
-    const hookEffects = parentFiber.hookEffects || []
+    const hookEffects = parentFiber.hookEffects || new Map()
     parentFiber.hookEffects = hookEffects
     const state: HookEffect = {
       deps
     }
     const hookEffect = envModel.createChangeAtom(state)
-    hookEffects.push(hookEffect)
-    envModel.updateEffect(() => {
+    const old = hookEffects.get(level)
+    const array = old || []
+    if (!old) {
+      hookEffects.set(level, array)
+    }
+    array.push(hookEffect)
+    envModel.updateEffect(level, () => {
       state.destroy = effect(deps)
     })
   } else {
@@ -162,19 +174,23 @@ export function useEffect(effect: any, deps?: any) {
     if (!hookEffects) {
       throw new Error("原组件上不存在hookEffects")
     }
-    const index = hookIndex.effect
-    const hookEffect = hookEffects[index]
+    const index = hookIndex.effects.get(level) || 0
+    const levelEffect = hookEffects.get(level)
+    if (!levelEffect) {
+      throw new Error(`未找到该level effect ${level}`)
+    }
+    const hookEffect = levelEffect[index]
     if (!hookEffect) {
       throw new Error("出现了更多的effect")
     }
     const state = hookEffect.get()
-    hookIndex.effect = index + 1
+    hookIndex.effects.set(level, index + 1)
     if (arrayNotEqualDepsWithEmpty(state.deps, deps)) {
       const newState: HookEffect = {
         deps
       }
       hookEffect.set(newState)
-      envModel.updateEffect(() => {
+      envModel.updateEffect(level, () => {
         if (state.destroy) {
           state.destroy(state.deps)
         }

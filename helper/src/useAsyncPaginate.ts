@@ -1,9 +1,10 @@
-import { emptyFun, useEffect } from "better-react";
+import { emptyFun } from "better-react";
 import { PromiseResult, buildPromiseResultSetData, useSerialRequestLoading } from "./usePromise";
 import { useChange, useState } from "./useState";
 import { useBuildSubSetObject } from "./util";
 import { useMemo } from "./useRef";
 import { useVersionLock } from "./Lock";
+import { useEffect } from "./useEffect";
 
 /**
  * 分页其实没必要

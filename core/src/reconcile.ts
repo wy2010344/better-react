@@ -86,7 +86,7 @@ export class BatchWork {
       const that = this
       this.envModel.addDelect(that.rootFiber)
       this.envModel.reconcile(function () {
-        that.envModel.updateEffect(function () {
+        that.envModel.updateEffect(0, function () {
           that.rootFiber = undefined as any
         })
       })

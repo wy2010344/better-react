@@ -1,4 +1,4 @@
-import { useEffect } from "better-react"
+import { useEffect } from "better-react-helper"
 import { useState, useMemo, useChange, useChangeFun } from "better-react-helper"
 
 /**

@@ -1,7 +1,8 @@
-import { EmptyFun, emptyArray, renderMapF, useEffect } from "better-react";
+import { EmptyFun, emptyArray, renderMapF } from "better-react";
 import { ValueCenter, useStoreTriggerRender, useValueCenter } from "./ValueCenter";
 import { renderFragment } from "./renderFragment";
 import { arrayHasValue } from "./renderMap";
+import { useEffect } from "./useEffect";
 
 
 

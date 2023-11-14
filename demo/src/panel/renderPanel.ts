@@ -1,4 +1,4 @@
-import { useEffect } from "better-react"
+import { useEffect } from "better-react-helper"
 import { dom, domOf, useDom, useSvg } from "better-react-dom"
 import { initDrag, resizeHelper } from "./drag"
 import useResize from "./useResize"

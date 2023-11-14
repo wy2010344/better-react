@@ -12,7 +12,7 @@ export class EnvModel {
     that.realTime.set(true)
     fun()
     this.reconcile(function () {
-      that.updateEffect(function () {
+      that.updateEffect(0, function () {
         that.realTime.set(false)
       })
     })
@@ -30,9 +30,14 @@ export class EnvModel {
   addDelect(fiber: Fiber) {
     this.deletions.push(fiber)
   }
-  private updateEffects: EmptyFun[] = []
-  updateEffect(set: EmptyFun) {
-    this.updateEffects.push(set)
+  private updateEffects = new Map<number, EmptyFun[]>()
+  updateEffect(level: number, set: EmptyFun) {
+    const old = this.updateEffects.get(level)
+    const array = old || []
+    if (!old) {
+      this.updateEffects.set(level, array)
+    }
+    array.push(set)
   }
   /**批量提交需要最终确认的atoms */
   private readonly changeAtoms: ChangeAtom<any>[]
@@ -62,7 +67,7 @@ export class EnvModel {
     this.draftConsumers.forEach(draft => draft.destroy())
     this.draftConsumers.length = 0
     this.deletions.length = 0
-    this.updateEffects.length = 0
+    this.updateEffects.clear()
     // appends.length = 0
     // appendAsPortals.length = 0
   }
@@ -85,9 +90,12 @@ export class EnvModel {
     updateFixDom(rootFiber)
 
     //执行所有effect
-    const updateEffect = this.updateEffects
-    updateEffect.forEach(effect => effect())
-    updateEffect.length = 0
+    const updateEffects = this.updateEffects
+    const keys = iterableToList(updateEffects.keys()).sort()
+    for (const key of keys) {
+      updateEffects.get(key)?.forEach(effect => effect())
+    }
+    updateEffects.clear()
 
     layout()
   }
@@ -262,12 +270,15 @@ function destroyFiber(fiber: Fiber) {
   fiber.destroyed = true
   const effects = fiber.hookEffects
   if (effects) {
-    for (const effect of effects) {
-      const state = effect.get()
-      const destroy = state.destroy
-      if (destroy) {
-        destroy(state.deps)
-      }
+    const keys = iterableToList(effects.keys()).sort()
+    for (const key of keys) {
+      effects.get(key)?.forEach(effect => {
+        const state = effect.get()
+        const destroy = state.destroy
+        if (destroy) {
+          destroy(state.deps)
+        }
+      })
     }
   }
   const listeners = fiber.hookContextCosumer
@@ -275,4 +286,16 @@ function destroyFiber(fiber: Fiber) {
     listener.destroy()
   })
   fiber.dom?.destroy()
+}
+
+export function iterableToList<T>(entity: IterableIterator<T>) {
+  const vs: T[] = []
+  while (true) {
+    const value = entity.next()
+    if (value.done) {
+      break
+    }
+    vs.push(value.value)
+  }
+  return vs
 }

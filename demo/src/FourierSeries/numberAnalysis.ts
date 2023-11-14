@@ -2,7 +2,7 @@ import { domOf, svgOf } from "better-react-dom";
 import { panelWith } from "../panel/PanelContext";
 import ComplexNumber from "./ComplexNumber";
 import { renderArray, useMemo, useReducer } from "better-react-helper";
-import { useEffect } from "better-react";
+import { useEffect } from "better-react-helper"
 import { extent, min, scaleBand, scaleLinear, scalePoint } from "d3";
 import dft, { dft2 } from "./dft";
 import fastFourierTransform, { fft2, fft3, ifft2, ifft3 } from "./fft";

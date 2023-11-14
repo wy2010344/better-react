@@ -26,6 +26,7 @@ export * from './useAsyncPaginate'
 export * from './usePortal'
 export * from './renderHasValue'
 export * from './exitAnimate'
+export * from './useEffect'
 export { compileSimpleRule, createMatch, pathExactly, pathStartWith, toAbsolutePath } from "./routes/util"
 export { RouteContext, routeMatch, routeMathWithOther } from "./routes"
 

@@ -5,7 +5,7 @@ export { startTransition } from './reconcile'
 export type { REAL_WORK } from './reconcile'
 export {
   useGetCreateChangeAtom,
-  useBaseReducer, useEffect, useBaseMemoGet,
+  useBaseReducer, useLevelEffect, useBaseMemoGet,
   createContext, renderFiber, useGetFlushSync
 } from './fc'
 export {
@@ -21,7 +21,7 @@ export {
   removeEqual,
   buildRemoveWhere
 } from './util'
-export type { ReducerResult, ReducerFun } from './fc'
+export type { ReducerResult, ReducerFun, EffectResult } from './fc'
 export type {
   Fiber, Props,
   VirtaulDomNode,

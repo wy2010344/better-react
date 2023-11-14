@@ -1,5 +1,6 @@
-import { StoreRef, emptyArray, storeRef, useEffect } from "better-react";
+import { StoreRef, emptyArray, storeRef } from "better-react";
 import { useMemo, useAtomBind } from "./useRef";
+import { useEffect } from "./useEffect";
 
 
 function increase(ref: StoreRef<number>) {

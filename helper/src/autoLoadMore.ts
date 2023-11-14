@@ -1,10 +1,11 @@
-import { EmptyFun, emptyFun, useEffect } from "better-react";
+import { EmptyFun, emptyFun } from "better-react";
 import { useEvent } from "./useEvent";
 import { PromiseResult, createAndFlushAbortController } from "./usePromise";
 import { useCallback } from "./useCallback";
 import { useAlways, useAtomBind } from "./useRef";
 import { useVersionLock } from "./Lock";
 import { useReducer } from "./useReducer";
+import { useEffect } from "./useEffect";
 
 export type LoadAfterResult<T, K> = {
   list: T[]

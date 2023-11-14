@@ -1,7 +1,7 @@
 import { dom, domOf } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
-import { EmptyFun, useEffect } from "better-react";
-import { renderIf, useVersion } from "better-react-helper";
+import { EmptyFun } from "better-react";
+import { renderIf, useEffect, useVersion } from "better-react-helper";
 
 
 function AComponent(children: EmptyFun) {

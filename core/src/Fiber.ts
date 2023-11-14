@@ -56,7 +56,7 @@ export class Fiber {
     changeValue(v: any): void
   }>
   hookValue?: HookValue<any, any>[]
-  hookEffects?: StoreRef<HookEffect>[]
+  hookEffects?: Map<number, StoreRef<HookEffect>[]>
   hookMemo?: {
     get(): any,
     value: StoreRef<HookMemo<any>>

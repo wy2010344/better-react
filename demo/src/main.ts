@@ -1,8 +1,8 @@
 import App from "./App";
-import { AskNextTimeWork, useEffect } from "better-react";
+import { AskNextTimeWork, } from "better-react";
 import { renderContent, useDom, getScheduleAskTime, createRoot, domOf } from "better-react-dom";
 import { CountContext, PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
-import { useStoreTriggerRender, renderArray, useState, valueCenterOf, renderFragment, useMemo } from "better-react-helper";
+import { useStoreTriggerRender, renderArray, useState, valueCenterOf, renderFragment, useMemo, useEffect } from "better-react-helper";
 import cssHasCursor from "./learn/css-has-cursor";
 import 测试sharePortal from "./测试sharePortal";
 import contentEditableReact from "./contentEditableReact";
@@ -87,7 +87,6 @@ const destroy = createRoot(
     PanelContext.useProvider(operate)
     useEffect(() => {
       // App(operate)
-
       // ExpensiveView(operate)
       // 开发AnimatePreference(operate)
       logic(operate, null)

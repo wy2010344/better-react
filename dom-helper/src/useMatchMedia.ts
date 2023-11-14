@@ -1,4 +1,4 @@
-import { useEffect } from "better-react";
+import { useEffect } from "better-react-helper";
 import { useChange } from "better-react-helper";
 
 export function useMatchMedia(pattern: string) {

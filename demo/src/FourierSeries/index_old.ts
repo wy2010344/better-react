@@ -1,8 +1,9 @@
 import { domOf } from "better-react-dom";
 import { panelWith } from "../panel/PanelContext";
-import { emptyArray, useEffect } from "better-react";
+import { emptyArray } from "better-react";
 import ComplexNumber from "./ComplexNumber";
 import { bitLength } from "./util";
+import { useEffect } from "better-react-helper";
 
 export default panelWith({
   initWidth: 800,

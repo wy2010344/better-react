@@ -1,4 +1,4 @@
-import { useEffect } from "better-react"
+import { useEffect } from "better-react-helper"
 import { DomAttribute, domOf } from "better-react-dom"
 import { useVersion } from 'better-react-helper'
 type InputType = "input" | "textarea"

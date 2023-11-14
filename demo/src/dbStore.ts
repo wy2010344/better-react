@@ -1,4 +1,3 @@
-import { StoreRef, useGetCreateChangeAtom, CreateChangeAtom, useEffect } from "better-react"
 import { useState, useMemo, valueCenterOf, ValueCenter, useStoreTriggerRender } from "better-react-helper"
 import { TypeSystemModel } from "./typeSystem/model"
 

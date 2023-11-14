@@ -1,4 +1,4 @@
-import { useEffect } from "better-react"
+import { useEffect } from "better-react-helper"
 import { normalPanel } from "../panel/PanelContext"
 import { evaluate } from "./eval"
 import { mergeTree, parseTree, tokenize } from "./tokenize"

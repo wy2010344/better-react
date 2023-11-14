@@ -1,7 +1,7 @@
 import { useDom } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
 import { css } from 'stylis-creater'
-import { useEffect } from "better-react";
+import { useEffect } from "better-react-helper"
 
 const images = [ //https://unsplash.com/@nicolehoneywill
   "https://images.unsplash.com/photo-1537886079430-486164575c54?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=4c747db3353a34b312d05786f47930d3&auto=format&fit=crop&w=600&q=60",

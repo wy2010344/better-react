@@ -1,8 +1,8 @@
 import { panelWith } from "@/panel/PanelContext";
-import { createUseReducer, useState } from "better-react-helper";
+import { createUseReducer, useEffect, useState } from "better-react-helper";
 import { ThemeColors, defineColors } from "../../../kanren-logic/src";
 import renderPanel from "@/panel/renderPanel";
-import { emptyArray, useEffect } from "better-react";
+import { emptyArray } from "better-react";
 import { renderInput } from "better-react-dom-helper";
 import { dom } from "better-react-dom";
 

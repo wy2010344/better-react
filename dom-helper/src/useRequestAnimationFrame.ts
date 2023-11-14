@@ -1,5 +1,5 @@
-import { EmptyFun, emptyArray, useEffect } from "better-react";
-import { useEvent } from "better-react-helper";
+import { EmptyFun, emptyArray } from "better-react";
+import { useEffect, useEvent } from "better-react-helper";
 export function useRequesetAnimationFrame(run: EmptyFun) {
   useEffect(() => {
     let open = true;

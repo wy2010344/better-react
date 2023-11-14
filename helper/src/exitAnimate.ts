@@ -2,7 +2,8 @@ import { useChgAtomFun } from "./useRef"
 import { useVersion } from "./useVersion"
 import { ArrayHelper, createEmptyArray, getOutResolvePromise, removeWhere } from "./util"
 import { renderArray } from "./renderMap"
-import { emptyArray, useEffect } from "better-react"
+import { emptyArray } from "better-react"
+import { useEffect } from "./useEffect"
 
 
 
@@ -34,6 +35,7 @@ export function renderExitAnimate<V>(
     mode = 'shift',
     exitIgnore,
     onExitComplete,
+    onEnterComplete,
     enterIgnore,
     onAnimateComplete
   }: {
@@ -42,6 +44,7 @@ export function renderExitAnimate<V>(
     exitIgnore?(v: V): any
     enterIgnore?(v: V): any
     onExitComplete?(): void
+    onEnterComplete?(): void
     onAnimateComplete?(): void
   },
   render: (v: ExitModel<V>) => void
@@ -144,6 +147,17 @@ export function renderExitAnimate<V>(
         })
       }
     }
+    if (onEnterComplete) {
+      const enterPromises: Promise<any>[] = []
+      for (const add of thisAddList) {
+        if (!enterIgnore?.(add.value)) {
+          enterPromises.push(add.promise)
+        }
+      }
+      if (enterPromises.length) {
+        Promise.all(enterPromises).then(onEnterComplete)
+      }
+    }
     if (onAnimateComplete) {
       const promiseAll = destroyPromises.slice()
       for (const add of thisAddList) {
@@ -151,7 +165,9 @@ export function renderExitAnimate<V>(
           promiseAll.push(add.promise)
         }
       }
-      Promise.all(promiseAll).then(onAnimateComplete)
+      if (promiseAll.length) {
+        Promise.all(promiseAll).then(onAnimateComplete)
+      }
     }
   })
   renderArray(newCacheList.get().filter(getNotHide), getKen, function (value) {

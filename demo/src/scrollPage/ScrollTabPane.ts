@@ -1,4 +1,4 @@
-import { useEffect } from "better-react";
+import { useEffect } from "better-react-helper"
 import { useDom } from "better-react-dom";
 import { useEvent, useState, renderArray, useMemo } from "better-react-helper";
 import { initDrag } from "../panel/drag";

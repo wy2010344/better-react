@@ -1,7 +1,7 @@
 import { domOf, useDom } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
 import { renderIf, useSharePortal, useVersion } from 'better-react-helper'
-import { useEffect } from "better-react";
+import { useEffect } from "better-react-helper"
 export default function () {
 
   const { render, useAppend } = useSharePortal()

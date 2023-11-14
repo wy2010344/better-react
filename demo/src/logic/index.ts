@@ -1,5 +1,5 @@
 import { panelWith } from "../panel/PanelContext";
-import { useEffect } from "better-react";
+import { useEffect } from "better-react-helper"
 import { dom, domOf } from "better-react-dom";
 import {
   useKNewQuery, useRenderCode,

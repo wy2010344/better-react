@@ -1,6 +1,6 @@
-import { emptyArray, startTransition, useEffect, useGetCreateChangeAtom } from "better-react";
+import { emptyArray, startTransition, useGetCreateChangeAtom } from "better-react";
 import { dom, renderContent, useDom } from "better-react-dom";
-import { useEvent, useState, renderArray, renderFragment, useMemo, useAtom, useChgAtom } from "better-react-helper";
+import { useEvent, useState, renderArray, renderFragment, useMemo, useAtom, useChgAtom, useEffect } from "better-react-helper";
 import { normalPanel } from "./panel/PanelContext";
 import { renderInput, stringifyStyle } from "better-react-dom-helper";
 

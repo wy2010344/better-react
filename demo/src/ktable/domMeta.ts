@@ -1,5 +1,6 @@
-import { EmptyFun, RenderWithDep, emptyArray, useEffect } from "better-react";
+import { EmptyFun, RenderWithDep, emptyArray } from "better-react";
 import { DomAttribute, DomElement, DomElementType, React, SvgAttribute, SvgElement, SvgElementType, domOf, isSVG, svgOf } from "better-react-dom";
+import { useEffect } from "better-react-helper";
 
 type contentEditable = true | "inherit" | "plaintext-only"
 export type DomMeta<T extends DomElementType> = {

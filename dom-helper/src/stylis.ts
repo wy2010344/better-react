@@ -1,5 +1,6 @@
 import { compile, serialize, stringify, middleware, prefixer } from 'stylis'
-import { useBaseMemoGet, useEffect, emptyArray } from 'better-react'
+import { useBaseMemoGet, emptyArray, storeRef } from 'better-react'
+import { useAttrEffect, useEffect } from 'better-react-helper'
 let uid = 0
 function newClassName() {
   return 'stylis-' + uid++
@@ -9,37 +10,55 @@ function toCssFragment(className: string, css: string) {
 }
 
 export function createBodyStyleTag() {
-  const styled = document.createElement("style")
+  const style = document.createElement("style")
   const body = document.body
-  body.appendChild(styled)
-  return styled
-}
-function createStyled(css: string) {
   const className = newClassName()
-  const styled = createBodyStyleTag()
-  styled.textContent = toCssFragment(className, css)
-  styled.id = className
-  return styled
+  style.id = className
+  body.appendChild(style)
+  return style
 }
-export function genCssMap<T extends {
-  [key: string]: string
-}>(map: T): {
-  css: string
-  classMap: {
-    [key in keyof T]: string
+
+
+function genCircleMap<T extends CssNest>(
+  map: T,
+  prefix = '',
+  split = '',
+  contents: string[]
+): T {
+  if (typeof map == 'string') {
+    //不管split
+    contents.push(toCssFragment(prefix, map))
+    return prefix as any
+  } else if (Array.isArray(map)) {
+    return map.map(function (value, i) {
+      return genCircleMap(value, `${prefix}${split}${i}`, split, contents)
+    }) as any
+  } else {
+    const classMap: any = {}
+    Object.entries(map).forEach(function ([key, value]) {
+      const out = genCircleMap(value, `${prefix}${split}${key}`, split, contents)
+      classMap[key] = out
+    })
+    return classMap
   }
+}
+
+export function genCssMap<T extends CssNest>(
+  map: T,
+  prefix = '',
+  split = ''
+): {
+  css: string
+  classMap: T
 } {
-  const classMap: any = {}
-  const contents = Object.entries(map).map(function ([key, value]) {
-    const className = newClassName()
-    classMap[key] = className
-    return toCssFragment(className, value)
-  })
+  const contents: string[] = []
+  const classMap = genCircleMap(map, prefix, split, contents)
   return {
     css: contents.join('\n'),
     classMap,
   }
 }
+
 type CSSParamType = string | number | null | undefined | boolean
 export function genCSS(ts: TemplateStringsArray, vs: CSSParamType[]) {
   const xs: any[] = []
@@ -52,10 +71,29 @@ export function genCSS(ts: TemplateStringsArray, vs: CSSParamType[]) {
   return xs.join('')
 }
 
-function createEmptyStyle() {
-  return createStyled('')
+function useDeleteStyle(style: HTMLStyleElement) {
+  useEffect(() => {
+    return function () {
+      style.remove()
+    }
+  }, emptyArray)
 }
 
+interface RecordCssNest {
+  [key: string]: string | RecordCssNest | ArrayCssNest
+}
+type ArrayCssNest = (string | RecordCssNest)[]
+type CssNest = string | RecordCssNest | ArrayCssNest
+
+export function useCssMap<T extends CssNest>(map: T, split?: string) {
+  const style = useBaseMemoGet(createBodyStyleTag, emptyArray)()
+  const { css, classMap } = genCssMap(map, style.id, split)
+  useAttrEffect(() => {
+    style.textContent = css
+  }, [css])
+  useDeleteStyle(style)
+  return classMap
+}
 /**
  * 单个css,动态变化
  * @param ts 
@@ -64,28 +102,16 @@ function createEmptyStyle() {
  */
 export function useCss(ts: TemplateStringsArray, ...vs: CSSParamType[]) {
   const css = genCSS(ts, vs)
-  const style = useBaseMemoGet(createEmptyStyle, emptyArray)()
-  useEffect(() => {
-    style.textContent = toCssFragment(style.id, css)
-  }, [css])
-  useEffect(() => {
-    return function () {
-      style.remove()
-    }
-  }, emptyArray)
-  return style.id
+  return useCssMap(css)
 }
-
 /**
  * 这里是全局的,所以应该在回调里使用
  * @param map 
  * @returns 
  */
-export function cssMap<T extends {
-  [key: string]: string
-}>(map: T) {
+export function cssMap<T extends CssNest>(map: T, split?: string) {
   const styled = createBodyStyleTag()
-  const { css, classMap } = genCssMap(map)
+  const { css, classMap } = genCssMap(map, styled.id, split)
   styled.textContent = css
   return classMap
 }
@@ -97,6 +123,7 @@ export function cssMap<T extends {
  * @returns 
  */
 export function css(ts: TemplateStringsArray, ...vs: CSSParamType[]) {
-  const body = createStyled(genCSS(ts, vs))
-  return body.id
+  const style = createBodyStyleTag()
+  style.textContent = toCssFragment(style.id, genCSS(ts, vs))
+  return style.id
 }

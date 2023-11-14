@@ -1,6 +1,7 @@
-import { HookValueSet, emptyFun, quote, useEffect } from "better-react"
-import { useMemo, useAtomBind } from "./useRef"
+import { HookValueSet, emptyFun, quote } from "better-react"
+import { useMemo } from "./useRef"
 import { useRefState } from "./useRefState"
+import { useEffect } from "./useEffect"
 
 type EventHandler<T> = (v: T) => void
 export interface VirtualEventCenter<T> {

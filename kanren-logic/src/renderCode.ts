@@ -1,9 +1,9 @@
 import { React, dom } from "better-react-dom";
-import { renderFragment, renderIf, useAtom, useChange, useChgAtom, useMemo, useVersionLock } from "better-react-helper";
+import { renderFragment, renderIf, useAtom, useChange, useChgAtom, useEffect, useMemo, useVersionLock } from "better-react-helper";
 import { ContentEditableModel, contentDelete, contentEnter, contentTab, getCurrentRecord, useContentEditable } from "better-react-dom-helper";
 import { mb } from "better-react-dom-helper";
 import { LToken, keywords, tokenize } from "./tokenize";
-import { emptyArray, useEffect } from "better-react";
+import { emptyArray } from "better-react";
 import { LRule, parseNewQuery, parseNewRule, parseQuery, parseRules } from "./parse";
 import { css, useCss } from "better-react-dom-helper";
 import { useErrorContextProvide } from "./errorContext";

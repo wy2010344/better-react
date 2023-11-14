@@ -1,4 +1,4 @@
-import { render, AskNextTimeWork, VirtualDomOperator, RenderWithDep, renderFiber, emptyArray, useEffect } from "better-react";
+import { render, AskNextTimeWork, VirtualDomOperator, RenderWithDep, renderFiber, emptyArray, useLevelEffect } from "better-react";
 import { DomAttribute, DomElement, DomElementType, SvgAttribute, SvgElement, SvgElementType } from "./html";
 import { EMPTYPROPS, FiberNode, FiberText, domTagNames, emptyFun, svgTagNames, updateProps } from "./updateDom";
 export { getScheduleAskTime } from './schedule'
@@ -180,7 +180,7 @@ export class DomCreater<T extends DomElementType>{
       emptyFun
     ) as FiberNode
     const node = dom.node as unknown as DomElement<T>
-    useEffect(() => {
+    useLevelEffect(0, () => {
       node.contentEditable = contentEditable || "true"
       if (text) {
         if (as == "html") {

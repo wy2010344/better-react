@@ -1,4 +1,4 @@
-import { useEffect } from "better-react";
+import { useEffect } from "better-react-helper"
 import { renderFragment, renderGuard, renderGuardString, useState, } from "better-react-helper"
 import { domOf, renderContent, useDom } from "better-react-dom";
 import dsl from "./dsl";
