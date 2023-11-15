@@ -1,4 +1,4 @@
-import { emptyArray } from "better-react"
+import { EmptyFun, emptyArray } from "better-react"
 import { useChange, useEffect, useMemo, useVersion } from "better-react-helper"
 
 
@@ -16,7 +16,7 @@ export function useLifeTrans<T>(exiting: any, config: {
 }) {
   const [state, setState] = useChange(config.from)
   useEffect(() => {
-    requestAnimationFrame(function () {
+    requestAnimationState(function () {
       setState(config.show)
     })
   }, emptyArray)
@@ -34,24 +34,21 @@ export function useBaseLifeTransSameTime<T>(exiting: any, config: {
   show: T
   willExit?: T
   exit: T
-}, {
-  didChange,
-  disabled
-}: {
+}, ext?: {
   didChange?: (exiting?: boolean) => void
   disabled?: boolean
 }) {
-  const [state, setState] = useChange<'show' | 'hide'>()
+  const [state, setState] = useChange<'show' | 'hide' | undefined>(ext?.disabled ? 'show' : undefined)
   useEffect(() => {
-    if (disabled) {
+    if (ext?.disabled) {
       return
     }
-    requestAnimationFrame(function () {
+    requestAnimationState(function () {
       setState(exiting ? 'hide' : 'show')
-      didChange?.(exiting)
+      ext?.didChange?.(exiting)
     })
   }, [!exiting])
-  if (disabled) {
+  if (ext?.disabled) {
     return config.show
   }
   if (!state) {
@@ -110,4 +107,8 @@ export function useLifeTransSameTime<T>(
     didChange: updateVersion,
     disabled
   })
+}
+
+function requestAnimationState(fun: EmptyFun) {
+  requestAnimationFrame(fun)
 }

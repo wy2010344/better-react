@@ -1,4 +1,4 @@
-import { ExitAnimateMode, ExitModel, renderOneExitAnimate } from "better-react-helper"
+import { renderOneExitAnimate } from "better-react-helper"
 import { useBaseLifeTransSameTime, useLifeTransSameTime } from "./useTransitionValue"
 
 
@@ -51,7 +51,7 @@ export function renderOneTAnimateTime<T>(
       value as any,
       v.resolve,
       value.timeout, args.ignore)!
-    render(!v.enterIgnore ? ct : undefined, v)
+    render(ct, v)
   })
 }
 
@@ -95,6 +95,6 @@ export function renderOneTAnimate<T>(
       value as any, {
       disabled: args.ignore
     })!
-    render(!v.enterIgnore ? ct : undefined, v)
+    render(ct, v)
   })
 }

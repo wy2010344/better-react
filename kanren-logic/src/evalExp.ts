@@ -51,6 +51,23 @@ export function evalLExp(exp: CacheValue, pool: VarPool): KType {
   return exp
 }
 
+export function evalAbsExp(exp: KType, pool: VarPool): KType {
+  if (exp instanceof KPair) {
+    return KPair.of(
+      evalAbsExp(exp.left, pool),
+      evalAbsExp(exp.right, pool)
+    )
+  } else if (exp instanceof KVar) {
+    const oldV = pool.get(exp.flag)
+    if (oldV) {
+      return oldV
+    }
+    const newV = kanren.fresh()
+    pool.set(exp.flag, newV)
+    return newV
+  }
+  return exp
+}
 
 function toEvalRules(
   sub: KSubsitution,
@@ -148,6 +165,64 @@ const defineRules: EvalRule[] = [
             topEvalExpGoal(topRules, left),
             topEvalExpGoal(topRules, right)
           )
+        })
+      }
+      return out
+    },
+  },
+  //在全局中执行
+  {
+    query(sub, exp, topRules) {
+      const val = kanren.fresh()
+      const head = termToPairs(['apply', val])
+      const out = kanren.toUnify(sub, exp, head)
+      if (out) {
+        return streamBindGoal(out, function (sub) {
+          // const realVal = walk(val, sub)
+          // console.log("real-val", stringifyLog(realVal), realVal)
+          return toEvalExp(sub, topRules, val)
+        })
+      }
+      return out
+    },
+  },
+  /**
+   * 作为lambda执行
+   * (({x}{y})
+   *  ({x}+9={y}))分为左右两部分,
+   * 匹配了左边部分,去and右边
+   * 左边包括入参与返回值,右边则是仍然去全局匹配规则
+   * 可以更抽象,如变成and/or/not
+   * ({x}{y},{x}+9={y}...)
+   * 仍然能去优先级
+   * 后面是函数体,只能以逗号开头
+   * 或者多条匹配语句,用---分割,像顶层一样
+   * 就变成lambda规则,当然是最后才生成.
+   * 但如果跟顶层规则一样,是否导致内部自路由?所以模块化,模块内部调用自身的方法,还是调用到宿主的方法?
+   */
+  {
+    query(sub, exp, topRules) {
+      const lambda = kanren.fresh()
+      const val = kanren.fresh()
+      const head = termToPairs([lambda, 'apply', val])
+      const out = kanren.toUnify(sub, exp, head)
+      if (out) {
+        return streamBindGoal(out, function (sub) {
+          const realLambda = walk(lambda, sub)
+          if (realLambda instanceof KPair) {
+            const out = tryParsePair(realLambda)
+            if (out.type == 'term' && out.list.length == 2) {
+              const pool = new VarPool()
+              return kanren.toAnd(sub, function (sub) {
+                const left = evalAbsExp(out.list[0], pool)
+                return kanren.toUnify(sub, val, left)
+              }, function (sub) {
+                const right = evalAbsExp(out.list[1], pool)
+                return toEvalExp(sub, topRules, right)
+              })
+            }
+          }
+          return null
         })
       }
       return out
@@ -256,6 +331,21 @@ const defineRules: EvalRule[] = [
       }
       return null
     },
+  },
+  {
+    query(sub, exp) {
+      const val = kanren.fresh()
+      const head = termToPairs(['log', val])
+      const out = kanren.toUnify(sub, exp, head)
+      if (out) {
+        return streamBindGoal(out, function (sub) {
+          const realVal = walk(val, sub)
+          console.log(stringifyLog(realVal))
+          return kanren.success(sub)
+        })
+      }
+      return out
+    }
   },
   {
     /**

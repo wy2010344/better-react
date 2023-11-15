@@ -558,19 +558,20 @@ function judgeASplit(before: AtomExp[]): AtomExp | undefined {
     const one = before[0]
     const list = toSplitAndList(one.children)
     const exp = buildOneQuery(list)
-    exp.begin = one.begin
-    exp.end = one.end
-    exp.errors = exp.errors.concat(one.errors)
-    return exp
-  } else {
-    //普通函子
-    return {
-      type: "()",
-      begin: before[0].begin,
-      end: before.at(-1)!.end,
-      children: before,
-      errors: []
+    if (exp) {
+      exp.begin = one.begin
+      exp.end = one.end
+      exp.errors = exp.errors.concat(one.errors)
+      return exp
     }
+  }
+  //普通函子
+  return {
+    type: "()",
+    begin: before[0].begin,
+    end: before.at(-1)!.end,
+    children: before,
+    errors: []
   }
 }
 
