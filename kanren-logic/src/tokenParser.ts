@@ -294,7 +294,7 @@ export const whiteSpaceRule = manyMatch(
 
 
 
-export function arraySplit<T>(vs: T[], fun: (v: T) => any) {
+export function arraySplitInto<T>(vs: T[], fun: (v: T) => any) {
   let lastSplit: T | undefined = undefined
   let lastIdx = 0
   const list: [T | undefined, T[]][] = []
@@ -313,4 +313,21 @@ export function arraySplit<T>(vs: T[], fun: (v: T) => any) {
     first: list[0][1],
     rest: list.slice(1) as [T, T[]][]
   }
+}
+export function arraySplit<T>(vs: T[], fun: (v: T) => any) {
+  let lastSplit: T | undefined = undefined
+  let lastIdx = 0
+  const list: T[][] = []
+  for (let i = 0; i < vs.length; i++) {
+    const v = vs[i]
+    if (fun(v)) {
+      const before = vs.slice(lastIdx, i)
+      lastIdx = i + 1
+      lastSplit = v
+      list.push(before)
+    }
+  }
+  const last = vs.slice(lastIdx)
+  list.push(last)
+  return list
 }

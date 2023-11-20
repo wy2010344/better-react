@@ -3,11 +3,11 @@ import { useEffect } from "better-react-helper"
 import { dom, domOf } from "better-react-dom";
 import {
   useKNewQuery, useRenderCode,
-  VarPool, evalLExp, queryResult, useRenderResult, transLateRule, defineColors, ThemeColors, useKNewRules, useGetNewRules, useGetNew
+  VarPool, evalLExp, queryResult, useRenderResult, transLateRule, useKNewRules, useGetNew
 } from '@/kanren-logic';
-import { useChange, useMemo, useState } from "better-react-helper";
+import { useMemo } from "better-react-helper";
 import { useDragdownX } from "./dragPanel";
-import { ContentEditableModel, initContentEditableModel, renderInput } from "better-react-dom-helper";
+import { ContentEditableModel, initContentEditableModel } from "better-react-dom-helper";
 import renderColorConfig from "./colorConfig";
 import chroma from "chroma-js"
 

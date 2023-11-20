@@ -1,5 +1,6 @@
-import { renderOneExitAnimate } from "better-react-helper"
+import { renderExitAnimate, renderOneExitAnimate } from "better-react-helper"
 import { useBaseLifeTransSameTime, useLifeTransSameTime } from "./useTransitionValue"
+import { emptyArray } from "better-react"
 
 
 
@@ -38,7 +39,7 @@ export function renderOneTAnimateTime<T>(
     ignore?: any
   },
   render: (
-    args: T | undefined,
+    args: T,
     ext: {
       exiting?: boolean;
       promise: Promise<any>;
@@ -53,6 +54,78 @@ export function renderOneTAnimateTime<T>(
       value.timeout, args.ignore)!
     render(ct, v)
   })
+}
+
+
+export type FAnimateTime<T> = {
+  //没有from的时候,enter忽略
+  from?: T
+  show: T
+  willExit?: T
+  //没有exit的时候,exit忽略
+  exit?: T
+  timeout: number
+  exitTimeout?: number
+}
+export function renderOneFAnimateTime<T>(
+  show: FAnimateTime<T> | false | null | undefined,
+  {
+    defaultExit,
+    customExit,
+    ...args }: {
+      onAnimateComplete?(): void,
+      //默认的退出,也依外部最新.如果没有指定配置
+      defaultExit?: {
+        willExit?: T
+        exit: T
+        timeout?: number
+      }
+      //外部定义的退出,也依外部最新,如果没有指定配置
+      customExit?: {
+        willExit?: T
+        exit: T
+        timeout?: number
+      }
+    },
+  render: (
+    args: T,
+    ext: {
+      exiting?: boolean;
+      promise: Promise<any>;
+    }
+  ) => void
+) {
+  return renderExitAnimate<FAnimateTime<T>>(show ? [show] : emptyArray as any, getOneKey, {
+    enterIgnore: enterIgnoreNoFrom,
+    exitIgnore: defaultExit || customExit ? ignoreFalse : enterIgnoreNoFrom,
+    ...args
+  }, function (v) {
+    const ct = useLifeTransSameTime<T>(
+      v.exiting,
+      {
+        ...defaultExit,
+        ...v.value,
+        ...customExit
+      } as any,
+      v.resolve,
+      v.exiting ? customExit?.timeout || v.value.exitTimeout || v.value.timeout || defaultExit?.timeout! : v.value.timeout, !v.value.from)!
+    return render(ct, v)
+  })
+}
+
+function enterIgnoreNoFrom(v: {
+  from?: any
+}) {
+  return !v.from
+}
+function exitIgnoreNoExit(v: {
+  exit?: any
+}) {
+  return !v.exit
+}
+
+function getOneKey() {
+  return 1
 }
 
 
@@ -97,4 +170,63 @@ export function renderOneTAnimate<T>(
     })!
     render(ct, v)
   })
+}
+export type FAnimateConfig<T> = {
+  //没有from的时候,enter忽略
+  from?: T
+  show: T
+  willExit?: T
+  //没有exit的时候,exit忽略
+  exit?: T
+}
+
+
+
+export function renderOneFAnimate<T>(
+  show: FAnimateConfig<T> | false | null | undefined,
+  {
+    defaultExit,
+    customExit,
+    ...args
+  }: {
+    onAnimateComplete?(): void,
+    //默认的退出,也依外部最新.如果没有指定配置
+    defaultExit?: {
+      willExit?: T
+      exit: T
+    }
+    //外部定义的退出,也依外部最新,如果没有指定配置
+    customExit?: {
+      willExit?: T
+      exit: T
+    }
+  },
+  render: (
+    args: T,
+    ext: {
+      exiting?: boolean;
+      promise: Promise<any>;
+    }
+  ) => void
+) {
+  return renderExitAnimate<FAnimateConfig<T>>(show ? [show] : emptyArray as any, getOneKey, {
+    enterIgnore: enterIgnoreNoFrom,
+    exitIgnore: defaultExit || customExit ? ignoreFalse : exitIgnoreNoExit,
+    ...args
+  }, function (v) {
+    const ct = useBaseLifeTransSameTime<T>(
+      v.exiting,
+      {
+        ...defaultExit,
+        ...v.value,
+        ...customExit
+      } as any, {
+      disabled: !v.value.from
+    })!
+    return render(ct, v)
+  })
+}
+
+function ignoreFalse() {
+  return false
 }

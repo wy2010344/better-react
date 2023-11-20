@@ -129,6 +129,35 @@ export function queryResult(allRule: List<EvalRule>, exp: KType) {
   return toEvalExp(null, allRule, exp)
 }
 
+
+function circleMatch(real: KType, sub: KSubsitution, topRules: List<EvalRule>, val: KType): Stream<KSubsitution> {
+  if (real instanceof KPair) {
+    const first = real.left
+    if (first instanceof KPair) {
+      const out = tryParsePair(first)
+      if (out.type == 'term' && out.list.length == 3) {
+        //可以允许少于3,跟rule一样
+        const center = out.list[1]
+        const match = center == ';' ? kanren.toOr : center == '|' ? kanren.toCut : undefined
+        if (match) {
+          return match(sub, function (sub) {
+            const pool = new VarPool()
+            return kanren.toAnd(sub, function (sub) {
+              const left = evalAbsExp(out.list[0], pool)
+              return kanren.toUnify(sub, val, left)
+            }, function (sub) {
+              const right = evalAbsExp(out.list[2], pool)
+              return toEvalExp(sub, topRules, right)
+            })
+          }, function (sub) {
+            return circleMatch(real.right, sub, topRules, val)
+          })
+        }
+      }
+    }
+  }
+  return null
+}
 function termToPairs<T>(list: T[]) {
   return KPair.of(
     KPair.of(
@@ -199,6 +228,15 @@ const defineRules: EvalRule[] = [
    * 或者多条匹配语句,用---分割,像顶层一样
    * 就变成lambda规则,当然是最后才生成.
    * 但如果跟顶层规则一样,是否导致内部自路由?所以模块化,模块内部调用自身的方法,还是调用到宿主的方法?
+   * 其实是类似object,不能自调用/访问
+   * 因此是列表的
+   * [
+   *  a b c
+   *  ;fa aweffea
+   *  ---
+   *  b c d
+   *  |fawe awew w
+   * ]
    */
   {
     query(sub, exp, topRules) {
@@ -209,20 +247,7 @@ const defineRules: EvalRule[] = [
       if (out) {
         return streamBindGoal(out, function (sub) {
           const realLambda = walk(lambda, sub)
-          if (realLambda instanceof KPair) {
-            const out = tryParsePair(realLambda)
-            if (out.type == 'term' && out.list.length == 2) {
-              const pool = new VarPool()
-              return kanren.toAnd(sub, function (sub) {
-                const left = evalAbsExp(out.list[0], pool)
-                return kanren.toUnify(sub, val, left)
-              }, function (sub) {
-                const right = evalAbsExp(out.list[1], pool)
-                return toEvalExp(sub, topRules, right)
-              })
-            }
-          }
-          return null
+          return circleMatch(realLambda, sub, topRules, val)
         })
       }
       return out
@@ -330,6 +355,37 @@ const defineRules: EvalRule[] = [
         })
       }
       return null
+    },
+  },
+  {
+    //promise then
+    query(sub, exp, topRules) {
+      const promiseVar = kanren.fresh()
+      const varVal = kanren.fresh()
+      const callbackVar = kanren.fresh()
+      const head = termToPairs([promiseVar, 'then', varVal, callbackVar])
+      const out = kanren.toUnify(sub, exp, head)
+      if (out) {
+        return streamBindGoal(out, function (sub) {
+          const realPromise = walk(promiseVar, sub)
+          const reallCallback = walk(callbackVar, sub)
+          const realVar = walk(varVal, sub)
+          if (realPromise instanceof Promise) {
+            realPromise.then(function (key) {
+              // console.log("ddd", realVar, key)
+              if (realVar instanceof KVar) {
+                const newSub = extendSubsitution(realVar, key, sub)
+                toEvalExp(newSub, topRules, reallCallback)
+              } else if (realVar == key) {
+                toEvalExp(sub, topRules, reallCallback)
+              }
+            })
+            return kanren.success(sub)
+          }
+          return null
+        })
+      }
+      return out
     },
   },
   {

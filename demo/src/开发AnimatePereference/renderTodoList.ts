@@ -1,9 +1,8 @@
 import { createUseReducer, renderExitAnimate, useMemo, useVersion } from "better-react-helper";
-import { useLifeTrans } from "better-react-dom-helper";
+import { css, useLifeTrans } from "better-react-dom-helper";
 
 import { dom } from "better-react-dom";
 import { faker } from '@faker-js/faker';
-import { css } from "stylis-creater";
 import { cns } from "better-react-dom-helper";
 import { emptyFun } from "better-react";
 
@@ -72,10 +71,7 @@ export function renderTodoList() {
     }
   }).text`追加`
   const [model, dispatch] = useList(0)
-  renderExitAnimate(model.list, {
-    getKey(v) {
-      return v.id
-    },
+  renderExitAnimate(model.list, v => v.id, {
     mode: "wait",
     // mode: "pop",
     enterIgnore(v) {

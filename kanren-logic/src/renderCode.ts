@@ -4,13 +4,10 @@ import { ContentEditableModel, contentDelete, contentEnter, contentTab, getCurre
 import { mb } from "better-react-dom-helper";
 import { LToken, keywords, tokenize } from "./tokenize";
 import { emptyArray } from "better-react";
-import { LRule, parseNewQuery, parseNewRule, parseQuery, parseRules } from "./parse";
-import { css, useCss } from "better-react-dom-helper";
+import { parseNewQuery, parseNewRule, parseQuery, parseRules, pserNewRules } from "./parse";
+import { useCss } from "better-react-dom-helper";
 import { useErrorContextProvide } from "./errorContext";
 import { AreaAtom, buildViewPairs, isAreaCode } from "./buildViewPairs";
-import { EvalRule, transLateRule } from "./evalExp";
-import { List } from "./kanren";
-import { arraySplit } from "./tokenParser";
 
 type ColorWithBack = {
   background?: string
@@ -245,16 +242,7 @@ export function useGetNew<T>(getCache: () => T, deps?: any[]) {
     return cache
   }
 }
-export function useGetNewRules(getCaches: () => string[], deps?: any[]) {
-  return useGetNew(function () {
-    const list = getCaches().map(value => {
-      const tokens = tokenize(value)
-      const { errorAreas, rule } = parseNewRule(tokens)
-      return rule
-    }).filter(v => v) as LRule[]
-    const cache = transLateRule(list)
-  })
-}
+
 export function useKNewRule(value: string) {
   return useMemo(() => {
     const tokens = tokenize(value)
@@ -269,24 +257,9 @@ export function useKNewRule(value: string) {
 export function useKNewRules(value: string) {
   return useMemo(() => {
     const tokens = tokenize(value)
-    const { first, rest } = arraySplit(tokens, v => v.type == 'block' && v.value == '---')
-    const { errorAreas, rule, asts } = parseNewRule(first)
-    const rules: LRule[] = []
-    if (rule) {
-      rules.push(rule)
-    }
-    let allErrorAreas = [...errorAreas]
-    let allAsts = [...asts]
-    for (let i = 0; i < rest.length; i++) {
-      const { errorAreas, rule, asts } = parseNewRule(rest[i][1])
-      if (rule) {
-        rules.push(rule)
-      }
-      allErrorAreas = [...allErrorAreas, ...errorAreas]
-      allAsts = [...allAsts, ...asts]
-    }
+    const { rules, errorAreas, asts } = pserNewRules(tokens)
     return {
-      list: buildViewPairs(tokens, allAsts, allErrorAreas),
+      list: buildViewPairs(tokens, asts, errorAreas),
       rules
     }
   }, [value])

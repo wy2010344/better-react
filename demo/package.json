@@ -29,7 +29,6 @@
     "jsstore": "^4.5.4",
     "kanren-logic": "file:.yalc/kanren-logic",
     "motion": "^10.11.0",
-    "stylis-creater": "file:.yalc/stylis-creater",
     "topojson": "^3.0.2",
     "xml-js": "^1.6.11",
     "xml-reader": "^2.4.3",

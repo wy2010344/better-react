@@ -1845,10 +1845,10 @@ bcrypt-pbkdf@^1.0.0:
   dependencies:
     tweetnacl "^0.14.3"
 
-better-react@^1.2.4:
-  version "1.2.4"
-  resolved "https://registry.npmjs.org/better-react/-/better-react-1.2.4.tgz"
-  integrity sha512-L38yHL6kCBDmOWGhzWKnyui1TKssxoG2OHjB/N9bMkIlnGLEq733Fw86p+2feyR+YaZoDoRgAv/LQJ+o43+/rw==
+better-react@^1.2.5:
+  version "1.2.5"
+  resolved "https://registry.npmjs.org/better-react/-/better-react-1.2.5.tgz"
+  integrity sha512-CSZCHNlMRqIjAp4O8/0Fw2DvpMQIaFfGLwi1Z9S2NcIAkx3nI7/ERVLhJrRhBKSNQInKfwZRPjGwWT8K0Lb6fA==
 
 binary-extensions@^2.0.0:
   version "2.2.0"
@@ -2285,11 +2285,6 @@ cssstyle@^2.0.0:
   integrity sha512-AZL67abkUzIuvcHqk7c09cezpGNcxUxU4Ioi/05xHk4DQeTkWmGYftIE6ctU6AEt+Gn4n1lDStOtj7FKycP71A==
   dependencies:
     cssom "~0.3.6"
-
-csstype@^3.1.0:
-  version "3.1.0"
-  resolved "https://registry.npmjs.org/csstype/-/csstype-3.1.0.tgz"
-  integrity sha512-uX1KG+x9h5hIJsaKR9xHUeUraxf8IODOwq9JLNPq6BwB04a/xgpq3rcx47l5BZu5zBPlgD342tdke3Hom/nJRA==
 
 damerau-levenshtein@^1.0.7:
   version "1.0.8"

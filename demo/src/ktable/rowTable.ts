@@ -34,7 +34,7 @@ export function renderRowTable({
   }
 }) {
   domOf("div", {
-    style: stringifyStyle(style)
+    style: style ? stringifyStyle(style) : ''
   }).render(function () {
     //顶部
     domOf("div", {
@@ -82,7 +82,7 @@ export function renderRowTable({
 
     renderMax(dataSize, getKey, function (i) {
       domOf("div", {
-        style: stringifyStyle(rowStyle),
+        style: rowStyle ? stringifyStyle(rowStyle) : '',
       }).render(function () {
         //左边
         domOf("div", {

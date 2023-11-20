@@ -1,11 +1,9 @@
 import { createContext } from "better-react";
 import { createUseReducer, useAtomFun, renderExitAnimate, ExitModel, } from "better-react-helper";
-import { useLifeTransSameTime } from "better-react-dom-helper";
+import { css, useLifeTransSameTime } from "better-react-dom-helper";
 import { dom } from "better-react-dom";
 import { faker } from "@faker-js/faker";
 import { HookValueSet } from "better-react";
-import { css } from "stylis-creater";
-
 
 
 
@@ -125,10 +123,7 @@ export function renderPages() {
       exit: 'left'
     }
     const balseClsName = animation == '3d' ? base3DClsName : baseTransClsName
-    renderExitAnimate([page], {
-      getKey(v) {
-        return v.id
-      },
+    renderExitAnimate([page], v => v.id, {
       mode: method == 'pop' ? 'pop' : 'shift',
       // mode: animation == '3d' ? 'wait' : method == 'pop' ? 'pop' : 'shift',
       // onAnimateComplete() {

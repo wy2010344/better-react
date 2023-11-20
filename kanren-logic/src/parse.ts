@@ -444,7 +444,7 @@ export function parseNewQuery(tokens: LToken[]) {
     ast = buildOneQuery(list)
     if (ast) {
       mergeErrorAreas(ast, errorAreas)
-      query = evalToExp(ast)
+      query = evalToExp(simpleBody(ast))
     }
   }
   return {
@@ -476,7 +476,122 @@ function buildOneQuery(list: [LBlock | undefined, AtomExp][], begin = 0) {
 }
 
 
+/**
+ * @todo 嵌套的规则 其实是类似js的object
+ * 声明时,使用[|abcd ds wefewf]这样的方式来简化,相当于特殊化[]
+ * 但是调用时却有问题,可以动态构造
+ * 否则是动态解析组合成数据结构... 
+ * 因为用---分割,所以必要是吧
+ * @param tokens 
+ * @returns 
+ */
+export function pserNewRules(tokens: LToken[]) {
+  const errorAreas: ErrorArea[] = []
+  const filterTokens = getFilterTokens(tokens)
+  const result = queryRuleGet(new BaseQue(filterTokens))
+  const rules: LRule[] = []
+  let asts: AtomExp[] = []
+  if (result) {
+    const values = arraySplit(result.value, v => v.type == 'block' && v.value == '---')
+    for (const value of values) {
+      const rule = toRule(value, asts)
+      if (rule) {
+        rules.push(rule)
+      }
+    }
+  }
+  return {
+    asts,
+    rules,
+    errorAreas
+  }
+}
 
+
+function simpleBody(body: AtomExp): AtomExp {
+  if (body.type == '[]' && !body.last) {
+    const first = body.children[0]
+    if (first?.type == 'block' && first.value == '@') {
+      const subRules = body.children.slice()
+      subRules.shift()
+      const values = arraySplit(subRules, v => v.type == 'block' && v.value == '---')
+      return {
+        type: "[]",
+        begin: body.begin,
+        end: body.end,
+        errors: body.errors,
+        children: values.filter(v => v.length).map(value => {
+          const list = toSplitAndList(value)
+          const head = list[0]?.[1]
+          const splitToken = list[1]?.[0]
+          const body = buildOneQuery(list, 1)
+          const thisExp = [
+            simpleBody(head)
+          ]
+          if (splitToken) {
+            thisExp.push(splitToken)
+          }
+          if (body) {
+            thisExp.push(simpleBody(body))
+          }
+          return {
+            type: "()",
+            begin: value[0].begin,
+            end: value.at(-1)!.end,
+            errors: [],
+            children: thisExp
+          }
+        })
+      }
+    }
+  }
+
+  if (body.type == '[]') {
+    return {
+      ...body,
+      children: body.children.map(simpleBody),
+      last: body.last ? simpleBody(body.last) : undefined
+    }
+  } else if (body.type == '()') {
+    return {
+      ...body,
+      children: body.children.map(simpleBody)
+    }
+  }
+
+  return body
+}
+
+function toRule(value: AtomExp[], asts: AtomExp[]) {
+  const list = toSplitAndList(value)
+  const head = list[0]?.[1]
+  const splitToken = list[1]?.[0]
+  const body = buildOneQuery(list, 1)
+  let rule: LRule | null = null
+  if (splitToken?.value == ',') {
+    splitToken.errors.push('不允许使用逗号分割')
+  }
+  if (head) {
+    const headExp = simpleBody(head)
+    const bodyExp = body ? simpleBody(body) : undefined
+    rule = {
+      type: "rule",
+      begin: value[0].begin,
+      end: value.at(-1)?.end!,
+      head: evalToExp(headExp),
+      body: bodyExp ? evalToExp(bodyExp) : undefined,
+      isCut: splitToken?.value == '|'
+    }
+    asts.push(headExp)
+    if (splitToken) {
+      asts.push(splitToken)
+    }
+    if (bodyExp) {
+      asts.push(bodyExp)
+    }
+  }
+  return rule
+}
 export function parseNewRule(tokens: LToken[]) {
   const errorAreas: ErrorArea[] = []
   const filterTokens = getFilterTokens(tokens)
@@ -484,33 +599,7 @@ export function parseNewRule(tokens: LToken[]) {
   let rule: LRule | null = null
   let asts: AtomExp[] = []
   if (result) {
-    const list = toSplitAndList(result.value)
-    const head = list[0]?.[1]
-    const splitToken = list[1]?.[0]
-    const body = buildOneQuery(list, 1)
-
-    if (splitToken?.value == ',') {
-      splitToken.errors.push('不允许使用逗号分割')
-    }
-    if (head) {
-      rule = {
-        type: "rule",
-        begin: result.value[0].begin,
-        end: result.value.at(-1)?.end!,
-        head: evalToExp(head),
-        body: body ? evalToExp(body) : undefined,
-        isCut: splitToken?.value == '|'
-      }
-      asts.push(head)
-      if (splitToken) {
-        asts.push(splitToken)
-      }
-      if (body) {
-        asts.push(body)
-      }
-    }
-    // mergeErrorAreas(ast, errorAreas)
-    // query = evalToExp(ast)
+    rule = toRule(result.value, asts)
   }
   return {
     asts,
