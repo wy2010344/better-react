@@ -127,10 +127,13 @@ export function useRenderExitAnimate<V>(
         }
       }
     }
-    if (destroyPromises.length && onExitComplete) {
+    const onExitWait = mode == 'wait' && thisAddList.length != 0
+    if (destroyPromises.length && (onExitComplete || onExitWait)) {
       const allDestroyPromise = Promise.all(destroyPromises)
-      allDestroyPromise.then(onExitComplete)
-      if (mode == 'wait' && thisAddList.length != 0) {
+      if (onExitComplete) {
+        allDestroyPromise.then(onExitComplete)
+      }
+      if (onExitWait) {
         allDestroyPromise.then(function () {
           //将本次更新全部标记为展示.
           let n = 0
