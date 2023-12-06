@@ -1,5 +1,5 @@
 import { EmptyFun, emptyArray } from "better-react"
-import { useChange, useEffect, useMemo, useVersion } from "better-react-helper"
+import { run, useChange, useEffect, useMemo, useVersion } from "better-react-helper"
 
 
 /**
@@ -25,6 +25,7 @@ export function useLifeTrans<T>(exiting: any, config: {
 
 /**
  * 这个解决了同时性问题,但是会多render一次.
+ * 如果状态是flushSync,则会出现裂口
  * @param exiting 
  * @param config 
  * @returns 
@@ -32,18 +33,23 @@ export function useLifeTrans<T>(exiting: any, config: {
 export function useBaseLifeTransSameTime<T>(exiting: any, config: {
   from: T,
   show: T
-  willExit?: T
+  willExit?: T | boolean
   exit: T
 }, ext?: {
   didChange?: (exiting?: boolean) => void
   disabled?: boolean
 }) {
   const [state, setState] = useChange<'show' | 'hide' | undefined>(ext?.disabled ? 'show' : undefined)
+  const willExit = config.willExit
+    ? typeof config.willExit == 'boolean'
+      ? config.show
+      : config.willExit
+    : config.willExit
   useEffect(() => {
     if (ext?.disabled) {
       return
     }
-    if (exiting && !config.willExit) {
+    if (exiting && !willExit) {
       ext?.didChange?.(exiting)
       return
     }
@@ -60,7 +66,7 @@ export function useBaseLifeTransSameTime<T>(exiting: any, config: {
   }
   if (state == 'show') {
     if (exiting) {
-      return config.willExit || config.exit
+      return willExit || config.exit
     }
     return config.show
   }
@@ -99,7 +105,7 @@ export function useLifeTransSameTime<T>(
   config: {
     from: T,
     show: T
-    willExit?: T
+    willExit?: T | boolean
     exit: T
   },
   resolve: () => void,
@@ -113,6 +119,13 @@ export function useLifeTransSameTime<T>(
   })
 }
 
-function requestAnimationState(fun: EmptyFun) {
-  requestAnimationFrame(fun)
+export function requestAnimationState(fun: EmptyFun) {
+  cacheList.push(fun)
+  if (cacheList.length == 1) {
+    requestAnimationFrame(function () {
+      cacheList.forEach(run)
+      cacheList.length = 0
+    })
+  }
 }
+const cacheList: EmptyFun[] = []

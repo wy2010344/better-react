@@ -17,7 +17,7 @@ export {
   emptyObject,
   emptyFun,
   expandFunCall,
-  expandFunReturn,
+  run,
   removeEqual,
   buildRemoveWhere
 } from './util'
@@ -40,7 +40,6 @@ export function render<T>(
   dom: VirtaulDomNode<T>,
   props: T,
   render: () => void,
-  layout: () => void,
   getAsk: AskNextTimeWork
 ) {
   const envModel = new EnvModel()
@@ -52,8 +51,7 @@ export function render<T>(
   })
   const batchWork = new BatchWork(
     rootFiber,
-    envModel,
-    layout
+    envModel
   )
   const reconcile = getReconcile(batchWork, envModel, getAsk)
   envModel.reconcile = reconcile

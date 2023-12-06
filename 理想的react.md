@@ -172,17 +172,11 @@ useMap/useOne——组件大写,不再用use
 
 有更新未到npm:
 better-react:
-  buildRemoveWhere等工具函数
-  只有一种useEfffect
+  删除layout
 better-react-dom:
-  getScheduleAskTime和CreateStyleNode
-  没有css与exit属性
+  补充回exit的动画
 better-react-helper:
-  usePromise等的cancel
-  useAsyncPaginage等
-  listAnimate模块
+  修改onExitAnimated的bug
 better-react-dom-helper:
-  增加code-editable
-  增加useTransitionValue
+  增加transition的willExit
 stylis-creater:
-  改变了useStylisCreater

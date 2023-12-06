@@ -79,26 +79,26 @@ export class FiberNode implements FiberAbsNode {
       this.removeFromParent()
     }
   }
-  // private realRemove() {
-  // }
 
   removeFromParent() {
     const props = this.props
-    this.node.parentElement?.removeChild(this.node)
-    // if (props.exit) {
-    //   const that = this
-    //   props.exit(this.node).then(() => {
-    //     that.realRemove()
-    //   })
-    // } else {
-    //   this.realRemove()
-    // }
+    if (props.exit) {
+      props.exit(this.node, props).then(() => {
+        realRemove(this.node)
+      })
+    } else {
+      realRemove(this.node)
+    }
   }
+
   updateProp(key: string, value: any) {
     this._updateProp(this.node, key, value)
   }
 }
 
+function realRemove(node: Node) {
+  node.parentElement?.removeChild(node)
+}
 
 export class FiberText implements FiberAbsNode {
   public node: Node = document.createTextNode("")

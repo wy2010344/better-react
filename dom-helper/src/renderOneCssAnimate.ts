@@ -108,8 +108,9 @@ export function renderOneFAnimateTime<T>(
         ...customExit
       } as any,
       v.resolve,
-      v.exiting ? customExit?.timeout || v.value.exitTimeout || v.value.timeout || defaultExit?.timeout! : v.value.timeout, !v.value.from)!
-    return render(ct, v)
+      v.exiting ? customExit?.timeout || v.value.exitTimeout || v.value.timeout || defaultExit?.timeout! : v.value.timeout,
+      !v.value.from)!
+    render(ct, v)
   })
 }
 
@@ -223,7 +224,7 @@ export function renderOneFAnimate<T>(
       } as any, {
       disabled: !v.value.from
     })!
-    return render(ct, v)
+    render(ct, v)
   })
 }
 

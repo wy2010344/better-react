@@ -1,6 +1,6 @@
-import { createContext, useGetFlushSync } from "better-react";
-import { createUseReducer, useAtomFun, renderExitAnimate, ExitModel, useEffect, } from "better-react-helper";
-import { css, useLifeTransSameTime } from "better-react-dom-helper";
+import { createContext, emptyArray, useGetFlushSync } from "better-react";
+import { createUseReducer, useAtomFun, renderExitAnimate, ExitModel, renderOne, delay, useEffect, useEvent, useChange, } from "better-react-helper";
+import { cns, css, requestAnimationState, useLifeTransSameTime } from "better-react-dom-helper";
 import { dom } from "better-react-dom";
 import { faker } from "@faker-js/faker";
 import { HookValueSet } from "better-react";
@@ -8,7 +8,11 @@ import { HookValueSet } from "better-react";
 
 
 
-type Render = (v: ExitModel<RenderPage>, className: string) => HTMLElement
+type Render = (className: string, config: {
+  from: string
+  show: string
+  exit: string
+}, getExitClassName: () => string) => void
 type AnimationType = "line" | "3d" | undefined
 type RenderPage = {
   id: number
@@ -94,7 +98,7 @@ const pageContext = createContext<{
   size: number,
   method?: PageAction['method']
 }>(null as any)
-export function renderPages() {
+export default function renderPages() {
 
   const [model, dispatch] = usePages(0)
 
@@ -105,51 +109,37 @@ export function renderPages() {
     size: model.pages.length,
     method: model.method
   })
-
   dom.div({
     style: `
     overflow:hidden;
     position:absolute;
-    inset:0;
+    inset:0
     `
   }).render(function () {
     const page = model.pages.at(-1)!
     const config = method == 'pop' ? {
       from: 'left',
       show: 'center',
-      willExit: true,
       exit: 'right'
     } : {
       from: 'right',
       show: 'center',
-      willExit: true,
       exit: 'left'
     }
     const balseClsName = animation == '3d' ? base3DClsName : baseTransClsName
-    renderExitAnimate([page], v => v.id, {
-      mode: method == 'pop' ? 'pop' : 'shift',
-      // mode: animation == '3d' ? 'wait' : method == 'pop' ? 'pop' : 'shift',
-      // onAnimateComplete() {
-      //   if (method == 'pop') {
-      //     //退回到第一页不对,因为使用3D的wait,退回到第一页,需要等第一页的入场动画完成
-      //     dispatch({
-      //       method: 'pop-animation',
-      //       index: model.animations.length - 1
-      //     })
-      //   }
-      // },
-    }, function (v) {
-      const className = useLifeTransSameTime(v.exiting, config, v.resolve, 1000, false)
-      useEffect(() => {
-        console.log("render", v.key, className)
-      })
-      v.value.render(v, `${balseClsName} ${method && className} `)
+
+    const getExitClassName = useEvent(() => {
+      return cns(balseClsName, config.exit)
+    })
+    renderOne(page.id, function () {
+      page.render(balseClsName, config, getExitClassName)
     })
   })
 }
 
+
 const baseTransClsName = css`
-transition:all ease-out 1s;
+transition:all ease 1s;
 &.left{
   transform:translateX(-100%);
 }
@@ -177,11 +167,25 @@ backface-visibility: hidden;
 }
 `
 
-function renderPage(arg: ExitModel<RenderPage>, className: string) {
+function renderPage(baseClassName: string, config: {
+  from: string
+  show: string
+  exit: string
+}, getExitClassName: () => string) {
   const { dispatch, size, method } = pageContext.useConsumer()
   const color = useAtomFun(() => faker.color.rgb())
-  return dom.div({
-    className,
+  const flushSync = useGetFlushSync()
+
+  const [showCls, setShowCls] = useChange(config.from)
+  useEffect(() => {
+    requestAnimationState(() => {
+      flushSync(function () {
+        setShowCls(config.show)
+      })
+    })
+  }, emptyArray)
+  dom.div({
+    className: cns(baseClassName, showCls),
     style: `
     position:absolute;
     inset:0;
@@ -192,6 +196,13 @@ function renderPage(arg: ExitModel<RenderPage>, className: string) {
     justify-content:center;
     opacity:0.9;
     `,
+    exit(node) {
+      //为什么这里仍然不行?如果使用useEffect,则在effect里面触发.
+      requestAnimationState(() => {
+        node.className = getExitClassName()
+      })
+      return delay(1000)
+    },
     // onTransitionEnd(event) {
     //   if (arg.exiting) {
     //     arg.resolve()
@@ -206,7 +217,6 @@ function renderPage(arg: ExitModel<RenderPage>, className: string) {
         })
       }
     }).text`退出`
-    const flushSync = useGetFlushSync()
     dom.button({
       onClick() {
         flushSync(function () {
@@ -234,9 +244,5 @@ function renderPage(arg: ExitModel<RenderPage>, className: string) {
         })
       }
     }).text`进入`
-
-    dom.span().text`当前id${arg.key}`
   })
 }
-
-let count = 1

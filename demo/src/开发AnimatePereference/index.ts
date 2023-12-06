@@ -3,10 +3,12 @@ import { renderPages } from "./renderPages";
 import { renderTodoList } from "./renderTodoList";
 import { renderSinglePage } from "./singlePage";
 import { renderTransformZ } from "./transformZ";
+import 内置退出动画 from "./内置退出动画";
 
 export default normalPanel(function () {
-  // renderPages()
+  renderPages()
   // renderTodoList()
   // renderSinglePage()
-  renderTransformZ()
+  // renderTransformZ()
+  // 内置退出动画()
 })

@@ -84,13 +84,6 @@ export function useBuildSubSetArray<T>(
 }
 
 
-export function run<T>(fun: (...vs: any[]) => T) {
-  return fun()
-}
-
-
-
-
 export function serialEvent<T extends (...args: any[]) => any>(
   ..._vs: (T | undefined | null)[]
 ): T | undefined {

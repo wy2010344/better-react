@@ -18,7 +18,6 @@ export function createRoot(node: Node, reconcile: () => void, getAsk: AskNextTim
     FiberNode.create(node, updateProps, true),
     EMPTYPROPS,
     reconcile,
-    emptyFun,
     getAsk
   )
 }

@@ -88,8 +88,8 @@ const destroy = createRoot(
     useEffect(() => {
       // App(operate)
       // ExpensiveView(operate)
-      // 开发AnimatePreference(operate)
-      logic(operate, null)
+      开发AnimatePreference(operate)
+      // logic(operate, null)
       // colorDesign(operate)
       // FourierSeries(operate, null)
       // numberAnalysis(operate, null)

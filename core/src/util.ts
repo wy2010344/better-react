@@ -71,7 +71,7 @@ export function expandFunCall<T extends AnyFunction>(
 ) {
   fun()
 }
-export function expandFunReturn<T extends AnyFunction>(
+export function run<T extends AnyFunction>(
   fun: T
 ) {
   return fun()

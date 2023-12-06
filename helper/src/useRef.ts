@@ -78,3 +78,12 @@ export function useChgAtom() {
 export function useChgAtomFun<T>(init: () => T) {
   return useChgAtom(undefined, init)
 }
+
+
+export function useRefConst<T>(fun: () => T) {
+  return useAtomFun(fun).get()
+}
+
+export function useRefConstWith<T>(v: T) {
+  return useAtom(v).get()
+}

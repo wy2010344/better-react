@@ -1,11 +1,12 @@
 import { StoreRef } from "better-react"
 import { useEvent } from "./useEvent"
 import { useChange, useState } from "./useState"
-import { useMemo, useAtomBind, useAtom } from "./useRef"
+import { useMemo, useAtomBind, useAtom, useAtomFun, useAlways, useRefConst } from "./useRef"
 import { EmptyFun, FalseType, emptyFun } from "better-react"
 import { useVersionInc, useVersionLock } from "./Lock"
 import { ReduceState } from "./ValueCenter"
 import { useEffect } from "./useEffect"
+import { createEmptyArray } from "./util"
 
 export type PromiseResult<T> = {
   type: "success",
@@ -202,6 +203,51 @@ export function useMutationState<Req extends any[], Res>(effect: (...vs: Req) =>
       updateData({ type: "error", value: err, version })
     })
   }), data] as const
+}
+
+export function useSerialRequestSingle<Req extends any[], Res>(
+  callback: (...vs: Req) => Promise<Res>,
+  effect: (res: PromiseResult<Res>) => void = emptyFun
+) {
+  const cacheList = useRefConst<Req[]>(createEmptyArray)
+  return function (...vs: Req) {
+    cacheList.push(vs)
+    if (cacheList.length == 1) {
+      //之前是空的
+      const checkRun = () => {
+        cacheList.shift()
+        if (cacheList.length) {
+          //如果有值,继续操作
+          circleRun()
+          return false
+        }
+        return true
+      }
+      const circleRun = () => {
+        while (cacheList.length > 1) {
+          cacheList.shift()
+        }
+        callback(...cacheList[0])
+          .then(res => {
+            if (checkRun()) {
+              effect({
+                type: "success",
+                value: res
+              })
+            }
+          })
+          .catch(err => {
+            if (checkRun()) {
+              effect({
+                type: "error",
+                value: err
+              })
+            }
+          })
+      }
+      circleRun()
+    }
+  }
 }
 /**
  * 串行的请求,跟usePromise有相似之处,在于使用version

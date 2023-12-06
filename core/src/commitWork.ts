@@ -1,6 +1,6 @@
 import { Fiber, HookContextCosumer, VirtaulDomNode } from "./Fiber"
 import { deepTravelFiber, findParentAndBefore } from "./findParentAndBefore"
-import { EmptyFun, ManageValue, quote, removeEqual, storeRef } from "./util"
+import { EmptyFun, ManageValue, quote, removeEqual, run, storeRef } from "./util"
 
 
 export type CreateChangeAtom<T> = (v: T, didCommit?: (v: T) => T) => StoreRef<T>
@@ -71,7 +71,7 @@ export class EnvModel {
     // appends.length = 0
     // appendAsPortals.length = 0
   }
-  commit(rootFiber: Fiber, layout: () => void) {
+  commit(rootFiber: Fiber) {
     /**最新更新所有注册的*/
     this.changeAtoms.forEach(atom => atom.commit())
     this.changeAtoms.length = 0
@@ -93,11 +93,9 @@ export class EnvModel {
     const updateEffects = this.updateEffects
     const keys = iterableToList(updateEffects.keys()).sort()
     for (const key of keys) {
-      updateEffects.get(key)?.forEach(effect => effect())
+      updateEffects.get(key)?.forEach(run)
     }
     updateEffects.clear()
-
-    layout()
   }
   /**
  * 在commit期间修改后,都是最新值,直到commit前,都可以回滚

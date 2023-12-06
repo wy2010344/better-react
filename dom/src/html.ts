@@ -1092,6 +1092,7 @@ export namespace React {
     yChannelSelector?: string | undefined;
     z?: number | string | undefined;
     zoomAndPan?: string | undefined;
+    exit?(node: T, props: SVGAttributes<T>): Promise<any>
   }
   export type SVGProps<T> = {
     attributes: SVGAttributes<T>,
@@ -1164,6 +1165,8 @@ export namespace React {
      * @see https://html.spec.whatwg.org/multipage/custom-elements.html#attr-is
      */
     is?: string | undefined;
+
+    exit?(node: T, props: HTMLAttributes<T>): Promise<any>
   }
   type HTMLAttributeAnchorTarget =
     | '_self'

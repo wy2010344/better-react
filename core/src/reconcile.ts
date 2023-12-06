@@ -49,8 +49,7 @@ export function getReconcile(
 export class BatchWork {
   constructor(
     private rootFiber: Fiber,
-    private readonly envModel: EnvModel,
-    private layout: () => void
+    private readonly envModel: EnvModel
   ) { }
   beginRender(currentTick: CurrentTick, renderWorks: RenderWorks) {
     if (this.envModel.shouldRender() && this.rootFiber) {
@@ -78,7 +77,7 @@ export class BatchWork {
     }
   }
   private finishRender() {
-    this.envModel.commit(this.rootFiber!, this.layout)
+    this.envModel.commit(this.rootFiber!)
   }
 
   destroy() {
