@@ -1,5 +1,5 @@
 import App from "./App";
-import { AskNextTimeWork, } from "better-react";
+import { AskNextTimeWork, useLevelEffect, } from "better-react";
 import { renderContent, useDom, getScheduleAskTime, createRoot, domOf } from "better-react-dom";
 import { CountContext, PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
 import { useStoreTriggerRender, renderArray, useState, valueCenterOf, renderFragment, useMemo, useEffect } from "better-react-helper";
@@ -14,9 +14,13 @@ import logic from "./logic";
 import 开发AnimatePreference from "./开发AnimatePereference";
 import colorDesign from "./color-design";
 import ExpensiveView from "./ExpensiveView";
+const app = document.getElementById("app")!
 const destroy = createRoot(
-  document.getElementById("app")!,
+  app,
   function () {
+    useLevelEffect(-10, function () {
+      app.offsetHeight
+    })
     console.log("root-render")
     useDom("button", {
       className: "abddc",

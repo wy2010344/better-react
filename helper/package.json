@@ -55,5 +55,8 @@
     "tsdx": "^0.14.1",
     "tslib": "^2.3.1",
     "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "better-react": "file:.yalc/better-react"
   }
 }

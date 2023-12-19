@@ -1,11 +1,12 @@
-import { createContext, useGetFlushSync } from "better-react";
+import { createContext, emptyArray, useGetFlushSync, useLevelEffect } from "better-react";
 import { createUseReducer, useAtomFun, renderExitAnimate, ExitModel, useEffect, } from "better-react-helper";
-import { css, useLifeTransSameTime } from "better-react-dom-helper";
+import { LiftStateModel, css, getLifeState, useBindTransitionFinish, useInitClassNames, useLifeStateTime, useLifeStateTransition } from "better-react-dom-helper";
 import { dom } from "better-react-dom";
 import { faker } from "@faker-js/faker";
 import { HookValueSet } from "better-react";
 
 
+const time = 5000
 
 
 type Render = (v: ExitModel<RenderPage>, className: string) => HTMLElement
@@ -106,80 +107,150 @@ export function renderPages() {
     method: model.method
   })
 
+  const page = model.pages.at(-1)!
+  const config: LiftStateModel<string> = method == 'pop' ? {
+    init: "left",
+    enter: 'center animation',
+    show: 'center',
+    exit: 'right animation'
+  } : {
+    init: "right",
+    enter: 'center animation',
+    show: 'center',
+    exit: 'left animation'
+  }
+  const balseClsName = animation == '3d' ? baseCls3fName : baseClsName
+
   dom.div({
     style: `
-    overflow:hidden;
-    position:absolute;
-    inset:0;
+    position:relative;
+    width:300px;
+    height:200px;
     `
   }).render(function () {
-    const page = model.pages.at(-1)!
-    const config = method == 'pop' ? {
-      from: 'left',
-      show: 'center',
-      willExit: true,
-      exit: 'right'
-    } : {
-      from: 'right',
-      show: 'center',
-      willExit: true,
-      exit: 'left'
-    }
-    const balseClsName = animation == '3d' ? base3DClsName : baseTransClsName
     renderExitAnimate([page], v => v.id, {
       mode: method == 'pop' ? 'pop' : 'shift',
-      // mode: animation == '3d' ? 'wait' : method == 'pop' ? 'pop' : 'shift',
-      // onAnimateComplete() {
-      //   if (method == 'pop') {
-      //     //退回到第一页不对,因为使用3D的wait,退回到第一页,需要等第一页的入场动画完成
-      //     dispatch({
-      //       method: 'pop-animation',
-      //       index: model.animations.length - 1
-      //     })
-      //   }
-      // },
     }, function (v) {
-      const className = useLifeTransSameTime(v.exiting, config, v.resolve, 1000, false)
-      useEffect(() => {
-        console.log("render", v.key, className)
+      const state = useLifeStateTime(v.exiting, time, {
+        resolve: v.resolve,
+        ref() {
+          return node
+        },
       })
-      v.value.render(v, `${balseClsName} ${method && className} `)
+      const node = v.value.render(v, `${balseClsName} ${method && getLifeState(config, state)} `)
     })
   })
+  dom.div({
+    style: `
+    position:relative;
+    width:300px;
+    height:200px;
+    `
+  }).render(function () {
+    renderExitAnimate([page], v => v.id, {
+      mode: method == 'pop' ? 'pop' : 'shift',
+    }, function (v) {
+      const state = useLifeStateTransition(v.exiting, {
+        resolve: v.resolve,
+        ref() {
+          return node
+        },
+      })
+      const node = v.value.render(v, `${balseClsName} ${method && getLifeState(config, state)} `)
+    })
+  })
+  dom.div({
+    style: `
+    position:relative;
+    width:300px;
+    height:200px;
+    // overflow:hidden;
+    `
+  }).render(function () {
+    renderExitAnimate([page], v => v.id, {
+      mode: method == 'pop' ? 'pop' : 'shift',
+    }, function (v) {
+      /**
+       * 主要是enter有动画参数,切换到退出,是平滑过去的
+       * 不像上面有个中间状态,则不会平滑过渡:立即切换为退出状态.
+       * 因为在进入中立即变成退出中,进入中的resolve,而退出中的是否立即resolve呢?
+       */
+      useInitClassNames(() => node, config.init || '', config.enter || '')
+      useBindTransitionFinish(() => node, v.resolve, [!v.exiting])
+      const node = v.value.render(v, `${balseClsName} ${v.exiting ? config.exit : config.enter}`)
+    })
+  })
+  dom.div({
+    style: `
+    position:relative;
+    width:300px;
+    height:200px;
+    // overflow:hidden;
+    `
+  }).render(function () {
+    renderExitAnimate([page], v => v.id, {
+      mode: method == 'pop' ? 'pop' : 'shift',
+    }, function (v) {
+      /**
+       * 为什么这种方式会比上面慢一格? 是因为颜色也发生了动画,而颜色的动画触发提前结束
+       * 而且进入时,颜色也发生的渐变.
+       * 如果不设className,只做scrollTop,也不能触发动画
+       */
+      useLevelEffect(-1, () => {
+        node.className = `${balseClsName} ${config.init}`
+        node.scrollTop
+      }, emptyArray)
+      useBindTransitionFinish(() => node, v.resolve, [!v.exiting])
+      const node = v.value.render(v, `${balseClsName} ${v.exiting ? config.exit : config.enter}`)
+    })
+  })
+  dom.button({
+    onClick() {
+      dispatch({
+        method: "replace",
+        render: renderPage
+      })
+    }
+  }).text`替换`
 }
 
-const baseTransClsName = css`
-transition:all ease-out 1s;
+const baseClsName = css`
+&.center{
+  transform:translateX(0);
+}
 &.left{
   transform:translateX(-100%);
 }
 &.right{
   transform:translateX(100%);
 }
-&.center{
-  transform:translateX(0);
-  transform:perspective(1000px) rotateY(0deg);
+&.animation{
+  transition:transform linear ${time}ms;
 }
 `
 
-const base3DClsName = css`
-transition:all linear 1s;
+const baseCls3fName = css`
 backface-visibility: hidden;
+&.enter{
+  transform:perspective(1000px) rotateY(0deg);
+}
 &.left{
   transform:perspective(1000px) rotateY(-180deg);
 }
-&.enter{
-  transform:translateX(0);
-  transform:perspective(1000px) rotateY(0deg);
-}
 &.right{
   transform:perspective(1000px) rotateY(180deg);
+}
+&.animation{
+  transition:transform linear ${time}ms;
 }
 `
 
 function renderPage(arg: ExitModel<RenderPage>, className: string) {
   const { dispatch, size, method } = pageContext.useConsumer()
-  const color = useAtomFun(() => faker.color.rgb())
+  const color = useAtomFun(() => {
+    faker.seed(arg.key)
+    return faker.color.rgb()
+  })
   return dom.div({
     className,
     style: `

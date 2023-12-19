@@ -53,6 +53,7 @@ export class BatchWork {
   ) { }
   beginRender(currentTick: CurrentTick, renderWorks: RenderWorks) {
     if (this.envModel.shouldRender() && this.rootFiber) {
+      this.envModel.beginRender()
       this.workLoop(renderWorks, currentTick, this.rootFiber)
     }
   }
@@ -159,6 +160,7 @@ function buildWorkUnits(
         //寻找是否有渲染任务,如果有,则中断
         const work = getRenderWork(false)
         if (work) {
+          //这里只是ask,没有回滚吧
           renderWorks.rollback()
           currentTick.rollback()
           envModel.rollback()
@@ -166,11 +168,13 @@ function buildWorkUnits(
           return work
         }
       }
-      //执行计划任务
+      //执行计划的渲染任务
       const renderWork = renderWorks.getFirstWork()
       if (renderWork) {
         return renderWork
       }
+      //@todo 渲染后的任务可以做在这里....
+
       //寻找渲染任务
       const work = getRenderWork(false)
       if (work) {
@@ -261,26 +265,6 @@ export type AskNextTimeWork = (data: {
 export type REAL_WORK = EmptyFun & {
   isRender?: boolean
 }
-
-// //同步地清空所的的任务
-// const sycAskNextTimeWork: AskNextTimeWork = (envModel, getNextWork) => {
-//   let work = getNextWork(envModel)
-//   while (work) {
-//     work()
-//     work = getNextWork(envModel)
-//   }
-// }
-
-// /**
-//  * fun 里面是立即执行的各种setState
-//  * @param fun 
-//  */
-// export function flushSync(fun: () => void) {
-//   // askNextTimeWork = sycAskNextTimeWork
-//   // fun()
-//   // callNextTimeWork()
-//   // askNextTimeWork = asyncAskNextTimeWork
-// }
 
 let currentTaskIsLow = false
 /**

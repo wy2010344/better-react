@@ -1,4 +1,4 @@
-import { emptyArray } from "better-react"
+import { emptyArray, quote } from "better-react"
 import { React } from "better-react-dom"
 import { useEffect, useMemo } from "better-react-helper"
 
@@ -96,6 +96,17 @@ export function underlineToCamel(str: string) {
   return str.replace(/\B([A-Z])/g, '-$1').toLowerCase()
 }
 
+export function getTrim(v: string) {
+  return v.trim()
+}
+/**
+ * 先就简单这么分割吧,如果文字还\n,\t,会以之分割并中断
+ * @param names 
+ * @returns 
+ */
+export function splitClassNames(names: string) {
+  return new Set(names.split(' ').map(getTrim).filter(quote))
+}
 
 import * as CSS from 'csstype';
 export interface CSSProperties extends CSS.Properties<string | number> {

@@ -143,7 +143,7 @@ export type EffectResult<T> = (void | ((deps: T) => void))
  */
 export function useLevelEffect<T extends readonly any[] = readonly any[]>(
   level: number,
-  effect: (args: T) => EffectResult<T>, deps: T): void
+  effect: (args: T, isInit: boolean) => EffectResult<T>, deps: T): void
 export function useLevelEffect(
   level: number,
   effect: () => EffectResult<any[]>,
@@ -152,7 +152,8 @@ export function useLevelEffect(
   level: number,
   effect: any, deps?: any) {
   const [envModel, parentFiber] = useParentFiber()
-  if (parentFiber.effectTag.get() == 'PLACEMENT') {
+  const isInit = parentFiber.effectTag.get() == 'PLACEMENT'
+  if (isInit) {
     //新增
     const hookEffects = parentFiber.hookEffects || new Map()
     parentFiber.hookEffects = hookEffects
@@ -167,7 +168,7 @@ export function useLevelEffect(
     }
     array.push(hookEffect)
     envModel.updateEffect(level, () => {
-      state.destroy = effect(deps)
+      state.destroy = effect(deps, isInit)
     })
   } else {
     const hookEffects = parentFiber.hookEffects
@@ -194,7 +195,7 @@ export function useLevelEffect(
         if (state.destroy) {
           state.destroy(state.deps)
         }
-        newState.destroy = effect(deps)
+        newState.destroy = effect(deps, isInit)
       })
     }
   }
@@ -211,17 +212,18 @@ export function useGetCreateChangeAtom() {
  * @returns 
  */
 export function useBaseMemoGet<T, V extends readonly any[] = readonly any[]>(
-  effect: (deps: V) => T,
+  effect: (deps: V, isInit: boolean) => T,
   deps: V,
 ): () => T {
   const [envModel, parentFiber] = useParentFiber()
-  if (parentFiber.effectTag.get() == "PLACEMENT") {
+  const isInit = parentFiber.effectTag.get() == "PLACEMENT"
+  if (isInit) {
     const hookMemos = parentFiber.hookMemo || []
     parentFiber.hookMemo = hookMemos
 
     draftParentFiber()
     const state = {
-      value: effect(deps),
+      value: effect(deps, isInit),
       deps,
     }
     revertParentFiber()
@@ -252,7 +254,7 @@ export function useBaseMemoGet<T, V extends readonly any[] = readonly any[]>(
 
       draftParentFiber()
       const newState = {
-        value: effect(deps),
+        value: effect(deps, isInit),
         deps
       }
       revertParentFiber()
@@ -280,7 +282,8 @@ export function renderBaseFiber(
 ): any {
   const [envModel, parentFiber] = useParentFiber()
   let currentFiber: Fiber
-  if (parentFiber.effectTag.get() == 'PLACEMENT') {
+  const isInit = parentFiber.effectTag.get() == 'PLACEMENT'
+  if (isInit) {
     //新增
     const vdom = dom ? dom[0](dom[2]) : undefined
     currentFiber = Fiber.createFix(
@@ -324,7 +327,7 @@ export function renderBaseFiber(
     if (!dom) {
       throw new Error('需要更新参数')
     }
-    currentDom.useUpdate(dom[1])
+    currentDom.useUpdate(dom[1], isInit)
   }
   return currentDom
 }
@@ -406,7 +409,8 @@ class ContextFactory<T> implements Context<T>{
    */
   useSelector<M>(getValue: (v: T) => M, shouldUpdate?: (a: M, b: M) => any): M {
     const [envModel, parentFiber] = useParentFiber()
-    if (parentFiber.effectTag.get() == "PLACEMENT") {
+    const isInit = parentFiber.effectTag.get() == "PLACEMENT"
+    if (isInit) {
       const hookConsumers = parentFiber.hookContextCosumer || []
       parentFiber.hookContextCosumer = hookConsumers
 
@@ -530,4 +534,9 @@ class ContextListener<T, M>{
 export function useGetFlushSync() {
   const [envModel] = useParentFiber()
   return envModel.flushSync
+}
+
+export function useGetTaskRun() {
+  const [envModel] = useParentFiber()
+  return envModel.taskRun
 }

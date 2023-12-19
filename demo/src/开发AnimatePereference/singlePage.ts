@@ -1,5 +1,4 @@
 import { dom } from "better-react-dom";
-import { FAnimateTime, renderOneFAnimateTime, renderOneTAnimate } from "better-react-dom-helper";
 import { useChange, useVersion } from "better-react-helper";
 
 export function renderSinglePage() {
@@ -53,56 +52,63 @@ export function renderSinglePage() {
     perspective:1000px;
     `
   }).render(function () {
+    dom.div({
+      style: `
+    width:200px;
+    height:200px;
+    background:green;
+    transition:all ease 0.5s;
+    `
+    }).render()
+    // let style: FAnimateTime<string> | undefined = undefined
 
-    let style: FAnimateTime<string> | undefined = undefined
-
-    console.log("dd", direction)
-    if (show) {
-      if (direction == 'left') {
-        style = {
-          from: `transform:translateX(-300px);`,
-          show: `transform:translateX(-100px);`,
-          exit: `transform:translateX(-300px);`,
-          timeout: 500
-        }
-      } else if (direction == 'right') {
-        style = {
-          from: `transform:translateX(300px);`,
-          show: `transform:translateX(100px);`,
-          exit: `transform:translateX(300px)`,
-          timeout: 500
-        }
-      } else if (direction == 'top') {
-        style = {
-          from: `transform:translateY(-300px);`,
-          show: `transform:translateY(-100px);`,
-          exit: `transform:translateY(-300px);`,
-          timeout: 500
-        }
-      } else if (direction == 'bottom') {
-        style = {
-          from: `transform:translateY(300px);`,
-          show: `transform:translateY(100px);`,
-          exit: `transform:translateY(300px);`,
-          timeout: 500
-        }
-      }
-    }
-    renderOneFAnimateTime<string>(style, {
-      customExit: {
-        exit: version % 2 ? `transform:translateZ(-1000px);` : `scale:2;`
-      }
-    }, function (v) {
-      console.log(v)
-      dom.div({
-        style: `
-width:200px;
-height:200px;
-background:green;
-transition:all ease 0.5s;
-${v}
-`
-      }).render()
-    })
+    // console.log("dd", direction)
+    // if (show) {
+    //   if (direction == 'left') {
+    //     style = {
+    //       from: `transform:translateX(-300px);`,
+    //       show: `transform:translateX(-100px);`,
+    //       exit: `transform:translateX(-300px);`,
+    //       timeout: 500
+    //     }
+    //   } else if (direction == 'right') {
+    //     style = {
+    //       from: `transform:translateX(300px);`,
+    //       show: `transform:translateX(100px);`,
+    //       exit: `transform:translateX(300px)`,
+    //       timeout: 500
+    //     }
+    //   } else if (direction == 'top') {
+    //     style = {
+    //       from: `transform:translateY(-300px);`,
+    //       show: `transform:translateY(-100px);`,
+    //       exit: `transform:translateY(-300px);`,
+    //       timeout: 500
+    //     }
+    //   } else if (direction == 'bottom') {
+    //     style = {
+    //       from: `transform:translateY(300px);`,
+    //       show: `transform:translateY(100px);`,
+    //       exit: `transform:translateY(300px);`,
+    //       timeout: 500
+    //     }
+    //   }
+    // }
+    //     renderOneFAnimateTime<string>(style, {
+    //       customExit: {
+    //         exit: version % 2 ? `transform:translateZ(-1000px);` : `scale:2;`
+    //       }
+    //     }, function (v) {
+    //       console.log(v)
+    //       dom.div({
+    //         style: `
+    // width:200px;
+    // height:200px;
+    // background:green;
+    // transition:all ease 0.5s;
+    // ${v}
+    // `
+    //       }).render()
+    //     })
   })
 }

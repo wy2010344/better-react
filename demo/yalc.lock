@@ -2,22 +2,22 @@
   "version": "v1",
   "packages": {
     "better-react-helper": {
-      "signature": "75a1a615ef30b324b36bbbd40b068daf",
+      "signature": "a40d112983aa9fce65a38765f8462991",
       "file": true,
       "replaced": "^1.2.0"
     },
     "better-react-dom-helper": {
-      "signature": "010c089480e886644f4cb3ef3c993fe6",
+      "signature": "36687a8b19461acb9d0e46eac28e2960",
       "file": true,
       "replaced": "^1.2.0"
     },
     "better-react": {
-      "signature": "82edee87112dfb234cf2f586c30288c5",
+      "signature": "ba62903ed767ca0210467d518a1c1f41",
       "file": true,
       "replaced": "^1.2.4"
     },
     "better-react-dom": {
-      "signature": "81f2fee266e137547274feb6bb405d1a",
+      "signature": "c581d8f43b6e828bf4c0e70cb987065e",
       "file": true,
       "replaced": "^1.2.0"
     },

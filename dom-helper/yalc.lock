@@ -2,12 +2,12 @@
   "version": "v1",
   "packages": {
     "better-react-helper": {
-      "signature": "9d13a32fe77c8cc46b7a27b0b22a17d7",
+      "signature": "61c1635cc7fec3de66d4845bfc13a9e1",
       "file": true,
       "replaced": "^1.2.5"
     },
     "better-react": {
-      "signature": "1e16b1bf365b5b0d91e48f5dec3df6ec",
+      "signature": "6bbeca7e9f95fd358865f7a029e9c248",
       "file": true,
       "replaced": "^1.2.4"
     },

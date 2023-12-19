@@ -205,11 +205,12 @@ export function useMutationState<Req extends any[], Res>(effect: (...vs: Req) =>
   }), data] as const
 }
 
-export function useSerialRequestSingle<Req extends any[], Res>(
+
+export function buildSerialRequestSingle<Req extends any[], Res>(
   callback: (...vs: Req) => Promise<Res>,
-  effect: (res: PromiseResult<Res>) => void = emptyFun
+  effect: (res: PromiseResult<Res>) => void = emptyFun,
+  cacheList: Req[] = []
 ) {
-  const cacheList = useRefConst<Req[]>(createEmptyArray)
   return function (...vs: Req) {
     cacheList.push(vs)
     if (cacheList.length == 1) {
@@ -248,6 +249,13 @@ export function useSerialRequestSingle<Req extends any[], Res>(
       circleRun()
     }
   }
+}
+export function useSerialRequestSingle<Req extends any[], Res>(
+  callback: (...vs: Req) => Promise<Res>,
+  effect: (res: PromiseResult<Res>) => void = emptyFun
+) {
+  const cacheList = useRefConst<Req[]>(createEmptyArray)
+  return buildSerialRequestSingle(callback, effect, cacheList)
 }
 /**
  * 串行的请求,跟usePromise有相似之处,在于使用version

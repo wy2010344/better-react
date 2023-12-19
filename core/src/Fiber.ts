@@ -204,7 +204,7 @@ export type RenderWithDep<T extends readonly any[] = readonly any[]> = [
 ]
 
 export type VirtaulDomNode<T = any> = {
-  useUpdate(props: T): void
+  useUpdate(props: T, isFirst: boolean): void
   isPortal?: boolean
   //创建
   //在update之前,所以要更新props

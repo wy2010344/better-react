@@ -1,8 +1,8 @@
-import { useChgAtomFun } from "./useRef"
+import { useAtom, useAtomFun, useChgAtomFun } from "./useRef"
 import { useVersion } from "./useVersion"
-import { ArrayHelper, createEmptyArray, getOutResolvePromise, removeWhere } from "./util"
+import { ArrayHelper, createEmptyArray, getOutResolvePromise } from "./util"
 import { renderArray } from "./renderMap"
-import { emptyArray } from "better-react"
+import { emptyArray, useGetTaskRun } from "better-react"
 import { useEffect } from "./useEffect"
 
 
@@ -10,8 +10,9 @@ import { useEffect } from "./useEffect"
 
 
 export interface ExitModel<V> {
+  key: Promise<any>
   value: V
-  key: any
+  originalKey: any
   enterIgnore?: boolean
   exiting?: boolean
   promise: Promise<any>
@@ -19,8 +20,7 @@ export interface ExitModel<V> {
 }
 
 interface ExitModelImpl<V> extends ExitModel<V> {
-  hide?: boolean
-  needCollect: boolean
+  hide?: boolean | ExitModel<V>
 }
 
 
@@ -28,58 +28,70 @@ interface ExitModelImpl<V> extends ExitModel<V> {
 /**
  * 主要是有一点,可能会回退
  */
-export type ExitAnimateMode = 'pop' | 'shift' | 'wait'
+export type ExitAnimateMode = 'pop' | 'shift'
 
-export type RenderAnimateConfig<V> = {
+export type ExitAnimateArg<V> = {
   mode?: ExitAnimateMode
+  wait?: 'in-out' | 'out-in'
   exitIgnore?(v: V): any
-  enterIgnore?(v: V): any
-  onExitComplete?(): void
-  onEnterComplete?(): void
-  onAnimateComplete?(): void
+  enterIgnore?(v: V): boolean
+  onExitComplete?(v?: any): void
+  onEnterComplete?(v?: any): void
+  onAnimateComplete?(v?: any): void
 }
+
 export function useRenderExitAnimate<V>(
   list: readonly V[],
   getKey: (v: V) => any,
   {
     mode = 'shift',
+    wait,
     exitIgnore,
     onExitComplete,
     onEnterComplete,
     enterIgnore,
     onAnimateComplete
-  }: RenderAnimateConfig<V>
+  }: ExitAnimateArg<V>
 ) {
   //用于删除后强制刷新
   const [_, updateVersion] = useVersion()
-  //每次render进来,合并cacheList
-  const cacheList = useChgAtomFun<ExitModelImpl<V>[]>(createEmptyArray)
+  //每次render进来,合并cacheList,因为有回滚与副作用,所以必须保持所有变量的无副作用
+  const cacheList = useAtomFun<ExitModelImpl<V>[]>(createEmptyArray)
   const newCacheList = new ArrayHelper(cacheList.get())
-  let destroyCount = 0
-  for (let i = newCacheList.get().length - 1; i > -1; i--) {
-    //新列表未找到,标记为删除
-    const old = newCacheList.get()[i]
-    if (!old.exiting && !list.some(v => getKey(v) == old.key)) {
+  const thisAddList: ExitModelImpl<V>[] = []
+  const thisRemoveList: ExitModelImpl<V>[] = []
+
+  newCacheList.forEachRight(function (old, i) {
+    if (!old.exiting && !list.some(v => getKey(v) == old.originalKey)) {
       //新删除了
       if (exitIgnore?.(old.value)) {
         newCacheList.removeAt(i)
       } else {
-        destroyCount++
         const [promise, resolve] = getOutResolvePromise()
-        newCacheList.replace(i, {
+        const cache: ExitModelImpl<V> = {
           ...old,
-          needCollect: true,
           exiting: true,
           promise,
           resolve,
+          hide: old
+        }
+        newCacheList.replace(i, cache)
+        thisRemoveList.push(cache)
+        promise.then(function () {
+          const eCacheList = new ArrayHelper(cacheList.get())
+          const n = eCacheList.removeWhere(old => old.key == cache.key)
+          if (n) {
+            updateVersion()
+            cacheList.set(eCacheList.get() as ExitModelImpl<V>[])
+          }
         })
       }
     }
-  }
+  })
   let nextIndex = 0
   for (const v of list) {
     const key = getKey(v)
-    const oldIndex = newCacheList.get().findIndex(old => old.key == key)
+    const oldIndex = newCacheList.get().findIndex(old => !old.exiting && old.originalKey == key)
     if (oldIndex < 0) {
       if (mode == 'shift') {
         while (newCacheList.get()[nextIndex]?.exiting) {
@@ -87,15 +99,17 @@ export function useRenderExitAnimate<V>(
         }
       }
       const [promise, resolve] = getOutResolvePromise()
-      newCacheList.insert(nextIndex, {
+      const cache: ExitModelImpl<V> = {
+        key: promise,
         value: v,
-        key,
-        hide: mode == 'wait' && destroyCount != 0,
-        needCollect: true,
+        originalKey: key,
+        hide: wait == 'out-in' && thisRemoveList.length != 0,
         enterIgnore: enterIgnore?.(v),
         promise,
         resolve
-      })
+      }
+      newCacheList.insert(nextIndex, cache)
+      thisAddList.push(cache)
     } else {
       newCacheList.replace(oldIndex, {
         ...newCacheList.get()[oldIndex],
@@ -104,84 +118,91 @@ export function useRenderExitAnimate<V>(
       nextIndex = oldIndex + 1
     }
   }
-  cacheList.set(newCacheList.get() as ExitModelImpl<V>[])
+  if (!(thisAddList.length && wait == 'in-out')) {
+    thisRemoveList.forEach(row => row.hide = false)
+  }
 
   useEffect(() => {
-    const destroyPromises: Promise<any>[] = []
-    const thisAddList: ExitModel<any>[] = []
-    for (const cache of cacheList.get()) {
-      if (cache.needCollect) {
-        cache.needCollect = false
-        if (cache.exiting) {
-          cache.promise.then(function () {
-            const n = removeWhere(cacheList.get(), function (v, i) {
-              return v.key == cache.key && v.exiting && v.promise == cache.promise
-            })
-            if (n) {
-              updateVersion()
-            }
-          })
-          destroyPromises.push(cache.promise)
-        } else {
-          thisAddList.push(cache)
-        }
-      }
-    }
-    const onExitWait = mode == 'wait' && thisAddList.length != 0
-    if (destroyPromises.length && (onExitComplete || onExitWait)) {
-      const allDestroyPromise = Promise.all(destroyPromises)
+    const removePromiseList: Promise<any>[] = thisRemoveList.map(v => v.promise)
+
+    if (removePromiseList.length) {
+      const allDestroyPromise = Promise.all(removePromiseList)
       if (onExitComplete) {
         allDestroyPromise.then(onExitComplete)
       }
+      const onExitWait = wait == 'out-in' && thisAddList.length != 0
       if (onExitWait) {
         allDestroyPromise.then(function () {
           //将本次更新全部标记为展示.
+          const eCacheList = new ArrayHelper(cacheList.get())
           let n = 0
-          for (const cache of cacheList.get()) {
+          eCacheList.forEach(function (cache, x) {
             if (cache.hide) {
-              const thisAdd = thisAddList.find(v => v.key == cache.key && v.promise == cache.promise)
-              if (thisAdd) {
-                cache.hide = false
+              const row = thisAddList.find(v => v.key == cache.key)
+              if (row) {
+                eCacheList.replace(x, {
+                  ...cache,
+                  hide: false
+                })
                 n++
               }
             }
-          }
+          })
           if (n) {
             updateVersion()
+            cacheList.set(eCacheList.get() as ExitModelImpl<V>[])
           }
         })
       }
     }
-    if (onEnterComplete) {
-      const enterPromises: Promise<any>[] = []
-      for (const add of thisAddList) {
-        if (!enterIgnore?.(add.value)) {
-          enterPromises.push(add.promise)
-        }
-      }
-      if (enterPromises.length) {
-        Promise.all(enterPromises).then(onEnterComplete)
+    const addPromiseList: Promise<any>[] = []
+    for (const thisAdd of thisAddList) {
+      if (!enterIgnore?.(thisAdd.value)) {
+        addPromiseList.push(thisAdd.promise)
       }
     }
-    if (onAnimateComplete) {
-      const promiseAll = destroyPromises.slice()
-      for (const add of thisAddList) {
-        if (!enterIgnore?.(add.value)) {
-          promiseAll.push(add.promise)
-        }
+    if (addPromiseList.length) {
+      const allEnterPromise = Promise.all(addPromiseList)
+      if (onEnterComplete) {
+        allEnterPromise.then(onEnterComplete)
       }
-      if (promiseAll.length) {
-        Promise.all(promiseAll).then(onAnimateComplete)
+      const onEnterWait = wait == 'in-out' && thisRemoveList.length != 0
+      if (onEnterWait) {
+        allEnterPromise.then(function () {
+          //将本次更新全部标记为展示.
+          const eCacheList = new ArrayHelper(cacheList.get())
+          let n = 0
+          eCacheList.forEach(function (cache, x) {
+            if (cache.hide) {
+              const row = thisRemoveList.find(v => v.key == cache.key)
+              if (row) {
+                eCacheList.replace(x, {
+                  ...cache,
+                  hide: false
+                })
+                n++
+              }
+            }
+          })
+          if (n) {
+            updateVersion()
+            cacheList.set(eCacheList.get() as ExitModelImpl<V>[])
+          }
+        })
       }
     }
+    if (onAnimateComplete && (addPromiseList.length || removePromiseList.length)) {
+      Promise.all([...addPromiseList, ...removePromiseList]).then(onAnimateComplete)
+    }
+    cacheList.set(newCacheList.get() as ExitModelImpl<V>[])
   })
-  return newCacheList.get().filter(getNotHide) as ExitModel<V>[]
+  return newCacheList.get().map(getHideAsShow).filter(getNotHide)
 }
 
 export function renderExitAnimate<V>(
   list: readonly V[],
   getKey: (v: V) => any,
-  args: RenderAnimateConfig<V>,
+  args: ExitAnimateArg<V>,
   render: (v: ExitModel<V>) => void
 ) {
   const newList = useRenderExitAnimate(list, getKey, args)
@@ -193,7 +214,16 @@ export function renderExitAnimate<V>(
 function getNotHide(v: ExitModelImpl<any>) {
   return !v.hide
 }
-
+function getHideAsShow(v: ExitModelImpl<any>) {
+  if (v.hide && v.exiting && typeof v.hide == 'object') {
+    return {
+      ...v,
+      ...v.hide,
+      exiting: false
+    }
+  }
+  return v
+}
 function getKen<V>(v: ExitModel<V>) {
   return v.key
 }

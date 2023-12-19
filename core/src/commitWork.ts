@@ -5,6 +5,14 @@ import { EmptyFun, ManageValue, quote, removeEqual, run, storeRef } from "./util
 
 export type CreateChangeAtom<T> = (v: T, didCommit?: (v: T) => T) => StoreRef<T>
 export type Reconcile = (work?: EmptyFun) => void
+
+/**
+ * 涉及修改ref
+ * useEffect里面可以直接执行
+ * 主要是promise等外部事件,恰好在render中
+ *   非render时可以立即执行.
+ *   否则得在render完成后执行.
+ */
 export class EnvModel {
   realTime = storeRef(false)
   flushSync(fun: EmptyFun) {
@@ -54,11 +62,34 @@ export class EnvModel {
       },
     }
     this.flushSync = this.flushSync.bind(this)
+    this.taskRun = this.taskRun.bind(this)
     this.createChangeAtom = this.createChangeAtom.bind(this)
   }
   shouldRender() {
     //changeAtoms说明有状态变化,deletions表示,比如销毁
     return this.changeAtoms.length > 0 || this.deletions.length > 0
+  }
+
+  private isOnRender = false
+  beginRender() {
+    this.isOnRender = true
+  }
+  private notRenderList: EmptyFun[] = []
+  private finishRender() {
+    /**
+     * 虽然感觉这个应该异步执行更科学
+     */
+    this.isOnRender = false
+    this.notRenderList.forEach(run)
+    this.notRenderList.length = 0
+  }
+
+  taskRun(fun: EmptyFun) {
+    if (this.isOnRender) {
+      this.notRenderList.push(fun)
+    } else {
+      fun()
+    }
   }
 
   rollback() {
@@ -68,8 +99,7 @@ export class EnvModel {
     this.draftConsumers.length = 0
     this.deletions.length = 0
     this.updateEffects.clear()
-    // appends.length = 0
-    // appendAsPortals.length = 0
+    this.finishRender()
   }
   commit(rootFiber: Fiber) {
     /**最新更新所有注册的*/
@@ -96,6 +126,7 @@ export class EnvModel {
       updateEffects.get(key)?.forEach(run)
     }
     updateEffects.clear()
+    this.finishRender()
   }
   /**
  * 在commit期间修改后,都是最新值,直到commit前,都可以回滚
@@ -120,17 +151,6 @@ export type LoopWork = {
  * 分为3个等级,更新属性前,更新属性中,更新属性后
 */
 export type UpdateEffectLevel = 0 | 1 | 2
-
-/**计算出需要appends的节点 */
-// const appends: [VirtaulDomNode, FindParentAndBefore][] = []
-// export function addAppends(dom: VirtaulDomNode, pb: FindParentAndBefore) {
-//   appends.push([dom, pb])
-// }
-/**计算出需要appends的Portal节点*/
-// const appendAsPortals: VirtaulDomNode[] = []
-// export function addAppendAsPortal(dom: VirtaulDomNode) {
-//   appendAsPortals.push(dom)
-// }
 export type StoreRef<T> = {
   set(v: T): void
   get(): T
@@ -154,6 +174,9 @@ class ChangeAtom<T> implements StoreRef<T>{
     if (this.isCreate) {
       this.value = v
     } else {
+      /**
+       * 主要是构造阶段设定的就是正式值,要么本次构造一起回滚
+       */
       if (v != this.value) {
         if (!this.dirty) {
           this.dirty = true

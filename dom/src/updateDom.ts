@@ -10,26 +10,25 @@ interface FiberAbsNode extends VirtaulDomNode {
 }
 export const EMPTYPROPS = {}
 // const INPUTS = ["input", "textarea", "select"]
+
 export class FiberNode implements FiberAbsNode {
   private constructor(
     public node: Node,
     private _updateProp: (node: Node, key: string, value: any) => void,
     public readonly isPortal?: boolean,
-  ) {
+  ) { }
+  private updateDomEffect() {
+    updateDom(this, this.props, this.oldProps)
+    this.oldProps = this.props
   }
   //这个props不需要AtomValue,因为在运行时不访问
   private props: Props = EMPTYPROPS
   private oldProps: Props = EMPTYPROPS
-  useUpdate(props: Props): void {
+  useUpdate(props: Props, isFirst: boolean): void {
     this.props = props
     const that = this
-    useLevelEffect(0, () => {
-      const props = that.props
-      updateDom(that,
-        props,
-        that.oldProps
-      )
-      that.oldProps = props
+    useLevelEffect(0, function () {
+      that.updateDomEffect()
     })
   }
   static create(
@@ -177,13 +176,6 @@ function updateDom(
         node.addEventListener(eventType, props[name])
       }
     })
-
-  // if (removeClass) {
-  //   (dom.node as HTMLElement).classList.remove(removeClass)
-  // }
-  // if (addClass) {
-  //   (dom.node as HTMLElement).classList.add(addClass)
-  // }
 }
 
 const Capture = "capture"
@@ -202,7 +194,9 @@ function isEvent(key: string) {
  * @returns 
  */
 function isProperty(key: string) {
-  return key != 'children' && !isEvent(key) //&&  key != 'css' && key != 'exit'&& key != 'appendAsPortal'
+  return key != 'children'
+    && !isEvent(key)
+    && key != 'exit'
 }
 /**
  * 属性发生变更
@@ -227,13 +221,15 @@ function isGone(prev: Props, next: Props) {
   }
 }
 
+const emptyKeys = ['href', 'className']
 export function updateProps(node: any, key: string, value: any) {
   if (key.includes('-')) {
     node.setAttribute(key, value)
   } else {
-    node[key] = value
-    if (key == 'href' && !value) {
+    if (emptyKeys.includes(key) && !value) {
       node.removeAttribute(key)
+    } else {
+      node[key] = value
     }
   }
 }

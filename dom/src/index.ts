@@ -16,7 +16,6 @@ export * from './html'
 export function createRoot(node: Node, reconcile: () => void, getAsk: AskNextTimeWork) {
   return render(
     FiberNode.create(node, updateProps, true),
-    EMPTYPROPS,
     reconcile,
     getAsk
   )

@@ -6,7 +6,7 @@ export type { REAL_WORK } from './reconcile'
 export {
   useGetCreateChangeAtom,
   useBaseReducer, useLevelEffect, useBaseMemoGet,
-  createContext, renderFiber, useGetFlushSync
+  createContext, renderFiber, useGetFlushSync, useGetTaskRun
 } from './fc'
 export {
   arrayNotEqualDepsWithEmpty,
@@ -38,16 +38,12 @@ export type { FalseType, EmptyFun, AnyFunction } from './util'
 
 export function render<T>(
   dom: VirtaulDomNode<T>,
-  props: T,
   render: () => void,
   getAsk: AskNextTimeWork
 ) {
   const envModel = new EnvModel()
   const rootFiber = Fiber.createFix(envModel, null!, dom, {
-    render() {
-      dom.useUpdate(props)
-      render()
-    }
+    render
   })
   const batchWork = new BatchWork(
     rootFiber,

@@ -1,6 +1,6 @@
 import { createContext, emptyArray, useGetFlushSync } from "better-react";
-import { createUseReducer, useAtomFun, renderExitAnimate, ExitModel, renderOne, delay, useEffect, useEvent, useChange, } from "better-react-helper";
-import { cns, css, requestBatchAnimationFrame } from "better-react-dom-helper";
+import { createUseReducer, useAtomFun, renderExitAnimate, ExitModel, useEffect, } from "better-react-helper";
+import { css } from "better-react-dom-helper";
 import { dom } from "better-react-dom";
 import { faker } from "@faker-js/faker";
 import { HookValueSet } from "better-react";
@@ -8,11 +8,7 @@ import { HookValueSet } from "better-react";
 
 
 
-type Render = (className: string, config: {
-  from: string
-  show: string
-  exit: string
-}, getExitClassName: () => string) => void
+type Render = (v: ExitModel<RenderPage>) => HTMLElement
 type AnimationType = "line" | "3d" | undefined
 type RenderPage = {
   id: number
@@ -98,7 +94,7 @@ const pageContext = createContext<{
   size: number,
   method?: PageAction['method']
 }>(null as any)
-export default function renderPages() {
+export function renderPagesValue() {
 
   const [model, dispatch] = usePages(0)
 
@@ -109,46 +105,66 @@ export default function renderPages() {
     size: model.pages.length,
     method: model.method
   })
+
   dom.div({
     style: `
     overflow:hidden;
     position:absolute;
-    inset:0
+    inset:0;
     `
   }).render(function () {
     const page = model.pages.at(-1)!
     const config = method == 'pop' ? {
       from: 'left',
       show: 'center',
+      willExit: true,
       exit: 'right'
     } : {
       from: 'right',
       show: 'center',
+      willExit: true,
       exit: 'left'
     }
     const balseClsName = animation == '3d' ? base3DClsName : baseTransClsName
+    renderExitAnimate([page], v => v.id, {
+      mode: method == 'pop' ? 'pop' : 'shift',
+      // mode: animation == '3d' ? 'wait' : method == 'pop' ? 'pop' : 'shift',
+      // onAnimateComplete() {
+      //   if (method == 'pop') {
+      //     //退回到第一页不对,因为使用3D的wait,退回到第一页,需要等第一页的入场动画完成
+      //     dispatch({
+      //       method: 'pop-animation',
+      //       index: model.animations.length - 1
+      //     })
+      //   }
+      // },
+    }, function (v) {
+      // const className = useLifeTransSameTime(v.exiting, config, v.resolve, 1000, false)
+      // v.value.render(v, `${balseClsName} ${method && className} `)
 
-    const getExitClassName = useEvent(() => {
-      return cns(balseClsName, config.exit)
-    })
-    renderOne(page.id, function () {
-      page.render(balseClsName, config, getExitClassName)
+      // const subscribe = useLifeTransValueCenter(v.exiting, config, v.resolve, 1000)
+      // const node = v.value.render(v)
+      // useEffect(() => {
+      //   return subscribe(function (cn) {
+      //     node.className = balseClsName + ' ' + cn
+      //   })
+      // }, emptyArray)
     })
   })
 }
-
-
 const baseTransClsName = css`
-transition:all ease 1s;
+transition:all ease-out 1s;
 &.left{
+  pointer-events: none;
   transform:translateX(-100%);
-}
-&.right{
-  transform:translateX(100%);
 }
 &.center{
   transform:translateX(0);
   transform:perspective(1000px) rotateY(0deg);
+}
+&.right{
+  pointer-events: none;
+  transform:translateX(100%);
 }
 `
 
@@ -156,6 +172,7 @@ const base3DClsName = css`
 transition:all linear 1s;
 backface-visibility: hidden;
 &.left{
+  pointer-events: none;
   transform:perspective(1000px) rotateY(-180deg);
 }
 &.enter{
@@ -163,29 +180,15 @@ backface-visibility: hidden;
   transform:perspective(1000px) rotateY(0deg);
 }
 &.right{
+  pointer-events: none;
   transform:perspective(1000px) rotateY(180deg);
 }
 `
 
-function renderPage(baseClassName: string, config: {
-  from: string
-  show: string
-  exit: string
-}, getExitClassName: () => string) {
+function renderPage(arg: ExitModel<RenderPage>) {
   const { dispatch, size, method } = pageContext.useConsumer()
   const color = useAtomFun(() => faker.color.rgb())
-  const flushSync = useGetFlushSync()
-
-  const [showCls, setShowCls] = useChange(config.from)
-  useEffect(() => {
-    requestBatchAnimationFrame(() => {
-      flushSync(function () {
-        setShowCls(config.show)
-      })
-    })
-  }, emptyArray)
-  dom.div({
-    className: cns(baseClassName, showCls),
+  return dom.div({
     style: `
     position:absolute;
     inset:0;
@@ -196,13 +199,6 @@ function renderPage(baseClassName: string, config: {
     justify-content:center;
     opacity:0.9;
     `,
-    exit(node) {
-      //为什么这里仍然不行?如果使用useEffect,则在effect里面触发.
-      requestBatchAnimationFrame(() => {
-        node.className = getExitClassName()
-      })
-      return delay(1000)
-    },
     // onTransitionEnd(event) {
     //   if (arg.exiting) {
     //     arg.resolve()
@@ -217,6 +213,7 @@ function renderPage(baseClassName: string, config: {
         })
       }
     }).text`退出`
+    const flushSync = useGetFlushSync()
     dom.button({
       onClick() {
         flushSync(function () {
@@ -244,5 +241,7 @@ function renderPage(baseClassName: string, config: {
         })
       }
     }).text`进入`
+
+    dom.span().text`当前id${arg.key}`
   })
 }

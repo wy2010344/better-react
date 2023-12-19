@@ -797,13 +797,16 @@ export namespace React {
     onAnimationStartCapture?: AnimationEventHandler<T> | undefined;
     onAnimationEnd?: AnimationEventHandler<T> | undefined;
     onAnimationEndCapture?: AnimationEventHandler<T> | undefined;
+    onAnimationCancel?: AnimationEventHandler<T> | undefined;
+    onAnimationCancelCapture?: AnimationEventHandler<T> | undefined;
     onAnimationIteration?: AnimationEventHandler<T> | undefined;
     onAnimationIterationCapture?: AnimationEventHandler<T> | undefined;
 
     // Transition Events
     onTransitionEnd?: TransitionEventHandler<T> | undefined;
     onTransitionEndCapture?: TransitionEventHandler<T> | undefined;
-
+    onTransitionCancel?: TransitionEventHandler<T> | undefined;
+    onTransitionCancelCapture?: TransitionEventHandler<T> | undefined;
     /**作为转移到别的父节点下 */
     // portalTarget?(): Node
     /**加一个css属性，作为全局的类配置*/
@@ -813,7 +816,7 @@ export namespace React {
   }
 
   export type DetailedHTMLProps<E extends HTMLAttributes<T>, T> = {
-    attributes: E,
+    attributes: E
     element: T
   }
 
@@ -1095,7 +1098,7 @@ export namespace React {
     exit?(node: T, props: SVGAttributes<T>): Promise<any>
   }
   export type SVGProps<T> = {
-    attributes: SVGAttributes<T>,
+    attributes: SVGAttributes<T>
     element: T
   }
   export interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
