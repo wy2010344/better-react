@@ -53,7 +53,6 @@ export class BatchWork {
   ) { }
   beginRender(currentTick: CurrentTick, renderWorks: RenderWorks) {
     if (this.envModel.shouldRender() && this.rootFiber) {
-      this.envModel.beginRender()
       this.workLoop(renderWorks, currentTick, this.rootFiber)
     }
   }
@@ -157,15 +156,29 @@ function buildWorkUnits(
         return collectWork
       }
       if (currentTick.isOnLow()) {
-        //寻找是否有渲染任务,如果有,则中断
-        const work = getRenderWork(false)
+        /**
+         * 寻找是否有渲染任务,如果有,则中断
+         * 如果有新的lazywork,则也优先
+         */
+        let workType = false
+        let work = getRenderWork(false)
+        if (!work) {
+          workType = true
+          work = getRenderWork(true)
+        }
         if (work) {
           //这里只是ask,没有回滚吧
-          renderWorks.rollback()
-          currentTick.rollback()
-          envModel.rollback()
-          console.log("强行中断低优先级任务,执行高优先级")
-          return work
+          return function () {
+            renderWorks.rollback()
+            currentTick.rollback()
+            envModel.rollback()
+            if (workType) {
+              console.log("有新的低优先级任务出现,中断之前的低优先级")
+            } else {
+              console.log("强行中断低优先级任务,执行高优先级")
+            }
+            return work!()
+          }
         }
       }
       //执行计划的渲染任务

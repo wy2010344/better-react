@@ -1,6 +1,6 @@
 import { useAtomFun } from "./useRef"
 import { useVersion } from "./useVersion"
-import { ArrayHelper, createEmptyArray, getOutResolvePromise } from "./util"
+import { ArrayHelper, createEmptyArray, getOutResolvePromise } from "better-react-helper"
 import { renderArray } from "./renderMap"
 import { emptyArray } from "better-react"
 import { useEffect } from "./useEffect"

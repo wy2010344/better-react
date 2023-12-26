@@ -6,7 +6,7 @@ export type { REAL_WORK } from './reconcile'
 export {
   useGetCreateChangeAtom,
   useBaseReducer, useLevelEffect, useBaseMemoGet,
-  createContext, renderFiber, useGetFlushSync, useGetTaskRun
+  createContext, renderFiber, useGetFlushSync
 } from './fc'
 export {
   arrayNotEqualDepsWithEmpty,

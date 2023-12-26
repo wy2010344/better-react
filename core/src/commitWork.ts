@@ -62,34 +62,11 @@ export class EnvModel {
       },
     }
     this.flushSync = this.flushSync.bind(this)
-    this.taskRun = this.taskRun.bind(this)
     this.createChangeAtom = this.createChangeAtom.bind(this)
   }
   shouldRender() {
     //changeAtoms说明有状态变化,deletions表示,比如销毁
     return this.changeAtoms.length > 0 || this.deletions.length > 0
-  }
-
-  private isOnRender = false
-  beginRender() {
-    this.isOnRender = true
-  }
-  private notRenderList: EmptyFun[] = []
-  private finishRender() {
-    /**
-     * 虽然感觉这个应该异步执行更科学
-     */
-    this.isOnRender = false
-    this.notRenderList.forEach(run)
-    this.notRenderList.length = 0
-  }
-
-  taskRun(fun: EmptyFun) {
-    if (this.isOnRender) {
-      this.notRenderList.push(fun)
-    } else {
-      fun()
-    }
   }
 
   rollback() {
@@ -99,7 +76,6 @@ export class EnvModel {
     this.draftConsumers.length = 0
     this.deletions.length = 0
     this.updateEffects.clear()
-    this.finishRender()
   }
   commit(rootFiber: Fiber) {
     /**最新更新所有注册的*/
@@ -126,7 +102,6 @@ export class EnvModel {
       updateEffects.get(key)?.forEach(run)
     }
     updateEffects.clear()
-    this.finishRender()
   }
   /**
  * 在commit期间修改后,都是最新值,直到commit前,都可以回滚

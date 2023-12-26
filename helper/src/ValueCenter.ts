@@ -7,7 +7,7 @@ type EventHandler<T> = (v: T) => void
 export interface VirtualEventCenter<T> {
   subscribe(notify: EventHandler<T>): () => void
 }
-type Subscriber<T> = (v: EventHandler<T>) => (() => void)
+export type Subscriber<T> = (v: EventHandler<T>) => (() => void)
 export function eventCenter<T>() {
   const pool = new Set<EventHandler<T>>()
   return {
