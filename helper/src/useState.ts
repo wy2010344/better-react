@@ -1,9 +1,10 @@
 import { ReducerResult, run } from "better-react";
 import { useReducer } from "./useReducer";
+import { RefReducerResult, useRefReducer } from "./useRefReducer";
 
 
 
-type StateReducerState<T> = T | ((v: T) => T)
+export type StateReducerState<T> = T | ((v: T) => T)
 function reducer<T>(old: T, action: StateReducerState<T>) {
   if (typeof (action) == 'function') {
     return (action as any)(old)
@@ -41,4 +42,14 @@ export function useChange<T>(): ReducerResult<T, T> {
 
 export function useChangeFun<T>(fun: () => T): ReducerResult<T, T> {
   return useChange(undefined, fun)
+}
+
+export function useRefChange<T = undefined>(): RefReducerResult<T | undefined, T | undefined>
+export function useRefChange<M, T>(v: M, init: (v: M) => T): RefReducerResult<T, T>
+export function useRefChange<T>(v: T): RefReducerResult<T, T>
+export function useRefChange<T>(): RefReducerResult<T, T> {
+  return useRefReducer(change, arguments[0], arguments[1])
+}
+export function useRefChangeFun<T>(fun: () => T): RefReducerResult<T, T> {
+  return useRefChange(undefined, fun)
 }

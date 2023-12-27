@@ -1,6 +1,6 @@
 import { valueCenterOf } from "./ValueCenter"
 import { GetPromiseRequest, PromiseResult, createAndFlushAbortController } from "./usePromise"
-import { useStoreTriggerRender } from "./ValueCenter"
+import { useStoreTriggerRender } from "./useStoreTriggerRender"
 import { EmptyFun, quote, storeRef } from "better-react"
 
 export function createResource<T>(getResource: GetPromiseRequest<T>) {

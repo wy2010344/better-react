@@ -1,6 +1,7 @@
 
 import { renderOneF } from "better-react";
-import { useStoreTriggerRender, valueCenterOf } from "./ValueCenter";
+import { valueCenterOf } from "./ValueCenter";
+import { useStoreTriggerRender } from "./useStoreTriggerRender";
 type FunElement = {
   render(): void
   id: any

@@ -1,7 +1,5 @@
 import { HookValueSet, emptyFun, quote } from "better-react"
 import { useMemo } from "./useRef"
-import { useRefState } from "./useRefState"
-import { useEffect } from "./useEffect"
 
 type EventHandler<T> = (v: T) => void
 export interface VirtualEventCenter<T> {
@@ -71,34 +69,4 @@ export function useValueCenter() {
 }
 export function useValueCenterFun<T>(fun: () => T): ValueCenter<T> {
   return useValueCenter(undefined, fun)
-}
-/**
- * 
- * @param store 
- * @param arg 只能初始化,中间不可以改变,即使改变,也是跟随的
- */
-export function useStoreTriggerRender<T, M>(store: ValueCenter<T>, arg: {
-  filter(a: T): M,
-  onBind?(a: M): void
-}): M
-export function useStoreTriggerRender<T>(store: ValueCenter<T>, arg?: {
-  filter?(a: T): T,
-  onBind?(a: T): void
-}): T
-export function useStoreTriggerRender<T>(store: ValueCenter<T>) {
-  const arg = arguments[1]
-  const filter = arg?.filter || quote
-  const [state, setState] = useRefState(store.get(), filter)
-  useEffect(function () {
-    function setValue(v: T) {
-      const newState = filter(v) as T
-      setState(newState)
-      return newState
-    }
-    const newValue = store.get() as T
-    setValue(newValue)
-    arg?.onBind?.(newValue)
-    return store.subscribe(setState)
-  }, [store])
-  return state
 }

@@ -1,5 +1,6 @@
 import { useMemo } from "./useRef"
-import { useStoreTriggerRender, useValueCenter } from "./ValueCenter"
+import { useValueCenter } from "./ValueCenter"
+import { useStoreTriggerRender } from "./useStoreTriggerRender"
 
 /**
  * 

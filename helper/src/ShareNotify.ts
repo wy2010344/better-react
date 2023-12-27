@@ -1,6 +1,7 @@
 import { renderArray } from "./renderMap";
 import { getOnlyId } from "./useOnlyId";
-import { useStoreTriggerRender, valueCenterOf } from "./ValueCenter";
+import { valueCenterOf } from "./ValueCenter";
+import { useStoreTriggerRender } from "./useStoreTriggerRender";
 
 
 

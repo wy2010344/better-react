@@ -1,6 +1,6 @@
 import { compile, serialize, stringify, middleware, prefixer } from 'stylis'
-import { useBaseMemoGet, emptyArray, storeRef } from 'better-react'
-import { useAttrEffect, useEffect } from 'better-react-helper'
+import { useBaseMemoGet, emptyArray, storeRef, EmptyFun, run } from 'better-react'
+import { ValueCenter, useAttrEffect, useEffect, valueCenterOf } from 'better-react-helper'
 let uid = 0
 function newClassName() {
   return 'stylis-' + uid++
@@ -126,4 +126,33 @@ export function css(ts: TemplateStringsArray, ...vs: CSSParamType[]) {
   const style = createBodyStyleTag()
   style.textContent = toCssFragment(style.id, genCSS(ts, vs))
   return style.id
+}
+
+/**
+ * 全局状态
+ * @param map 
+ * @param split 
+ */
+export function observeCssmap<T extends CssNest, VS extends readonly any[]>(
+  values: {
+    [key in keyof VS]: ValueCenter<VS[key]>
+  },
+  getMap: (vs: VS) => T,
+  split?: string
+) {
+  const styled = createBodyStyleTag()
+  const vs: any[] = []
+  const destroyList: EmptyFun[] = []
+  for (const value of values) {
+    vs.push(value.get())
+    destroyList.push(value.subscribe(function () {
+      const { css } = genCssMap(getMap(values.map(value => value.get()) as any), styled.id, split)
+      styled.textContent = css
+    }))
+  }
+  const { css, classMap } = genCssMap(getMap(vs as any), styled.id, split)
+  styled.textContent = css
+  return [classMap, function () {
+    destroyList.forEach(run)
+  }] as const
 }
