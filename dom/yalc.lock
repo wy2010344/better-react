@@ -2,7 +2,7 @@
   "version": "v1",
   "packages": {
     "better-react": {
-      "signature": "a2da4b2ba719c7e014e135f8a3c4a4cf",
+      "signature": "bca491a1aadb30466a433c9a87436ad0",
       "file": true,
       "replaced": "^1.2.4"
     },
@@ -12,6 +12,10 @@
     },
     "stylis-creater": {
       "signature": "904e0a1c1ae46e04b04519c10d6344ae",
+      "file": true
+    },
+    "wy-helper": {
+      "signature": "a0be357923f39e008bf5a1039704032d",
       "file": true
     }
   }

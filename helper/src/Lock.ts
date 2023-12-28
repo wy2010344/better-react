@@ -1,4 +1,4 @@
-import { StoreRef, emptyArray, storeRef } from "better-react";
+import { StoreRef, emptyArray, storeRef } from "wy-helper";
 import { useMemo, useAtomBind } from "./useRef";
 import { useEffect } from "./useEffect";
 

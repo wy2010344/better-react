@@ -1,6 +1,5 @@
-import { emptyArray, quote } from "better-react"
 import { useEffect } from "./useEffect";
-import { ValueCenter } from "./ValueCenter";
+import { ValueCenter, emptyArray, quote } from "wy-helper";
 import { useChange } from "./useState";
 import { useAtomBind } from "./useRef";
 import { useCallback } from "./useCallback";

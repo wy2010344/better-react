@@ -5,7 +5,7 @@ import { TopicModel, useUser } from "../dbStore";
 import { panelWith } from "../panel/PanelContext";
 import { renderIf, useState } from "better-react-helper"
 import person from "./person";
-import { stringifyStyle } from "better-react-dom-helper";
+import { stringifyStyle } from "wy-dom-helper";
 
 
 

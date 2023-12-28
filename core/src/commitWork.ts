@@ -1,6 +1,6 @@
 import { Fiber, HookContextCosumer, VirtaulDomNode } from "./Fiber"
 import { deepTravelFiber, findParentAndBefore } from "./findParentAndBefore"
-import { EmptyFun, ManageValue, quote, removeEqual, run, storeRef } from "./util"
+import { EmptyFun, ManageValue, StoreRef, iterableToList, quote, removeEqual, run, storeRef } from "wy-helper"
 
 
 export type CreateChangeAtom<T> = (v: T, didCommit?: (v: T) => T) => StoreRef<T>
@@ -126,11 +126,6 @@ export type LoopWork = {
  * 分为3个等级,更新属性前,更新属性中,更新属性后
 */
 export type UpdateEffectLevel = 0 | 1 | 2
-export type StoreRef<T> = {
-  set(v: T): void
-  get(): T
-}
-
 /**
  * 需要区分create和update阶段
  */
@@ -282,16 +277,4 @@ function destroyFiber(fiber: Fiber) {
     listener.destroy()
   })
   fiber.dom?.destroy()
-}
-
-export function iterableToList<T>(entity: IterableIterator<T>) {
-  const vs: T[] = []
-  while (true) {
-    const value = entity.next()
-    if (value.done) {
-      break
-    }
-    vs.push(value.value)
-  }
-  return vs
 }

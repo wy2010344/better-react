@@ -1,6 +1,7 @@
-import { render, AskNextTimeWork, VirtualDomOperator, RenderWithDep, renderFiber, emptyArray, useLevelEffect } from "better-react";
+import { render, AskNextTimeWork, VirtualDomOperator, RenderWithDep, renderFiber, useLevelEffect } from "better-react";
 import { DomAttribute, DomElement, DomElementType, SvgAttribute, SvgElement, SvgElementType } from "./html";
 import { EMPTYPROPS, FiberNode, FiberText, domTagNames, emptyFun, svgTagNames, updateProps } from "./updateDom";
+import { emptyArray } from "wy-helper";
 export { getScheduleAskTime } from './schedule'
 export { isSVG, FiberNode, FiberText } from './updateDom'
 export { getAliasOfAttribute, getAttributeAlias } from './getAttributeAlias'

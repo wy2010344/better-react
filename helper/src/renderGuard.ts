@@ -1,4 +1,5 @@
-import { emptyFun, quote, renderOneF } from "better-react"
+import { renderOneF } from "better-react"
+import { emptyFun, quote } from 'wy-helper'
 type GuardBaseFiber<A, T> = (readonly [
   A,
   (v: T) => void

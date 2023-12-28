@@ -1,4 +1,4 @@
-import { EmptyFun, emptyFun } from "better-react";
+import { EmptyFun, emptyFun } from "wy-helper";
 import { useEvent } from "./useEvent";
 import { PromiseResult, createAndFlushAbortController } from "./usePromise";
 import { useCallback } from "./useCallback";

@@ -1,7 +1,7 @@
 import { React, domOf } from "better-react-dom";
 import { renderDisplayTable, renderTable } from "./renderTable";
 import { defaultBoxShadow } from "./util";
-import { CSSProperties, stringifyStyle } from "better-react-dom-helper";
+import { CSSProperties, stringifyStyle } from "wy-dom-helper"
 
 export function renderTableDemo() {
   domOf("div", {
@@ -17,7 +17,7 @@ export function renderTableDemo() {
         return i
       },
       columns: Array(30).fill(1).map((_, i) => {
-        let style: CSSProperties | undefined = undefined
+        let style: CSSProperties
         if (i == 0) {
           style = {
             position: 'sticky',
@@ -33,7 +33,6 @@ export function renderTableDemo() {
         } else {
           style = {}
         }
-
         if (i == 0) {
           style.borderRight = '1px solid gray'
         } else if (i != 1) {

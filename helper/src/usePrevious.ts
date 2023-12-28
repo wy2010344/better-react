@@ -1,4 +1,4 @@
-import { useAtomBind, useChgAtom } from "./useRef";
+import { useChgAtom } from "./useRef";
 
 /**
  * @todo 

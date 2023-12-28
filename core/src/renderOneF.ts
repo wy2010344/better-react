@@ -1,6 +1,6 @@
 import { Fiber, VirtaulDomNode, VirtualDomOperator } from "./Fiber"
 import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemoGet, useParentFiber, useLevelEffect } from "./fc"
-import { emptyArray } from "./util"
+import { emptyArray } from "wy-helper"
 ////////****single****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type OneProps<T extends readonly any[] = readonly any[]> = readonly [
   any,

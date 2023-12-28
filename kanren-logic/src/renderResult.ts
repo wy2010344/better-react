@@ -1,7 +1,7 @@
-import { emptyArray } from "better-react";
-import { renderArray, renderArrayWithIndexAsKey, renderIf, useMemo, useReducer } from "better-react-helper";
+import { emptyArray } from "wy-helper"
+import { renderArrayWithIndexAsKey, renderIf, useMemo, useReducer } from "better-react-helper";
 import { VarPool } from "./evalExp";
-import { DelayStream, KSubsitution, Stream, walk } from "./kanren";
+import { DelayStream, KSubsitution, Stream, walk } from "wy-helper/kanren";
 import { stringifyLog } from "./stringify";
 import { domOf } from "better-react-dom";
 

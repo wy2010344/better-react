@@ -1,4 +1,4 @@
-import { Goal, KPair, KSubsitution, KType, KVar, List, Stream, KSymbol, extendSubsitution, kanren, streamBindGoal, toList, walk } from "./kanren"
+import { Goal, KPair, KSubsitution, KType, KVar, List, Stream, KSymbol, extendSubsitution, kanren, streamBindGoal, toList, walk } from "wy-helper/kanren"
 import { CacheValue, LRule } from "./parse"
 import { stringifyLog, tryParsePair } from "./stringify"
 

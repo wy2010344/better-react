@@ -1,10 +1,11 @@
 import {
   FindParentAndBefore,
-  Props, VirtaulDomNode, useLevelEffect
+  VirtaulDomNode, useLevelEffect
 } from "better-react"
 import { getAttributeAlias } from "./getAttributeAlias"
 import { DomElementType, SvgElementType } from "./html"
 
+export type Props = { [key: string]: any }
 interface FiberAbsNode extends VirtaulDomNode {
   node: Node
 }

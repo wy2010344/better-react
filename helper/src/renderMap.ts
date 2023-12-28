@@ -1,4 +1,4 @@
-import { quote, renderMapF } from "better-react";
+import { renderMapF } from "better-react";
 
 export type ReadArray<T> = {
   length: number

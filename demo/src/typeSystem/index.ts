@@ -2,8 +2,9 @@ import { useDom } from "better-react-dom";
 import { useBuildSubSetArray, useBuildSubSetObject, useState, renderArray } from "better-react-helper";
 import { normalPanel } from "../panel/PanelContext";
 import { alertWith, use居中 } from "../panel/居中";
-import { useClickOutside, renderInput, stringifyStyle } from "better-react-dom-helper";
+import { useClickOutside, renderInput } from "better-react-dom-helper";
 import { AllType, SubStructTypeModel, useTypeDB } from "./model";
+import { stringifyStyle } from "wy-dom-helper";
 
 
 

@@ -1,7 +1,7 @@
 import { useState } from "better-react-helper";
 import { renderContent, useDom, useSvg } from "better-react-dom";
 import { normalPanel } from "../panel/PanelContext";
-import { stringifyStyle } from "better-react-dom-helper";
+import { stringifyStyle } from "wy-dom-helper";
 
 export default normalPanel(function (operate, id) {
   useDom("div", {

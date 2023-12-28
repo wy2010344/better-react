@@ -1,6 +1,6 @@
 import { Fiber, VirtaulDomNode, VirtualDomOperator } from "./Fiber"
 import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemoGet, useParentFiber, useLevelEffect } from "./fc"
-import { emptyArray, storeRef } from "./util"
+import { emptyArray, storeRef } from "wy-helper"
 
 ////////****useMap****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 export type MapRowRender<C, T extends any[]> = readonly [

@@ -1,4 +1,4 @@
-import { EmptyFun, emptyArray } from "better-react";
+import { EmptyFun, emptyArray } from "wy-helper";
 import { useEffect, useEvent } from "better-react-helper";
 export function useRequesetAnimationFrame(run: EmptyFun) {
   useEffect(() => {

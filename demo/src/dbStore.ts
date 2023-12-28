@@ -1,5 +1,6 @@
-import { useState, useMemo, valueCenterOf, ValueCenter, useStoreTriggerRender } from "better-react-helper"
+import { useState, useMemo, useStoreTriggerRender } from "better-react-helper"
 import { TypeSystemModel } from "./typeSystem/model"
+import { ValueCenter, valueCenterOf } from "wy-helper"
 
 export type UserModel = {
   name: string

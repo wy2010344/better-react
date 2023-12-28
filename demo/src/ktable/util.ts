@@ -1,5 +1,5 @@
 import { React, domOf } from "better-react-dom"
-import { CSSProperties, stringifyStyle } from "better-react-dom-helper"
+import { CSSProperties, stringifyStyle } from "wy-dom-helper";
 export type KColumnPosition = "left" | "center" | "right"
 export type KColumn = {
   key: any

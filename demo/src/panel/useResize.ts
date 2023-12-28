@@ -1,7 +1,7 @@
 import { useEffect } from "better-react-helper"
 import { useDom, React } from "better-react-dom";
 import { Direction, initDrag, ResizeHelper } from "./drag";
-import { stringifyStyle } from "better-react-dom-helper";
+import { stringifyStyle } from "wy-dom-helper";
 
 
 export default function useResize(resize: ResizeHelper) {

@@ -1,5 +1,5 @@
-import { KPair, KType, List, KSymbol, kanren, toList, toPairs } from "./kanren"
-import { BaseQue, ParseFunGet, QueArray, andRuleGet, arraySplit, manyRuleGet, matchEnd, matchVS, orRuleGet, ruleGet, ruleGetSelf } from "./tokenParser"
+import { KPair, KType, List, KSymbol, kanren, toList, toPairs } from "wy-helper/kanren"
+import { BaseQue, ParseFunGet, QueArray, andRuleGet, arraySplit, manyRuleGet, matchEnd, matchVS, orRuleGet, ruleGet, ruleGetSelf } from "wy-helper/tokenParser"
 import { LToken } from "./tokenize"
 
 type LString = {

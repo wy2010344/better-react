@@ -1,13 +1,13 @@
 import { useMemo } from './useRef'
-import { HookValueSet, ReducerFun, emptyArray, quote } from 'better-react'
+import { ReducerFun, } from 'better-react'
 import { useReducer } from './useReducer'
-import { Subscriber, valueCenterOf } from './ValueCenter'
+import { Subscriber, valueCenterOf, emptyArray, quote, SetValue } from "wy-helper"
 
 
 /**
  * 其实没必要了,既然能访问实时值.
  */
-export type RefReducerResult<F, T> = [T, HookValueSet<F>, () => T, Subscriber<T>, () => number];
+export type RefReducerResult<F, T> = [T, SetValue<F>, () => T, Subscriber<T>, () => number];
 export function useRefReducer<F, M, T>(reducer: ReducerFun<F, T>, init: M, initFun: (m: M) => T): RefReducerResult<F, T>;
 export function useRefReducer<F, T>(reducer: ReducerFun<F, T>, init: T, initFun?: (m: T) => T): RefReducerResult<F, T>;
 export function useRefReducer<F, T = undefined>(reducer: ReducerFun<F, T>, init?: T, initFun?: (m: T) => T): RefReducerResult<F, T>

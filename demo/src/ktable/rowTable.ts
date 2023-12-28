@@ -1,8 +1,8 @@
 import { React, domOf } from "better-react-dom";
 import { KColumn, getKColumnKey } from "./util";
 import { renderArray, renderMax } from "better-react-helper";
-import { emptyArray } from "better-react";
-import { CSSProperties, stringifyStyle } from "better-react-dom-helper";
+import { emptyArray } from "wy-helper"
+import { CSSProperties, stringifyStyle } from "wy-dom-helper";
 
 /**
  * 

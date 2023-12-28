@@ -1,6 +1,5 @@
-import { KPair, KSymbol, KType, KVar } from "./kanren";
+import { KPair, KSymbol, KType, KVar } from "wy-helper/kanren";
 import { includeBlockNotChar } from "./tokenize";
-
 
 
 export function tryParsePair(v: KPair<KType, KType>) {

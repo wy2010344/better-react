@@ -1,6 +1,6 @@
-import { StoreRef, EnvModel, UpdateEffectLevel } from "./commitWork";
-import { Fiber, HookContextCosumer, HookEffect, HookValue, HookValueSet, RenderWithDep, VirtaulDomNode, VirtualDomOperator } from "./Fiber";
-import { arrayEqual, arrayNotEqualDepsWithEmpty, quote, simpleEqual } from "./util";
+import { EnvModel } from "./commitWork";
+import { Fiber, HookContextCosumer, HookEffect, HookValue, RenderWithDep, VirtaulDomNode, VirtualDomOperator } from "./Fiber";
+import { arrayEqual, arrayNotEqualDepsWithEmpty, quote, SetValue, simpleEqual, StoreRef } from "wy-helper";
 
 
 const wipFiber: [EnvModel, Fiber] = [] as any
@@ -44,7 +44,7 @@ export function updateFunctionComponent(envModel: EnvModel, fiber: Fiber) {
 }
 
 export type ReducerFun<F, T> = (old: T, action: F) => T
-export type ReducerResult<F, T> = [T, HookValueSet<F>];
+export type ReducerResult<F, T> = [T, SetValue<F>];
 
 /**
  * 依赖外部初始值

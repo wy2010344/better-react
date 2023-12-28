@@ -1,4 +1,5 @@
-import { AskNextTimeWork, EmptyFun } from "better-react"
+import { AskNextTimeWork } from "better-react"
+import { EmptyFun } from "wy-helper"
 export const getTime = () => performance.now()
 const canPromise = typeof Promise !== 'undefined' && window.queueMicrotask
 const canMessageChannel = typeof MessageChannel !== 'undefined'

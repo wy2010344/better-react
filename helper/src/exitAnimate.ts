@@ -1,8 +1,7 @@
 import { useAtomFun } from "./useRef"
 import { useVersion } from "./useVersion"
-import { ArrayHelper, createEmptyArray, getOutResolvePromise } from "./util"
 import { renderArray } from "./renderMap"
-import { emptyArray } from "better-react"
+import { emptyArray, ArrayHelper, createEmptyArray, getOutResolvePromise } from "wy-helper"
 import { useEffect } from "./useEffect"
 
 

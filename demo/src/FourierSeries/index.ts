@@ -3,9 +3,7 @@ import { panelWith } from "../panel/PanelContext";
 import { useReducer } from "better-react-helper";
 import ComplexNumber, { radianToDegree } from "./ComplexNumber";
 import { useEffect } from "better-react-helper"
-import fastFourierTransform from "./fft";
-import dft from "./dft";
-import { stringifyStyle } from "better-react-dom-helper";
+import { stringifyStyle } from "wy-dom-helper";
 
 /**
  * 参考源

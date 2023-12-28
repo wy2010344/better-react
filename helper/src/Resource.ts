@@ -1,8 +1,13 @@
-import { valueCenterOf } from "./ValueCenter"
 import { GetPromiseRequest, PromiseResult, createAndFlushAbortController } from "./usePromise"
 import { useStoreTriggerRender } from "./useStoreTriggerRender"
-import { EmptyFun, quote, storeRef } from "better-react"
+import { EmptyFun, quote, storeRef, valueCenterOf } from "wy-helper"
 
+/**
+ * 这里是如果重新请求,则放弃
+ * 是否可以禁止重复请求?
+ * @param getResource 
+ * @returns 
+ */
 export function createResource<T>(getResource: GetPromiseRequest<T>) {
   const resource = valueCenterOf<PromiseResult<T> | undefined>(undefined)
   let promise: Promise<any> | undefined = undefined

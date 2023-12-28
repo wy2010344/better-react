@@ -1,7 +1,7 @@
 import { React, domOf } from "better-react-dom"
 import { renderRowTable } from "./rowTable"
 import { defaultBoxShadow, renderKColumns } from "./util"
-import { CSSProperties, stringifyStyle } from "better-react-dom-helper"
+import { CSSProperties, stringifyStyle } from "wy-dom-helper";
 
 const cellStyle: CSSProperties = {
   // display: "table-cell",

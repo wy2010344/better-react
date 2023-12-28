@@ -1,4 +1,4 @@
-import { emptyArray } from "better-react";
+import { emptyArray } from "wy-helper"
 import { useEvent } from "./useEvent";
 import { useEffect } from "./useEffect";
 

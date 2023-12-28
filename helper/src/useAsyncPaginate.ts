@@ -1,4 +1,4 @@
-import { emptyFun } from "better-react";
+import { emptyFun } from "wy-helper"
 import { PromiseResult, buildPromiseResultSetData, useSerialRequestLoading } from "./usePromise";
 import { useChange, useState } from "./useState";
 import { useBuildSubSetObject } from "./util";

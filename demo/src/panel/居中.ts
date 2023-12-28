@@ -1,7 +1,7 @@
 import { useDom } from 'better-react-dom'
 import { PanelCallback, PanelOperate } from './PanelContext'
 import { PanelParams } from './renderPanel'
-import { stringifyStyle } from 'better-react-dom-helper'
+import { stringifyStyle } from "wy-dom-helper";
 
 
 export function use居中(body: () => void) {

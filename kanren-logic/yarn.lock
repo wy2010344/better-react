@@ -2048,27 +2048,25 @@ bcrypt-pbkdf@^1.0.0:
   dependencies:
     tweetnacl "^0.14.3"
 
-better-react-dom-helper@^1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/better-react-dom-helper/-/better-react-dom-helper-1.2.2.tgz#4f3dfbe3462bffad9230c18268f09c72ed74dddf"
-  integrity sha512-SKh2DLrG4ApthagGripct9cYmFCy4hFCkDKLXcOPg/UY1G/PId4khkJAmPkERfPtyMPIJZd3WHksqM8wbt0EzA==
-
-better-react-dom@^1.2.4:
+better-react-dom-helper@^1.2.4:
   version "1.2.4"
-  resolved "https://registry.yarnpkg.com/better-react-dom/-/better-react-dom-1.2.4.tgz#c69e6effbf7968b3d1ed852e8ff2ba58421e3359"
-  integrity sha512-CosDpBvms0FmdAW/Mqp1V5S3KqmbpTu/ysYukNld7ZLiJRt6yASnj3q2Wa5A46DaCq3sa85T4T0JCA39aSxz8Q==
-  dependencies:
-    csstype "^3.1.0"
+  resolved "https://registry.yarnpkg.com/better-react-dom-helper/-/better-react-dom-helper-1.2.4.tgz#4121c6199c50803d5aa389f8f8805a829e81b699"
+  integrity sha512-FnrqggONLkyArdtryYI1r7iIXPTzAjAMynU39bDhac9Xsb2CtT2d9PdJ7/5Vc5Mftea1cHDgm4Su9LMRQ+9bbQ==
 
-better-react-helper@^1.2.5:
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/better-react-helper/-/better-react-helper-1.2.5.tgz#d3fb79febb56295892667216f76afc2619b56bc4"
-  integrity sha512-eqRd6K4Eorhutl1lfUpL9DJBqraZeAo6ktTWKmlKiP4KnsuWP9xaDnm8Q8nPlKZRFklTAuXlufHYF9pqY5ZfWA==
+better-react-dom@^1.2.6:
+  version "1.2.6"
+  resolved "https://registry.yarnpkg.com/better-react-dom/-/better-react-dom-1.2.6.tgz#929dceb840fc549c699808fd0e6d17dd20b80e10"
+  integrity sha512-uYYIil6A5RHJOdPz4hw1EoDlowM5K+a3B2Dr230hV3RMAk7iRhmz0Wi1RpAUM/eQpQwWOPXKcWk19Zg+seYR3A==
 
-better-react@^1.2.4:
-  version "1.2.4"
-  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.2.4.tgz#655dc190e3ce0b463605703716c684793c5307fb"
-  integrity sha512-L38yHL6kCBDmOWGhzWKnyui1TKssxoG2OHjB/N9bMkIlnGLEq733Fw86p+2feyR+YaZoDoRgAv/LQJ+o43+/rw==
+better-react-helper@^1.2.7:
+  version "1.2.7"
+  resolved "https://registry.yarnpkg.com/better-react-helper/-/better-react-helper-1.2.7.tgz#f40abcba60750491c8f59bae1e0b5793c2088f82"
+  integrity sha512-isPD2kX1tGejdwT+LY2h0i2YWEFHasMJbj3I7Wj2/R2a0CsyQ9nsRXMbrW96nUfYlqECEdMl7I5azlSXaDNStA==
+
+better-react@^1.2.6:
+  version "1.2.6"
+  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.2.6.tgz#37fc9a61ac31f69f15851fc5a75daea04c1aa80e"
+  integrity sha512-KydnKI2zNvcgE2fTtC4kS4ioBndiqhRAcEmBdyTmGAKQ71ay7mM4ysqO23+/RtHQ4tnq4xhuv6eAMRIGhK/4iA==
 
 binary-extensions@^2.0.0:
   version "2.2.0"
@@ -2463,11 +2461,6 @@ cssstyle@^2.0.0:
   integrity sha512-AZL67abkUzIuvcHqk7c09cezpGNcxUxU4Ioi/05xHk4DQeTkWmGYftIE6ctU6AEt+Gn4n1lDStOtj7FKycP71A==
   dependencies:
     cssom "~0.3.6"
-
-csstype@^3.1.0:
-  version "3.1.2"
-  resolved "https://registry.yarnpkg.com/csstype/-/csstype-3.1.2.tgz#1d4bf9d572f11c14031f0436e1c10bc1f571f50b"
-  integrity sha512-I7K1Uu0MBPzaFKg4nI5Q7Vs2t+3gWWW648spaF+Rg7pI9ds18Ugn+lvg4SHczUdKlHI5LWBXyqfS8+DufyBsgQ==
 
 damerau-levenshtein@^1.0.8:
   version "1.0.8"
@@ -6306,17 +6299,10 @@ strip-json-comments@^3.0.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-3.1.1.tgz#31f1281b3832630434831c310c01cccda8cbe006"
   integrity sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==
 
-stylis-creater@^1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/stylis-creater/-/stylis-creater-1.2.2.tgz#1e7a78b4cdf95d457a70821abc65556bf279fef6"
-  integrity sha512-RDCyvphTABoiFnk5JqbVGNC0rWTagmxNI/9uzYXGU/8HFuHZQoWK2zwLVr14uSzwWtVpLJ0v7oi9yRt3dKg54A==
-  dependencies:
-    stylis "^4.0.13"
-
-stylis@^4.0.13:
-  version "4.3.0"
-  resolved "https://registry.yarnpkg.com/stylis/-/stylis-4.3.0.tgz#abe305a669fc3d8777e10eefcfc73ad861c5588c"
-  integrity sha512-E87pIogpwUsUwXw7dNyU4QDjdgVMy52m+XEOPEKUn161cCzWjjhPSQhByfd1CcNvrOLnXQ6OnnZDwnJrz/Z4YQ==
+stylis@^4.3.1:
+  version "4.3.1"
+  resolved "https://registry.yarnpkg.com/stylis/-/stylis-4.3.1.tgz#ed8a9ebf9f76fe1e12d462f5cc3c4c980b23a7eb"
+  integrity sha512-EQepAV+wMsIaGVGX1RECzgrcqRRU/0sYOHkeLsZ3fzHaHXZy4DaOOX0vOlGQdlsjkh3mFHAIlVimpwAs4dslyQ==
 
 supports-color@^5.3.0:
   version "5.5.0"
@@ -6994,6 +6980,18 @@ ws@^7.0.0:
   version "7.5.9"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.9.tgz#54fa7db29f4c7cec68b1ddd3a89de099942bb591"
   integrity sha512-F+P9Jil7UiSKSkppIiD94dN07AwvFixvLIj1Og1Rl9GGMuNipJnV9JzjD6XuqmAeiswGvUmNLjr5cFuXwNS77Q==
+
+wy-dom-helper@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/wy-dom-helper/-/wy-dom-helper-0.1.0.tgz#dcfc8c083e204064635acfa926c5760cf356428c"
+  integrity sha512-vR5y5gKaHbzr4RzdTvt+afYwRSQXt+DKm3zx79I1dMLCuXRCSa8q3VV++AN7ZIt5KsOkHFfGkDp6tfaT6IPfwg==
+  dependencies:
+    stylis "^4.3.1"
+
+wy-helper@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/wy-helper/-/wy-helper-0.1.0.tgz#0879645adc435efc8763f800d012935d21af8d6a"
+  integrity sha512-qOtCzlsiughd7uzIH8widouB4S1mzq/VTMqxHuOj4ZkTzJc0wM6NHAoqVf8bcvegRDOoay2oJveRGYG+6YrVRQ==
 
 xml-name-validator@^3.0.0:
   version "3.0.0"

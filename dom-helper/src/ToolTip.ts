@@ -1,7 +1,6 @@
 import { useMemo } from "better-react-helper"
 import { useDom, useSvg } from "better-react-dom"
-import { stringifyStyle } from "./util"
-import { css } from "./stylis"
+import { css, stringifyStyle } from "wy-dom-helper"
 
 /**
  * 

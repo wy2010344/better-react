@@ -27,8 +27,13 @@
       "replaced": "^1.2.0"
     },
     "kanren-logic": {
-      "signature": "7a38a5a803b6efc5901c7e8bacdafb17",
+      "signature": "3903221efb48ee4260025749a1a0b846",
       "file": true
+    },
+    "wy-dom-helper": {
+      "signature": "c8c2918196e652eb354ffa61f7782ac4",
+      "file": true,
+      "replaced": "^0.1.0"
     }
   }
 }

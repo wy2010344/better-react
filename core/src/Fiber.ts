@@ -1,10 +1,9 @@
-import { StoreRef, EnvModel, FindParentAndBefore } from "./commitWork"
-import { arrayNotEqualDepsWithEmpty, storeRef } from "./util"
+import { EnvModel, FindParentAndBefore } from "./commitWork"
+import { arrayNotEqualDepsWithEmpty, SetValue, storeRef, StoreRef } from "wy-helper"
 
-export type HookValueSet<F> = (v: F) => void
 export type HookValue<F, T> = {
   value: StoreRef<T>
-  readonly set: HookValueSet<F>
+  readonly set: SetValue<F>
   reducer: any,
   init: any,
   initFun: any
@@ -220,4 +219,3 @@ export type StoreValue<T> = {
   get(): T
   set(v: T, callback?: () => void): void
 }
-export type Props = { [key: string]: any }

@@ -1,8 +1,7 @@
-import { EmptyFun } from "better-react";
 import { React, domOf } from "better-react-dom";
 import { renderArray, renderMax } from "better-react-helper";
 import { defaultBoxShadow } from "./util";
-import { CSSProperties, stringifyStyle } from "better-react-dom-helper";
+import { CSSProperties, stringifyStyle } from "wy-dom-helper"
 
 
 type TableColumn = {
@@ -78,7 +77,7 @@ export function renderDisplayTable({
   columns: TableColumn[]
 }) {
   domOf("div", {
-    style: stringifyStyle(style)
+    style: stringifyStyle(style || {})
   }).render(function () {
     domOf("div", {
       style: stringifyStyle({
@@ -94,7 +93,7 @@ export function renderDisplayTable({
       })
     })
     renderMax(dataSize, getKey, function (row) {
-      domOf("div", { style: stringifyStyle(rowStyle) }).render(function () {
+      domOf("div", { style: stringifyStyle(rowStyle || {}) }).render(function () {
         renderArray(columns, getTableColumnKey, function (column, c) {
           column.renderCell(row, c)
         })

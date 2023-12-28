@@ -1,5 +1,5 @@
 {
-  "version": "1.2.2",
+  "version": "1.2.4",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -30,11 +30,6 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "peerDependencies": {
-    "better-react": "^1.2.5",
-    "better-react-dom": "^1.2.5",
-    "better-react-helper": "^1.2.6"
-  },
   "name": "better-react-dom-helper",
   "author": "wangyang2010344",
   "module": "dist/better-react-dom-helper.esm.js",
@@ -48,11 +43,6 @@
       "limit": "10 KB"
     }
   ],
-  "dependencies": {
-    "better-react": "file:.yalc/better-react",
-    "better-react-helper": "file:.yalc/better-react-helper",
-    "stylis": "^4.0.13"
-  },
   "devDependencies": {
     "@size-limit/preset-small-lib": "^7.0.8",
     "@types/stylis": "^4.0.2",
@@ -62,5 +52,12 @@
     "tsdx": "^0.14.1",
     "tslib": "^2.3.1",
     "typescript": "^4.6.3"
+  },
+  "peerDependencies": {
+    "better-react": "^1.2.6",
+    "better-react-dom": "^1.2.6",
+    "better-react-helper": "^1.2.7",
+    "wy-helper": "^0.1.0",
+    "wy-dom-helper": "^0.1.0"
   }
 }

@@ -1,8 +1,8 @@
-import { emptyArray } from "better-react"
+import { emptyArray } from "wy-helper"
 import { React, domOf } from "better-react-dom"
 import { renderArray, renderMax } from "better-react-helper"
 import { KColumn, getKColumnKey } from "./util"
-import { CSSProperties, stringifyStyle } from "better-react-dom-helper"
+import { CSSProperties, stringifyStyle } from "wy-dom-helper"
 
 
 export function renderColumnTable({

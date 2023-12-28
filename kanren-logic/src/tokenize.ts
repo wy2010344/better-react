@@ -1,5 +1,5 @@
 
-import { Que, andMatch, manyMatch, manyRuleGet, match, matchEnd, notMathChar, orMatch, orRuleGet, ruleGet, whiteList, whiteSpaceRule } from "./tokenParser";
+import { Que, andMatch, manyMatch, manyRuleGet, match, matchEnd, notMathChar, orMatch, orRuleGet, ruleGet, whiteList, whiteSpaceRule } from "wy-helper/tokenParser";
 
 export type LToken = ({
   value: string

@@ -2,7 +2,7 @@ import App from "./App";
 import { AskNextTimeWork, useLevelEffect, } from "better-react";
 import { renderContent, useDom, getScheduleAskTime, createRoot, domOf } from "better-react-dom";
 import { CountContext, PanelCollection, PanelContext, PanelOperate } from "./panel/PanelContext";
-import { useStoreTriggerRender, renderArray, useState, valueCenterOf, renderFragment, useMemo, useEffect } from "better-react-helper";
+import { useStoreTriggerRender, renderArray, useState, renderFragment, useMemo, useEffect } from "better-react-helper";
 import cssHasCursor from "./learn/css-has-cursor";
 import 测试sharePortal from "./测试sharePortal";
 import contentEditableReact from "./contentEditableReact";
@@ -14,6 +14,7 @@ import logic from "./logic";
 import 开发AnimatePreference from "./开发AnimatePereference";
 import colorDesign from "./color-design";
 import ExpensiveView from "./ExpensiveView";
+import { valueCenterOf } from "wy-helper";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(

@@ -51,15 +51,12 @@
     "tslib": "^2.6.2",
     "typescript": "^5.2.2"
   },
-  "peerDependencies": {
-    "better-react": "^1.2.4",
-    "better-react-dom": "^1.2.4",
-    "better-react-helper": "^1.2.5"
-  },
   "dependencies": {
-    "better-react": "file:.yalc/better-react",
-    "better-react-dom": "file:.yalc/better-react-dom",
-    "better-react-dom-helper": "file:.yalc/better-react-dom-helper",
-    "better-react-helper": "file:.yalc/better-react-helper"
+    "better-react": "^1.2.6",
+    "better-react-dom": "^1.2.6",
+    "better-react-dom-helper": "^1.2.4",
+    "better-react-helper": "^1.2.7",
+    "wy-dom-helper": "^0.1.0",
+    "wy-helper": "^0.1.0"
   }
 }

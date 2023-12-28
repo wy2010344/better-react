@@ -1,8 +1,8 @@
-import { EnvModel, LoopWork, StoreRef } from "./commitWork"
+import { EnvModel, LoopWork } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
 import { Fiber } from "./Fiber"
 import { deepTravelFiber } from "./findParentAndBefore"
-import { EmptyFun } from "./util"
+import { EmptyFun, StoreRef } from "wy-helper"
 
 function getRec1(askNextTimeWork: EmptyFun, appendWork: (work: WorkUnit) => void) {
   let batchUpdateOn = false

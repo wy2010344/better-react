@@ -1,9 +1,8 @@
-import { emptyArray } from "better-react"
+import { emptyArray } from "wy-helper"
 import { React, DomElementType, DomElement, domOf, DomAttribute } from "better-react-dom"
 import { useEffect, useMemo } from "better-react-helper"
-import { mb, contentEditable, MbRange, getSelection, insertHTML, browser, afterCursor, beforeCursor } from "./mb"
-import { CSSProperties, stringifyStyle } from "./util"
-
+import { CSSProperties, stringifyStyle } from "wy-dom-helper"
+import { mb, contentEditableText, MbRange, getSelection, insertHTML, browser, afterCursor, beforeCursor } from 'wy-dom-helper/contentEditable'
 function shouldRecord(e: React.KeyboardEvent) {
   return !isUndo(e)
     && !isRedo(e)
@@ -500,7 +499,7 @@ export function useCodeJar<T extends DomElementType>(tag: T, {
       //粘贴的时候,内容与选中都会改变,然后记录历史
       rememberHistory()
     },
-    contentEditable: readonly ? false : contentEditable.text,
+    contentEditable: readonly ? false : contentEditableText,
     spellcheck,
     style: stringifyStyle({
       resize: height ? "none" : "vertical",

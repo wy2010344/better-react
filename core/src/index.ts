@@ -8,34 +8,18 @@ export {
   useBaseReducer, useLevelEffect, useBaseMemoGet,
   createContext, renderFiber, useGetFlushSync
 } from './fc'
-export {
-  arrayNotEqualDepsWithEmpty,
-  arrayEqual, simpleEqual,
-  storeRef,
-  quote,
-  emptyArray,
-  emptyObject,
-  emptyFun,
-  expandFunCall,
-  run,
-  removeEqual,
-  buildRemoveWhere
-} from './util'
 export type { ReducerResult, ReducerFun, EffectResult } from './fc'
 export type {
-  Fiber, Props,
+  Fiber,
   VirtaulDomNode,
-  HookValueSet,
   RenderWithDep,
   VirtualDomOperator,
 } from './Fiber'
 export type { AskNextTimeWork }
-export { StoreRef, CreateChangeAtom } from './commitWork'
+export { CreateChangeAtom } from './commitWork'
 export type { FindParentAndBefore } from './findParentAndBefore'
 export * from './renderOneF'
 export * from './renderMapF'
-export type { FalseType, EmptyFun, AnyFunction } from './util'
-
 export function render<T>(
   dom: VirtaulDomNode<T>,
   render: () => void,

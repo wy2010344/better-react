@@ -1,4 +1,5 @@
-import { ReducerFun, ReducerResult, quote, useBaseReducer } from "better-react";
+import { ReducerFun, ReducerResult, useBaseReducer } from "better-react";
+import { quote } from "wy-helper";
 
 
 export function useReducer<F, M, T>(reducer: ReducerFun<F, T>, init: M, initFun: (m: M) => T): ReducerResult<F, T>;

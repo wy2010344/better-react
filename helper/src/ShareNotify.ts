@@ -1,6 +1,6 @@
 import { renderArray } from "./renderMap";
 import { getOnlyId } from "./useOnlyId";
-import { valueCenterOf } from "./ValueCenter";
+import { valueCenterOf } from "wy-helper";
 import { useStoreTriggerRender } from "./useStoreTriggerRender";
 
 
