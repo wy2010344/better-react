@@ -1,6 +1,6 @@
-import { EmptyFun, emptyFun } from "wy-helper";
+import { EmptyFun, PromiseResult, emptyFun } from "wy-helper";
 import { useEvent } from "./useEvent";
-import { PromiseResult, createAndFlushAbortController } from "./usePromise";
+import { createAndFlushAbortController } from "./usePromise";
 import { useCallback } from "./useCallback";
 import { useAlways, useAtomBind } from "./useRef";
 import { useVersionLock } from "./Lock";

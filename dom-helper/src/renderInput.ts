@@ -1,22 +1,28 @@
 import { useEffect } from "better-react-helper"
-import { DomAttribute, domOf } from "better-react-dom"
+import { DomAttribute, DomElementType, dom } from "better-react-dom"
 import { useVersion } from 'better-react-helper'
-type InputType = "input" | "textarea"
-type InputTypeProps = DomAttribute<InputType> & {
+type InputTypeProps<T extends DomElementType> = DomAttribute<T> & {
   value: string
   onValueChange(v: string): void
 }
-export function renderInput(type: InputType, {
+export function renderInput(type: "textarea", args: InputTypeProps<'textarea'>): HTMLTextAreaElement
+export function renderInput(type: "input", props: Omit<InputTypeProps<"input">, 'type'> & {
+  /**
+   * 不支持那几项
+   */
+  type?: Exclude<DomAttribute<'input'>['type'], 'checkbox' | 'button' | 'hidden' | 'radio' | 'reset' | 'submit' | 'image'>
+}): HTMLInputElement
+export function renderInput(type: any, {
   value,
   onValueChange,
   onInput,
+  onCompositionEnd,
   ...props
-}: InputTypeProps) {
+}: any) {
   //只是为了强制这个模块更新
   const [version, updateVersion] = useVersion()
-  const input = domOf(type, {
-    onInput(e: any) {
-      e.preventDefault()
+  const input = dom[type as "input"]({
+    onInput(e) {
       const newValue = input.value
       updateVersion()
       onValueChange(newValue)
@@ -31,66 +37,40 @@ export function renderInput(type: InputType, {
       input.value = value
     }
   }, [value, version])
+  return input as any
+}
+
+export function renderInputCheckbox({
+  checked,
+  onCheckedChange,
+  onInput,
+  ...props
+}: Omit<DomAttribute<'input'>, 'type'> & {
+  checked?: any
+  onCheckedChange(v?: boolean): void
+}) {
+  //只是为了强制这个模块更新
+  const [version, updateVersion] = useVersion()
+  const input = dom.input({
+    /**
+     * 使用onInput实时事件,而不是使用onKeyUp与onCompositionEnd
+     * @param e 
+     */
+    onInput(e) {
+      const newValue = input.checked
+      updateVersion()
+      onCheckedChange(newValue)
+      onInput?.(e)
+    },
+    ...props,
+    type: "checkbox"
+  }).render()
+  //用useMemo更快触发,但会面临回滚问题
+  useEffect(() => {
+    if (!checked == input.checked) {
+      //外部值和内部值不一样,说明外部阻塞了变化
+      input.checked = checked
+    }
+  }, [checked, version])
   return input
 }
-
-
-
-
-
-export function canInputNumber(
-  fix: number = 0,
-  config?: {
-    allowNegative?: boolean;
-    canChange?(v: number): boolean;
-  }
-) {
-  if (fix != Infinity) {
-    if (fix < 0) {
-      throw new Error("fix should be oppositive");
-    }
-    if (fix != Math.round(fix)) {
-      throw new Error("fix should be int");
-    }
-  }
-  return function (v: string) {
-    if (v == "") {
-      return true;
-    } else if (v == "-") {
-      //负数
-      if (config?.allowNegative) {
-        return true;
-      } else {
-        return false;
-      }
-    } else {
-      const n = Number(v);
-      if (isNaN(n)) {
-        return false;
-      }
-      if (!config?.allowNegative && n < 0) {
-        return false;
-      }
-      const idx = v.indexOf(".");
-      if (idx > -1) {
-        if (fix == 0) {
-          return false;
-        }
-        if (v.length - idx - 1 > fix) {
-          return false;
-        }
-      }
-      if (config?.canChange) {
-        return config.canChange(n);
-      }
-      return true;
-    }
-  };
-}
-export const canInputInt = canInputNumber();
-export const canInputIntMax = canInputNumber(0, {
-  canChange(v) {
-    return v < 2147483647;
-  },
-});
-export const canInputAnyPositiveNumber = canInputNumber(Infinity);

@@ -40,7 +40,8 @@ export function updateFunctionComponent(envModel: EnvModel, fiber: Fiber) {
 
   hookIndex.cusomer = 0
   fiber.render()
-  draftParentFiber()
+  draftParentFiber();
+  (wipFiber as any[]).length = 0
 }
 
 export type ReducerFun<F, T> = (old: T, action: F) => T

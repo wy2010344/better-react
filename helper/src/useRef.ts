@@ -1,5 +1,5 @@
-import { useBaseMemoGet, useGetCreateChangeAtom } from 'better-react';
-import { storeRef, quote, emptyArray } from 'wy-helper'
+import { useBaseMemoGet, useGetCreateChangeAtom, useGetFlushSync } from 'better-react';
+import { storeRef, quote, emptyArray, emptyFun } from 'wy-helper'
 
 type StoreRef<T> = {
   get(): T
@@ -59,6 +59,15 @@ function getDep<T>(dep: readonly [T]) {
  */
 export function useAlways<T>(init: T) {
   return useMemoGet(getDep, [init] as const)
+}
+
+export function useFlushAlaways<T>(init: T) {
+  const flushSync = useGetFlushSync()
+  const getValue = useAlways(init)
+  return function () {
+    flushSync(emptyFun)
+    return getValue()
+  }
 }
 
 /**

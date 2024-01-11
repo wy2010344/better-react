@@ -1,47 +1,12 @@
 
 import { useEvent } from "./useEvent"
 import { useChange, useState } from "./useState"
-import { useMemo, useAtomBind, useAtom, useAtomFun, useAlways, useRefConst } from "./useRef"
+import { useMemo, useAtomBind, useAtom, useRefConst } from "./useRef"
 import { } from "better-react"
 import { useVersionInc, useVersionLock } from "./Lock"
 import { useEffect } from "./useEffect"
-import { createEmptyArray, ReduceState, EmptyFun, FalseType, emptyFun, StoreRef } from "wy-helper"
+import { createEmptyArray, ReduceState, EmptyFun, emptyFun, StoreRef, PromiseResult, buildSerialRequestSingle, VersionPromiseResult, OutPromiseOrFalse, GetPromiseRequest, OnVersionPromiseFinally, PromiseResultSuccessValue, createAbortController, buildPromiseResultSetData } from "wy-helper"
 
-export type PromiseResult<T> = {
-  type: "success",
-  value: T
-} | {
-  type: "error",
-  value: any
-}
-export type PromiseResultSuccessValue<T> = T extends {
-  type: "success"
-  value: infer V
-} ? V : never
-
-export type VersionPromiseResult<T> = PromiseResult<T> & {
-  version: number
-}
-export type GetPromiseRequest<T> = (signal?: AbortSignal, ...vs: any[]) => Promise<T>;
-type OnFinally<T> = (
-  data: VersionPromiseResult<T>,
-  ...vs: any[]
-) => void
-function createAbortController() {
-  if ("AbortController" in globalThis) {
-    const signal = new AbortController();
-    return {
-      signal: signal.signal,
-      cancel() {
-        signal.abort();
-      },
-    };
-  }
-  return {
-    signal: undefined,
-    cancel: emptyFun,
-  };
-}
 export function createAndFlushAbortController(ref: StoreRef<EmptyFun | undefined>) {
   const controller = createAbortController()
   const last = ref.get()
@@ -52,10 +17,8 @@ export function createAndFlushAbortController(ref: StoreRef<EmptyFun | undefined
   return controller.signal
 }
 
-
-type OutPromiseOrFalse<T> = (GetPromiseRequest<T>) | FalseType;
 export function useMemoPromiseCall<T, Deps extends readonly any[]>(
-  initOnFinally: OnFinally<T>,
+  initOnFinally: OnVersionPromiseFinally<T>,
   effect: (deps: Deps, ...vs: any[]) => OutPromiseOrFalse<T>,
   deps: Deps
 ) {
@@ -89,28 +52,12 @@ export function useMemoPromiseCall<T, Deps extends readonly any[]>(
   return mout
 }
 export function useCallbackPromiseCall<T, Deps extends readonly any[]>(
-  onFinally: OnFinally<T>,
+  onFinally: OnVersionPromiseFinally<T>,
   request: GetPromiseRequest<T>,
   deps: Deps
 ) {
   return useMemoPromiseCall(onFinally, () => request, deps)
 }
-export function buildPromiseResultSetData<F extends PromiseResult<any>>(
-  updateData: ReduceState<F | undefined>
-): ReduceState<PromiseResultSuccessValue<F>> {
-  return function setData(fun) {
-    updateData((old) => {
-      if (old?.type == "success") {
-        return {
-          ...old,
-          value: typeof fun == "function" ? (fun as any)(old.value) : fun,
-        };
-      }
-      return old;
-    });
-  };
-}
-
 /**
  * 内部状态似乎不应该允许修改
  * 后面可以使用memo合并差异项
@@ -119,7 +66,7 @@ export function buildPromiseResultSetData<F extends PromiseResult<any>>(
  * @returns [生效的数据,是否在loading]
  */
 export function useBaseMemoPromiseState<T, Deps extends readonly any[]>(
-  onFinally: undefined | OnFinally<T>,
+  onFinally: undefined | OnVersionPromiseFinally<T>,
   effect: (deps: Deps, ...vs: any[]) => OutPromiseOrFalse<T>,
   deps: Deps
 ) {
@@ -143,7 +90,7 @@ export function useMemoPromiseState<T, Deps extends readonly any[]>(
   return useBaseMemoPromiseState(undefined, effect, deps)
 }
 export function useBaseCallbackPromiseState<T, Deps extends readonly any[]>(
-  onFinally: undefined | OnFinally<T>,
+  onFinally: undefined | OnVersionPromiseFinally<T>,
   effect: GetPromiseRequest<T>,
   deps: Deps
 ) {
@@ -204,51 +151,6 @@ export function useMutationState<Req extends any[], Res>(effect: (...vs: Req) =>
   }), data] as const
 }
 
-
-export function buildSerialRequestSingle<Req extends any[], Res>(
-  callback: (...vs: Req) => Promise<Res>,
-  effect: (res: PromiseResult<Res>) => void = emptyFun,
-  cacheList: Req[] = []
-) {
-  return function (...vs: Req) {
-    cacheList.push(vs)
-    if (cacheList.length == 1) {
-      //之前是空的
-      const checkRun = () => {
-        cacheList.shift()
-        if (cacheList.length) {
-          //如果有值,继续操作
-          circleRun()
-          return false
-        }
-        return true
-      }
-      const circleRun = () => {
-        while (cacheList.length > 1) {
-          cacheList.shift()
-        }
-        callback(...cacheList[0])
-          .then(res => {
-            if (checkRun()) {
-              effect({
-                type: "success",
-                value: res
-              })
-            }
-          })
-          .catch(err => {
-            if (checkRun()) {
-              effect({
-                type: "error",
-                value: err
-              })
-            }
-          })
-      }
-      circleRun()
-    }
-  }
-}
 export function useSerialRequestSingle<Req extends any[], Res>(
   callback: (...vs: Req) => Promise<Res>,
   effect: (res: PromiseResult<Res>) => void = emptyFun

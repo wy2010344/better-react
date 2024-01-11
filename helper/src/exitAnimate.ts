@@ -1,7 +1,7 @@
 import { useAtomFun } from "./useRef"
 import { useVersion } from "./useVersion"
 import { renderArray } from "./renderMap"
-import { emptyArray, ArrayHelper, createEmptyArray, getOutResolvePromise } from "wy-helper"
+import { emptyArray, ArrayHelper, createEmptyArray, getOutResolvePromise, emptyObject } from "wy-helper"
 import { useEffect } from "./useEffect"
 
 
@@ -50,7 +50,7 @@ export function useRenderExitAnimate<V>(
     onEnterComplete,
     enterIgnore,
     onAnimateComplete
-  }: ExitAnimateArg<V>
+  }: ExitAnimateArg<V> = emptyObject
 ) {
   //用于删除后强制刷新
   const [_, updateVersion] = useVersion()
