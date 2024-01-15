@@ -21,7 +21,7 @@ export function useRenderCode<T>(
       props: React.HTMLAttributes<HTMLDivElement> & {
         readonly?: boolean
       },
-      render: EmptyFun
+      render: (div: HTMLDivElement) => void
     ) {
       renderContentEditable({
         readonly: props?.readonly
@@ -89,7 +89,9 @@ export function useRenderCode<T>(
               }
             }
           },
-        }).render(render)
+        }).render(function () {
+          render(div)
+        })
         useAttrEffect(() => {
           editorRef.set(div)
         }, emptyArray)

@@ -1,3 +1,4 @@
+import { EmptyFun } from "wy-helper";
 import { useReducer } from "./useReducer";
 
 
@@ -9,6 +10,14 @@ function increase(old: number) {
  * @returns 
  */
 export function useVersion(init = 0) {
-  const [version, dispatch] = useReducer(increase, init);
-  return [version, dispatch as (v?: any, after?: (v: number) => void) => void] as const
+  return useReducer(increase, init) as [number, EmptyFun]
+}
+
+
+export function getOpposite(old: any) {
+  return !old
+}
+
+export function useToggle(init?: any) {
+  return useReducer(getOpposite, init) as [boolean, EmptyFun]
 }

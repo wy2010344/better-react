@@ -1,5 +1,5 @@
-import { emptyFun } from "wy-helper"
-import { PromiseResult, buildPromiseResultSetData, useSerialRequestLoading } from "./usePromise";
+import { PromiseResult, buildPromiseResultSetData, emptyFun } from "wy-helper"
+import { useSerialRequestLoading } from "./usePromise";
 import { useChange, useState } from "./useState";
 import { useBuildSubSetObject } from "./util";
 import { useMemo } from "./useRef";
