@@ -59,5 +59,8 @@
     "better-react-helper": "^1.2.7",
     "wy-helper": "^0.1.0",
     "wy-dom-helper": "^0.1.0"
+  },
+  "dependencies": {
+    "wy-dom-helper": "file:.yalc/wy-dom-helper"
   }
 }

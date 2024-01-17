@@ -1,7 +1,7 @@
 import { useAtomFun } from "./useRef"
 import { useVersion } from "./useVersion"
 import { renderArray } from "./renderMap"
-import { emptyArray, ArrayHelper, createEmptyArray, getOutResolvePromise, emptyObject } from "wy-helper"
+import { emptyArray, ArrayHelper, createEmptyArray, getOutResolvePromise, emptyObject, FalseType } from "wy-helper"
 import { useEffect } from "./useEffect"
 
 
@@ -198,14 +198,10 @@ export function useRenderExitAnimate<V>(
   return newCacheList.get().map(getHideAsShow).filter(getNotHide)
 }
 
-export function renderExitAnimate<V>(
-  list: readonly V[],
-  getKey: (v: V) => any,
-  args: ExitAnimateArg<V>,
-  render: (v: ExitModel<V>) => void
-) {
-  const newList = useRenderExitAnimate(list, getKey, args)
-  renderArray(newList, getKen, function (value) {
+export function renderExitAnimateArray<V>(
+  vs: ExitModel<V>[],
+  render: (v: ExitModel<V>) => void) {
+  renderArray(vs, getKen, function (value) {
     render(value)
   })
 }
@@ -226,38 +222,32 @@ function getHideAsShow(v: ExitModelImpl<any>) {
 function getKen<V>(v: ExitModel<V>) {
   return v.key
 }
-
-function onlyGetArray(v: any) {
-  return v
-}
 function ignoreTrue() {
   return true
 }
-
-
-const onlyArray = [1]
+function onlyGetArray(v: any) {
+  return 1
+}
 /**
  * 只有一个元素的
  */
-export function renderOneExitAnimate(
-  show: any,
+export function useRenderOneExitAnimate<T>(
+  show: T | undefined | null | false | void,
   {
     ignore,
     ...args
   }: {
     ignore?: boolean
     onAnimateComplete?(): void
-  },
-  render: (v: ExitModel<any>) => void
+  } = emptyObject
 ) {
-  renderExitAnimate(
-    show ? onlyArray : emptyArray,
+  return useRenderExitAnimate(
+    show ? [show] : emptyArray,
     onlyGetArray,
     {
       enterIgnore: show && ignore ? ignoreTrue : undefined,
       exitIgnore: !show && ignore ? ignoreTrue : undefined,
       ...args
-    },
-    render
+    }
   )
 }

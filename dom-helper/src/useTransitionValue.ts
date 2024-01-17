@@ -1,6 +1,6 @@
 import { EmptyFun } from "wy-helper"
 import { useChange, useEffect } from "better-react-helper"
-import { forceFlow, forceFlowClassNames, forceFlowInitClassNames, requestBatchAnimationFrame } from "wy-dom-helper"
+import { CSSProperties, forceFlow, forceFlowClassNames, forceFlowInitClassNames, forceFlowInitStyle, forceFlowStyle, requestBatchAnimationFrame, mergeStyle } from "wy-dom-helper"
 
 
 type Getter<T> = (...vs: any[]) => T
@@ -26,58 +26,54 @@ export function useInitClassNames(
   initCls: string,
   showCls: string,
 ) {
-  const value = {
-    init: initCls,
-    show: showCls
-  }
-  return useTriggerClassNames(ref, false, value, value)
+  return useTriggerClassNames(ref, false, {
+    willShow: initCls,
+    show: showCls,
+    exit: initCls
+  })
 }
 export function useTriggerClassNames(
   ref: () => Element,
   exiting: any,
-  enter: {
-    init: string
+  config: {
+    willShow: string
     show: string
+    willExit?: string
+    exit: string
   },
-  exit: string | {
-    init: string
-    show: string
-  },
-  effect?: () => void | EmptyFun
+  effect?: (exiting: any) => void | EmptyFun
 ) {
   useEffect(() => {
     const div = ref()
     if (exiting) {
-      if (typeof exit == 'string') {
-        forceFlowClassNames(div, exit)
+      if (config.willExit) {
+        forceFlowInitClassNames(div, config.willExit, config.exit)
       } else {
-        forceFlowInitClassNames(div, exit.init, exit.show)
+        forceFlowClassNames(div, config.exit)
       }
     } else {
-      forceFlowInitClassNames(div, enter.init, enter.show)
+      forceFlowInitClassNames(div, config.willShow, config.show)
     }
-    return effect?.()
+    return effect?.(exiting)
   }, [!exiting])
-  return exiting ? typeof exit == 'string' ? exit : exit.show : enter.show
+  return exiting ? config.exit : config.show
 }
 
 export function useTriggerClassNamesWithShow(
   ref: () => Element,
   exiting: any,
-  enter: {
-    init: string
+  config: {
+    willShow: string
     show: string
-  },
-  exit: string | {
-    init: string
-    show: string
+    willExit?: string
+    exit: string
   },
   resolve: EmptyFun,
   timeout: number,
   show?: string
 ) {
   const [state, setState] = useChange<string>()
-  const cls = useTriggerClassNames(ref, exiting, enter, exit, function () {
+  const cls = useTriggerClassNames(ref, exiting, config, function () {
     return subscribeTimeout(show ? function () {
       resolve()
       setState(show)
@@ -90,6 +86,66 @@ export function useTriggerClassNamesWithShow(
   }
 }
 
+export type TriggerStyleConfig = {
+  willShow: CSSProperties
+  show: CSSProperties
+  showReplace?(div: ElementCSSInlineStyle & Element, style: CSSProperties): CSSProperties
+  willExit?: CSSProperties
+  willExitReplace?(div: ElementCSSInlineStyle & Element, style: CSSProperties): CSSProperties
+  exit: CSSProperties
+}
+export function useTriggerStyle(
+  ref: () => ElementCSSInlineStyle & Element,
+  exiting: any,
+  config: TriggerStyleConfig,
+  effect?: (exiting: any) => void
+) {
+  useEffect(() => {
+    const div = ref()
+    if (exiting) {
+      const replace = config.willExitReplace || config.showReplace
+      if (config.willExit || replace) {
+        forceFlowInitStyle(div, config.willExit || config.show, config.exit, replace)
+      } else {
+        forceFlowStyle(div, config.exit)
+      }
+    } else {
+      const replaceShow = config.showReplace?.(div, config.show) || config.show
+      forceFlowInitStyle(div, config.willShow, replaceShow)
+    }
+    return effect?.(exiting)
+  }, [!exiting])
+  return exiting ? config.exit : config.show
+}
+
+export function useTriggerStyleWithShow(
+  ref: () => ElementCSSInlineStyle & Element,
+  exiting: any,
+  config: TriggerStyleConfig,
+  resolve: EmptyFun,
+  /**可以根据是否在exiting动态赋值一个数字*/
+  timeout: number,
+  /**如果展示时需要突变到特殊的样式*/
+  show?: CSSProperties
+) {
+  const [state, setState] = useChange<CSSProperties>()
+  const cls = useTriggerStyle(ref, exiting, config, function (exiting) {
+    return subscribeTimeout(function () {
+      resolve()
+      if (!exiting && config.showReplace) {
+        mergeStyle(ref(), config.show)
+      }
+      if (show) {
+        setState(show)
+      }
+    }, timeout)
+  })
+  if (exiting) {
+    return cls
+  } else {
+    return state || cls
+  }
+}
 
 /**
  * 有这样的一种可能,进入动画并未完成,但变成退出了,此时绑定了退出动画事件,此时退出事件被进入动画的事件处理到
