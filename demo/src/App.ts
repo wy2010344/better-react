@@ -218,30 +218,6 @@ function TestButtonPage() {
   const operate = PanelContext.useConsumer()
   const [thisId, setThisId] = useState(-1)
   console.log("renderId", thisId)
-  useDom("button", {
-    onClick(e) {
-      e.stopPropagation()
-      if (thisId < 0) {
-        const id = operate.push(function () {
-          usePanel({
-            close() {
-              operate.close(id)
-            },
-            children() {
-              renderFragment(TestButtonPage, [])
-            },
-            moveFirst() {
-              operate.moveToFirst(id)
-            }
-          })
-        })
-        setThisId(id)
-      }
-    },
-    children() {
-      renderContent("新弹窗")
-    }
-  })
   useEffect(() => {
     return () => {
       console.log("销毁了?", thisId)

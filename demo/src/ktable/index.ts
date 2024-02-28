@@ -1,3 +1,4 @@
+import { useState } from "better-react-helper";
 import { panelWith } from "../panel/PanelContext";
 import { renderColumnTableDemo } from "./columnTableDemo";
 import { renderDisplayTableDemo } from "./renderTableDemo";
@@ -11,14 +12,14 @@ function range(i: number) {
 }
 
 
-export default panelWith({
-  initWidth: 800,
-  children(operate, id) {
-    // renderColumnTableDemo()
-    renderRowTableDemo()
-    // renderTableDemo()
-    // renderDisplayTableDemo()
-  },
+export default panelWith(function () {
+  return {
+    width: useState(800),
+    children(p, body) {
+
+      renderRowTableDemo()
+    },
+  }
 })
 
 

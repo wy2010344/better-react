@@ -1,93 +1,93 @@
 import { domOf } from "better-react-dom";
 import { panelWith } from "../panel/PanelContext";
-import { emptyArray } from "better-react";
 import ComplexNumber from "./ComplexNumber";
 import { bitLength } from "./util";
-import { useEffect } from "better-react-helper";
+import { useEffect, useState } from "better-react-helper";
+import { emptyArray } from "wy-helper";
 
-export default panelWith({
-  initWidth: 800,
-  children(operate, id, arg) {
+export default panelWith(function () {
+  return {
+    width: useState(800),
+    children(p, body) {
+      const canvas = domOf("canvas", {
+        width: 600,
+        height: 400,
+      }).render()
 
+      useEffect(() => {
+        fft([2, 3, 4, 2, 4, 5, 4, 6, 65, 7, 67, 77, 6, 88, 8, 2])
+        const ctx = canvas.getContext("2d")
 
-    const canvas = domOf("canvas", {
-      width: 600,
-      height: 400,
-    }).render()
-
-    useEffect(() => {
-      fft([2, 3, 4, 2, 4, 5, 4, 6, 65, 7, 67, 77, 6, 88, 8, 2])
-      const ctx = canvas.getContext("2d")
-
-      if (ctx) {
-        let rt = 0
-        const waves: number[] = []
-        const draw = (time: number) => {
-          ctx.clearRect(0, 0, canvas.width, canvas.height)
-          ctx.fillStyle = 'black'
-          ctx.fillRect(0, 0, canvas.width, canvas.height)
-          const radius = 100
-          ctx.strokeStyle = 'white'
-          ctx.lineWidth = 2
-          // ctx.arc(100, 100, radius * 2, 0, Math.PI * 2)
-
-
-
-          let x = 0, y = 0
-
-          for (let i = 0; i < 5; i++) {
-            const prevX = x, prevY = y
-
-            const n = i * 2 + 1
-
-            const radius = 50 * (4 / (n * Math.PI));
-            x += radius * Math.cos(n * rt);
-            y += radius * Math.sin(n * rt);
+        if (ctx) {
+          let rt = 0
+          const waves: number[] = []
+          const draw = (time: number) => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
+            ctx.fillStyle = 'black'
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+            const radius = 100
+            ctx.strokeStyle = 'white'
+            ctx.lineWidth = 2
+            // ctx.arc(100, 100, radius * 2, 0, Math.PI * 2)
 
 
 
-            ctx.beginPath()
-            ctx.ellipse(prevX + 200, prevY + 200, radius, radius, 0, 0, Math.PI * 2)
-            ctx.stroke()
-            ctx.closePath()
-            // //半径连线
-            ctx.beginPath()
-            ctx.moveTo(prevX + 200, prevY + 200)
-            ctx.lineTo(x + 200, y + 200)
-            ctx.stroke()
-            //圆点
+            let x = 0, y = 0
+
+            for (let i = 0; i < 5; i++) {
+              const prevX = x, prevY = y
+
+              const n = i * 2 + 1
+
+              const radius = 50 * (4 / (n * Math.PI));
+              x += radius * Math.cos(n * rt);
+              y += radius * Math.sin(n * rt);
+
+
+
+              ctx.beginPath()
+              ctx.ellipse(prevX + 200, prevY + 200, radius, radius, 0, 0, Math.PI * 2)
+              ctx.stroke()
+              ctx.closePath()
+              // //半径连线
+              ctx.beginPath()
+              ctx.moveTo(prevX + 200, prevY + 200)
+              ctx.lineTo(x + 200, y + 200)
+              ctx.stroke()
+              //圆点
+              // ctx.beginPath()
+              // ctx.fillStyle = 'white'
+              // ctx.ellipse(x + 200, y + 200, 4, 4, 0, 0, 2 * Math.PI)
+              // ctx.closePath()
+              // ctx.fill()
+            }
+
+
             // ctx.beginPath()
-            // ctx.fillStyle = 'white'
-            // ctx.ellipse(x + 200, y + 200, 4, 4, 0, 0, 2 * Math.PI)
+            // ctx.ellipse(200, 200, radius, radius, 0, 0, 2 * Math.PI);
+            // ctx.stroke()
             // ctx.closePath()
-            // ctx.fill()
+
+
+
+            waves.unshift(y)
+            if (waves.length > 2000) {
+              waves.pop()
+            }
+            //波型
+            for (let i = 0; i < waves.length; i++) {
+              ctx.lineTo(330 + i, 200 + waves[i])
+            }
+            ctx.stroke()
+
+            rt -= 0.02
+            requestAnimationFrame(draw)
           }
-
-
-          // ctx.beginPath()
-          // ctx.ellipse(200, 200, radius, radius, 0, 0, 2 * Math.PI);
-          // ctx.stroke()
-          // ctx.closePath()
-
-
-
-          waves.unshift(y)
-          if (waves.length > 2000) {
-            waves.pop()
-          }
-          //波型
-          for (let i = 0; i < waves.length; i++) {
-            ctx.lineTo(330 + i, 200 + waves[i])
-          }
-          ctx.stroke()
-
-          rt -= 0.02
           requestAnimationFrame(draw)
         }
-        requestAnimationFrame(draw)
-      }
-    }, emptyArray)
-  },
+      }, emptyArray)
+    },
+  }
 })
 
 

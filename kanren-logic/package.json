@@ -52,11 +52,11 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "better-react": "^1.2.6",
-    "better-react-dom": "^1.2.6",
-    "better-react-dom-helper": "^1.2.4",
-    "better-react-helper": "^1.2.7",
-    "wy-dom-helper": "^0.1.0",
-    "wy-helper": "^0.1.0"
+    "better-react": "file:.yalc/better-react",
+    "better-react-dom": "file:.yalc/better-react-dom",
+    "better-react-dom-helper": "file:.yalc/better-react-dom-helper",
+    "better-react-helper": "file:.yalc/better-react-helper",
+    "wy-dom-helper": "file:.yalc/wy-dom-helper",
+    "wy-helper": "file:.yalc/wy-helper"
   }
 }

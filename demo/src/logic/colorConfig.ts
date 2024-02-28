@@ -2,9 +2,9 @@ import { panelWith } from "@/panel/PanelContext";
 import { createUseReducer, useEffect, useState } from "better-react-helper";
 import { ThemeColors, defineColors } from "../../../kanren-logic/src";
 import renderPanel from "@/panel/renderPanel";
-import { emptyArray } from "better-react";
 import { renderInput } from "better-react-dom-helper";
 import { dom } from "better-react-dom";
+import { emptyArray } from "wy-helper";
 
 
 const colorThemeKey = "kanren-code-color-theme"
@@ -78,15 +78,15 @@ export default function renderColorConfig() {
     document.body.appendChild(div)
   }, emptyArray)
   const div = renderPanel({
-    initTop: 377,
-    initLeft: 148,
+    top: useState(377),
+    left: useState(148),
     close() {
 
     },
     moveFirst() {
 
     },
-    children(p, body) {
+    children() {
       dom.div().text`主题色`
       renderInput("input", {
         type: "color",

@@ -7,11 +7,12 @@ import { renderTransformZ } from "./transformZ";
 import 内置退出动画 from "./内置退出动画";
 import { render内置入场动画 } from "./内置入场动画";
 import { render动画测试 } from "./动画测试";
+import { renderFilter } from "./renderFilter";
 
 export default normalPanel(function () {
   // renderPages()
   // renderPagesValue()
-  renderTodoList()
+  renderFilter()
   // renderSinglePage()
   // renderTransformZ()
   // 内置退出动画()

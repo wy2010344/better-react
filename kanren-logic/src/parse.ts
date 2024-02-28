@@ -1,5 +1,5 @@
 import { KPair, KType, List, KSymbol, kanren, toList, toPairs } from "wy-helper/kanren"
-import { BaseQue, ParseFunGet, QueArray, andRuleGet, arraySplit, manyRuleGet, matchEnd, matchVS, orRuleGet, ruleGet, ruleGetSelf } from "wy-helper/tokenParser"
+import { BQue, BaseQue, ParseFunGet, QueArray, andRuleGet, arraySplit, isParseSuccess, manyRuleGet, matchEnd, matchVS, orRuleGet, ruleGet, ruleGetSelf } from "wy-helper/tokenParser"
 import { LToken } from "./tokenize"
 
 type LString = {
@@ -383,16 +383,16 @@ export function parseRules(tokens: LToken[]) {
    * a b [daf ds ] (d aew aw)
    */
   const filterTokens = getFilterTokens(tokens)
-  const result = topRuleGet(new BaseQue(filterTokens))
+  const result = topRuleGet(new BQue(filterTokens))
   const rules: LRule[] = []
   let asts: LTerm[] = []
-  if (result) {
+  if (isParseSuccess(result)) {
     asts = result.value
     for (const row of result.value) {
       mergeErrorAreas(row, errorAreas)
       const cs = row.children
-      const out = ruleRuleGet(new BaseQue(cs))
-      if (out) {
+      const out = ruleRuleGet(new BQue(cs))
+      if (isParseSuccess(out)) {
         rules.push(out.value)
       } else {
         errorAreas.push({
@@ -413,11 +413,11 @@ export function parseRules(tokens: LToken[]) {
 export function parseQuery(tokens: LToken[]) {
   const errorAreas: ErrorArea[] = []
   const filterTokens = getFilterTokens(tokens)
-  const result = queryRuleGet(new BaseQue(filterTokens))
+  const result = queryRuleGet(new BQue(filterTokens))
 
   let asts: AtomExp[] = []
   let query: CacheValue = null
-  if (result) {
+  if (isParseSuccess(result)) {
     asts = result.value
     for (const cell of result.value) {
       mergeErrorAreas(cell, errorAreas)
@@ -436,10 +436,10 @@ const specialTokens = [',', ';', '|']
 export function parseNewQuery(tokens: LToken[]) {
   const errorAreas: ErrorArea[] = []
   const filterTokens = getFilterTokens(tokens)
-  const result = queryRuleGet(new BaseQue(filterTokens))
+  const result = queryRuleGet(new BQue(filterTokens))
   let ast: AtomExp | undefined = undefined
   let query: CacheValue = null
-  if (result) {
+  if (isParseSuccess(result)) {
     const list = toSplitAndList(result.value)
     ast = buildOneQuery(list)
     if (ast) {
@@ -488,10 +488,10 @@ function buildOneQuery(list: [LBlock | undefined, AtomExp][], begin = 0) {
 export function pserNewRules(tokens: LToken[]) {
   const errorAreas: ErrorArea[] = []
   const filterTokens = getFilterTokens(tokens)
-  const result = queryRuleGet(new BaseQue(filterTokens))
+  const result = queryRuleGet(new BQue(filterTokens))
   const rules: LRule[] = []
   let asts: AtomExp[] = []
-  if (result) {
+  if (isParseSuccess(result)) {
     const values = arraySplit(result.value, v => v.type == 'block' && v.value == '---')
     for (const value of values) {
       const rule = toRule(value, asts)
@@ -595,10 +595,10 @@ function toRule(value: AtomExp[], asts: AtomExp[]) {
 export function parseNewRule(tokens: LToken[]) {
   const errorAreas: ErrorArea[] = []
   const filterTokens = getFilterTokens(tokens)
-  const result = queryRuleGet(new BaseQue(filterTokens))
+  const result = queryRuleGet(new BQue(filterTokens))
   let rule: LRule | null = null
   let asts: AtomExp[] = []
-  if (result) {
+  if (isParseSuccess(result)) {
     rule = toRule(result.value, asts)
   }
   return {

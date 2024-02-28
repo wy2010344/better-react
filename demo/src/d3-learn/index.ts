@@ -1,18 +1,20 @@
-import { renderIf, renderArray, useCallbackPromiseState, useMemo } from "better-react-helper";
+import { renderIf, renderArray, useCallbackPromiseState, useMemo, useState } from "better-react-helper";
 import { panelWith } from "../panel/PanelContext";
-import { emptyArray } from "better-react";
 import { DSVRowArray, csv, arc, svg, pie, scaleBand, scaleLinear, max, format } from "d3";
 import { domOf, svgOf } from "better-react-dom";
 import renderWorldMap from "./renderWordMap";
+import { emptyArray } from "wy-helper";
 
-export default panelWith({
-  initWidth: 800,
-  children(operate, id, arg) {
-    // renderColorPie()
-    // renderPopulartation()
-    // renderScatter()
-    renderWorldMap()
-  },
+export default panelWith(function () {
+  return {
+    width: useState(800),
+    children() {
+      // renderColorPie()
+      // renderPopulartation()
+      // renderScatter()
+      renderWorldMap()
+    },
+  }
 })
 
 

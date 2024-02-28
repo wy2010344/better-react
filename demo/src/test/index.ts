@@ -17,7 +17,6 @@ export default function index() {
 
   testFlushSync()
   Demo2()
-  testPortalPanel()
 }
 function useRenderCount(prefix: string) {
   const renderCount = useAtom(0)
@@ -29,30 +28,6 @@ function Demo2() {
   useRenderCount("主")
 }
 
-function testPortalPanel() {
-  const [showRoot, setShowRoot] = useState(false)
-  useDom("button", {
-    onClick() {
-      setShowRoot(true)
-    },
-    children() {
-      renderContent("进入portal")
-    }
-  })
-  renderIf(showRoot, () => {
-    usePortalPanel({
-      close() {
-        setShowRoot(false)
-      },
-      children() {
-        renderContent("这是window级的portal")
-
-        testPortalPanel()
-        testChangeValue()
-      }
-    })
-  })
-}
 
 function testChangeValue() {
   const [value, setValue] = useState<DomElementType>("div")

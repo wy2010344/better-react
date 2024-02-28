@@ -1,6 +1,6 @@
 import { domOf } from "better-react-dom";
 import { panelWith } from "../panel/PanelContext";
-import { useReducer } from "better-react-helper";
+import { useReducer, useState } from "better-react-helper";
 import ComplexNumber, { radianToDegree } from "./ComplexNumber";
 import { useEffect } from "better-react-helper"
 import { stringifyStyle } from "wy-dom-helper";
@@ -60,123 +60,126 @@ function initData() {
     userDraw: false
   }
 }
-export default panelWith({
-  initWidth: 800,
-  children(operate, id, arg) {
-    const [data, dispatch] = useReducer(reducer, 0, initData)
-    useEffect(() => {
-      let destroyed = false
-      const ctx = canvas.getContext("2d")
-      if (ctx) {
-        if (data.userDraw) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height)
-          ctx.beginPath()
-          const first = data.pointers[0]
-          if (first) {
-            ctx.strokeStyle = 'white'
-            ctx.lineWidth = 1
-            ctx.moveTo(first.re, first.im)
-            for (let i = 1; i < data.pointers.length; i++) {
-              const pointer = data.pointers[i]
-              ctx.lineTo(pointer.re, pointer.im)
-            }
-            ctx.stroke()
-          }
-        } else {
-          // ctx.clearRect(0, 0, canvas.width, canvas.height)
-          //为什么用fft不行?
-          // const outs = fft2(data.pointers).map<FOut>((cp, i) => {
-          //   return {
-          //     radius: cp.radius(),
-          //     parse: Math.atan2(cp.im, cp.re),// cp.parse(),
-          //     freq: i,
-          //     value: cp
-          //   }
-          // }).sort((a, b) => b.radius - a.radius)
-          // console.log(outs)
-          /**
-           * 为什么dft可以,fft不行
-           */
-          const outs = dft2(data.pointers).sort((a, b) => b.radius - a.radius)
-          let time = 0
-          const epicycles = (
-            x: number,
-            y: number,
-            rotation: number,
-            fourier: FOut[]
-          ) => {
-            for (let i = 0; i < fourier.length; i++) {
-              const fr = fourier[i]
-              let prevX = x, prevY = y
-              x += fr.radius * Math.cos(fr.freq * time + fr.parse + rotation)
-              y += fr.radius * Math.sin(fr.freq * time + fr.parse + rotation)
-              ctx.beginPath()
-              ctx.ellipse(prevX, prevY, fr.radius, fr.radius, 0, 0, Math.PI * 2)
-              ctx.stroke()
-              ctx.beginPath()
-              ctx.moveTo(prevX, prevY)
-              ctx.lineTo(x, y)
-              ctx.stroke()
-            }
-            return new ComplexNumber(x, y)
-          }
-          const paths: ComplexNumber[] = []
-          const animate = () => {
+export default panelWith(function () {
+  return {
+    width: useState(800),
+    children() {
+      const [data, dispatch] = useReducer(reducer, 0, initData)
+      useEffect(() => {
+        let destroyed = false
+        const ctx = canvas.getContext("2d")
+        if (ctx) {
+          if (data.userDraw) {
             ctx.clearRect(0, 0, canvas.width, canvas.height)
-            const v = epicycles(0, 0, 0, outs)
-            paths.unshift(v)
-            time += Math.PI * 2 / outs.length;
-
             ctx.beginPath()
-            ctx.moveTo(paths[0].re, paths[0].im)
-            for (let i = 1; i < paths.length; i++) {
-              ctx.lineTo(paths[i].re, paths[i].im)
+            const first = data.pointers[0]
+            if (first) {
+              ctx.strokeStyle = 'white'
+              ctx.lineWidth = 1
+              ctx.moveTo(first.re, first.im)
+              for (let i = 1; i < data.pointers.length; i++) {
+                const pointer = data.pointers[i]
+                ctx.lineTo(pointer.re, pointer.im)
+              }
+              ctx.stroke()
             }
-            ctx.stroke()
-            if (time > Math.PI * 2) {
-              time = 0
-              // console.log(paths)
-              paths.length = 0
-              // destroyed = true
+          } else {
+            // ctx.clearRect(0, 0, canvas.width, canvas.height)
+            //为什么用fft不行?
+            // const outs = fft2(data.pointers).map<FOut>((cp, i) => {
+            //   return {
+            //     radius: cp.radius(),
+            //     parse: Math.atan2(cp.im, cp.re),// cp.parse(),
+            //     freq: i,
+            //     value: cp
+            //   }
+            // }).sort((a, b) => b.radius - a.radius)
+            // console.log(outs)
+            /**
+             * 为什么dft可以,fft不行
+             */
+            const outs = dft2(data.pointers).sort((a, b) => b.radius - a.radius)
+            let time = 0
+            const epicycles = (
+              x: number,
+              y: number,
+              rotation: number,
+              fourier: FOut[]
+            ) => {
+              for (let i = 0; i < fourier.length; i++) {
+                const fr = fourier[i]
+                let prevX = x, prevY = y
+                x += fr.radius * Math.cos(fr.freq * time + fr.parse + rotation)
+                y += fr.radius * Math.sin(fr.freq * time + fr.parse + rotation)
+                ctx.beginPath()
+                ctx.ellipse(prevX, prevY, fr.radius, fr.radius, 0, 0, Math.PI * 2)
+                ctx.stroke()
+                ctx.beginPath()
+                ctx.moveTo(prevX, prevY)
+                ctx.lineTo(x, y)
+                ctx.stroke()
+              }
+              return new ComplexNumber(x, y)
             }
-            if (!destroyed) {
-              requestAnimationFrame(animate)
+            const paths: ComplexNumber[] = []
+            const animate = () => {
+              ctx.clearRect(0, 0, canvas.width, canvas.height)
+              const v = epicycles(0, 0, 0, outs)
+              paths.unshift(v)
+              time += Math.PI * 2 / outs.length;
+
+              ctx.beginPath()
+              ctx.moveTo(paths[0].re, paths[0].im)
+              for (let i = 1; i < paths.length; i++) {
+                ctx.lineTo(paths[i].re, paths[i].im)
+              }
+              ctx.stroke()
+              if (time > Math.PI * 2) {
+                time = 0
+                // console.log(paths)
+                paths.length = 0
+                // destroyed = true
+              }
+              if (!destroyed) {
+                requestAnimationFrame(animate)
+              }
             }
+            requestAnimationFrame(animate)
           }
-          requestAnimationFrame(animate)
         }
-      }
-      return function () {
-        destroyed = true
-      }
-    }, [data])
-    const canvas = domOf("canvas", {
-      width: 600,
-      height: 500,
-      style: stringifyStyle({
-        background: "black"
-      }),
-      onPointerDown(event) {
-        const rect = canvas.getBoundingClientRect()
-        dispatch({
-          type: "down",
-          pointer: new ComplexNumber(event.clientX - rect.x, event.clientY - rect.y)
-        })
-      },
-      onPointerMove(event) {
-        const rect = canvas.getBoundingClientRect()
-        dispatch({
-          type: "move",
-          pointer: new ComplexNumber(event.clientX - rect.x, event.clientY - rect.y)
-        })
-      },
-      onPointerUp(event) {
-        dispatch({
-          type: "up"
-        })
-      },
-    }).render()
-  },
+        return function () {
+          destroyed = true
+        }
+      }, [data])
+      const canvas = domOf("canvas", {
+        width: 600,
+        height: 500,
+        style: stringifyStyle({
+          background: "black"
+        }),
+        onPointerDown(event) {
+          const rect = canvas.getBoundingClientRect()
+          dispatch({
+            type: "down",
+            pointer: new ComplexNumber(event.clientX - rect.x, event.clientY - rect.y)
+          })
+        },
+        onPointerMove(event) {
+          const rect = canvas.getBoundingClientRect()
+          dispatch({
+            type: "move",
+            pointer: new ComplexNumber(event.clientX - rect.x, event.clientY - rect.y)
+          })
+        },
+        onPointerUp(event) {
+          dispatch({
+            type: "up"
+          })
+        },
+      }).render()
+    }
+  }
+
 })
 
 

@@ -2,18 +2,18 @@
   "version": "v1",
   "packages": {
     "better-react-dom-helper": {
-      "signature": "d58d899a0029fd2ceedf16aedd05bf86",
+      "signature": "ebb4dce571145161a7566551ea05f00e",
       "file": true,
-      "replaced": "^1.2.2"
+      "replaced": "^1.2.4"
     },
     "kanren-logic": {
       "signature": "b26f595c9bc42a4307d1ff54def116cd",
       "file": true
     },
     "better-react-helper": {
-      "signature": "809b8d190c2f2d22649e6e941609c012",
+      "signature": "c31e0c3641f91d4380ae774a14fb4c98",
       "file": true,
-      "replaced": "^1.2.5"
+      "replaced": "^1.2.7"
     },
     "stylis-creater": {
       "signature": "d1693bbdfb5c43729ac308d9561920da",
@@ -21,22 +21,24 @@
       "replaced": "^1.2.2"
     },
     "better-react": {
-      "signature": "bca491a1aadb30466a433c9a87436ad0",
+      "signature": "3ad6ae821a85bc3873ca2a21ffa47c21",
       "file": true,
-      "replaced": "^1.2.4"
+      "replaced": "^1.2.6"
     },
     "better-react-dom": {
-      "signature": "2bdcbe007c3cc79f4f2fef8210087040",
+      "signature": "12a225b32a6db575b5f01d405ad54bf8",
       "file": true,
-      "replaced": "^1.2.4"
-    },
-    "wy-helper": {
-      "signature": "f68ae6e17f55f3df90a16a68bb7982d9",
-      "file": true
+      "replaced": "^1.2.6"
     },
     "wy-dom-helper": {
-      "signature": "b4602a0e71ab111bf789e37848f8ddb8",
-      "file": true
+      "signature": "18c4708a25e202f6770602c56c929bd7",
+      "file": true,
+      "replaced": "^0.1.0"
+    },
+    "wy-helper": {
+      "signature": "4d25140436aef8f98a3c2450a7ccefc0",
+      "file": true,
+      "replaced": "^0.1.0"
     }
   }
 }

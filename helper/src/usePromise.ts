@@ -1,11 +1,10 @@
 
 import { useEvent } from "./useEvent"
-import { useChange, useState } from "./useState"
+import { useState } from "./useState"
 import { useMemo, useAtomBind, useAtom, useRefConst } from "./useRef"
-import { } from "better-react"
 import { useVersionInc, useVersionLock } from "./Lock"
 import { useEffect } from "./useEffect"
-import { createEmptyArray, ReduceState, EmptyFun, emptyFun, StoreRef, PromiseResult, buildSerialRequestSingle, VersionPromiseResult, OutPromiseOrFalse, GetPromiseRequest, OnVersionPromiseFinally, PromiseResultSuccessValue, createAbortController, buildPromiseResultSetData } from "wy-helper"
+import { createEmptyArray, EmptyFun, emptyFun, StoreRef, PromiseResult, buildSerialRequestSingle, VersionPromiseResult, OutPromiseOrFalse, GetPromiseRequest, OnVersionPromiseFinally, createAbortController, buildPromiseResultSetData } from "wy-helper"
 
 export function createAndFlushAbortController(ref: StoreRef<EmptyFun | undefined>) {
   const controller = createAbortController()
@@ -129,26 +128,6 @@ export function useMutationWithLoading<Req extends any[], Res>(effect: (...vs: R
       })
     }
   }, loading] as const
-}
-/**
- * 因为要访问UI上的状态来阻塞,所以useEvent来锁定
- * @param effect 
- * @returns 
- */
-export function useMutationState<Req extends any[], Res>(effect: (...vs: Req) => Promise<Res>) {
-  const [getVersion, updateVersion] = useVersionLock(0)
-  const [data, updateData] = useChange<VersionPromiseResult<Res>>()
-  return [useEvent(function (...vs: Req) {
-    if ((data?.version || 0) != getVersion()) {
-      return
-    }
-    const version = updateVersion()
-    effect(...vs).then(res => {
-      updateData({ type: "success", value: res, version })
-    }).catch(err => {
-      updateData({ type: "error", value: err, version })
-    })
-  }), data] as const
 }
 
 export function useSerialRequestSingle<Req extends any[], Res>(

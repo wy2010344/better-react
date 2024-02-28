@@ -1,5 +1,6 @@
 import { createContext } from "better-react"
 import usePanel, { PanelParams, Size } from "./renderPanel"
+import { useState } from "better-react-helper"
 
 export type PanelCollection = {
   id: number
@@ -32,22 +33,18 @@ export type PanelCallback<T> = (
   operate: PanelOperate,
   value: T
 ) => void
-export function panelWith<T>({
-  children,
-  ...args
-}: {
-  children: (operate: PanelOperate, id: number, arg: T, size: Size, div: HTMLElement) => void,
-} & Omit<PanelParams, "close" | "children" | "moveFirst">): PanelCallback<T> {
-
+export function panelWith<T>(render: (
+  operate: PanelOperate,
+  id: number,
+  value: T
+) => Omit<PanelParams, "close" | "moveFirst">): PanelCallback<T> {
   return function (operate, value) {
     const id = operate.push(function () {
+      const args = render(operate, id, value)
       usePanel({
         ...args,
         close() {
           operate.close(id)
-        },
-        children(size, div) {
-          children(operate, id, value, size, div)
         },
         moveFirst() {
           operate.moveToFirst(id)
@@ -59,8 +56,12 @@ export function panelWith<T>({
 export function normalPanel(
   children: (operate: PanelOperate, id: number) => void,
 ) {
-  const callback = panelWith({
-    children
+  const callback = panelWith(function (o, id) {
+    return {
+      children(p, b) {
+        children(o, id)
+      }
+    }
   })
   return function (operate: PanelOperate) {
     callback(operate, null)
@@ -74,7 +75,7 @@ export const CountContext = createContext(0)
 
 
 
-export function usePortalPanel(args: Omit<PanelParams, "portalTarget" | "moveFirst">) {
+export function usePortalPanel(args: Omit<PanelParams, "portalTarget" | "moveFirst"> & Size) {
   const fiber = usePanel({
     ...args,
     // portalTarget() {

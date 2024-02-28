@@ -3,18 +3,17 @@ import { dom, domOf, useDom, useSvg } from "better-react-dom"
 import { initDrag, resizeHelper } from "./drag"
 import useResize from "./useResize"
 import { useState, useMemo } from "better-react-helper"
+import { ReduceState } from "wy-helper"
 
 export type Size = {
-  width: number
-  height: number
+  width: [number, ReduceState<number>]
+  height: [number, ReduceState<number>]
+  top: [number, ReduceState<number>]
+  left: [number, ReduceState<number>]
 }
 
 export type PanelParams = {
   // portalTarget?(): Node
-  initWidth?: number
-  initHeight?: number
-  initTop?: number
-  initLeft?: number
   title?(): void
   bodyStyle?: string
   children(p: Size, body: HTMLElement): void
@@ -24,10 +23,10 @@ export type PanelParams = {
 }
 
 function renderPanel({
-  initWidth = 400,
-  initHeight = 600,
-  initTop = 100,
-  initLeft = 100,
+  width: [width, setWidth] = useState(400),
+  height: [height, setHeight] = useState(600),
+  top: [top, setTop] = useState(100),
+  left: [left, setLeft] = useState(200),
   title,
   bodyStyle,
   children,
@@ -35,12 +34,7 @@ function renderPanel({
   moveFirst,
   asPortal
   // portalTarget
-}: PanelParams) {
-
-  const [top, setTop] = useState(initTop)
-  const [left, setLeft] = useState(initLeft)
-  const [width, setWidth] = useState(initWidth)
-  const [height, setHeight] = useState(initHeight)
+}: PanelParams & Partial<Size>) {
   const dragResize = useMemo(() => resizeHelper({
     addWidth(w) {
       setWidth(v => v + w)
@@ -148,7 +142,12 @@ function renderPanel({
         height:${height - titleHeight}px;
         `,
     }).render(function () {
-      children({ width, height }, div)
+      children({
+        width: [width, setWidth],
+        height: [height, setHeight],
+        top: [top, setTop],
+        left: [left, setLeft],
+      }, div)
     })
   })
 }

@@ -1,7 +1,7 @@
 import { domOf, svgOf } from "better-react-dom";
 import { panelWith } from "../panel/PanelContext";
 import ComplexNumber from "./ComplexNumber";
-import { renderArray, useMemo, useReducer } from "better-react-helper";
+import { renderArray, useMemo, useReducer, useState } from "better-react-helper";
 import { useEffect } from "better-react-helper"
 import { extent, min, scaleBand, scaleLinear, scalePoint } from "d3";
 import dft, { dft2 } from "./dft";
@@ -58,102 +58,104 @@ function initData(): Model {
     pointers: []
   }
 }
-export default panelWith({
-  initWidth: 800,
-  bodyStyle: `overflow-y:auto;`,
-  children(operate, id, arg) {
-    const [data, dispatch] = useReducer(reducer, 0, initData)
+export default panelWith(function () {
+  return {
+    width: useState(800),
+    bodyStyle: `overflow-y:auto;`,
+    children() {
+      const [data, dispatch] = useReducer(reducer, 0, initData)
 
-    const ps = data.pointers
-    useEffect(() => {
-      const ctx = canvas.getContext("2d")
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        const first = ps[0]
-        if (first) {
-          ctx.strokeStyle = 'white'
-          ctx.lineWidth = 1
-          ctx.beginPath()
-          ctx.moveTo(first.re, first.im)
-          for (let i = 1; i < ps.length; i++) {
-            const pointer = ps[i]
-            ctx.lineTo(pointer.re, pointer.im)
+      const ps = data.pointers
+      useEffect(() => {
+        const ctx = canvas.getContext("2d")
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height)
+          const first = ps[0]
+          if (first) {
+            ctx.strokeStyle = 'white'
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            ctx.moveTo(first.re, first.im)
+            for (let i = 1; i < ps.length; i++) {
+              const pointer = ps[i]
+              ctx.lineTo(pointer.re, pointer.im)
+            }
+            ctx.stroke()
           }
-          ctx.stroke()
         }
-      }
-    }, [ps])
-    const canvas = domOf("canvas", {
-      width: 200,
-      height: 200,
-      style: `
+      }, [ps])
+      const canvas = domOf("canvas", {
+        width: 200,
+        height: 200,
+        style: `
       background:#000;
       `,
-      onPointerDown(event) {
-        const rect = canvas.getBoundingClientRect()
-        dispatch({
-          type: "down",
-          pointer: new ComplexNumber(event.clientX - rect.x, event.clientY - rect.y)
-        })
-      },
-      onPointerMove(event) {
-        const rect = canvas.getBoundingClientRect()
-        dispatch({
-          type: "move",
-          pointer: new ComplexNumber(event.clientX - rect.x, event.clientY - rect.y)
-        })
-      },
-      onPointerUp(event) {
-        dispatch({
-          type: "up"
-        })
-      },
-    }).render()
-    renderViewComplex(ps)
-    domOf("h1").renderTextContent("dft")
-    const dftOuts = useMemo(() => {
-      return dft(ps)
-    }, [data.onDraw])
-    renderViewComplex(dftOuts)
-    domOf("h1").renderTextContent("dft2")
-    const dft2Outs = useMemo(() => {
-      return dft2(ps)
-    }, [data.onDraw])
-    renderViewComplex(dft2Outs)
-    domOf("h1").renderTextContent("fft")
-    const fftOuts = useMemo(() => {
-      return fastFourierTransform(ps)//.sort((a, b) => a.radius() - b.radius())
-    }, [data.onDraw])
-    renderViewComplex(fftOuts)
+        onPointerDown(event) {
+          const rect = canvas.getBoundingClientRect()
+          dispatch({
+            type: "down",
+            pointer: new ComplexNumber(event.clientX - rect.x, event.clientY - rect.y)
+          })
+        },
+        onPointerMove(event) {
+          const rect = canvas.getBoundingClientRect()
+          dispatch({
+            type: "move",
+            pointer: new ComplexNumber(event.clientX - rect.x, event.clientY - rect.y)
+          })
+        },
+        onPointerUp(event) {
+          dispatch({
+            type: "up"
+          })
+        },
+      }).render()
+      renderViewComplex(ps)
+      domOf("h1").renderTextContent("dft")
+      const dftOuts = useMemo(() => {
+        return dft(ps)
+      }, [data.onDraw])
+      renderViewComplex(dftOuts)
+      domOf("h1").renderTextContent("dft2")
+      const dft2Outs = useMemo(() => {
+        return dft2(ps)
+      }, [data.onDraw])
+      renderViewComplex(dft2Outs)
+      domOf("h1").renderTextContent("fft")
+      const fftOuts = useMemo(() => {
+        return fastFourierTransform(ps)//.sort((a, b) => a.radius() - b.radius())
+      }, [data.onDraw])
+      renderViewComplex(fftOuts)
 
-    domOf("h1").renderTextContent("fft-re")
-    const fftOutsRe = useMemo(() => {
-      return fastFourierTransform(fftOuts, true)//.sort((a, b) => a.radius() - b.radius())
-    }, [fftOuts])
-    renderViewComplex(fftOutsRe)
-    domOf("h1").renderTextContent("fft2")
-    const newFFtOuts = useMemo(() => {
-      return fft2(ps)//.sort((a, b) => a.radius() - b.radius())
-    }, [data.onDraw])
-    renderViewComplex(newFFtOuts)
+      domOf("h1").renderTextContent("fft-re")
+      const fftOutsRe = useMemo(() => {
+        return fastFourierTransform(fftOuts, true)//.sort((a, b) => a.radius() - b.radius())
+      }, [fftOuts])
+      renderViewComplex(fftOutsRe)
+      domOf("h1").renderTextContent("fft2")
+      const newFFtOuts = useMemo(() => {
+        return fft2(ps)//.sort((a, b) => a.radius() - b.radius())
+      }, [data.onDraw])
+      renderViewComplex(newFFtOuts)
 
-    domOf("h1").renderTextContent("fft-re")
-    const fft2OutsRe = useMemo(() => {
-      return ifft2(newFFtOuts)//.sort((a, b) => a.radius() - b.radius())
-    }, [fftOuts])
-    renderViewComplex(fft2OutsRe)
+      domOf("h1").renderTextContent("fft-re")
+      const fft2OutsRe = useMemo(() => {
+        return ifft2(newFFtOuts)//.sort((a, b) => a.radius() - b.radius())
+      }, [fftOuts])
+      renderViewComplex(fft2OutsRe)
 
-    domOf("h1").renderTextContent("fft3")
-    const newFFt3Outs = useMemo(() => {
-      return fft3(ps)
-    }, [data.onDraw])
-    renderViewComplex(newFFt3Outs)
-    domOf("h1").renderTextContent("fft3-re")
-    const newFFt3ReOuts = useMemo(() => {
-      return ifft3(newFFt3Outs)
-    }, [newFFt3Outs])
-    renderViewComplex(newFFt3ReOuts)
-  },
+      domOf("h1").renderTextContent("fft3")
+      const newFFt3Outs = useMemo(() => {
+        return fft3(ps)
+      }, [data.onDraw])
+      renderViewComplex(newFFt3Outs)
+      domOf("h1").renderTextContent("fft3-re")
+      const newFFt3ReOuts = useMemo(() => {
+        return ifft3(newFFt3Outs)
+      }, [newFFt3Outs])
+      renderViewComplex(newFFt3ReOuts)
+    },
+  }
 })
 
 

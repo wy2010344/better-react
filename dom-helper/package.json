@@ -61,6 +61,7 @@
     "wy-dom-helper": "^0.1.0"
   },
   "dependencies": {
-    "wy-dom-helper": "file:.yalc/wy-dom-helper"
+    "wy-dom-helper": "file:.yalc/wy-dom-helper",
+    "wy-helper": "file:.yalc/wy-helper"
   }
 }
