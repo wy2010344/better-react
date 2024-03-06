@@ -7,19 +7,19 @@ export default normalPanel(function (operate, id) {
 
   useDom("div", {
     children() {
-      useDom("button", {
+      dom.button({
         onClick() {
         },
         textContent: "增加",
       })
-      useDom("button", {
+      dom.button({
         onClick() {
         },
         children() {
           renderContent("查询")
         }
       })
-      useDom("button", {
+      dom.button({
         async onClick() {
           const items = await navigator.clipboard.read()
           if (items && items.length) {

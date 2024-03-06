@@ -21,7 +21,7 @@ export default normalPanel(function (operate, id) {
           textarea.style.height = textarea.scrollHeight + 'px'
         }
       })
-      useDom("button", {
+      dom.button({
         onClick(e) {
           e.stopPropagation()
           const value = textarea?.value.trim()

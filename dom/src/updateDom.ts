@@ -6,13 +6,12 @@ import { getAttributeAlias } from "./getAttributeAlias"
 import { DomElementType, SvgElementType } from "./html"
 
 export type Props = { [key: string]: any }
-interface FiberAbsNode extends VirtaulDomNode {
+interface FiberAbsNode<T = any> extends VirtaulDomNode<T> {
   node: Node
 }
 export const EMPTYPROPS = {}
-// const INPUTS = ["input", "textarea", "select"]
-
-export class FiberNode implements FiberAbsNode {
+export type GetValueWithDep<T, F extends readonly any[] = any[]> = readonly [(vs: F) => T, F] | readonly [() => T]
+export class FiberNode implements FiberAbsNode<GetValueWithDep<Props>> {
   private constructor(
     public node: Node,
     private _updateProp: (node: Node, key: string, value: any) => void,
@@ -25,12 +24,13 @@ export class FiberNode implements FiberAbsNode {
   //这个props不需要AtomValue,因为在运行时不访问
   private props: Props = EMPTYPROPS
   private oldProps: Props = EMPTYPROPS
-  useUpdate(props: Props, isFirst: boolean): void {
-    this.props = props
+  useUpdate([getProps, deps]: GetValueWithDep<Props>, isFirst: boolean): void {
     const that = this
-    useLevelEffect(0, function () {
+    useLevelEffect(0, function (deps: any, isInit: boolean) {
+      that.props = getProps(deps)
       that.updateDomEffect()
-    })
+      return that.props.onDestroy
+    }, deps as any[])
   }
   static create(
     node: Node,
@@ -198,6 +198,7 @@ function isProperty(key: string) {
   return key != 'children'
     && !isEvent(key)
     && key != 'exit'
+    && key != 'onDestroy'
 }
 /**
  * 属性发生变更

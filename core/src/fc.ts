@@ -1,23 +1,29 @@
 import { EnvModel } from "./commitWork";
 import { Fiber, HookContextCosumer, HookEffect, HookValue, RenderWithDep, VirtaulDomNode, VirtualDomOperator } from "./Fiber";
-import { arrayEqual, arrayNotEqualDepsWithEmpty, quote, SetValue, simpleEqual, StoreRef } from "wy-helper";
+import { arrayEqual, arrayNotEqualDepsWithEmpty, quote, run, SetValue, simpleEqual, StoreRef } from "wy-helper";
+
+const w = globalThis as any
+const cache = w.__better_react_one__ || {
+  wipFiber: [] as [] | [EnvModel, Fiber],
+  allowWipFiber: false
+}
+w.__better_react_one__ = cache
 
 
-const wipFiber: [EnvModel, Fiber] = [] as any
+
+
 export function useParentFiber() {
-  if (allowWipFiber) {
-    return wipFiber
+  if (cache.allowWipFiber) {
+    return cache.wipFiber
   }
   console.error('禁止在此处访问fiber')
   throw new Error('禁止在此处访问fiber')
 }
-
-let allowWipFiber = false
 export function draftParentFiber() {
-  allowWipFiber = false
+  cache.allowWipFiber = false
 }
 export function revertParentFiber() {
-  allowWipFiber = true
+  cache.allowWipFiber = true
 }
 const hookIndex = {
   state: 0,
@@ -29,8 +35,8 @@ const hookIndex = {
 
 export function updateFunctionComponent(envModel: EnvModel, fiber: Fiber) {
   revertParentFiber()
-  wipFiber[0] = envModel
-  wipFiber[1] = fiber
+  cache.wipFiber[0] = envModel
+  cache.wipFiber[1] = fiber
 
   hookIndex.state = 0
   hookIndex.effects.clear()
@@ -41,7 +47,7 @@ export function updateFunctionComponent(envModel: EnvModel, fiber: Fiber) {
   hookIndex.cusomer = 0
   fiber.render()
   draftParentFiber();
-  (wipFiber as any[]).length = 0
+  cache.wipFiber.length = 0
 }
 
 export type ReducerFun<F, T> = (old: T, action: F) => T
@@ -53,12 +59,27 @@ export type ReducerResult<F, T> = [T, SetValue<F>];
  * @param reducer 
  * @param v 
  * @param init 
+ * @param initFun
+ * @param eq
  */
-export function useBaseReducer<F, M, T>(reducer: ReducerFun<F, T>, init: M, initFun: (m: M) => T): ReducerResult<F, T>
-export function useBaseReducer<F, T>(reducer: ReducerFun<F, T>, init: T, initFun?: (m: T) => T): ReducerResult<F, T>
-export function useBaseReducer<F, T = undefined>(reducer: ReducerFun<F, T>, init?: T, initFun?: (m: T) => T): ReducerResult<F, T>
+export function useBaseReducer<F, M, T>(
+  reducer: ReducerFun<F, T>,
+  init: M,
+  initFun: (m: M) => T,
+  eq?: (a: T, b: T) => any
+): ReducerResult<F, T>
+export function useBaseReducer<F, T>(
+  reducer: ReducerFun<F, T>,
+  init: T,
+  initFun?: (m: T) => T,
+  eq?: (a: T, b: T) => any): ReducerResult<F, T>
+export function useBaseReducer<F, T = undefined>(
+  reducer: ReducerFun<F, T>,
+  init?: T,
+  initFun?: (m: T) => T,
+  eq?: (a: T, b: T) => any): ReducerResult<F, T>
 export function useBaseReducer() {
-  const [reducer, init, initFun] = arguments
+  const [reducer, init, initFun, eq] = arguments
   const [envModel, parentFiber] = useParentFiber()
   if (parentFiber.effectTag.get() == 'PLACEMENT') {
     //新增
@@ -68,7 +89,7 @@ export function useBaseReducer() {
     const value = envModel.createChangeAtom(trans(init))
     const hook: HookValue<any, any> = {
       value,
-      set: buildSetValue(value, envModel, parentFiber, reducer),
+      set: buildSetValue(value, envModel, parentFiber, eq || simpleEqual, reducer),
       reducer,
       init,
       initFun
@@ -116,6 +137,7 @@ export function useBaseReducer() {
 function buildSetValue<T, F>(atom: StoreRef<T>,
   envModel: EnvModel,
   parentFiber: Fiber,
+  eq: (a: T, b: T) => any,
   reducer: (old: T, action: F) => T
 ) {
   return function (temp: F) {
@@ -127,7 +149,7 @@ function buildSetValue<T, F>(atom: StoreRef<T>,
       //这里如果多次设置值,则会改动多次,依前一次结果累积.
       const oldValue = atom.get()
       const newValue = reducer(oldValue, temp)
-      if (newValue != oldValue) {
+      if (!eq(oldValue, newValue)) {
         parentFiber.effectTag.set("UPDATE")
         atom.set(newValue)
       }

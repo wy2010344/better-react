@@ -9,7 +9,7 @@ export default normalPanel(function (operate, id) {
   useDom("div", {
     children() {
       const input = domOf("input").render()
-      useDom("button", {
+      dom.button({
         onClick() {
           const err = user.add(input.value)
           if (err) {

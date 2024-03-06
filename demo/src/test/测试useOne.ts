@@ -10,7 +10,7 @@ export default normalPanel(function (operate, id) {
   useDom("div", {
     children() {
       const [index2, setIndex2] = useState(0)
-      useDom("button", {
+      dom.button({
         textContent: "测试button-2/" + index2,
         onClick(e) {
           e.stopPropagation()
@@ -28,14 +28,14 @@ export default normalPanel(function (operate, id) {
 
 function 测试renderOne() {
   const [index, setIndex] = useState<IndexModel>({ key: 0 })
-  useDom("button", {
+  dom.button({
     textContent: "测试button" + index.key,
     onClick(e) {
       e.stopPropagation()
       setIndex(index => ({ key: index.key + 1 }))
     }
   })
-  useDom("button", {
+  dom.button({
     textContent: "复制" + index.key,
     onClick(e) {
       e.stopPropagation()
@@ -48,7 +48,7 @@ function 测试renderOne() {
 function 测试renderMapString() {
   const [key, setKey] = useState<'a' | 'b' | 'c'>('a')
 
-  useDom("button", {
+  dom.button({
     textContent: "测试useKey",
     onClick(e) {
       e.stopPropagation()
@@ -105,21 +105,21 @@ const map = {
 function 测试renderArray() {
 
   const [list, setList] = useState<IndexModel[]>([])
-  useDom("button", {
+  dom.button({
     textContent: "测试button-2/" + list.length,
     onClick(e) {
       e.stopPropagation()
       setList(list => list.concat({ key: list.length }))
     }
   })
-  useDom("button", {
+  dom.button({
     textContent: "浅复制",
     onClick(e) {
       e.stopPropagation()
       setList(list => list.slice())
     }
   })
-  useDom("button", {
+  dom.button({
     textContent: "深复制",
     onClick(e) {
       e.stopPropagation()
@@ -132,14 +132,14 @@ function 测试renderArray() {
 function 测试useBaseGuard() {
 
   const [index, setIndex] = useState<IndexModel>({ key: 0 })
-  useDom("button", {
+  dom.button({
     textContent: "测试button" + index.key,
     onClick(e) {
       e.stopPropagation()
       setIndex(index => ({ key: index.key + 1 }))
     }
   })
-  useDom("button", {
+  dom.button({
     textContent: "复制" + index.key,
     onClick(e) {
       e.stopPropagation()

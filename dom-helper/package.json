@@ -56,11 +56,14 @@
   "peerDependencies": {
     "better-react": "^1.2.6",
     "better-react-dom": "^1.2.6",
-    "better-react-helper": "^1.2.7",
-    "wy-helper": "^0.1.0",
-    "wy-dom-helper": "^0.1.0"
+    "better-react-helper": "file:.yalc/better-react-helper",
+    "wy-dom-helper": "file:.yalc/wy-dom-helper",
+    "wy-helper": "file:.yalc/wy-helper"
   },
   "dependencies": {
+    "better-react": "file:.yalc/better-react",
+    "better-react-dom": "file:.yalc/better-react-dom",
+    "better-react-helper": "file:.yalc/better-react-helper",
     "wy-dom-helper": "file:.yalc/wy-dom-helper",
     "wy-helper": "file:.yalc/wy-helper"
   }

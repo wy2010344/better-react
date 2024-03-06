@@ -10,7 +10,7 @@ export interface EaseFn {
   (t: number): number
 }
 
-export const ease: EaseMap = {
+export const ease = {
   // easeOutQuint
   swipe: {
     style: 'cubic-bezier(0.23, 1, 0.32, 1)',

@@ -54,6 +54,7 @@ function getDep<T>(dep: readonly [T]) {
 }
 /**
  * 始终获得render上的最新值
+ * 由于useMemoGet的特性,返回的自动就是一个hook上的最新值
  * @param init 
  * @returns 
  */

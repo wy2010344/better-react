@@ -1,5 +1,5 @@
+import { dom, svg } from "better-react-dom"
 import { useMemo } from "better-react-helper"
-import { useDom, useSvg } from "better-react-dom"
 import { css, stringifyStyle } from "wy-dom-helper"
 
 /**
@@ -74,34 +74,33 @@ export function ToolTip({
     }
   }, [parentRef, anchorRef, marginLeft, marginRight])
 
-  return useDom("div", {
+  return dom.div({
     className,
     style: stringifyStyle({
       width: width + 'px',
       bottom: bottom + 'px',
       left: left + 'px',
       backgroundColor
-    }),
-    children() {
-      children()
-      useSvg("svg", {
-        className: "arrow",
-        style: stringifyStyle({
-          left: arrowLeft + 'px',
-          bottom: '-9px'
-        }),
-        width: "17",
-        height: "10",
-        viewBox: "0 0 17 10",
-        fill: "none",
-        children() {
-          useSvg("path", {
-            d: "M0 0.757813L8.48528 9.24309L16.9706 0.757812L0 0.757813Z",
-            fill: "#191919"
-          })
-        },
+    })
+  }).render(function () {
+
+    children()
+    svg.svg({
+      className: "arrow",
+      style: stringifyStyle({
+        left: arrowLeft + 'px',
+        bottom: '-9px'
+      }),
+      width: "17",
+      height: "10",
+      viewBox: "0 0 17 10",
+      fill: "none"
+    }).render(function () {
+      svg.path({
+        d: "M0 0.757813L8.48528 9.24309L16.9706 0.757812L0 0.757813Z",
+        fill: "#191919"
       })
-    },
+    })
   })
 }
 const className = css` 

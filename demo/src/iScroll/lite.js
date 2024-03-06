@@ -53,6 +53,8 @@ var utils = (function () {
   };
 
   me.momentum = function (current, start, time, lowerMargin, wrapperSize, deceleration) {
+
+    console.log('momentum', current, start, time, lowerMargin, wrapperSize, deceleration)
     var distance = current - start,
       speed = Math.abs(distance) / time,
       destination,
@@ -610,7 +612,7 @@ class IScroll {
       return;
     }
 
-    this.scrollTo(newX, newY);	// ensures that the last position is rounded
+    this.scrollTo(newX, newY);	// ensures that the last position is rounded 为什么??
 
     // we scrolled less than 10 pixels
     if (!this.moved) {
@@ -627,6 +629,7 @@ class IScroll {
     }
 
     if (this._events.flick && duration < 200 && distanceX < 100 && distanceY < 100) {
+      //轻扫事件
       this._execEvent('flick');
       return;
     }
@@ -688,6 +691,7 @@ class IScroll {
       return false;
     }
 
+    console.log("reset-position", time, this.options.bounceEasing)
     this.scrollTo(x, y, time, this.options.bounceEasing);
 
     return true;
@@ -796,7 +800,7 @@ class IScroll {
   }
   scrollTo(x, y, time, easing) {
     easing = easing || utils.ease.circular;
-
+    //这里其实也要判断style是否存在吧???
     this.isInTransition = this.options.useTransition && time > 0;
     var transitionType = this.options.useTransition && easing.style;
     if (!time || transitionType) {

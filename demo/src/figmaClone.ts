@@ -4,7 +4,7 @@ import { normalPanel } from "./panel/PanelContext";
 
 export default normalPanel(function (operate) {
   const [preText, setPreText] = useState('')
-  useDom("button", {
+  dom.button({
     textContent: "点击",
     async onClick() {
       const text = await navigator.clipboard.readText()
@@ -56,7 +56,7 @@ export default normalPanel(function (operate) {
       setPreText(replaceText)
     }
   })
-  useDom("button", {
+  dom.button({
     textContent: "替换颜色",
     async onClick(e) {
       const text = await navigator.clipboard.readText()
@@ -65,7 +65,7 @@ export default normalPanel(function (operate) {
       setPreText(replaceText)
     }
   })
-  useDom("button", {
+  dom.button({
     textContent: "获得字体样式",
     async onClick(e) {
       const text = await navigator.clipboard.readText()

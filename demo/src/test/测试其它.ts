@@ -71,7 +71,7 @@ function 测试css动画() {
 
       const [width, setWidth] = useState(300)
       const [scaleY, setScaleY] = useState(0)
-      useDom("button", {
+      dom.button({
         textContent: "添加动画",
         onClick() {
           setWidth(w => w - 20)

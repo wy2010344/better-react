@@ -5,7 +5,7 @@ export default function Counter() {
   const [count, setCount] = useState(0);
   console.log("count-render", count)
 
-  useDom("button", {
+  dom.button({
     textContent: `数字${count}`,
     onClick(e) {
       e.stopPropagation()

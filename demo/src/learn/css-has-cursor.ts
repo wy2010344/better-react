@@ -42,7 +42,7 @@ export default normalPanel(function () {
                 })
               },
             })
-            useDom("button", {
+            dom.button({
               "aria-label": "play",
               children() {
                 useDom("span", {

@@ -28,5 +28,6 @@ export * from './useEffect'
 export * from './useStoreTriggerRender'
 export * from './useCreateRef'
 export * from './util'
+export * from './animationValue'
 export { compileSimpleRule, createMatch, pathExactly, pathStartWith, toAbsolutePath } from "./routes/util"
 export { RouteContext, routeMatch, routeMathWithOther } from "./routes"

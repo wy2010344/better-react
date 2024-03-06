@@ -1,5 +1,5 @@
 import { startTransition } from "better-react";
-import { dom, renderContent, useDom } from "better-react-dom";
+import { dom, renderContent } from "better-react-dom";
 import { useEvent, useState, renderArray, renderFragment, useMemo, useAtom, useChgAtom, useEffect } from "better-react-helper";
 import { normalPanel } from "./panel/PanelContext";
 import { renderInput } from "better-react-dom-helper";
@@ -44,108 +44,92 @@ export default normalPanel(function (operate, id) {
   })
   dom.div({
 
-  }).text`回滚次数${timeRef.get()} ---${chgTimeRef.get()}---${rollbackTime}`
-  useDom("div", {
+  }).renderText`回滚次数${timeRef.get()} ---${chgTimeRef.get()}---${rollbackTime}`
+  dom.div({
     style: stringifyStyle({
       height: '100%',
       display: 'flex',
       flexDirection: 'column'
-    }),
-    children() {
-      useDom("div", {
-        children() {
-          const checkbox = useDom("input", {
-            type: "checkbox",
-            onInput(e) {
-              const input = e.target as HTMLInputElement
-              setTransition(input.checked)
-            }
+    })
+  }).render(function () {
+    dom.div().render(function () {
+      const checkbox = dom.input({
+        type: "checkbox",
+        onInput(e) {
+          const input = e.target as HTMLInputElement
+          setTransition(input.checked)
+        }
+      }).render()
+      //console.log("reco...", checkbox.checked)
+      useEffect(() => {
+        checkbox.checked = transition
+        //console.log(checkbox.checked, transition)
+      }, [transition])
+      function changeValue(v: string) {
+        const value = Number(v)
+        setValue(value);
+        if (transition) {
+          startTransition(() => {
+            setRenderValue(value)
+            setOnTrans(v => !v)
+            abcStore.set(abcValue + 1)
+            //testStore.set(testValue + 1)
           })
-          //console.log("reco...", checkbox.checked)
-          useEffect(() => {
-            checkbox.checked = transition
-            //console.log(checkbox.checked, transition)
-          }, [transition])
-          function changeValue(v: string) {
-            const value = Number(v)
-            setValue(value);
-            if (transition) {
-              startTransition(() => {
-                setRenderValue(value)
-                setOnTrans(v => !v)
-                abcStore.set(abcValue + 1)
-                //testStore.set(testValue + 1)
-              })
-            } else {
-              setRenderValue(value)
-            }
-          }
-          renderInput("input", {
-            value: value + '',
-            type: "range",
-            min: 0,
-            max: 600,
-            step: 1,
-            onValueChange(v) {
-              changeValue(v)
-            },
-          })
-          renderInput("input", {
-            type: "range",
-            min: 0,
-            max: 600,
-            step: 1,
-            value: value + '',
-            onValueChange(v) {
-              changeValue(v)
-            }
-          })
-          renderContent(`${value}`)
-          const select = useDom("select", {
-            children() {
-              useDom("option", {
-                value: 9,
-                children() {
-                  renderContent("9")
-                }
-              })
-              useDom("option", {
-                value: 8,
-                children() {
-                  renderContent("8")
-                }
-              })
-              useDom("option", {
-                value: 7,
-                children() {
-                  renderContent("7")
-                }
-              })
-            }
-          })
-          useEffect(() => {
-            select.value = "7"
-          }, [])
-          renderContent(`改变内部值${onTrans ? "A" : "B"}外部存储值${avCount}---abc---${abcValue}`)
+        } else {
+          setRenderValue(value)
+        }
+      }
+      renderInput("input", {
+        value: value + '',
+        type: "range",
+        min: 0,
+        max: 600,
+        step: 1,
+        onValueChange(v) {
+          changeValue(v)
+        },
+      })
+      renderInput("input", {
+        type: "range",
+        min: 0,
+        max: 600,
+        step: 1,
+        value: value + '',
+        onValueChange(v) {
+          changeValue(v)
         }
       })
-      useDom("div", {
-        textContent: isPending ? `正在进行中...` : ''
-      })
-      useDom("hr")
-      useDom("div", {
-        style: stringifyStyle({
-          flex: "1",
-          overflow: "auto"
-        }),
-        children() {
+      renderContent(`${value}`)
+      const select = dom.select().render(function () {
+        dom.option({
+          value: 8
+        }).renderText`8`
+        dom.option({
+          value: 9
+        }).renderText`9`
+        dom.option({
+          value: 7
+        }).renderText`7`
 
-          renderFragment(() => {
-            ExpensiveView(renderValue)
-          }, [renderValue])
-        }
       })
-    }
+      useEffect(() => {
+        select.value = "7"
+      }, [])
+      renderContent(`改变内部值${onTrans ? "A" : "B"}外部存储值${avCount}---abc---${abcValue}`)
+    })
+    dom.div().renderTextContent(isPending ? `正在进行中...` : '')
+    dom.hr().render()
+    dom.div({
+      style: stringifyStyle({
+        flex: "1",
+        overflow: "auto"
+      }),
+    }).render(function () {
+
+      renderFragment(() => {
+        ExpensiveView(renderValue)
+      }, [renderValue])
+    })
   })
 })
 
@@ -153,42 +137,35 @@ function ExpensiveView(count: number) {
 
   //console.log("render-内部-ExpensiveView")
   const length = count * 20 + 1000;
-  const div = useDom("div", {
-    children() {
-      useDom("button", {
-        onClick(e) {
-          e.stopPropagation()
-          console.log(div.childNodes.length)
-        },
-        children() {
-          renderContent(`内容 ${length}`)
-        }
-      })
+  const div = dom.div().render(function () {
+    dom.button({
+      onClick(e) {
+        e.stopPropagation()
+        console.log(div.childNodes.length)
+      },
+    }).renderText`内容 ${length}`
 
-      renderFragment(PartView, [])
-      useDom("hr")
-      //console.log("render-mvvvv")
-      renderArray(
-        Array.from(Array(length).keys()).reverse(),
-        v => v,
-        v => {
-          const style = {
-            backgroundColor: `#${Math.floor(Math.random() * 16777215).toString(
-              16
-            )}`,
-            display: "inline-block",
-            width: "50px",
-            height: "50px",
-            margin: "2px"
-          };
-          useDom("div", {
-            style: stringifyStyle(style),
-            children() {
-              renderContent(`${v}`)
-            }
-          })
-        })
-    }
+    renderFragment(PartView, [])
+    dom.hr().render()
+    //console.log("render-mvvvv")
+    renderArray(
+      Array.from(Array(length).keys()).reverse(),
+      v => v,
+      v => {
+        const style = {
+          backgroundColor: `#${Math.floor(Math.random() * 16777215).toString(
+            16
+          )}`,
+          display: "inline-block",
+          width: "50px",
+          height: "50px",
+          margin: "2px"
+        };
+        dom.div({
+
+          style: stringifyStyle(style),
+        }).renderTextContent(`${v}`)
+      })
   })
 }
 
@@ -207,11 +184,7 @@ export function useTransition() {
 function PartView() {
   //const testValue = useSyncExternalStore(testStore.subscribe, testStore.get)
   const vvValue = useMyExternal(abcStore.subscribe, abcStore.get)
-  useDom("div", {
-    children() {
-      renderContent(`内部读取{ testValue } --- abc-- - ${vvValue}`)
-    }
-  })
+  dom.div().renderText`内部读取{ testValue } --- abc-- - ${vvValue}`
 }
 
 function createTestStore() {

@@ -65,7 +65,7 @@ export default normalPanel(function (operate, id) {
               setValue(v)
             },
           })
-          useDom("button", {
+          dom.button({
             textContent: "增加",
             onClick(e) {
               e.preventDefault()
@@ -79,7 +79,7 @@ export default normalPanel(function (operate, id) {
               }
             },
           })
-          useDom("button", {
+          dom.button({
             textContent: "调整顺序",
             onClick(e) {
               e.preventDefault()
@@ -133,7 +133,7 @@ export default normalPanel(function (operate, id) {
                       },
                     })
 
-                    useDom("button", {
+                    dom.button({
                       textContent: `数x字${ct}`,
                       onClick(e) {
                         e.stopPropagation()
@@ -143,7 +143,7 @@ export default normalPanel(function (operate, id) {
 
                     Counter()
 
-                    useDom("button", {
+                    dom.button({
                       textContent: `${i + 1}移动到随机`,
                       onClick(e) {
                         setCt(v => v + 1)

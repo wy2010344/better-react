@@ -25,7 +25,7 @@ export default panelWith({
         renderContent(topic.description)
       }
     })
-    useDom("button", {
+    dom.button({
       onClick(e) {
         person(operate)
         e.stopPropagation()
@@ -94,7 +94,7 @@ export default panelWith({
                               })
                             },
                             () => {
-                              useDom("button", {
+                              dom.button({
                                 onClick() {
                                   const value = prompt("请输入建议")?.trim()
                                   if (value && !topic.votes.find(v => v.description == value)) {
@@ -127,7 +127,7 @@ export default panelWith({
                                 renderContent("已选择")
                               },
                               () => {
-                                useDom("button", {
+                                dom.button({
                                   style: stringifyStyle({
                                     width: "20px",
                                     height: "30px"

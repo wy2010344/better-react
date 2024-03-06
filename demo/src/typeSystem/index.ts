@@ -13,7 +13,7 @@ export default normalPanel(function (operate, id) {
   const { list, checkExist, add, update } = useTypeDB()
   useDom("div", {
     children() {
-      useDom("button", {
+      dom.button({
         textContent: "增加结构体",
         onClick(e) {
           e.stopPropagation()
@@ -33,7 +33,7 @@ export default normalPanel(function (operate, id) {
           }
         },
       })
-      useDom("button", {
+      dom.button({
         textContent: "增加实例"
       })
     },
@@ -75,7 +75,7 @@ export default normalPanel(function (operate, id) {
         useDom("div", {
           className: "edit-column",
           children() {
-            useDom("button", {
+            dom.button({
               className: "edit",
               textContent: "修改",
               onClick(e) {
@@ -176,7 +176,7 @@ const structAlert = alertWith<{
                     const button = useDom("div", {
                       children() {
                         renderArray(row.value, v => v, function (row) {
-                          useDom("button", {
+                          dom.button({
                             textContent: row,
                             onClick() {
                               setValue(list => list.filter(v => v != row))
@@ -206,7 +206,7 @@ const structAlert = alertWith<{
                         renderArray(list.filter(v => {
                           return v.metaType == 'type' && !row.value.includes(v.name) && v.name.includes(filterValue)
                         }), v => v.name, function (type) {
-                          useDom("button", {
+                          dom.button({
                             textContent: type.name,
                             onClick(event) {
                               setValue(list => list.concat(type.name))
@@ -226,7 +226,7 @@ const structAlert = alertWith<{
                 display: "table-cell"
               }),
               children() {
-                useDom("button", {
+                dom.button({
                   textContent: "删除",
                   onClick(event) {
                     setRow()
@@ -247,7 +247,7 @@ const structAlert = alertWith<{
               display: "table-cell"
             }),
             children() {
-              useDom("button", {
+              dom.button({
                 textContent: "取消",
                 onClick(event) {
                   operate.close(id)
@@ -260,7 +260,7 @@ const structAlert = alertWith<{
               display: "table-cell"
             }),
             children() {
-              useDom("button", {
+              dom.button({
                 textContent: "确定",
                 onClick(event) {
                   const map: {
@@ -285,7 +285,7 @@ const structAlert = alertWith<{
               display: "table-cell"
             }),
             children() {
-              useDom("button", {
+              dom.button({
                 textContent: "添加",
                 onClick(event) {
                   setList(list => list.concat(createPair()))

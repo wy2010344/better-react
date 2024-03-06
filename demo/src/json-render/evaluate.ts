@@ -39,7 +39,7 @@ const libraryDefines: {
   },
   Button: {
     run(args: any, context: Context) {
-      useDom("button", {
+      dom.button({
         onClick: args.onClick ? buildEvent(args.onClick) : undefined,
         children() {
           for (const child of args.children) {

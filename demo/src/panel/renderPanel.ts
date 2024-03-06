@@ -98,7 +98,7 @@ function renderPanel({
             `,
           children: title
         })
-        useDom("button", {
+        dom.button({
           style: `
             width:${titleHeight}px;
             height:${titleHeight}px;

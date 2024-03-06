@@ -1,5 +1,5 @@
 import { AskNextTimeWork } from "better-react"
-import { EmptyFun } from "wy-helper"
+import { EmptyFun, emptyObject } from "wy-helper"
 export const getTime = () => performance.now()
 const canPromise = typeof Promise !== 'undefined' && window.queueMicrotask
 const canMessageChannel = typeof MessageChannel !== 'undefined'
@@ -38,19 +38,20 @@ function runTaskSync(fun: EmptyFun) {
   }
 }
 
-function runTask(fun: EmptyFun, realTime?: boolean) {
-  if (realTime) {
-    runTaskSync(fun)
-  } else {
-    runMacroTask(fun)
-  }
+function runTask(fun: EmptyFun) {
+  runMacroTask(fun)
 }
 
+/**
+ * 提前执行掉一些工作,却可能回滚
+ * @param param0 
+ * @returns 
+ */
 export function getScheduleAskTime({
   taskTimeThreadhold = 5
 }: {
   taskTimeThreadhold?: number
-}): AskNextTimeWork {
+} = emptyObject): AskNextTimeWork {
   return function ({
     askNextWork,
     realTime
@@ -70,21 +71,17 @@ export function getScheduleAskTime({
           callback = askNextWork()
         } else {
           if (callback.isRender) {
-            //主要是保证每次render与上一次render必然在不同的任务,不需要requestAnimationFrame,直接调用宏任务
-            runTask(() => {
-              (callback as any)!()
-              flush()
-            })
-            break;
+            //延时检查
+            setTimeout(flush, deadline - getTime())
+            break
+          }
+          if (getTime() < deadline) {
+            callback()
+            callback = askNextWork()
           } else {
-            if (getTime() < deadline) {
-              callback()
-              callback = askNextWork()
-            } else {
-              //需要中止,进入宏任务.原列表未处理完
-              runTask(flush)
-              break
-            }
+            //需要中止,进入宏任务.原列表未处理完
+            runTask(flush)
+            break
           }
         }
       }
@@ -92,11 +89,73 @@ export function getScheduleAskTime({
         onWork = false
       }
     }
+
+    //render期间必须执行完成
+    function requestAnimationFrameCheck() {
+      if (onWork) {
+        let work = askNextWork()
+        while (work) {
+          work()
+          if (work.isRender && !realTime.get()) {
+            if (askNextWork()) {
+              beginAsyncWork()
+            } else {
+              onWork = false
+            }
+            break
+          }
+          work = askNextWork()
+        }
+      }
+    }
+
+    function beginAsyncWork() {
+      runTask(flush)
+      requestAnimationFrame(requestAnimationFrameCheck)
+    }
     return function () {
       if (!onWork) {
         onWork = true
-        runTask(flush, realTime.get())
+        if (realTime.get()) {
+          runTaskSync(flush)
+        } else {
+          beginAsyncWork()
+        }
       }
     }
+  }
+}
+
+/**
+ * 尽可能延时到requestAnimationFrame执行,反倒是容错更高?
+ * @param param0 
+ * @returns 
+ */
+export const requestAnimationFrameScheduler: AskNextTimeWork = ({
+  askNextWork,
+  realTime
+}) => {
+  let onWork = false
+  function foreverRun() {
+    requestAnimationFrame(function () {
+      if (onWork) {
+        let work = askNextWork()
+        while (work) {
+          work()
+          if (work.isRender && !realTime.get()) {
+            if (!askNextWork()) {
+              onWork = false
+            }
+            break
+          }
+          work = askNextWork()
+        }
+      }
+      foreverRun()
+    })
+  }
+  foreverRun()
+  return function () {
+    onWork = true
   }
 }

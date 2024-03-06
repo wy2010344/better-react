@@ -1096,6 +1096,7 @@ export namespace React {
     z?: number | string | undefined;
     zoomAndPan?: string | undefined;
     exit?(node: T, props: SVGAttributes<T>): Promise<any>
+    onDestroy?(node: T): void
   }
   export type SVGProps<T> = {
     attributes: SVGAttributes<T>
@@ -1170,6 +1171,7 @@ export namespace React {
     is?: string | undefined;
 
     exit?(node: T, props: HTMLAttributes<T>): Promise<any>
+    onDestroy?(node: T): void
   }
   type HTMLAttributeAnchorTarget =
     | '_self'

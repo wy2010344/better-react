@@ -56,6 +56,8 @@
     "better-react-dom": "file:.yalc/better-react-dom",
     "better-react-dom-helper": "file:.yalc/better-react-dom-helper",
     "better-react-helper": "file:.yalc/better-react-helper",
+    "kanren-logic": "file:.yalc/kanren-logic",
+    "stylis-creater": "file:.yalc/stylis-creater",
     "wy-dom-helper": "file:.yalc/wy-dom-helper",
     "wy-helper": "file:.yalc/wy-helper"
   }

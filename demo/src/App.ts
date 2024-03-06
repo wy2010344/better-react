@@ -1,6 +1,6 @@
 import { useEffect } from "better-react-helper"
 import { renderFragment, renderGuard, renderGuardString, useState, } from "better-react-helper"
-import { domOf, renderContent, useDom } from "better-react-dom";
+import { dom, domOf, renderContent, useDom } from "better-react-dom";
 import dsl from "./dsl";
 import ExpensiveView from "./ExpensiveView";
 import FlexAbc from "./FlexAbc";
@@ -32,70 +32,56 @@ export default normalPanel(function (operate) {
 
   renderContent("root")
   renderFragment(TestButtonPage, [])
-  useDom("button", {
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       dsl(operate)
-    },
-    children() {
-      renderContent("进入DSL")
     }
-  })
-  useDom("button", {
+  }).renderText`进入DSL`
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       ExpensiveView(operate)
-    },
-    children() {
-      renderContent("进入ExpansiveView")
     }
-  })
+  }).renderText`进入ExpansiveView`
   domOf("button", {
     onClick(e) {
       e.stopPropagation()
       测试appendAsPortal(operate)
     }
   }).renderTextContent("测试appendAsPortal")
-  useDom("button", {
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       FlexAbc(operate)
-    },
-    children() {
-      renderContent("FlexAbc")
     }
-  })
-  useDom("button", {
+  }).renderText`FlexAbc`
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       sReact(operate)
-    },
-    textContent: "s-react"
-  })
-  useDom("button", {
+    }
+  }).renderText`s-react`
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       测试其它(operate)
-    },
-    textContent: "测试其它"
-  })
-  useDom("button", {
+    }
+  }).renderText`测试其它`
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       vote(operate)
-    },
-    children() {
-      renderContent("vote")
     }
-  })
-  useDom("button", {
+  }).renderText`vote`
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       typeSystem(operate)
     },
     textContent: "typeSystem"
   })
-  useDom("button", {
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       figmaClone(operate)
@@ -103,21 +89,21 @@ export default normalPanel(function (operate) {
     textContent: "figmaClone"
   })
 
-  useDom("button", {
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       xmlToBetter(operate)
     },
     textContent: "xmlToBetter"
   })
-  useDom("button", {
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       设计系统(operate)
     },
     textContent: "设计系统"
   })
-  useDom("button", {
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       todoList(operate)
@@ -126,7 +112,7 @@ export default normalPanel(function (operate) {
       renderContent("todoList")
     }
   })
-  // useDom("button", {
+  // dom.button( {
   //   onClick(e) {
   //     e.stopPropagation()
   //     motionOne(operate)
@@ -135,41 +121,31 @@ export default normalPanel(function (operate) {
   //     renderContent("motion-one")
   //   }
   // })
-  useDom("button", {
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       scrollPage(operate)
-    },
-    children() {
-      renderContent("scroll-page")
     }
-  })
-  useDom("button", {
+  }).renderText`scroll-page`
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       popup(operate)
-    },
-    children() {
-      renderContent("popup")
     }
-  })
+  }).renderText`popup`
 
-  useDom("button", {
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       测试Input(operate)
-    },
-    textContent: "测试input"
-  })
-  useDom("button", {
+    }
+  }).renderText`测试input`
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       测试renderOne(operate)
-    },
-    children() {
-      renderContent("测试renderOne")
     }
-  })
+  }).renderText`测试renderOne`
   Demo()
   // Action()
   //console.log("在这里")
@@ -178,22 +154,18 @@ export default normalPanel(function (operate) {
   renderContent(`在这里${value}`)
 
 
-  useDom("button", {
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       dragDemo(operate)
-    },
-    children() {
-      renderContent("drag-demo")
     }
-  })
-  useDom("button", {
+  }).renderText`drag-demo`
+  dom.button({
     onClick(event) {
       event.stopPropagation()
       文件系统整理(operate)
-    },
-    textContent: "文件系统整理"
-  })
+    }
+  }).renderText`文件系统整理`
   domOf("button", {
     onClick(event) {
       event.stopPropagation()
@@ -383,7 +355,7 @@ function Demo() {
           })
         }
       })
-      useDom("button", {
+      dom.button({
         onClick() {
           setCount(count + 1)
         },
@@ -398,7 +370,7 @@ function Demo() {
 function Count() {
   console.log("render-count")
   const [count, setCount] = useState(9)
-  useDom("button", {
+  dom.button({
     onClick(e) {
       setCount(v => v + 1)
       setCount(v => v + 1)
@@ -408,7 +380,7 @@ function Count() {
       renderContent(`点击了${count}次`)
     }
   })
-  useDom("button", {
+  dom.button({
     onClick(e) {
       e.stopPropagation()
       setCount(count)

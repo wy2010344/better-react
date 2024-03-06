@@ -34,7 +34,7 @@ function testChangeValue() {
 
   useDom(value, {
     children() {
-      useDom("button", {
+      dom.button({
         onClick() {
           setValue(value == "div" ? "pre" : "div")
         },
@@ -58,7 +58,7 @@ function testFlushSync() {
           setValue(Number(input.value))
         }
       })
-      useDom("button", {
+      dom.button({
         onClick() {
           setValue(v => v + 1)
           console.log(input.value)
@@ -80,7 +80,7 @@ function testIncrease() {
   console.log("render-自身")
   useDom("div", {
     children() {
-      useDom("button", {
+      dom.button({
         onClick() {
           setCount(count + 1)
         },
@@ -89,7 +89,7 @@ function testIncrease() {
         }
       })
       renderContent(`值${count}`)
-      useDom("button", {
+      dom.button({
         onClick() {
           setCount(count - 1)
         },
@@ -106,7 +106,7 @@ function testcIncrease() {
   const [count, setCount] = useState(0)
   useDom("div", {
     children() {
-      useDom("button", {
+      dom.button({
         onClick() {
           setCount(count + 1)
         },
@@ -115,7 +115,7 @@ function testcIncrease() {
         }
       })
       renderContent(`值${count}`)
-      useDom("button", {
+      dom.button({
         onClick() {
           setCount(count - 1)
         },
@@ -143,7 +143,7 @@ function MapList() {
         })
         useDom("input")
 
-        useDom("button", {
+        dom.button({
           onClick() {
             list.splice(i, 1)
             setList([...list])
@@ -157,7 +157,7 @@ function MapList() {
     })
   })
 
-  useDom("button", {
+  dom.button({
     onClick(e) {
       list.unshift({
         index: list.length,

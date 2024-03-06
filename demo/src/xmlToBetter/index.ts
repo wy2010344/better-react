@@ -6,7 +6,7 @@ import { XmlNode, parseSync } from "xml-reader";
 export default normalPanel(function (operate, id) {
 
   const [target, setTarget] = useState('')
-  useDom("button", {
+  dom.button({
     textContent: "转化",
     style: `
     

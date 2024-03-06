@@ -1,5 +1,6 @@
+import { emptyArray } from "wy-helper";
 import { useCallback } from "./useCallback";
-import { useAlways } from "./useRef";
+import { useAlways, useMemo } from "./useRef";
 
 /**
  * 
@@ -12,4 +13,23 @@ export function useEvent<T extends (...vs: any[]) => any>(fun: T): T {
   return useCallback<T>(function (...vs) {
     return get()(...vs)
   } as T, [])
+}
+
+
+
+export function useProxy<T extends object>(init: T) {
+  const get = useAlways(init)
+  return useMemo(() => {
+    return new Proxy<T>(get(), {
+      get(target, p, receiver) {
+        return (get() as any)[p]
+      },
+      apply(target, thisArg, argArray) {
+        return (get() as any).apply(thisArg, argArray)
+      },
+      construct(target, argArray, newTarget) {
+        return new (get() as any)(...argArray)
+      },
+    })
+  }, emptyArray)
 }
