@@ -6,7 +6,11 @@ export function useInit(callback: (dep: readonly any[]) => (void | (() => void))
   useEffect(callback, emptyArray)
 }
 
-export function useDestroy(initCallback: () => void) {
+export function useEventDestroy(initCallback: () => void) {
   const callback = useEvent(initCallback)
+  useDestroy(callback)
+}
+
+export function useDestroy(callback: () => void) {
   useEffect(() => callback, emptyArray)
 }

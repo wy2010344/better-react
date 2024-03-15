@@ -4,11 +4,15 @@ import { EnvModel } from "./commitWork"
 export { startTransition } from './reconcile'
 export type { REAL_WORK } from './reconcile'
 export {
-  useGetCreateChangeAtom,
-  useBaseReducer, useLevelEffect, useBaseMemoGet,
-  createContext, renderFiber, useGetFlushSync
+  useLevelEffect, useBaseMemoGet,
+  createContext, renderFiber,
+  hookGetCreateChangeAtom,
+  hookGetFlushSync,
+  hookEffectTag,
+  hookRequestReconcile,
+  hookMakeDirtyAndRequestUpdate
 } from './fc'
-export type { ReducerResult, ReducerFun, EffectResult } from './fc'
+export type { EffectResult } from './fc'
 export type {
   Fiber,
   VirtaulDomNode,

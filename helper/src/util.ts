@@ -1,4 +1,4 @@
-import { ReduceRowState, ReduceState, SetStateAction, buildSubSetArray, buildSubSetObject } from "wy-helper"
+import { ReduceRowState, ReduceState, buildSubSetArray, buildSubSetObject } from "wy-helper"
 import { useMemo } from "./useRef"
 
 /**

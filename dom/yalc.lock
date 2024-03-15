@@ -2,20 +2,24 @@
   "version": "v1",
   "packages": {
     "better-react": {
-      "signature": "bca491a1aadb30466a433c9a87436ad0",
+      "signature": "bf5b9ba3e6697307271ad0c0cfb77630",
       "file": true,
       "replaced": "^1.2.4"
     },
     "better-react-dom": {
-      "signature": "8f66fa685dcb5d8024e587aadbcf7a96",
+      "signature": "65b51d5a1c6f96a558b2e83cbb2b8974",
       "file": true
     },
     "stylis-creater": {
-      "signature": "904e0a1c1ae46e04b04519c10d6344ae",
+      "signature": "d1693bbdfb5c43729ac308d9561920da",
       "file": true
     },
     "wy-helper": {
-      "signature": "e036fa52d60247bd5e4e07772a1c1bc0",
+      "signature": "026279c5c45861995e2cec99b0e9102a",
+      "file": true
+    },
+    "wy-dom-helper": {
+      "signature": "7b26d5af41ee77162e0dbb43d3508334",
       "file": true
     }
   }

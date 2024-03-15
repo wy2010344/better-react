@@ -6,7 +6,7 @@
       "file": true
     },
     "better-react-helper": {
-      "signature": "c61e79f717b22981fa38df6d8dfad67a",
+      "signature": "e69e8aa967200777fe8543bc9dc76a5c",
       "file": true,
       "replaced": "^1.2.7"
     },
@@ -16,27 +16,27 @@
       "replaced": "^1.2.2"
     },
     "better-react": {
-      "signature": "2d3c4eb51fed2406374a801a2e12316f",
+      "signature": "46d7a26d0e2cb9db541045f15bb0800f",
       "file": true,
       "replaced": "^1.2.6"
     },
     "better-react-dom": {
-      "signature": "ec20ac21a2f021356b50a74dac4099be",
+      "signature": "65b51d5a1c6f96a558b2e83cbb2b8974",
       "file": true,
       "replaced": "^1.2.6"
     },
     "wy-helper": {
-      "signature": "a8e6fb2ee104340c4f3c68df37e8796d",
+      "signature": "3c75441431e2c71b8035d935291f5d92",
       "file": true,
       "replaced": "^0.1.0"
     },
     "wy-dom-helper": {
-      "signature": "b021e5a5d8cfa899d21d65e5422ce225",
+      "signature": "7b26d5af41ee77162e0dbb43d3508334",
       "file": true,
       "replaced": "^0.1.0"
     },
     "better-react-dom-helper": {
-      "signature": "7e81a1535ee56c49597cd09da6adf9cb",
+      "signature": "1b46a53158c9207d380539f50e69f5ec",
       "file": true,
       "replaced": "^1.2.4"
     }

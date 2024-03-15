@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import { dom } from "better-react-dom";
 import { renderArray } from "better-react-helper";
 
-const list = Array(500).fill(1).map((_, i) => {
+const list = Array(2000).fill(1).map((_, i) => {
 	return {
 		index: i,
 		name: faker.animal.bear()

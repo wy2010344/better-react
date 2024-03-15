@@ -1,5 +1,5 @@
 import { Fiber, VirtaulDomNode, VirtualDomOperator } from "./Fiber"
-import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemoGet, useParentFiber, useLevelEffect } from "./fc"
+import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemoGet, hookParentFiber, useLevelEffect } from "./fc"
 import { emptyArray } from "wy-helper"
 ////////****single****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type OneProps<T extends readonly any[] = readonly any[]> = readonly [
@@ -41,7 +41,7 @@ export function renderOneF<M>(
     revertParentFiber()
 
     let commitWork: (() => void) | void = undefined
-    const [envModel, parentFiber] = useParentFiber()
+    const parentFiber = hookParentFiber()
     const cache = useBaseMemoGet(initCache, emptyArray)()
     if (cache.key == key && cache.fiber) {
       //key相同复用
@@ -50,9 +50,13 @@ export function renderOneF<M>(
       //删旧增新
       if (cache.fiber) {
         //节点存在
-        envModel.addDelect(cache.fiber)
+        parentFiber.envModel.addDelect(cache.fiber)
       }
-      const placeFiber = Fiber.createOneChild(envModel, parentFiber, dom, { render, deps })
+      const placeFiber = Fiber.createOneChild(
+        parentFiber.envModel,
+        parentFiber,
+        dom,
+        { render, deps })
       commitWork = () => {
         cache.key = key
         cache.fiber = placeFiber

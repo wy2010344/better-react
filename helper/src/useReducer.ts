@@ -1,6 +1,10 @@
-import { ReducerFun, ReducerResult, useBaseReducer } from "better-react";
-import { quote } from "wy-helper";
+import { hookGetCreateChangeAtom, hookRequestReconcile } from "better-react";
+import { SetValue, emptyArray, quote, simpleEqual } from "wy-helper";
+import { useMemo } from "./useRef";
 
+
+export type ReducerFun<F, T> = (old: T, action: F) => T
+export type ReducerResult<F, T> = [T, SetValue<F>];
 
 export function useReducer<F, M, T>(
   reducer: ReducerFun<F, T>,
@@ -18,7 +22,35 @@ export function useReducer<F, T = undefined>(
   initFun?: (m: T) => T,
   eq?: (a: T, b: T) => any): ReducerResult<F, T>
 export function useReducer(reducer: any, init: any, initFun: any, eq: any) {
-  return useBaseReducer(reducer, init, initFun, eq)
+  const createChangeAtom = hookGetCreateChangeAtom()
+  const reconcile = hookRequestReconcile()
+  const hook = useMemo(() => {
+    const realEq = eq || simpleEqual
+    const trans = initFun || quote
+    const value = createChangeAtom(trans(init))
+    function set(action: any) {
+      reconcile(function () {
+        const oldValue = value.get()
+        const newValue = reducer(oldValue, action)
+        if (!realEq(oldValue, newValue)) {
+          value.set(newValue)
+          return true
+        }
+      })
+    }
+    return {
+      value,
+      set,
+      reducer,
+      init,
+      initFun,
+      eq
+    }
+  }, emptyArray)
+  if (reducer != hook.reducer) {
+    console.warn("reducer上的reducer变化!!")
+  }
+  return [hook.value.get(), hook.set]
 }
 
 export function useReducerFun<F, T>(

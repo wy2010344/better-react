@@ -39,7 +39,7 @@ export default function () {
       getCurrentValue() {
         return translateY.get()
       },
-      momentum: momentum.bScroll()
+      momentum: momentum.iScroll()
     }), emptyArray)
 
     useEffect(() => {

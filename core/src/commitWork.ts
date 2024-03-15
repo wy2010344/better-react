@@ -1,4 +1,4 @@
-import { Fiber, HookContextCosumer, VirtaulDomNode } from "./Fiber"
+import { Fiber, VirtaulDomNode } from "./Fiber"
 import { deepTravelFiber, findParentAndBefore } from "./findParentAndBefore"
 import { EmptyFun, ManageValue, StoreRef, iterableToList, quote, removeEqual, run, storeRef } from "wy-helper"
 
@@ -27,12 +27,6 @@ export class EnvModel {
   }
 
   reconcile: Reconcile = null as any
-  // readonly askNextTimeWork: () => void
-  /**本次新注册的监听者*/
-  private readonly draftConsumers: HookContextCosumer<any, any>[] = []
-  addDraftConsumer(v: HookContextCosumer<any, any>) {
-    this.draftConsumers.push(v)
-  }
   /**本次等待删除的fiber*/
   private readonly deletions: Fiber[] = []
   addDelect(fiber: Fiber) {
@@ -72,8 +66,6 @@ export class EnvModel {
   rollback() {
     this.changeAtoms.forEach(atom => atom.rollback())
     this.changeAtoms.length = 0
-    this.draftConsumers.forEach(draft => draft.destroy())
-    this.draftConsumers.length = 0
     this.deletions.length = 0
     this.updateEffects.clear()
   }
@@ -83,7 +75,6 @@ export class EnvModel {
     this.changeAtoms.length = 0
     /******清理删除********************************************************/
     /******清理所有的draft********************************************************/
-    this.draftConsumers.length = 0
     // checkRepeat(deletions)
     this.deletions.forEach(function (fiber) {
       //清理effect
@@ -272,9 +263,5 @@ function destroyFiber(fiber: Fiber) {
       })
     }
   }
-  const listeners = fiber.hookContextCosumer
-  listeners?.forEach(listener => {
-    listener.destroy()
-  })
   fiber.dom?.destroy()
 }

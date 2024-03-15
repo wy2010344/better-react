@@ -1,13 +1,6 @@
 import { EnvModel, FindParentAndBefore } from "./commitWork"
-import { arrayNotEqualDepsWithEmpty, SetValue, storeRef, StoreRef } from "wy-helper"
+import { arrayNotEqualDepsWithEmpty, emptyFun, EmptyFun, SetValue, storeRef, StoreRef, ValueCenter } from "wy-helper"
 
-export type HookValue<F, T> = {
-  value: StoreRef<T>
-  readonly set: SetValue<F>
-  reducer: any,
-  init: any,
-  initFun: any
-}
 export type HookMemo<T> = {
   deps: readonly any[]
   value: T
@@ -16,13 +9,6 @@ export type HookEffect = {
   deps?: readonly any[]
   destroy?: void | ((deps?: readonly any[]) => void)
 }
-export type HookContextCosumer<T, M> = {
-  getValue(): M
-  select(v: T): M
-  shouldUpdate?(a: M, b: M): boolean
-  destroy(): void
-}
-
 
 type RenderDeps = {
   deps?: readonly any[],
@@ -51,17 +37,12 @@ export class Fiber {
   destroyed?: boolean
   /**全局key,使帧复用,或keep-alive*/
   // globalKey?: any
-  contextProvider?: Map<any, {
-    changeValue(v: any): void
-  }>
-  hookValue?: HookValue<any, any>[]
+  contextProvider?: Map<any, ValueCenter<any>>
   hookEffects?: Map<number, StoreRef<HookEffect>[]>
   hookMemo?: {
     get(): any,
     value: StoreRef<HookMemo<any>>
   }[]
-  hookContextCosumer?: HookContextCosumer<any, any>[]
-
   /**初始化或更新 
    * UPDATE可能是setState造成的,可能是更新造成的
    * 这其中要回滚
@@ -73,8 +54,11 @@ export class Fiber {
   readonly lastChild: StoreRef<Fiber | void> = undefined!
 
   private renderDeps: StoreRef<RenderDeps>
+
+  requestReconcile: ((fun: () => any) => void) | void = undefined
+  makeDirtyAndRequestUpdate: EmptyFun | void = undefined
   private constructor(
-    envModel: EnvModel,
+    public readonly envModel: EnvModel,
     public readonly parent: Fiber | undefined,
     public readonly dom: VirtaulDomNode | undefined,
     public readonly before: StoreRef<Fiber | void>,

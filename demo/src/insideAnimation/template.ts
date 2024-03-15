@@ -1,12 +1,10 @@
 
-import { faker, fi } from "@faker-js/faker";
-import { useGetFlushSync } from "better-react";
+import { faker } from "@faker-js/faker";
 import { dom } from "better-react-dom";
-import { renderInput, useRequesetAnimationFrame } from "better-react-dom-helper";
-import { useAnimationFrameNumber } from "better-react-dom-helper";
-import { renderArray, useAtom, useChange, useEffect, useMemo, useValueCenter, useVersion } from "better-react-helper";
-import { getPageOffset } from "wy-dom-helper";
-import { Point, TweenFnZXX, TweenFns, emptyArray, pointEqual, syncMergeCenter } from "wy-helper";
+import { renderInput } from "better-react-dom-helper";
+import { renderArray, useAtom, useChange, useEffect, useMemo } from "better-react-helper";
+import { getPageOffset, subscribeRequestAnimationFrame } from "wy-dom-helper";
+import { Point, pointEqual } from "wy-helper";
 
 
 const list = Array(100).fill(1).map((_, i) => {
@@ -51,8 +49,9 @@ export function renderTemplate(
       const lastPSAtom = useAtom<Point | undefined>(undefined)
 
       const locationChange = useLayout(() => div)
-      useRequesetAnimationFrame(function () {
-        if (div) {
+
+      useEffect(() => {
+        return subscribeRequestAnimationFrame(function () {
           const ps = getPageOffset(div)
           const lastPS = lastPSAtom.get()
           if (lastPS) {
@@ -64,7 +63,7 @@ export function renderTemplate(
             //第一次
             lastPSAtom.set(ps)
           }
-        }
+        })
       })
       const div = dom.div({
         style: `

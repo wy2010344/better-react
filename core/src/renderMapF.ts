@@ -1,5 +1,5 @@
 import { Fiber, VirtaulDomNode, VirtualDomOperator } from "./Fiber"
-import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemoGet, useParentFiber, useLevelEffect } from "./fc"
+import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemoGet, hookParentFiber, useLevelEffect } from "./fc"
 import { emptyArray, storeRef } from "wy-helper"
 
 ////////****useMap****////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -60,7 +60,7 @@ export function renderMapF<M, C>(
     useLevelEffect(0, function () {
       mapRef.set(newMap)
     })
-    const [envModel, parentFiber] = useParentFiber()
+    const parentFiber = hookParentFiber()
 
     let beforeFiber: Fiber | undefined = undefined
     //提前置空
@@ -84,7 +84,7 @@ export function renderMapF<M, C>(
         oldFibers?.shift()
       } else {
         const tempFiber = Fiber.createMapChild(
-          envModel,
+          parentFiber.envModel,
           parentFiber,
           dom,
           {
@@ -118,7 +118,7 @@ export function renderMapF<M, C>(
         //需要清理,以保证不会删除错误
         old.before.set(undefined)
         old.next.set(undefined)
-        envModel.addDelect(old)
+        parentFiber.envModel.addDelect(old)
       }
     }
 

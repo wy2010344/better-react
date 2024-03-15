@@ -1,12 +1,14 @@
-import { createContext, emptyArray, useGetFlushSync, useLevelEffect } from "better-react";
-import { createUseReducer, useAtomFun, renderExitAnimate, ExitModel, useEffect, } from "better-react-helper";
-import { LiftStateModel, css, getLifeState, useBindTransitionFinish, useInitClassNames, useLifeStateTime, useLifeStateTransition } from "better-react-dom-helper";
+import { createContext, hookGetFlushSync } from "better-react";
+import { createUseReducer, renderExitAnimateArray, useAtomFun, useRenderExitAnimate, useTimeoutAnimateValue } from "better-react-helper";
 import { dom } from "better-react-dom";
 import { faker } from "@faker-js/faker";
-import { HookValueSet } from "better-react";
+import { ExitModel, SetValue } from "wy-helper";
+import { css } from "wy-dom-helper";
+import { useTriggerStyleWithShow } from "better-react-dom-helper";
+import { getTimeoutPromise } from "better-react-dom-helper";
 
 
-const time = 5000
+const time = 500
 
 
 type Render = (v: ExitModel<RenderPage>, className: string) => HTMLElement
@@ -91,7 +93,7 @@ const usePages = createUseReducer(function (model: {
 })
 
 const pageContext = createContext<{
-  dispatch: HookValueSet<PageAction>
+  dispatch: SetValue<PageAction>
   size: number,
   method?: PageAction['method']
 }>(null as any)
@@ -101,14 +103,14 @@ export function renderPages() {
 
   const method = model.method
   const animation = model.who.animation
-  pageContext.useProvider({
+  pageContext.hookProvider({
     dispatch,
     size: model.pages.length,
     method: model.method
   })
 
   const page = model.pages.at(-1)!
-  const config: LiftStateModel<string> = method == 'pop' ? {
+  const config = method == 'pop' ? {
     init: "left",
     enter: 'center animation',
     show: 'center',
@@ -128,82 +130,98 @@ export function renderPages() {
     height:200px;
     `
   }).render(function () {
-    renderExitAnimate([page], v => v.id, {
-      mode: method == 'pop' ? 'pop' : 'shift',
-    }, function (v) {
-      const state = useLifeStateTime(v.exiting, time, {
-        resolve: v.resolve,
-        ref() {
-          return node
-        },
+    renderExitAnimateArray(
+      useRenderExitAnimate(
+        [page], v => v.id, {
+        mode: method == 'pop' ? 'pop' : 'shift',
+        // wait: "out-in"
+      }), function (v) {
+        const waitFinish = getTimeoutPromise(time, function () {
+          console.log("destroy", v.originalKey, v.exiting)
+          v.resolve()
+        })
+        const { className } = useTriggerStyleWithShow(() => node, v.exiting, {
+          from: {
+            className: config.init
+          },
+          target: {
+            className: config.enter
+          },
+          waitFinish
+        }, {
+          force: true,
+          target: {
+            className: config.exit
+          },
+          waitFinish
+        })
+        const node = v.value.render(v, `${balseClsName} ${method && className} `)
       })
-      const node = v.value.render(v, `${balseClsName} ${method && getLifeState(config, state)} `)
-    })
   })
-  dom.div({
-    style: `
-    position:relative;
-    width:300px;
-    height:200px;
-    `
-  }).render(function () {
-    renderExitAnimate([page], v => v.id, {
-      mode: method == 'pop' ? 'pop' : 'shift',
-    }, function (v) {
-      const state = useLifeStateTransition(v.exiting, {
-        resolve: v.resolve,
-        ref() {
-          return node
-        },
-      })
-      const node = v.value.render(v, `${balseClsName} ${method && getLifeState(config, state)} `)
-    })
-  })
-  dom.div({
-    style: `
-    position:relative;
-    width:300px;
-    height:200px;
-    // overflow:hidden;
-    `
-  }).render(function () {
-    renderExitAnimate([page], v => v.id, {
-      mode: method == 'pop' ? 'pop' : 'shift',
-    }, function (v) {
-      /**
-       * 主要是enter有动画参数,切换到退出,是平滑过去的
-       * 不像上面有个中间状态,则不会平滑过渡:立即切换为退出状态.
-       * 因为在进入中立即变成退出中,进入中的resolve,而退出中的是否立即resolve呢?
-       */
-      useInitClassNames(() => node, config.init || '', config.enter || '')
-      useBindTransitionFinish(() => node, v.resolve, [!v.exiting])
-      const node = v.value.render(v, `${balseClsName} ${v.exiting ? config.exit : config.enter}`)
-    })
-  })
-  dom.div({
-    style: `
-    position:relative;
-    width:300px;
-    height:200px;
-    // overflow:hidden;
-    `
-  }).render(function () {
-    renderExitAnimate([page], v => v.id, {
-      mode: method == 'pop' ? 'pop' : 'shift',
-    }, function (v) {
-      /**
-       * 为什么这种方式会比上面慢一格? 是因为颜色也发生了动画,而颜色的动画触发提前结束
-       * 而且进入时,颜色也发生的渐变.
-       * 如果不设className,只做scrollTop,也不能触发动画
-       */
-      useLevelEffect(-1, () => {
-        node.className = `${balseClsName} ${config.init}`
-        node.scrollTop
-      }, emptyArray)
-      useBindTransitionFinish(() => node, v.resolve, [!v.exiting])
-      const node = v.value.render(v, `${balseClsName} ${v.exiting ? config.exit : config.enter}`)
-    })
-  })
+  // dom.div({
+  //   style: `
+  //   position:relative;
+  //   width:300px;
+  //   height:200px;
+  //   `
+  // }).render(function () {
+  //   renderExitAnimate([page], v => v.id, {
+  //     mode: method == 'pop' ? 'pop' : 'shift',
+  //   }, function (v) {
+  //     const state = useLifeStateTransition(v.exiting, {
+  //       resolve: v.resolve,
+  //       ref() {
+  //         return node
+  //       },
+  //     })
+  //     const node = v.value.render(v, `${balseClsName} ${method && getLifeState(config, state)} `)
+  //   })
+  // })
+  // dom.div({
+  //   style: `
+  //   position:relative;
+  //   width:300px;
+  //   height:200px;
+  //   // overflow:hidden;
+  //   `
+  // }).render(function () {
+  //   renderExitAnimate([page], v => v.id, {
+  //     mode: method == 'pop' ? 'pop' : 'shift',
+  //   }, function (v) {
+  //     /**
+  //      * 主要是enter有动画参数,切换到退出,是平滑过去的
+  //      * 不像上面有个中间状态,则不会平滑过渡:立即切换为退出状态.
+  //      * 因为在进入中立即变成退出中,进入中的resolve,而退出中的是否立即resolve呢?
+  //      */
+  //     useInitClassNames(() => node, config.init || '', config.enter || '')
+  //     useBindTransitionFinish(() => node, v.resolve, [!v.exiting])
+  //     const node = v.value.render(v, `${balseClsName} ${v.exiting ? config.exit : config.enter}`)
+  //   })
+  // })
+  // dom.div({
+  //   style: `
+  //   position:relative;
+  //   width:300px;
+  //   height:200px;
+  //   // overflow:hidden;
+  //   `
+  // }).render(function () {
+  //   renderExitAnimate([page], v => v.id, {
+  //     mode: method == 'pop' ? 'pop' : 'shift',
+  //   }, function (v) {
+  //     /**
+  //      * 为什么这种方式会比上面慢一格? 是因为颜色也发生了动画,而颜色的动画触发提前结束
+  //      * 而且进入时,颜色也发生的渐变.
+  //      * 如果不设className,只做scrollTop,也不能触发动画
+  //      */
+  //     useLevelEffect(-1, () => {
+  //       node.className = `${balseClsName} ${config.init}`
+  //       node.scrollTop
+  //     }, emptyArray)
+  //     useBindTransitionFinish(() => node, v.resolve, [!v.exiting])
+  //     const node = v.value.render(v, `${balseClsName} ${v.exiting ? config.exit : config.enter}`)
+  //   })
+  // })
   dom.button({
     onClick() {
       dispatch({
@@ -211,7 +229,7 @@ export function renderPages() {
         render: renderPage
       })
     }
-  }).text`替换`
+  }).renderText`替换`
 }
 
 const baseClsName = css`
@@ -269,15 +287,15 @@ function renderPage(arg: ExitModel<RenderPage>, className: string) {
     //   }
     // },
   }).render(function () {
-    dom.span().text`页数${size} -- ${method || ''}`
+    dom.span().renderText`页数${size} -- ${method || ''}`
     dom.button({
       onClick() {
         dispatch({
           method: "pop",
         })
       }
-    }).text`退出`
-    const flushSync = useGetFlushSync()
+    }).renderText`退出`
+    const flushSync = hookGetFlushSync()
     dom.button({
       onClick() {
         flushSync(function () {
@@ -287,7 +305,7 @@ function renderPage(arg: ExitModel<RenderPage>, className: string) {
           })
         })
       }
-    }).text`替换`
+    }).renderText`替换`
     dom.button({
       onClick() {
         dispatch({
@@ -295,7 +313,7 @@ function renderPage(arg: ExitModel<RenderPage>, className: string) {
           render: renderPage
         })
       }
-    }).text`替换`
+    }).renderText`替换`
     dom.button({
       onClick() {
         dispatch({
@@ -304,9 +322,9 @@ function renderPage(arg: ExitModel<RenderPage>, className: string) {
           animation: "3d"
         })
       }
-    }).text`进入`
+    }).renderText`进入`
 
-    dom.span().text`当前id${arg.key}`
+    dom.span().renderText`当前id${arg.originalKey}`
   })
 }
 

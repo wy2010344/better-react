@@ -302,6 +302,6 @@ export function startTransition(fun: () => void) {
 const performUnitOfWork = deepTravelFiber<EnvModel[]>(function (fiber, envModel) {
   //当前fiber脏了，需要重新render
   if (fiber.effectTag.get()) {
-    updateFunctionComponent(envModel, fiber)
+    updateFunctionComponent(fiber)
   }
 })

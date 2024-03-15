@@ -1,12 +1,11 @@
 import { faker } from "@faker-js/faker";
 import { React, dom } from "better-react-dom";
-import { createUseReducer, createUseReducerFun, renderArray, renderIf, useAtom, useChange, useEffect, useEvent, useMemo, useTimeoutAnimateValue } from "better-react-helper";
-import { Box, EmptyFun, Point, arrayToMove, boxEqual, convertBoundingBoxToBox, emptyArray, pointEqual, pointZero, syncMergeCenter } from "wy-helper";
-import { useReorder } from "./reorder";
+import { createUseReducerFun, renderArray, useAtom, useChange, useEffect, useEvent, useMemo, useTimeoutAnimateValue } from "better-react-helper";
+import { Box, Point, arrayToMove, convertBoundingBoxToBox, emptyArray, pointEqual, pointZero, syncMergeCenter } from "wy-helper";
 import { useEdgeScroll } from "./edgeScroll";
-import { forceFlow, getPageOffset, subscribeRequestAnimationFrame } from "wy-dom-helper";
-import { EffectResult, useLevelEffect } from "better-react";
-import { Render, renderDrag } from "./renderDrag";
+import { CSSProperties, requesetBatchAnimationForceFlow, subscribeRequestAnimationFrame } from "wy-dom-helper";
+import { Preview, Render, renderDrag } from "./renderDrag";
+import { useStyle, useReorder } from "better-react-dom-helper";
 
 const bList = Array(3).fill(1).map((_, i) => i)
 export default function () {
@@ -18,7 +17,7 @@ export default function () {
     gap:100px;
     `
   }).render(function () {
-    const { initRender, updateRender, updateBox, leveContainer, enterContainer, abc } = renderDrag()
+    const { initRender, updatePreview, updateInitBox, updatePreviewBox, leveContainer, enterContainer, abc } = renderDrag()
     renderArray(bList, v => v, function (i) {
       const [onMove, setOnMove] = useChange<{ index: number }>()
       const [list, dispatch] = useOrderList(() => {
@@ -56,10 +55,16 @@ export default function () {
       -webkit-user-select:${onMove ? 'none' : 'unset'};
         `,
         onPointerLeave(e) {
-          leveContainer(container, e)
+          leveContainer(container, {
+            x: e.pageX,
+            y: e.pageY
+          })
         },
         onPointerEnter(e) {
-          const row = enterContainer(container, e)
+          const row = enterContainer(container, {
+            x: e.pageX,
+            y: e.pageY
+          })
           if (row) {
             dispatch({
               type: "moveIn",
@@ -78,6 +83,7 @@ export default function () {
           disabled: !onMove
         })
 
+        //结束拖拽
         function endMove(p: Point) {
           if (reOrder.end(p)) {
             setOnMove(undefined)
@@ -121,10 +127,10 @@ export default function () {
         renderArray(list, v => v.index, function (row, index) {
           const trans = useTimeoutAnimateValue<Point, string>(pointZero, pointEqual)
 
-          const { getRender, startMove, beginMoveIn } = useMemo(() => {
+          const { getRender, getPreview, startMove, beginMoveIn } = useMemo(() => {
 
             function startMove(point: Point) {
-              reOrderChild.start(point, function () {
+              reOrderChild(point, function () {
                 trans.changeTo(pointZero, {
                   duration: 300,
                   value: "ease"
@@ -142,52 +148,74 @@ export default function () {
               })
               reOrderMove(loc)
             }
+
+            function render(style: CSSProperties) {
+              renderDiv(row, style)
+            }
             return {
               beginMoveIn,
               startMove,
-              getRender(): Render {
-                setHide(true)
-                let removed = false
+              getPreview(): Preview {
                 return {
                   container,
-                  askToMove() {
-                    return row
-                  },
-                  startRegist() {
-                    isRegist.set({
-                      index: row.index
-                    })
-                  },
-                  stopRegist() {
-                    isRegist.set(undefined)
-                  },
-                  render(style) {
-                    renderDiv(row, {
-                      style
-                    })
-                  },
-                  endMove,
-                  beginMoveIn,
-                  show() {
-                    setHide(false)
-                  },
-                  remove() {
-                    if (removed) {
-                      return
-                    }
+                  render,
+                  onDragLeave() {
+                    console.log("drag-Leave")
                     dispatch({
                       type: "remove",
                       key: row.index
                     })
                     setOnMove(undefined)
-                    removed = true
-                    return function () {
-                      dispatch({
-                        type: "insert",
-                        index: index,
-                        value: row,
+                  },
+                  onDrop() {
+                    return new Promise(function (resolve) {
+                      isRegist.set({
+                        index: row.index
                       })
-                    }
+                      setTimeout(() => {
+                        dispatch({
+                          type: "didDrop",
+                          key: row.index
+                        })
+                        isRegist.set(undefined)
+                        resolve(true)
+                        setOnMove(undefined)
+                      }, 600)
+                    })
+                  },
+                }
+              },
+              getRender(): Render {
+                return {
+                  container,
+                  render,
+                  leaveContainer(p) {
+                    endMove(p)
+                  },
+                  enterContainer(p, r) {
+                    beginMoveIn(p, r)
+                  },
+                  onDragCancel(p) {
+                    return new Promise(function (resolve) {
+                      isRegist.set({
+                        index: row.index
+                      })
+                      setTimeout(() => {
+                        isRegist.set(undefined)
+                        resolve(true)
+                        setOnMove(undefined)
+                      }, 600)
+                    })
+                  },
+                  onDrop() {
+                    dispatch({
+                      type: "remove",
+                      key: row.index
+                    })
+                    setOnMove(undefined)
+                  },
+                  acceptDrop() {
+                    return row
                   },
                 }
               }
@@ -196,7 +224,11 @@ export default function () {
           const isOnMove = onMove?.index == row.index
           const updateMyBox = useEvent(function () {
             if (isOnMove || isRegist.get()?.index == row.index) {
-              updateBox(getAbsoluteBox(div))
+              if (row.isMoveIn) {
+                updatePreviewBox(getAbsoluteBox(div))
+              } else {
+                updateInitBox(getAbsoluteBox(div))
+              }
             }
           })
           useEffect(() => {
@@ -215,10 +247,11 @@ export default function () {
               trans.changeTo(value)
             }, function (diff) {
               trans.changeTo(diff)
-              forceFlow(div)
-              trans.changeTo(pointZero, {
-                duration: 600,
-                value: 'ease'
+              requesetBatchAnimationForceFlow(div, function () {
+                trans.changeTo(pointZero, {
+                  duration: 600,
+                  value: 'ease'
+                })
               })
             })
 
@@ -235,16 +268,13 @@ export default function () {
 
           useEffect(() => {
             if (row.isMoveIn) {
-              updateRender(getRender())
+              updatePreview(getPreview())
               beginMoveIn(abc.loc, abc.pointLoc)
             }
-          }, emptyArray)
-          const [hide, setHide] = useChange(false)
+          }, [row.isMoveIn])
           const div = renderDiv(row, {
-            // visibility:${hide ? 'hidden' : 'unset'};
-            style: `
-    z-index:${isOnMove ? 1 : 0};
-            `,
+            zIndex: isOnMove ? 1 : 0
+          }, {
             onPointerDown(e) {
               const point = {
                 x: e.pageX,
@@ -265,27 +295,27 @@ function getAbsoluteBox(div: HTMLElement): Box {
   return convertBoundingBoxToBox(rect)
 }
 
-function renderDiv(row: {
-  avatar: string
-  name: string
-  color: string
-}, props?: React.HTMLAttributes<HTMLDivElement>) {
-  return dom.div({
+function renderDiv(row: Row, style: CSSProperties, props?: React.HTMLAttributes<HTMLDivElement>) {
+  const div = dom.div({
     ...props,
     style: `
     display:flex;
     align-items:center;
     margin-bottom:20px;
-    background:${row.color};
     position:relative;
-    ${props?.style}
     `,
   }).render(function () {
     dom.img({
       src: row.avatar
     }).render()
-    dom.span().renderText`${row.name}`
+    dom.span().renderText`${row.index}:${row.name}`
   })
+
+  useStyle(div, {
+    ...style,
+    background: row.color,
+  })
+  return div
 }
 
 
@@ -309,6 +339,9 @@ const useOrderList = createUseReducerFun<{
 } | {
   type: "moveIn"
   value: Row
+} | {
+  type: "didDrop"
+  key: number
 }, {
   index: number
   avatar: string
@@ -326,7 +359,7 @@ const useOrderList = createUseReducerFun<{
     if (idx1 < 0) {
       return list
     }
-    console.log("change", action, idx, idx1)
+    // console.log("change", action, idx, idx1)
     return arrayToMove(list, idx, idx1)
   } else if (action.type == 'remove') {
     return list.filter(v => v.index != action.key)
@@ -349,6 +382,16 @@ const useOrderList = createUseReducerFun<{
         index: max + 1
       }
     ]
+  } else if (action.type == "didDrop") {
+    return list.map(row => {
+      if (row.index == action.key) {
+        return {
+          ...row,
+          isMoveIn: undefined
+        }
+      }
+      return row
+    })
   }
   return list
 })

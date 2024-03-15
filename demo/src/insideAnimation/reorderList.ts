@@ -1,12 +1,10 @@
 import { faker } from "@faker-js/faker"
 import { dom } from "better-react-dom"
 import { createUseReducer, renderArray, useAtom, useChange, useEffect, useTimeoutAnimateValue } from "better-react-helper"
-import { forceFlow } from "wy-dom-helper"
 import { Point, arrayToMove, emptyArray, pointEqual, pointZero, syncMergeCenter } from "wy-helper"
-import { useReorder } from "./reorder"
 import { useEdgeScroll } from "./edgeScroll"
-
-
+import { requesetBatchAnimationForceFlow } from "wy-dom-helper"
+import { useReorder } from 'better-react-dom-helper'
 /**
  * 拖拽的render,依赖拖拽事件,不是react的render与requestAnimateFrame
  * 动画生成异步的,因为dom生效本来是异步的.
@@ -137,10 +135,11 @@ export default function () {
             transY.changeTo(value)
           }, function (diff) {
             transY.changeTo(diff)
-            forceFlow(div)
-            transY.changeTo(pointZero, {
-              duration: 600,
-              value: 'ease'
+            requesetBatchAnimationForceFlow(div, function () {
+              transY.changeTo(pointZero, {
+                duration: 600,
+                value: 'ease'
+              })
             })
           })
         useEffect(() => {
@@ -165,7 +164,7 @@ export default function () {
           onPointerDown(e) {
             // transX.changeTo(e.pageY - cb.get()!.y.min)
             setOnMove(row)
-            reOrderChild.start({
+            reOrderChild({
               x: e.pageX,
               y: e.pageY
             }, function () {

@@ -4,6 +4,7 @@ import {
 } from "better-react"
 import { getAttributeAlias } from "./getAttributeAlias"
 import { DomElementType, SvgElementType } from "./html"
+import { objectDiffDeleteKey } from "wy-helper"
 
 export type Props = { [key: string]: any }
 interface FiberAbsNode<T = any> extends VirtaulDomNode<T> {
@@ -126,6 +127,23 @@ export class FiberText implements FiberAbsNode {
 }
 export const emptyFun = () => { }
 
+
+function mergeEvent(node: Node, key: string, oldValue: any, newValue?: any) {
+  let eventType = key.toLowerCase().substring(2)
+  let capture = false
+  if (eventType.endsWith(Capture)) {
+    eventType = eventType.slice(0, eventType.length - Capture.length)
+    capture = true
+  }
+  if (newValue) {
+    if (oldValue) {
+      node.removeEventListener(eventType, oldValue, capture)
+    }
+    node.addEventListener(eventType, newValue, capture)
+  } else {
+    node.removeEventListener(eventType, oldValue, capture)
+  }
+}
 /**
  * 更新节点
  * @param dom 
@@ -139,45 +157,28 @@ function updateDom(
 ) {
   const node = dom.node
   //移除旧事件：新属性中不存在相应事件，或者事件不一样
-  const prevKeys = Object.keys(oldProps)
-  const nextKeys = Object.keys(props)
-  prevKeys
-    .filter(isEvent)
-    .filter(key => !(key in props) || isNew(oldProps, props)(key))
-    .forEach(name => {
-      let eventType = name.toLowerCase().substring(2)
-      if (eventType.endsWith(Capture)) {
-        eventType = eventType.slice(0, eventType.length - Capture.length)
-        node.removeEventListener(eventType, oldProps[name], true)
-      } else {
-        node.removeEventListener(eventType, oldProps[name])
-      }
-    })
-  //移除旧的不存在属性
-  prevKeys
-    .filter(isProperty)
-    .filter(isGone(oldProps, props))
-    .forEach(name => dom.updateProp(name, undefined))
-  //修改变更属性
-  nextKeys
-    .filter(isProperty)
-    .filter(isNew(oldProps, props))
-    .forEach(name => dom.updateProp(name, props[name]))
+  objectDiffDeleteKey(oldProps, props, function (key: string) {
+    if (isEvent(key)) {
+      mergeEvent(node, key, oldProps[key])
+    } else if (isProperty(key)) {
+      dom.updateProp(key, undefined)
+    }
+  })
 
-  //添加变更事件
-  nextKeys
-    .filter(isEvent)
-    .filter(isNew(oldProps, props))
-    .forEach(name => {
-      let eventType = name.toLowerCase().substring(2)
-      if (eventType.endsWith(Capture)) {
-        eventType = eventType.slice(0, eventType.length - Capture.length)
-        node.addEventListener(eventType, props[name], true)
-      } else {
-        node.addEventListener(eventType, props[name])
+  for (const key in props) {
+    const value = props[key]
+    const oldValue = oldProps[key]
+    if (value != oldValue) {
+      if (isEvent(key)) {
+        mergeEvent(node, key, oldValue, value)
+      } else if (isProperty(key)) {
+        dom.updateProp(key, value)
       }
-    })
+    }
+  }
 }
+
+
 
 const Capture = "capture"
 
@@ -196,31 +197,8 @@ function isEvent(key: string) {
  */
 function isProperty(key: string) {
   return key != 'children'
-    && !isEvent(key)
     && key != 'exit'
     && key != 'onDestroy'
-}
-/**
- * 属性发生变更
- * @param prev 
- * @param next 
- * @returns 
- */
-function isNew(prev: Props, next: Props) {
-  return function (key: string) {
-    return prev[key] != next[key]
-  }
-}
-/**
- * 新属性已经不存在
- * @param prev 
- * @param next 
- * @returns 
- */
-function isGone(prev: Props, next: Props) {
-  return function (key: string) {
-    return !(key in next)
-  }
 }
 
 const emptyKeys = ['href', 'className']
@@ -235,6 +213,8 @@ export function updateProps(node: any, key: string, value: any) {
     }
   }
 }
+
+
 export function updateSVGProps(node: any, key: string, value: any) {
   if (key == 'innerHTML' || key == 'textContent') {
     updateProps(node, key, value)

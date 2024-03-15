@@ -1,21 +1,18 @@
-import { ReducerResult } from "better-react";
-import { BGColor, emptyArray, animateColor, animateNumber, AnimateValue, TimeoutAnimate, SetValue, singleTimeoutCallback, simpleEqual, } from "wy-helper";
-import { useVersion } from "./useVersion";
+import { BGColor, emptyArray, animateColor, animateNumber, AnimateValue, TimeoutAnimate, simpleEqual, } from "wy-helper";
 import { useMemo } from "./useRef";
-import { createUseReducer } from "./useReducer";
-import { useEffect } from "./useEffect";
+import { hookMakeDirtyAndRequestUpdate } from "better-react";
 
 export function useAnimationNumber(n: number): AnimateValue<number> {
-  const [_, reload] = useVersion()
+  const makeDirtyAndRequestUpdate = hookMakeDirtyAndRequestUpdate()
   return useMemo(() => {
-    return animateNumber(reload, n)
+    return animateNumber(makeDirtyAndRequestUpdate, n)
   }, emptyArray)
 }
 
 export function useAnimationColor(color: BGColor): AnimateValue<BGColor> {
-  const [_, reload] = useVersion()
+  const makeDirtyAndRequestUpdate = hookMakeDirtyAndRequestUpdate()
   return useMemo(() => {
-    return animateColor(reload, color)
+    return animateColor(makeDirtyAndRequestUpdate, color)
   }, emptyArray)
 }
 

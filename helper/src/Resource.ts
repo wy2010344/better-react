@@ -1,6 +1,7 @@
-import { GetPromiseRequest, PromiseResult, createAndFlushAbortController } from "./usePromise"
+import { useCallback } from "./useCallback"
+import { createAndFlushAbortController } from "./usePromise"
 import { useStoreTriggerRender } from "./useStoreTriggerRender"
-import { EmptyFun, quote, storeRef, valueCenterOf } from "wy-helper"
+import { EmptyFun, GetPromiseRequest, PromiseResult, quote, storeRef, valueCenterOf } from "wy-helper"
 
 /**
  * 这里是如果重新请求,则放弃
@@ -31,14 +32,12 @@ export function createResource<T>(getResource: GetPromiseRequest<T>) {
     promise = thePromise
   }
   function useFilter<M>(filter: (v?: PromiseResult<T>) => M) {
-    return useStoreTriggerRender(resource, {
-      filter,
-      onBind(a) {
-        if (!promise) {
-          reloadPromise()
-        }
-      },
-    })
+    return useStoreTriggerRender(resource, useCallback((value) => {
+      if (!promise) {
+        reloadPromise()
+      }
+      return filter(value)
+    }, [filter]))
   }
   return {
     useFilter,

@@ -1,9 +1,9 @@
-import { createContext, emptyArray, useGetFlushSync } from "better-react";
-import { createUseReducer, useAtomFun, renderExitAnimate, ExitModel, renderOne, delay, useEffect, useEvent, useChange, } from "better-react-helper";
-import { cns, css, requestBatchAnimationFrame } from "better-react-dom-helper";
+import { createContext, useGetFlushSync } from "better-react";
+import { createUseReducer, useAtomFun, renderOne, useEffect, useEvent, useChange, } from "better-react-helper";
 import { dom } from "better-react-dom";
 import { faker } from "@faker-js/faker";
-import { HookValueSet } from "better-react";
+import { SetValue, emptyArray } from "wy-helper";
+import { cns, css, cssMap } from "wy-dom-helper";
 
 
 
@@ -94,7 +94,7 @@ const usePages = createUseReducer(function (model: {
 })
 
 const pageContext = createContext<{
-  dispatch: HookValueSet<PageAction>
+  dispatch: SetValue<PageAction>
   size: number,
   method?: PageAction['method']
 }>(null as any)
@@ -209,14 +209,14 @@ function renderPage(baseClassName: string, config: {
     //   }
     // },
   }).render(function () {
-    dom.span().text`页数${size} -- ${method || ''}`
+    dom.span().renderText`页数${size} -- ${method || ''}`
     dom.button({
       onClick() {
         dispatch({
           method: "pop",
         })
       }
-    }).text`退出`
+    }).renderText`退出`
     dom.button({
       onClick() {
         flushSync(function () {
@@ -226,7 +226,7 @@ function renderPage(baseClassName: string, config: {
           })
         })
       }
-    }).text`替换`
+    }).renderText`替换`
     dom.button({
       onClick() {
         dispatch({
@@ -234,7 +234,7 @@ function renderPage(baseClassName: string, config: {
           render: renderPage
         })
       }
-    }).text`替换`
+    }).renderText`替换`
     dom.button({
       onClick() {
         dispatch({
@@ -243,6 +243,6 @@ function renderPage(baseClassName: string, config: {
           animation: "3d"
         })
       }
-    }).text`进入`
+    }).renderText`进入`
   })
 }

@@ -15,8 +15,6 @@ export function useEvent<T extends (...vs: any[]) => any>(fun: T): T {
   } as T, [])
 }
 
-
-
 export function useProxy<T extends object>(init: T) {
   const get = useAlways(init)
   return useMemo(() => {

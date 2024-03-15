@@ -1,7 +1,7 @@
 
 import { useEvent } from "./useEvent"
 import { useState } from "./useState"
-import { useMemo, useAtomBind, useAtom, useRefConst } from "./useRef"
+import { useMemo, useAtomBind, useAtom, useRefConst, useAlways } from "./useRef"
 import { useVersionInc, useVersionLock } from "./Lock"
 import { useEffect } from "./useEffect"
 import { createEmptyArray, EmptyFun, emptyFun, StoreRef, PromiseResult, buildSerialRequestSingle, VersionPromiseResult, OutPromiseOrFalse, GetPromiseRequest, OnVersionPromiseFinally, createAbortController, buildPromiseResultSetData } from "wy-helper"
@@ -32,7 +32,8 @@ export function useMemoPromiseCall<T, Deps extends readonly any[]>(
     version,
     request
   } = mout
-  const onFinally = useEvent(function (data: VersionPromiseResult<T>) {
+
+  const onFinally = useAlways(function (data: VersionPromiseResult<T>) {
     if (version == data.version) {
       initOnFinally(data)
     }
@@ -41,9 +42,9 @@ export function useMemoPromiseCall<T, Deps extends readonly any[]>(
     if (request) {
       const signal = createAbortController();
       request(signal.signal).then(data => {
-        onFinally({ type: "success", value: data, version })
+        onFinally()({ type: "success", value: data, version })
       }).catch(err => {
-        onFinally({ type: "error", value: err, version })
+        onFinally()({ type: "error", value: err, version })
       })
       return signal.cancel
     }

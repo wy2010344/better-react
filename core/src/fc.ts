@@ -1,20 +1,22 @@
-import { EnvModel } from "./commitWork";
-import { Fiber, HookContextCosumer, HookEffect, HookValue, RenderWithDep, VirtaulDomNode, VirtualDomOperator } from "./Fiber";
-import { arrayEqual, arrayNotEqualDepsWithEmpty, quote, run, SetValue, simpleEqual, StoreRef } from "wy-helper";
+import { Fiber, HookEffect, RenderWithDep, VirtaulDomNode, VirtualDomOperator } from "./Fiber";
+import { arrayEqual, arrayNotEqualDepsWithEmpty, quote, simpleEqual, alawaysTrue, ValueCenter, valueCenterOf } from "wy-helper";
 
 const w = globalThis as any
-const cache = w.__better_react_one__ || {
-  wipFiber: [] as [] | [EnvModel, Fiber],
+const cache = (w.__better_react_one__ || {
+  wipFiber: undefined,
   allowWipFiber: false
+}) as {
+  wipFiber?: Fiber
+  allowWipFiber?: boolean
 }
 w.__better_react_one__ = cache
 
 
 
 
-export function useParentFiber() {
+export function hookParentFiber() {
   if (cache.allowWipFiber) {
-    return cache.wipFiber
+    return cache.wipFiber!
   }
   console.error('禁止在此处访问fiber')
   throw new Error('禁止在此处访问fiber')
@@ -26,135 +28,22 @@ export function revertParentFiber() {
   cache.allowWipFiber = true
 }
 const hookIndex = {
-  state: 0,
   effects: new Map<number, number>(),
   memo: 0,
   beforeFiber: undefined as (Fiber | undefined),
-  cusomer: 0
 }
 
-export function updateFunctionComponent(envModel: EnvModel, fiber: Fiber) {
+export function updateFunctionComponent(fiber: Fiber) {
   revertParentFiber()
-  cache.wipFiber[0] = envModel
-  cache.wipFiber[1] = fiber
+  cache.wipFiber = fiber
 
-  hookIndex.state = 0
   hookIndex.effects.clear()
   hookIndex.memo = 0
-
   hookIndex.beforeFiber = undefined
 
-  hookIndex.cusomer = 0
   fiber.render()
   draftParentFiber();
-  cache.wipFiber.length = 0
-}
-
-export type ReducerFun<F, T> = (old: T, action: F) => T
-export type ReducerResult<F, T> = [T, SetValue<F>];
-
-/**
- * 依赖外部初始值
- * 也有只依赖一个函数,则值为常值如0,另作一个封装
- * @param reducer 
- * @param v 
- * @param init 
- * @param initFun
- * @param eq
- */
-export function useBaseReducer<F, M, T>(
-  reducer: ReducerFun<F, T>,
-  init: M,
-  initFun: (m: M) => T,
-  eq?: (a: T, b: T) => any
-): ReducerResult<F, T>
-export function useBaseReducer<F, T>(
-  reducer: ReducerFun<F, T>,
-  init: T,
-  initFun?: (m: T) => T,
-  eq?: (a: T, b: T) => any): ReducerResult<F, T>
-export function useBaseReducer<F, T = undefined>(
-  reducer: ReducerFun<F, T>,
-  init?: T,
-  initFun?: (m: T) => T,
-  eq?: (a: T, b: T) => any): ReducerResult<F, T>
-export function useBaseReducer() {
-  const [reducer, init, initFun, eq] = arguments
-  const [envModel, parentFiber] = useParentFiber()
-  if (parentFiber.effectTag.get() == 'PLACEMENT') {
-    //新增
-    const hookValues = parentFiber.hookValue || []
-    parentFiber.hookValue = hookValues
-    const trans = initFun || quote
-    const value = envModel.createChangeAtom(trans(init))
-    const hook: HookValue<any, any> = {
-      value,
-      set: buildSetValue(value, envModel, parentFiber, eq || simpleEqual, reducer),
-      reducer,
-      init,
-      initFun
-    }
-    hookValues.push(hook)
-    return [value.get(), hook.set]
-  } else {
-    //修改
-    const hookValues = parentFiber.hookValue
-    if (!hookValues) {
-      throw new Error("原组件上不存在reducer")
-    }
-    const hook = hookValues[hookIndex.state]
-    if (!hook) {
-      throw new Error("出现了更多的reducer")
-    }
-    if (hook.reducer != reducer) {
-      console.warn("useReducer的reducer变化")
-    }
-    // if (hook.init != init) {
-    //   console.warn("useReducer的init变化")
-    // }
-    // if (hook.initFun != initFun) {
-    //   console.warn("useReducer的initFun变化")
-    // }
-    hookIndex.state++
-    return [hook.value.get(), hook.set]
-  }
-}
-/**
- * setState需要做成异步提交
- * 提交的时候,只是在一个副本树上修改
- * 副本树一些节点修改后,遍历修改在树上
- * 在未提交前舍弃副本树
- * 
- * 可以把树节点记为脏存放在另一个池中,只处理这个池的脏数据,克隆处理
- * 提交的时候,将克隆替换成正式数据
- * 但是脏节点是嵌套的
- * useMemo如果是自定义成ref,无法捕获设置值.useEffect还好,必须是提交的时候执行.useState需要克隆.useConsumer需要移除监听.这些都是未提交的内容.dom的修改也在提交时才生效.
- * 用表的思维去思考,特别是provider和consumer.添加了,但其标记还是draft.
- * 只添加记录操作方式而不具体操作,在提交时统一操作.
- * 
- * 很有可能,这个fiber是被更新了的,比如移位
- */
-function buildSetValue<T, F>(atom: StoreRef<T>,
-  envModel: EnvModel,
-  parentFiber: Fiber,
-  eq: (a: T, b: T) => any,
-  reducer: (old: T, action: F) => T
-) {
-  return function (temp: F) {
-    if (parentFiber.destroyed) {
-      console.log("更新已经销毁的fiber")
-      return
-    }
-    envModel.reconcile(function () {
-      //这里如果多次设置值,则会改动多次,依前一次结果累积.
-      const oldValue = atom.get()
-      const newValue = reducer(oldValue, temp)
-      if (!eq(oldValue, newValue)) {
-        parentFiber.effectTag.set("UPDATE")
-        atom.set(newValue)
-      }
-    })
-  }
+  cache.wipFiber = undefined
 }
 
 export type EffectResult<T> = (void | ((deps: T) => void))
@@ -174,7 +63,7 @@ export function useLevelEffect(
 export function useLevelEffect(
   level: number,
   effect: any, deps?: any) {
-  const [envModel, parentFiber] = useParentFiber()
+  const parentFiber = hookParentFiber()
   const isInit = parentFiber.effectTag.get() == 'PLACEMENT'
   if (isInit) {
     //新增
@@ -183,14 +72,14 @@ export function useLevelEffect(
     const state: HookEffect = {
       deps
     }
-    const hookEffect = envModel.createChangeAtom(state)
+    const hookEffect = parentFiber.envModel.createChangeAtom(state)
     const old = hookEffects.get(level)
     const array = old || []
     if (!old) {
       hookEffects.set(level, array)
     }
     array.push(hookEffect)
-    envModel.updateEffect(level, () => {
+    parentFiber.envModel.updateEffect(level, () => {
       state.destroy = effect(deps, isInit)
     })
   } else {
@@ -214,7 +103,7 @@ export function useLevelEffect(
         deps
       }
       hookEffect.set(newState)
-      envModel.updateEffect(level, () => {
+      parentFiber.envModel.updateEffect(level, () => {
         if (state.destroy) {
           state.destroy(state.deps)
         }
@@ -224,9 +113,9 @@ export function useLevelEffect(
   }
 }
 
-export function useGetCreateChangeAtom() {
-  const [envModel] = useParentFiber()
-  return envModel.createChangeAtom
+export function hookGetCreateChangeAtom() {
+  const parentFiber = hookParentFiber()
+  return parentFiber.envModel.createChangeAtom
 }
 /**
  * 通过返回函数,能始终通过函数访问fiber上的最新值
@@ -238,7 +127,7 @@ export function useBaseMemoGet<T, V extends readonly any[] = readonly any[]>(
   effect: (deps: V, isInit: boolean) => T,
   deps: V,
 ): () => T {
-  const [envModel, parentFiber] = useParentFiber()
+  const parentFiber = hookParentFiber()
   const isInit = parentFiber.effectTag.get() == "PLACEMENT"
   if (isInit) {
     const hookMemos = parentFiber.hookMemo || []
@@ -251,7 +140,7 @@ export function useBaseMemoGet<T, V extends readonly any[] = readonly any[]>(
     }
     revertParentFiber()
 
-    const hook = envModel.createChangeAtom(state)
+    const hook = parentFiber.envModel.createChangeAtom(state)
     const get = () => hook.get().value
     hookMemos.push({
       value: hook,
@@ -303,14 +192,14 @@ export function renderBaseFiber(
   render: any,
   deps?: any
 ): any {
-  const [envModel, parentFiber] = useParentFiber()
+  const parentFiber = hookParentFiber()
   let currentFiber: Fiber
   const isInit = parentFiber.effectTag.get() == 'PLACEMENT'
   if (isInit) {
     //新增
     const vdom = dom ? dom[0](dom[2]) : undefined
     currentFiber = Fiber.createFix(
-      envModel,
+      parentFiber.envModel,
       parentFiber,
       vdom,
       {
@@ -380,7 +269,12 @@ export function renderFiber(
   return renderBaseFiber(dom, false, render, deps)
 }
 export interface Context<T> {
-  useProvider(v: T): void
+  hookProvider(v: T): void
+  /**
+   * 似乎不能hookSelector,因为transition中闪建的节点,
+   * @param getValue 
+   * @param shouldUpdate 
+   */
   useSelector<M>(getValue: (v: T) => M, shouldUpdate?: (a: M, b: M) => boolean): M
   useConsumer(): T
 }
@@ -393,77 +287,21 @@ class ContextFactory<T> implements Context<T>{
   constructor(
     public readonly out: T
   ) {
-    this.defaultContext = this.createProvider(out)
+    this.defaultContext = valueCenterOf(out)
   }
 
-  private readonly defaultContext: ContextProvider<T>
-  private createProvider(value: T): ContextProvider<T> {
-    return new ContextProvider(value, this)
-  }
-  private createConsumer<M>(
-    envModel: EnvModel,
-    fiber: Fiber,
-    getValue: (v: T) => M,
-    shouldUpdate?: (a: M, b: M) => boolean
-  ): ContextListener<T, M> {
-    return new ContextListener(
-      envModel,
-      this.findProvider(fiber),
-      fiber,
-      getValue,
-      shouldUpdate
-    )
-  }
-  useProvider(v: T) {
-    const [envModel, parentFiber] = useParentFiber()
+  private readonly defaultContext: ValueCenter<T>
+  hookProvider(v: T) {
+    const parentFiber = hookParentFiber()
     const map = parentFiber.contextProvider || new Map()
     parentFiber.contextProvider = map
-    let hook = map.get(this)
+    let hook = map.get(this) as ValueCenter<T>
     if (!hook) {
-      hook = this.createProvider(v)
+      //同作用域会覆盖
+      hook = valueCenterOf(v)
       map.set(this, hook)
     }
-    hook.changeValue(v)
-  }
-  /**
-   * @param getValue 
-   * @param shouldUpdate 
-   * @returns 
-   */
-  useSelector<M>(getValue: (v: T) => M, shouldUpdate?: (a: M, b: M) => any): M {
-    const [envModel, parentFiber] = useParentFiber()
-    const isInit = parentFiber.effectTag.get() == "PLACEMENT"
-    if (isInit) {
-      const hookConsumers = parentFiber.hookContextCosumer || []
-      parentFiber.hookContextCosumer = hookConsumers
-
-      const hook: HookContextCosumer<T, M> = this.createConsumer(envModel, parentFiber, getValue, shouldUpdate)
-      hookConsumers.push(hook)
-      envModel.addDraftConsumer(hook)
-      //如果draft废弃,需要移除该hook
-      return hook.getValue()
-    } else {
-      const hookConsumers = parentFiber.hookContextCosumer
-      if (!hookConsumers) {
-        throw new Error("原组件上不存在hookConsumers")
-      }
-      const index = hookIndex.cusomer
-      const hook = hookConsumers[index]
-      if (!hook) {
-        throw new Error("没有出现更多consumes")
-      }
-      if (hook.select != getValue) {
-        console.warn("useSelector的select变化")
-      }
-      if (hook.shouldUpdate != shouldUpdate) {
-        console.warn("useSelector的shouldUpdate变化")
-      }
-      hookIndex.cusomer = index + 1
-      return hook.getValue()
-    }
-  }
-  useConsumer() {
-    return this.useSelector(quote)
+    hook.set(v)
   }
   private findProvider(_fiber: Fiber) {
     let fiber = _fiber as Fiber | undefined
@@ -471,90 +309,78 @@ class ContextFactory<T> implements Context<T>{
       if (fiber.contextProvider) {
         const providers = fiber.contextProvider
         if (providers.has(this)) {
-          return providers.get(this) as ContextProvider<T>
+          return providers.get(this) as ValueCenter<T>
         }
       }
       fiber = fiber.parent
     }
     return this.defaultContext
   }
-}
-class ContextProvider<T>{
-  constructor(
-    public value: T,
-    public parent: ContextFactory<T>
-  ) { }
-  changeValue(v: T) {
-    if (this.value != v) {
-      this.value = v
-      this.notify()
-    }
+  useConsumer() {
+    return this.useSelector(quote)
   }
-  notify() {
-    this.list.forEach(row => row.change())
-  }
-  private list = new Set<ContextListener<T, any>>()
-  on(fun: ContextListener<T, any>) {
-    if (this.list.has(fun)) {
-      console.warn("已经存在相应函数", fun)
-    } else {
-      this.list.add(fun)
-    }
-  }
-  off(fun: ContextListener<T, any>) {
-    if (!this.list.delete(fun)) {
-      console.warn("重复删除context", fun)
-      //throw new Error('重复删除debug')
-    }
+
+  /**
+   * 可能context没有改变,但本地render已经发生,
+   * 每次render都要注册事件,也要销毁前一次注册的事件.必然要在fiber上记忆.
+   * @param getValue 
+   * @param shouldUpdate 
+   * @returns 
+   */
+  useSelector<M>(getValue: (v: T) => M, shouldUpdate: (a: M, b: M) => any = simpleEqual): M {
+    const parentFiber = hookParentFiber()
+    const context = this.findProvider(parentFiber)
+    const thisValue = getValue(context.get())
+    useLevelEffect(0, function () {
+      return context.subscribe(function (value) {
+        const m = getValue(value)
+        if (shouldUpdate(thisValue, m)) {
+          parentFiber.effectTag.set("UPDATE")
+        }
+      })
+    }, [context, getValue, shouldUpdate])
+    return thisValue
   }
 }
 
-class ContextListener<T, M>{
-  constructor(
-    envModel: EnvModel,
-    public context: ContextProvider<T>,
-    private fiber: Fiber,
-    public select: (v: T) => M,
-    public shouldUpdate?: (a: M, b: M) => boolean
-  ) {
-    this.context.on(this)
-    this.atom = envModel.createChangeAtom(this.getFilberValue())
-  }
-  public atom: StoreRef<M>
-  getValue() {
-    return this.atom.get()
-  }
-  private getFilberValue() {
-    draftParentFiber()
-    const v = this.select(this.context.value)
-    revertParentFiber()
-    return v
-  }
-  change() {
-    const newValue = this.getFilberValue()
-    const oldValue = this.atom.get()
-    if (newValue != oldValue && this.didShouldUpdate(newValue, oldValue)) {
-      this.atom.set(newValue)
-      this.fiber.effectTag.set("UPDATE")
-    }
-  }
-  didShouldUpdate(a: M, b: M) {
-    if (this.shouldUpdate) {
-      draftParentFiber()
-      const v = this.shouldUpdate(a, b)
-      revertParentFiber()
-      return v
-    } else {
-      return true
-    }
-  }
-  destroy() {
-    this.context.off(this)
-  }
+export function hookEffectTag() {
+  const parentFiber = hookParentFiber()
+  return parentFiber.effectTag.get()!
+}
+export function hookGetFlushSync() {
+  const parentFiber = hookParentFiber()
+  return parentFiber.envModel.flushSync
 }
 
+export function hookRequestReconcile() {
+  const parentFiber = hookParentFiber()
+  if (!parentFiber.requestReconcile) {
+    parentFiber.requestReconcile = function (callback) {
+      if (parentFiber.destroyed) {
+        console.log("更新已经销毁的fiber")
+        return
+      }
+      parentFiber.envModel.reconcile(function () {
+        if (callback()) {
+          if (parentFiber.destroyed) {
+            console.log("更新已经销毁的fiber,1")
+            return
+          }
+          parentFiber.effectTag.set("UPDATE")
+        }
+      })
+    }
+  }
+  return parentFiber.requestReconcile
+}
 
-export function useGetFlushSync() {
-  const [envModel] = useParentFiber()
-  return envModel.flushSync
+export function hookMakeDirtyAndRequestUpdate() {
+  const parentFiber = hookParentFiber()
+  if (!parentFiber.makeDirtyAndRequestUpdate) {
+    const requestReconcile = hookRequestReconcile()
+    parentFiber.makeDirtyAndRequestUpdate = function () {
+      requestReconcile(alawaysTrue)
+    }
+  }
+  return parentFiber.makeDirtyAndRequestUpdate
 }

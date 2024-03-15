@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useValueCenter } from "better-react-helper";
+import { useEffect } from "better-react-helper";
 import { renderTemplate } from "./template";
 import { useTimeoutAnimateValue } from "better-react-helper";
-import { Point, TimeoutAnimateData, emptyArray, pointEqual, pointZero, syncMergeCenter } from "wy-helper";
-import { forceFlow } from "wy-dom-helper";
+import { Point, emptyArray, pointEqual, pointZero, syncMergeCenter } from "wy-helper";
+import { requesetBatchAnimationForceFlow } from "wy-dom-helper";
 
 
 export default function () {
@@ -14,12 +14,15 @@ export default function () {
         const style = div.style
         if (value.config) {
           //如果动作太快,并不是平滑过渡的!!
-          forceFlow(div)
-          style.transition = `transform ${value.config.value} ${value.config.duration}ms`;
+          const c = value.config
+          requesetBatchAnimationForceFlow(div, function () {
+            style.transition = `transform ${c.value} ${c.duration}ms`;
+            style.transform = `translate(${-(value.value.x)}px,${-(value.value.y)}px)`
+          })
         } else {
           style.transition = ''
+          style.transform = `translate(${-(value.value.x)}px,${-(value.value.y)}px)`
         }
-        style.transform = `translate(${-(value.value.x)}px,${-(value.value.y)}px)`
       })
     }, emptyArray)
 

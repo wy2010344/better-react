@@ -29,5 +29,6 @@ export * from './useStoreTriggerRender'
 export * from './useCreateRef'
 export * from './util'
 export * from './animationValue'
+export * from './reorder'
 export { compileSimpleRule, createMatch, pathExactly, pathStartWith, toAbsolutePath } from "./routes/util"
 export { RouteContext, routeMatch, routeMathWithOther } from "./routes"

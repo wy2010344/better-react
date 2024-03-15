@@ -1,7 +1,7 @@
-import { ReducerFun, ReducerResult } from "better-react";
-import { useReducer } from "./useReducer";
-import { RefReducerResult, useRefReducer } from "./useRefReducer";
-import { RWValue, initRWValue, run } from "wy-helper";
+
+import { ReducerFun, ReducerResult, useReducer } from "./useReducer";
+import { useRefReducer } from "./useRefReducer";
+import { GetValue, RWValue, SetValue, initRWValue, quote, run } from "wy-helper";
 
 
 
@@ -104,6 +104,35 @@ export function useChangeEqFun<T>(
 }
 
 
+
+
+
+
+export function createUseRefValue<T, O, M = T>(
+  create: (get: GetValue<T>, set: SetValue<T>) => O,
+  {
+    eq,
+    init
+  }: {
+    eq?: (a: T, b: T) => any
+    init?: (a: M) => T
+  }
+) {
+  function initRef(
+    reducer: ReducerFun<T, T>,
+    value: T,
+    dispatch: (f: T) => void) {
+    function setValue(v: T) {
+      dispatch(v)
+      value = reducer(value, v)
+    }
+    return create(() => value, setValue)
+  }
+  const initF = (init || quote) as (a: M) => T
+  return function (initArg: M) {
+    return useRefReducer(initRef, change, initArg, initF, eq)
+  }
+}
 
 
 type RefValueOut<T> = [T, RWValue<T>]

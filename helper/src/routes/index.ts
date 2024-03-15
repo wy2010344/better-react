@@ -43,7 +43,7 @@ export function routeMathWithOther({
     return {
       match: match.match,
       render({ scope, rest }) {
-        RouteContext.useProvider({
+        RouteContext.hookProvider({
           paths: rest,
           getPrefix() {
             return [...getPrefix(), ...slicePrefix(paths, rest)]
@@ -53,7 +53,7 @@ export function routeMathWithOther({
       }
     }
   }), function (rest) {
-    RouteContext.useProvider({
+    RouteContext.hookProvider({
       paths: rest,
       getPrefix() {
         return [...getPrefix(), ...slicePrefix(paths, rest)]

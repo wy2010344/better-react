@@ -1,7 +1,7 @@
 import { ReadValueCenter, ValueCenter, quote } from "wy-helper";
 import { EmptyFun } from "wy-helper";
 import { useEffect } from "./useEffect";
-import { useChange } from "./useState";
+import { useChangeFun } from "./useState";
 
 /**
  * 
@@ -10,16 +10,10 @@ import { useChange } from "./useState";
  * @returns 
  */
 export function useSyncExternalStore<T>(subscribe: (callback: EmptyFun) => EmptyFun, getSnapshot: () => T) {
-  const [state, setState] = useChange(getSnapshot())
-  useEffect(() => {
-    if (state != getSnapshot()) {
-      setState(getSnapshot())
-    }
-    return subscribe(function () {
-      setState(getSnapshot())
-    })
-  }, [subscribe])
-  return state
+  return useStoreTriggerRender({
+    get: getSnapshot,
+    subscribe
+  })
 }
 /**
  *
@@ -30,7 +24,15 @@ export function useStoreTriggerRender<T, M>(store: ReadValueCenter<T>, filter: (
 export function useStoreTriggerRender<T>(store: ReadValueCenter<T>, filter?: (a: T) => T): T;
 export function useStoreTriggerRender<T>(store: ReadValueCenter<T>) {
   const filter = arguments[1] || quote
-  return useSyncExternalStore(store.subscribe, function () {
-    return filter(store.get())
-  })
+  const [state, setState] = useChangeFun(() => filter(store.get()))
+  useEffect(() => {
+    const v = filter(store.get())
+    if (state != v) {
+      setState(v)
+    }
+    return store.subscribe(function (d) {
+      setState(filter(d))
+    })
+  }, [store.subscribe, filter])
+  return state
 }

@@ -1,6 +1,6 @@
 import { StoreRef, emptyArray, storeRef } from "wy-helper";
-import { useMemo, useAtomBind } from "./useRef";
-import { useEffect } from "./useEffect";
+import { useMemo } from "./useRef";
+import { hookEffectTag } from "better-react";
 
 
 function increase(ref: StoreRef<number>) {
@@ -34,13 +34,9 @@ export function useVersionLock(init = 0) {
 
 
 /**
- * 如果不是第一次,会是false
+ * 如果不是第一次则是true
  * @returns 
  */
-export function useIsLaunchLock() {
-  const ref = useAtomBind(true)
-  useEffect(() => {
-    ref.set(false)
-  }, emptyArray)
-  return ref.get()
+export function hookIsCreate() {
+  return hookEffectTag() == 'PLACEMENT'
 }

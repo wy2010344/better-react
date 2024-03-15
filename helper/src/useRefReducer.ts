@@ -1,7 +1,6 @@
 import { useMemo } from './useRef'
-import { ReducerFun, } from 'better-react'
-import { useReducer } from './useReducer'
-import { Subscriber, valueCenterOf, emptyArray, quote, SetValue } from "wy-helper"
+import { ReducerFun, useReducer } from './useReducer'
+import { emptyArray, quote } from "wy-helper"
 
 
 export type BaseInit<T, F, G> = (

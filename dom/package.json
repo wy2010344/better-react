@@ -21,7 +21,8 @@
   },
   "peerDependencies": {
     "better-react": "^1.2.6",
-    "wy-helper": "file:.yalc/wy-helper"
+    "wy-helper": "file:.yalc/wy-helper",
+    "wy-dom-helper": "file:.yalc/wy-dom-helper"
   },
   "husky": {
     "hooks": {
@@ -54,5 +55,12 @@
     "tsdx": "^0.14.1",
     "tslib": "^2.3.1",
     "typescript": "^4.6.2"
+  },
+  "dependencies": {
+    "better-react": "file:.yalc/better-react",
+    "better-react-dom": "file:.yalc/better-react-dom",
+    "stylis-creater": "file:.yalc/stylis-creater",
+    "wy-dom-helper": "file:.yalc/wy-dom-helper",
+    "wy-helper": "file:.yalc/wy-helper"
   }
 }

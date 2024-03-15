@@ -1,6 +1,6 @@
-import { emptyArray } from "wy-helper"
-import { useAttrEffect, useEffect } from "better-react-helper"
-import { CSSParamType, CssNest, createBodyStyleTag, genCSS, genCssMap } from "wy-dom-helper"
+import { emptyArray, emptyObject, objectDiffDeleteKey } from "wy-helper"
+import { useAtom, useAttrEffect, useEffect } from "better-react-helper"
+import { CSSParamType, CSSProperties, CssNest, createBodyStyleTag, genCSS, genCssMap } from "wy-dom-helper"
 import { useBaseMemoGet } from "better-react"
 
 /**
@@ -28,4 +28,24 @@ export function useCssMap<T extends CssNest>(map: T, split?: string) {
   }, [css])
   useDeleteStyle(style)
   return classMap
+}
+
+
+
+
+export function useStyle(div: HTMLElement, style: CSSProperties = emptyObject) {
+  const old = useAtom<CSSProperties>(emptyObject)
+  useAttrEffect(() => {
+    objectDiffDeleteKey(old.get() as any, style as any, function (key: any) {
+      div.style[key] = ''
+    })
+    for (const key in style) {
+      const value = style[key as keyof CSSProperties]
+      const oldValue = old.get()[key as keyof CSSProperties]
+      if (value != oldValue) {
+        div.style[key as any] = value as any
+      }
+    }
+    old.set(style)
+  })
 }

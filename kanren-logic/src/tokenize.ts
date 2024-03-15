@@ -1,5 +1,5 @@
 
-import { Que, andMatch, manyMatch, manyRuleGet, match, matchEnd, notMathChar, orMatch, orRuleGet, ruleGet, whiteList, whiteSpaceRule } from "wy-helper/tokenParser";
+import { Que, andMatch, isParseSuccess, manyMatch, manyRuleGet, match, matchEnd, notMathChar, orMatch, orRuleGet, ruleGet, whiteList, whiteSpaceRule } from "wy-helper/tokenParser";
 
 export type LToken = ({
   value: string
@@ -145,7 +145,7 @@ const tokenRuleGet = manyRuleGet<Que, LToken>(orRuleGet(
 
 export function tokenize(content: string): LToken[] {
   const result = tokenRuleGet(new Que(content))
-  if (result) {
+  if (isParseSuccess(result)) {
     const tokens = result.value
     return tokens
   } else {

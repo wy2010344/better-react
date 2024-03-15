@@ -1,4 +1,3 @@
-
 /*
 React projects that don't include the DOM library need these interfaces to compile.
 React Native applications use React, but there is no DOM available. The JavaScript runtime
