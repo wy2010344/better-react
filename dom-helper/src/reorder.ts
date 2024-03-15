@@ -2,11 +2,11 @@
 
 import { useReorder as useBaseReorder, useEffect, useMemo } from "better-react-helper"
 import { getReorderOnScroll, reorderChildChangeIndex } from "wy-dom-helper"
-import { Box, EmptyFun, Point, ReorderChild, ReorderDirection, emptyArray } from "wy-helper"
+import { Box, EmptyFun, Point, ReorderChild, PointKey, emptyArray } from "wy-helper"
 
 
 export function useReorder(
-  axis: ReorderDirection,
+  axis: PointKey,
   shouldRemove: (key: any) => boolean,
   moveItem: (itemKey: any, baseKey: any) => void
 ) {

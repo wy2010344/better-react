@@ -1,11 +1,11 @@
-import { Reorder, ReorderDirection, emptyArray, pointZero } from "wy-helper";
+import { PointKey, Reorder, emptyArray, pointZero } from "wy-helper";
 import { useMemo } from "./useRef";
 import { useEffect } from "./useEffect";
 
 
 
 export function useReorder(
-  axis: ReorderDirection,
+  axis: PointKey,
   shouldRemove: (key: any) => boolean,
   moveItem: (itemKey: any, baseKey: any) => void
 ) {

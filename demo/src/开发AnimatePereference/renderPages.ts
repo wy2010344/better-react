@@ -2,7 +2,7 @@ import { createContext, hookGetFlushSync } from "better-react";
 import { createUseReducer, renderExitAnimateArray, useAtomFun, useRenderExitAnimate, useTimeoutAnimateValue } from "better-react-helper";
 import { dom } from "better-react-dom";
 import { faker } from "@faker-js/faker";
-import { ExitModel, SetValue } from "wy-helper";
+import { ExitModel, SetValue, objectDeepEqual } from "wy-helper";
 import { css } from "wy-dom-helper";
 import { useTriggerStyleWithShow } from "better-react-dom-helper";
 import { getTimeoutPromise } from "better-react-dom-helper";
@@ -98,6 +98,8 @@ const pageContext = createContext<{
   method?: PageAction['method']
 }>(null as any)
 export function renderPages() {
+  const n = window as any
+  n.objectDe = objectDeepEqual
 
   const [model, dispatch] = usePages(0)
 
