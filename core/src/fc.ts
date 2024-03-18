@@ -113,7 +113,7 @@ export function useLevelEffect(
   }
 }
 
-export function hookGetCreateChangeAtom() {
+export function hookCreateChangeAtom() {
   const parentFiber = hookParentFiber()
   return parentFiber.envModel.createChangeAtom
 }
@@ -347,7 +347,7 @@ export function hookEffectTag() {
   const parentFiber = hookParentFiber()
   return parentFiber.effectTag.get()!
 }
-export function hookGetFlushSync() {
+export function hookFlushSync() {
   const parentFiber = hookParentFiber()
   return parentFiber.envModel.flushSync
 }

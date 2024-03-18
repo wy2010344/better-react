@@ -1,6 +1,6 @@
 import { useAtomFun } from "./useRef"
 import { renderArray } from "./renderMap"
-import { emptyArray, emptyObject, ExitAnimateArg, buildUseExitAnimate, quote, ExitModel, alawaysTrue, createEmptyExitListCache } from "wy-helper"
+import { emptyArray, emptyObject, ExitAnimateArg, buildUseExitAnimate, quote, ExitModel, alawaysTrue, createEmptyExitListCache, FalseType } from "wy-helper"
 import { useEffect } from "./useEffect"
 import { hookMakeDirtyAndRequestUpdate } from "better-react"
 
@@ -8,7 +8,7 @@ import { hookMakeDirtyAndRequestUpdate } from "better-react"
 
 
 
-export function useRenderExitAnimate<V>(
+export function useExitAnimate<V>(
   outList: readonly V[],
   getKey: (v: V) => any,
   arg: ExitAnimateArg<V> = emptyObject
@@ -36,7 +36,7 @@ function getKen<V>(v: ExitModel<V>) {
 /**
  * 只有一个元素的
  */
-export function useRenderOneExitAnimate<T>(
+export function useOneExitAnimate<T>(
   show: T | undefined | null | false | void,
   {
     ignore,
@@ -46,7 +46,7 @@ export function useRenderOneExitAnimate<T>(
     onAnimateComplete?(): void
   } = emptyObject
 ) {
-  return useRenderExitAnimate(
+  return useExitAnimate(
     show ? [show] : emptyArray,
     alawaysTrue,
     {
@@ -55,4 +55,30 @@ export function useRenderOneExitAnimate<T>(
       ...args
     }
   )
+}
+
+
+
+export function renderIfExitAnimate<T>(
+  show: T,
+  renderTrue: (v: ExitModel<Exclude<T, FalseType>>) => void,
+  other?: ExitAnimateArg<T> & {
+    renderFalse?(v: ExitModel<Extract<T, FalseType>>): void
+  }) {
+
+  const list = useExitAnimate(
+    show ? [show] : other?.renderFalse ? [show] : emptyArray,
+    renderIfGetKey,
+    other)
+  renderExitAnimateArray(list, function (v) {
+    if (v.value) {
+      renderTrue(v)
+    } else if (other?.renderFalse) {
+      other.renderFalse(v)
+    }
+  })
+}
+
+function renderIfGetKey<T>(v: T) {
+  return !v
 }

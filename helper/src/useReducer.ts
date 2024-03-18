@@ -1,4 +1,4 @@
-import { hookGetCreateChangeAtom, hookRequestReconcile } from "better-react";
+import { hookCreateChangeAtom, hookRequestReconcile } from "better-react";
 import { SetValue, emptyArray, quote, simpleEqual } from "wy-helper";
 import { useMemo } from "./useRef";
 
@@ -22,7 +22,7 @@ export function useReducer<F, T = undefined>(
   initFun?: (m: T) => T,
   eq?: (a: T, b: T) => any): ReducerResult<F, T>
 export function useReducer(reducer: any, init: any, initFun: any, eq: any) {
-  const createChangeAtom = hookGetCreateChangeAtom()
+  const createChangeAtom = hookCreateChangeAtom()
   const reconcile = hookRequestReconcile()
   const hook = useMemo(() => {
     const realEq = eq || simpleEqual

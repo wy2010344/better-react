@@ -1,4 +1,4 @@
-import { hookGetCreateChangeAtom, hookGetFlushSync, useBaseMemoGet } from 'better-react';
+import { hookCreateChangeAtom, hookFlushSync, useBaseMemoGet } from 'better-react';
 import { storeRef, quote, emptyArray, emptyFun } from 'wy-helper'
 import { useAttrEffect } from './useEffect';
 
@@ -78,7 +78,7 @@ export function useEventAlaways<T>(init: T) {
 }
 
 export function useFlushAlaways<T>(init: T) {
-  const flushSync = hookGetFlushSync()
+  const flushSync = hookFlushSync()
   const getValue = useAlways(init)
   return function () {
     flushSync(emptyFun)
@@ -95,7 +95,7 @@ export function useChgAtom<M, T>(init: M, trans: (m: M) => T): StoreRef<T>
 export function useChgAtom<T>(init: T): StoreRef<T>
 export function useChgAtom() {
   const [init, oldTrans] = arguments
-  const createChangeAtom = hookGetCreateChangeAtom()
+  const createChangeAtom = hookCreateChangeAtom()
   return useMemo(() => {
     const trans = oldTrans || quote
     return createChangeAtom(trans(init))

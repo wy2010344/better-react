@@ -6,8 +6,8 @@ export type { REAL_WORK } from './reconcile'
 export {
   useLevelEffect, useBaseMemoGet,
   createContext, renderFiber,
-  hookGetCreateChangeAtom,
-  hookGetFlushSync,
+  hookCreateChangeAtom,
+  hookFlushSync,
   hookEffectTag,
   hookRequestReconcile,
   hookMakeDirtyAndRequestUpdate

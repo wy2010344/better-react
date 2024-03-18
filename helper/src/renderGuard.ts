@@ -1,5 +1,5 @@
 import { renderOneF } from "better-react"
-import { emptyFun, quote } from 'wy-helper'
+import { FalseType, emptyFun, quote } from 'wy-helper'
 type GuardBaseFiber<A, T> = (readonly [
   A,
   (v: T) => void
@@ -42,12 +42,12 @@ function toOppsite(v: boolean) { return !v }
  * @param whenFalse 
  * @returns 
  */
-export function renderIf(
-  v: any,
-  whenTrue: () => void,
-  whenFalse?: () => void
+export function renderIf<T>(
+  v: T,
+  whenTrue: (v: Exclude<T, FalseType>) => void,
+  whenFalse?: (v: Extract<T, FalseType>) => void
 ) {
-  const matches: GuardMatchType<boolean>[] = [
+  const matches: GuardMatchType<any>[] = [
     [
       quote,
       whenTrue

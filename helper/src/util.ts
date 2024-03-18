@@ -22,4 +22,3 @@ export function useBuildSubSetArray<T>(
 ): ReduceRowState<T> {
   return useMemo(() => buildSubSetArray(parentSet, equal), [])
 }
-

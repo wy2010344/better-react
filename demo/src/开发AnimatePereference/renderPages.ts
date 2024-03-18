@@ -1,4 +1,4 @@
-import { createContext, hookGetFlushSync } from "better-react";
+import { createContext, hookFlushSync } from "better-react";
 import { createUseReducer, renderExitAnimateArray, useAtomFun, useRenderExitAnimate, useTimeoutAnimateValue } from "better-react-helper";
 import { dom } from "better-react-dom";
 import { faker } from "@faker-js/faker";
@@ -297,7 +297,7 @@ function renderPage(arg: ExitModel<RenderPage>, className: string) {
         })
       }
     }).renderText`退出`
-    const flushSync = hookGetFlushSync()
+    const flushSync = hookFlushSync()
     dom.button({
       onClick() {
         flushSync(function () {
