@@ -1,7 +1,6 @@
 import { emptyArray, emptyObject, objectDiffDeleteKey } from "wy-helper"
-import { useAtom, useAttrEffect, useEffect } from "better-react-helper"
+import { useAtom, useAttrEffect, useEffect, useMemoGet } from "better-react-helper"
 import { CSSParamType, CSSProperties, CssNest, createBodyStyleTag, genCSS, genCssMap } from "wy-dom-helper"
-import { useBaseMemoGet } from "better-react"
 
 /**
  * 单个css,动态变化
@@ -21,7 +20,7 @@ function useDeleteStyle(style: HTMLStyleElement) {
   }, emptyArray)
 }
 export function useCssMap<T extends CssNest>(map: T, split?: string) {
-  const style = useBaseMemoGet(createBodyStyleTag, emptyArray)()
+  const style = useMemoGet(createBodyStyleTag, emptyArray)()
   const { css, classMap } = genCssMap(map, style.id, split)
   useAttrEffect(() => {
     style.textContent = css

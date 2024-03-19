@@ -5,6 +5,7 @@ import {
 import { getAttributeAlias } from "./getAttributeAlias"
 import { DomElementType, SvgElementType } from "./html"
 import { objectDiffDeleteKey } from "wy-helper"
+import { useAttrEffect } from "better-react-helper"
 
 export type Props = { [key: string]: any }
 interface FiberAbsNode<T = any> extends VirtaulDomNode<T> {
@@ -27,7 +28,7 @@ export class FiberNode implements FiberAbsNode<GetValueWithDep<Props>> {
   private oldProps: Props = EMPTYPROPS
   useUpdate([getProps, deps]: GetValueWithDep<Props>, isFirst: boolean): void {
     const that = this
-    useLevelEffect(0, function (deps: any, isInit: boolean) {
+    useAttrEffect(function (oldDeps, isInit, deps) {
       that.props = getProps(deps)
       that.updateDomEffect()
       return that.props.onDestroy

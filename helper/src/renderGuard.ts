@@ -1,5 +1,5 @@
 import { renderOneF } from "better-react"
-import { FalseType, emptyFun, quote } from 'wy-helper'
+import { FalseType, alawaysTrue, emptyFun, quote } from 'wy-helper'
 type GuardBaseFiber<A, T> = (readonly [
   A,
   (v: T) => void
@@ -23,12 +23,12 @@ function guardMatchEqual<T>(a: (v: T) => boolean, v: T) {
   return a(v)
 }
 export function renderBaseGuard<T>(v: T, matches: GuardMatchType<T>[]) {
-  renderOneF(undefined, v, function (v) {
+  renderOneF(undefined, v, alawaysTrue, function (v) {
     const [index, match] = findFirst(matches, v, guardMatchEqual)
-    return [index, undefined, function () {
+    return [index, undefined, alawaysTrue, function () {
       match(v)
-    }]
-  })
+    }, undefined]
+  }, undefined)
 }
 export function renderGuard<T>(v: T, ...matches: GuardMatchType<T>[]) {
   renderBaseGuard(v, matches)
@@ -68,12 +68,12 @@ function isSwitch<T>(a: T, v: T) {
   return a == v
 }
 export function renderSwitch<T>(v: T, ...matches: GuardSwitchType<T>[]) {
-  return renderOneF(undefined, v, function (v) {
+  return renderOneF(undefined, v, alawaysTrue, function (v) {
     const [index, match] = findFirst(matches, v, isSwitch)
-    return [index, undefined, function () {
+    return [index, undefined, alawaysTrue, function () {
       match(v)
-    }]
-  })
+    }, undefined]
+  }, undefined)
 }
 ////////****useGuardString****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 type MatchStringOne = {
@@ -102,10 +102,10 @@ export function renderGuardString<T extends string>(
     [key in T]?: (k: string) => void
   }
 ) {
-  return renderOneF(undefined, value, function (value) {
+  return renderOneF(undefined, value, alawaysTrue, function (value) {
     const matches = findMatchString(value, map)
-    return [matches?.key, undefined, function () {
+    return [matches?.key, undefined, alawaysTrue, function () {
       matches?.match(value)
-    }]
-  })
+    }, undefined]
+  }, undefined)
 }

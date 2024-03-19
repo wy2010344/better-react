@@ -1,7 +1,8 @@
-import { render, AskNextTimeWork, VirtualDomOperator, RenderWithDep, renderFiber, useLevelEffect } from "better-react";
+import { render, AskNextTimeWork, VirtualDomOperator, RenderWithDep, renderFiber } from "better-react";
 import { DomAttribute, DomElement, DomElementType, SvgAttribute, SvgElement, SvgElementType } from "./html";
 import { EMPTYPROPS, FiberNode, FiberText, GetValueWithDep, domTagNames, emptyFun, svgTagNames, updateProps } from "./updateDom";
-import { asLazy, emptyArray } from "wy-helper";
+import { alawaysFalse, alawaysTrue, arrayNotEqualDepsWithEmpty, asLazy, emptyArray } from "wy-helper";
+import { useAttrEffect } from "better-react-helper";
 export { getScheduleAskTime, requestAnimationFrameScheduler } from './schedule'
 export { isSVG, FiberNode, FiberText } from './updateDom'
 export { getAliasOfAttribute, getAttributeAlias } from './getAttributeAlias'
@@ -22,7 +23,7 @@ export function createRoot(node: Node, reconcile: () => void, getAsk: AskNextTim
   )
 }
 export function renderContent(content: string) {
-  const dom = renderFiber([FiberText.create, content], emptyFun) as FiberText
+  const dom = renderFiber([FiberText.create, content], alawaysTrue, emptyFun, undefined) as FiberText
   return dom.node
 }
 
@@ -65,10 +66,12 @@ export class DomCreater<T extends DomElementType>{
   renderInnerHTML(innerHTML: string) {
     const dom = renderFiber(
       <VirtualDomOperator<any>>[this.create, this.props, this.createArg],
-      emptyFun
+      alawaysFalse,
+      emptyFun,
+      undefined
     ) as FiberNode
     const node = dom.node as HTMLElement
-    useLevelEffect(0, () => {
+    useAttrEffect(() => {
       node.innerHTML = innerHTML
     }, [innerHTML])
     return dom.node as unknown as DomElement<T>
@@ -76,10 +79,12 @@ export class DomCreater<T extends DomElementType>{
   renderTextContent(textContent: string) {
     const dom = renderFiber(
       <VirtualDomOperator<any>>[this.create, this.props, this.createArg],
-      emptyFun
+      alawaysFalse,
+      emptyFun,
+      undefined
     ) as FiberNode
     const node = dom.node
-    useLevelEffect(0, () => {
+    useAttrEffect(() => {
       node.textContent = textContent
     }, [textContent])
     return dom.node as unknown as DomElement<T>
@@ -98,10 +103,12 @@ export class DomCreater<T extends DomElementType>{
     const as = arguments[2]
     const dom = renderFiber(
       <VirtualDomOperator<any>>[this.create, this.props, this.createArg],
-      emptyFun
+      alawaysFalse,
+      emptyFun,
+      undefined
     ) as FiberNode
     const node = dom.node as unknown as DomElement<T>
-    useLevelEffect(0, () => {
+    useAttrEffect(() => {
       node.contentEditable = contentEditable || "true"
       if (text) {
         if (as == "html") {
@@ -113,17 +120,21 @@ export class DomCreater<T extends DomElementType>{
     }, emptyArray)
     return node
   }
-  render<M extends readonly any[]>(...vs: RenderWithDep<M>): DomElement<T>
-  render(): DomElement<T>
-  render() {
-    const render = arguments[0] || emptyFun
-    const deps = arguments[1]
+
+  renderBase<M>(...[shouldChange, render, deps]: RenderWithDep<M>) {
     const dom = renderFiber(
       <VirtualDomOperator<any>>[this.create, this.props, this.createArg],
+      shouldChange,
       render,
       deps
     ) as FiberNode
     return dom.node as unknown as DomElement<T>
+  }
+  render<M extends readonly any[]>(render: (old: T | undefined, isNew: boolean, nv: T) => void, deps: T): DomElement<T>
+  render(render: (old: undefined, isNew: boolean, nv: undefined) => void): DomElement<T>
+  render(): DomElement<T>
+  render() {
+    return this.renderBase(arrayNotEqualDepsWithEmpty, arguments[0] || emptyFun, arguments[2])
   }
 }
 /**
@@ -172,17 +183,21 @@ export class SvgCreater<T extends SvgElementType>{
     return this.setPortal(true)
   }
 
-  render<M extends readonly any[]>(...vs: RenderWithDep<M>): SvgElement<T>
-  render(): SvgElement<T>
-  render() {
-    const render = arguments[0] || emptyFun
-    const deps = arguments[1]
+  renderBase<M>(...[shouldChange, render, deps]: RenderWithDep<M>) {
     const dom = renderFiber(
-      <VirtualDomOperator<any>>[this.create, this.props, this.createArg] as any,
+      <VirtualDomOperator<any>>[this.create, this.props, this.createArg],
+      shouldChange,
       render,
       deps
     ) as FiberNode
     return dom.node as unknown as SvgElement<T>
+  }
+
+  render<M extends readonly any[]>(render: (old: T | undefined, isNew: boolean, nv: T) => void, deps: T): SvgElement<T>
+  render(render: (old: undefined, isNew: boolean, nv: undefined) => void): SvgElement<T>
+  render(): SvgElement<T>
+  render() {
+    return this.renderBase(arrayNotEqualDepsWithEmpty, arguments[0] || emptyFun, arguments[2])
   }
 
   /**
@@ -198,7 +213,9 @@ export class SvgCreater<T extends SvgElementType>{
         ...this.props,
         innerHTML
       }, this.createArg],
-      emptyFun
+      alawaysFalse,
+      emptyFun,
+      undefined
     ) as FiberNode
     return dom.node as unknown as SvgElement<T>
   }
@@ -208,7 +225,9 @@ export class SvgCreater<T extends SvgElementType>{
         ...this.props,
         textContent
       }, this.createArg],
-      emptyFun
+      alawaysFalse,
+      emptyFun,
+      undefined
     ) as FiberNode
     return dom.node as unknown as SvgElement<T>
   }

@@ -1,5 +1,5 @@
 import { Fiber, HookEffect, RenderWithDep, VirtaulDomNode, VirtualDomOperator } from "./Fiber";
-import { arrayEqual, arrayNotEqualDepsWithEmpty, quote, simpleEqual, alawaysTrue, ValueCenter, valueCenterOf } from "wy-helper";
+import { quote, simpleNotEqual, alawaysTrue, ValueCenter, valueCenterOf, arrayNotEqual } from "wy-helper";
 
 const w = globalThis as any
 const cache = (w.__better_react_one__ || {
@@ -53,24 +53,19 @@ export type EffectResult<T> = (void | ((deps: T) => void))
  * @param effect 
  * @param deps 
  */
-export function useLevelEffect<T extends readonly any[] = readonly any[]>(
+export function useLevelEffect<T>(
   level: number,
-  effect: (args: T, isInit: boolean) => EffectResult<T>, deps: T): void
-export function useLevelEffect(
-  level: number,
-  effect: () => EffectResult<any[]>,
-  deps?: readonly any[]): void
-export function useLevelEffect(
-  level: number,
-  effect: any, deps?: any) {
+  shouldChange: (a: T, b: T) => any,
+  effect: (oldArgs: T | undefined, isInit: boolean, newArgs: T) => EffectResult<T>, deps: T): void {
   const parentFiber = hookParentFiber()
   const isInit = parentFiber.effectTag.get() == 'PLACEMENT'
   if (isInit) {
     //新增
     const hookEffects = parentFiber.hookEffects || new Map()
     parentFiber.hookEffects = hookEffects
-    const state: HookEffect = {
-      deps
+    const state: HookEffect<T> = {
+      deps,
+      shouldChange
     }
     const hookEffect = parentFiber.envModel.createChangeAtom(state)
     const old = hookEffects.get(level)
@@ -80,7 +75,7 @@ export function useLevelEffect(
     }
     array.push(hookEffect)
     parentFiber.envModel.updateEffect(level, () => {
-      state.destroy = effect(deps, isInit)
+      state.destroy = effect(undefined, isInit, deps)
     })
   } else {
     const hookEffects = parentFiber.hookEffects
@@ -97,17 +92,21 @@ export function useLevelEffect(
       throw new Error("出现了更多的effect")
     }
     const state = hookEffect.get()
+    if (state.shouldChange != shouldChange) {
+      throw new Error('shouldChange发生改变')
+    }
     hookIndex.effects.set(level, index + 1)
-    if (arrayNotEqualDepsWithEmpty(state.deps, deps)) {
-      const newState: HookEffect = {
-        deps
+    if (shouldChange(state.deps, deps)) {
+      const newState: HookEffect<T> = {
+        deps,
+        shouldChange
       }
       hookEffect.set(newState)
       parentFiber.envModel.updateEffect(level, () => {
         if (state.destroy) {
-          state.destroy(state.deps)
+          state.destroy(deps)
         }
-        newState.destroy = effect(deps, isInit)
+        newState.destroy = effect(state.deps, isInit, deps)
       })
     }
   }
@@ -123,8 +122,9 @@ export function hookCreateChangeAtom() {
  * @param deps 
  * @returns 
  */
-export function useBaseMemoGet<T, V extends readonly any[] = readonly any[]>(
-  effect: (deps: V, isInit: boolean) => T,
+export function useBaseMemoGet<T, V>(
+  shouldChange: (a: V, b: V) => any,
+  effect: (oldDeps: V | undefined, isCreate: boolean, newDeps: V) => T,
   deps: V,
 ): () => T {
   const parentFiber = hookParentFiber()
@@ -135,8 +135,8 @@ export function useBaseMemoGet<T, V extends readonly any[] = readonly any[]>(
 
     draftParentFiber()
     const state = {
-      value: effect(deps, isInit),
-      deps,
+      value: effect(undefined, true, deps),
+      deps
     }
     revertParentFiber()
 
@@ -145,6 +145,7 @@ export function useBaseMemoGet<T, V extends readonly any[] = readonly any[]>(
     hookMemos.push({
       value: hook,
       get,
+      shouldChange
     })
     return get
   } else {
@@ -157,31 +158,31 @@ export function useBaseMemoGet<T, V extends readonly any[] = readonly any[]>(
     if (!hook) {
       throw new Error("出现了更多的memo")
     }
+    if (hook.shouldChange != shouldChange) {
+      throw new Error("shouldChange发生改变")
+    }
     hookIndex.memo = index + 1
     const state = hook.value.get()
-    if (arrayEqual(state.deps, deps, simpleEqual)) {
+    if (hook.shouldChange(state.deps, deps)) {
       //不处理
-      return hook.get
-    } else {
-
       draftParentFiber()
       const newState = {
-        value: effect(deps, isInit),
+        value: effect(state.deps, false, deps),
         deps
       }
       revertParentFiber()
 
       hook.value.set(newState)
-      return hook.get
     }
+    return hook.get
   }
 }
-export function renderBaseFiber<T extends readonly any[] = readonly any[]>(
+export function renderBaseFiber<T>(
   dom: VirtualDomOperator,
   dynamicChild: boolean,
   ...vs: RenderWithDep<T>
 ): VirtaulDomNode
-export function renderBaseFiber<T extends readonly any[] = readonly any[]>(
+export function renderBaseFiber<T>(
   dom: void,
   dynamicChild: boolean,
   ...vs: RenderWithDep<T>
@@ -189,8 +190,9 @@ export function renderBaseFiber<T extends readonly any[] = readonly any[]>(
 export function renderBaseFiber(
   dom: any,
   dynamicChild: boolean,
+  shouldChange: (a: any, b: any) => any,
   render: any,
-  deps?: any
+  deps: any
 ): any {
   const parentFiber = hookParentFiber()
   let currentFiber: Fiber
@@ -202,9 +204,11 @@ export function renderBaseFiber(
       parentFiber.envModel,
       parentFiber,
       vdom,
+      shouldChange,
       {
         render,
-        deps
+        deps,
+        isNew: true,
       },
       dynamicChild)
     currentFiber.before.set(hookIndex.beforeFiber)
@@ -228,6 +232,9 @@ export function renderBaseFiber(
     }
     if (!oldFiber) {
       throw new Error("非预期地多出现了fiber")
+    }
+    if (oldFiber.shouldChange != shouldChange) {
+      throw new Error("shouldChange发生改变")
     }
     currentFiber = oldFiber
 
@@ -253,20 +260,21 @@ export function renderBaseFiber(
  * @param shouldUpdate 
  * @returns 
  */
-export function renderFiber<T extends readonly any[] = readonly any[]>(
+export function renderFiber<T>(
   dom: VirtualDomOperator,
   ...vs: RenderWithDep<T>
 ): VirtaulDomNode
-export function renderFiber<T extends readonly any[] = readonly any[]>(
+export function renderFiber<T>(
   dom: void,
   ...vs: RenderWithDep<T>
 ): void
 export function renderFiber(
   dom: any,
+  shouldChange: (a: any, b: any) => any,
   render: any,
   deps?: any
 ) {
-  return renderBaseFiber(dom, false, render, deps)
+  return renderBaseFiber(dom, false, shouldChange, render, deps)
 }
 export interface Context<T> {
   hookProvider(v: T): void
@@ -327,11 +335,11 @@ class ContextFactory<T> implements Context<T>{
    * @param shouldUpdate 
    * @returns 
    */
-  useSelector<M>(getValue: (v: T) => M, shouldUpdate: (a: M, b: M) => any = simpleEqual): M {
+  useSelector<M>(getValue: (v: T) => M, shouldUpdate: (a: M, b: M) => any = simpleNotEqual): M {
     const parentFiber = hookParentFiber()
     const context = this.findProvider(parentFiber)
     const thisValue = getValue(context.get())
-    useLevelEffect(0, function () {
+    useLevelEffect(0, arrayNotEqual, function () {
       return context.subscribe(function (value) {
         const m = getValue(value)
         if (shouldUpdate(thisValue, m)) {

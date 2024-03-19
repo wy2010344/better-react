@@ -1,7 +1,7 @@
 import { useAnimationFrameNumber } from "better-react-dom-helper";
 import { renderTemplate } from "./template";
 import { useEffect, useValueCenter } from "better-react-helper";
-import { Point, TweenFns, emptyArray, pointZero, syncMergeCenter } from "wy-helper";
+import { Point, easeFns, emptyArray, pointZero, syncMergeCenter } from "wy-helper";
 
 export default function FrameLayout() {
 
@@ -40,11 +40,11 @@ export default function FrameLayout() {
 
       transX.changeTo(0, {
         duration: 1000,
-        fn: TweenFns.Quad.easeInOut
+        fn: easeFns.inOut(easeFns.quad)
       })
       transY.changeTo(0, {
         duration: 1000,
-        fn: TweenFns.Quad.easeInOut
+        fn: easeFns.inOut(easeFns.quad)
       })
     }
   })

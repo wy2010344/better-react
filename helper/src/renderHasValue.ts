@@ -1,4 +1,5 @@
 import { renderMapF } from "better-react";
+import { alawaysTrue } from "wy-helper";
 
 
 function hasValueBase<C>(hasValue: (i: C) => any, i: C) {
@@ -11,11 +12,11 @@ export function renderHasValue<C>(
   getKey: (i: C) => any,
   render: (i: C) => void
 ) {
-  renderMapF(undefined, hasValue, initValue, hasValueBase, function (_, i) {
-    return [getNextValue(i), getKey(i), undefined, function () {
+  renderMapF(undefined, hasValue, initValue, hasValueBase, alawaysTrue, function (_, i) {
+    return [getNextValue(i), getKey(i), undefined, alawaysTrue, function () {
       return render(i)
-    }]
-  })
+    }, undefined]
+  }, undefined)
 }
 
 export function renderMax(

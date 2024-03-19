@@ -1,4 +1,5 @@
 import { renderMapF } from "better-react";
+import { alawaysTrue } from "wy-helper";
 
 export type ReadArray<T> = {
   length: number
@@ -15,11 +16,11 @@ export function createRenderMapF<M, C>(
   getKey: (v: M, c: C) => any,
 ) {
   return function (data: M, initCache: C, render: (v: M, c: C) => void) {
-    return renderMapF(undefined, data, initCache, hasValue, function (row, c) {
-      return [getNext(row, c), getKey(row, c), undefined, function () {
+    return renderMapF(undefined, data, initCache, hasValue, alawaysTrue, function (row, c) {
+      return [getNext(row, c), getKey(row, c), undefined, alawaysTrue, function () {
         render(row, c)
-      }]
-    })
+      }, undefined]
+    }, undefined)
   }
 }
 
@@ -28,12 +29,12 @@ export function renderArray<T>(
   getKey: (v: T, i: number) => any,
   render: (v: T, i: number) => void
 ) {
-  renderMapF(undefined, vs, 0 as number, arrayHasValue, function (data, i) {
+  renderMapF(undefined, vs, 0 as number, arrayHasValue, alawaysTrue, function (data, i) {
     const row = data[i]
-    return [i + 1, getKey(row, i), undefined, function () {
+    return [i + 1, getKey(row, i), undefined, alawaysTrue, function () {
       render(row, i)
-    }]
-  })
+    }, undefined]
+  }, undefined)
 }
 
 export function createRenderArray<T>(
@@ -61,11 +62,11 @@ export function renderIterableIterator<V>(
   getKey: (value: V) => any,
   render: (value: V) => void
 ) {
-  renderMapF(undefined, iterable, iterable.next(), iterableHasValue, function (iterable, i) {
-    return [iterable.next(), getKey(i.value), undefined, function () {
+  renderMapF(undefined, iterable, iterable.next(), iterableHasValue, alawaysTrue, function (iterable, i) {
+    return [iterable.next(), getKey(i.value), undefined, alawaysTrue, function () {
       return render(i.value)
-    }]
-  })
+    }, undefined]
+  }, undefined)
 }
 
 

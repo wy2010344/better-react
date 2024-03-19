@@ -40,7 +40,7 @@ export default function () {
       className: 'content'
     }).render(function () {
       renderArray(list, v => v.index, function (row) {
-        dom.div().text`${row.index}--${row.name}`
+        dom.div().renderText`${row.index}--${row.name}`
       })
     })
   })

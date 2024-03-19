@@ -1,17 +1,22 @@
 import { hookCreateChangeAtom, hookFlushSync, useBaseMemoGet } from 'better-react';
-import { storeRef, quote, emptyArray, emptyFun } from 'wy-helper'
+import { storeRef, quote, emptyArray, emptyFun, arrayNotEqual, arrayNotEqualOrOne } from 'wy-helper'
 import { useAttrEffect } from './useEffect';
+import { notEqualChange } from 'wy-helper/Vue';
 
 type StoreRef<T> = {
   get(): T
   set(v: T): void
 }
 
-export function useMemoGet<T, V extends readonly any[] = readonly any[]>(effect: (deps: V) => T, deps: V) {
-  return useBaseMemoGet(effect, deps)
+export function useMemoGet<T, V>(
+  effect: (oldDeps: V | undefined, isNew: boolean, deps: V) => T,
+  deps: V) {
+  return useBaseMemoGet(arrayNotEqualOrOne, effect, deps)
 }
 
-export function useMemo<T, V extends readonly any[] = readonly any[]>(effect: (deps: V) => T, deps: V): T {
+export function useMemo<T, V>(
+  effect: (oldDeps: V | undefined, isNew: boolean, deps: V) => T,
+  deps: V): T {
   return useMemoGet(effect, deps)()
 }
 /**
@@ -50,8 +55,8 @@ export function useAtomFun<T>(init: () => T) {
   return useAtom(undefined, init)
 }
 
-function getDep<T>(dep: readonly [T]) {
-  return dep[0]
+function getDep<T>(oldDeps: T | undefined, isNew: boolean, dep: T) {
+  return dep
 }
 /**
  * 始终获得render上的最新值
@@ -60,7 +65,7 @@ function getDep<T>(dep: readonly [T]) {
  * @returns 
  */
 export function useAlways<T>(init: T) {
-  return useMemoGet(getDep, [init] as const)
+  return useBaseMemoGet(notEqualChange, getDep, init)
 }
 
 /**

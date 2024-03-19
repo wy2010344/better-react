@@ -1,19 +1,15 @@
 import { Fiber, VirtaulDomNode, VirtualDomOperator } from "./Fiber"
 import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemoGet, hookParentFiber, useLevelEffect } from "./fc"
-import { emptyArray, storeRef } from "wy-helper"
+import { alawaysFalse, alawaysTrue, storeRef } from "wy-helper"
 
 ////////****useMap****////////////////////////////////////////////////////////////////////////////////////////////////////////////
-export type MapRowRender<C, T extends any[]> = readonly [
+export type MapRowRender<C, T> = readonly [
   C,
   any,
   VirtaulDomNode | undefined,
+  (a: T, b: T) => any,
   (v: T) => void,
   T,
-] | readonly [
-  C,
-  any,
-  VirtaulDomNode | undefined,
-  () => void
 ]
 function createMapRef() {
   return storeRef(new Map<any, Fiber[]>())
@@ -26,40 +22,43 @@ function createMapRef() {
  * @param render 
  * @param deps 
  */
-export function renderMapF<M, C>(
+export function renderMapF<M, C, D>(
   dom: VirtualDomOperator,
   data: M,
   initCache: C,
   hasValue: (v: M, c: C) => boolean,
   /**中间不允许hooks,应该处理一下*/
+  shouldChange: (a: D, b: D) => any,
   render: (v: M, c: C) => MapRowRender<C, any>,
-  deps?: readonly any[]
+  deps: D
 ): VirtaulDomNode
-export function renderMapF<M, C>(
+export function renderMapF<M, C, D>(
   dom: void,
   data: M,
   initCache: C,
   hasValue: (v: M, c: C) => boolean,
   /**中间不允许hooks,应该处理一下*/
+  shouldChange: (a: D, b: D) => any,
   render: (row: M, c: C) => MapRowRender<C, any>,
-  deps?: readonly any[]
+  deps: D
 ): void
-export function renderMapF<M, C>(
+export function renderMapF<M, C, D>(
   dom: any,
   data: M,
   initCache: C,
   hasValue: (v: M, c: C) => boolean,
   /**中间不允许hooks,应该处理一下*/
+  shouldChange: (a: D, b: D) => any,
   render: (row: M, c: C) => MapRowRender<C, any>,
-  deps?: readonly any[]
+  deps: D
 ) {
-  return renderBaseFiber(dom, true, function () {
-    const mapRef = useBaseMemoGet(createMapRef, emptyArray)();
+  return renderBaseFiber(dom, true, shouldChange, function () {
+    const mapRef = useBaseMemoGet(alawaysFalse, createMapRef, undefined)();
     const oldMap = cloneMap(mapRef.get())
     const newMap = new Map<any, Fiber[]>()
-    useLevelEffect(0, function () {
+    useLevelEffect(0, alawaysTrue, function () {
       mapRef.set(newMap)
-    })
+    }, undefined)
     const parentFiber = hookParentFiber()
 
     let beforeFiber: Fiber | undefined = undefined
@@ -71,7 +70,7 @@ export function renderMapF<M, C>(
     let cache = initCache
     while (hasValue(data, cache)) {
       draftParentFiber()
-      const [nextCache, key, dom, rowRender, deps] = render(data, cache)
+      const [nextCache, key, dom, childShouldChange, rowRender, deps] = render(data, cache)
       cache = nextCache
       revertParentFiber()
 
@@ -87,9 +86,11 @@ export function renderMapF<M, C>(
           parentFiber.envModel,
           parentFiber,
           dom,
+          childShouldChange,
           {
             render: rowRender,
-            deps
+            deps,
+            isNew: true
           })
         tempFiber.before.set(beforeFiber!)
         oldFiber = tempFiber
@@ -122,7 +123,7 @@ export function renderMapF<M, C>(
       }
     }
 
-  }, deps!)
+  }, deps)
 }
 export function cloneMap<T>(map: Map<any, T[]>) {
   const newMap = new Map<any, T[]>()

@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker"
 import { dom } from "better-react-dom"
 import { getTimeoutPromise, renderInput, useTriggerStyleWithShow } from "better-react-dom-helper"
-import { renderArray, renderExitAnimateArray, useChange, useEffect, useMemo, useRenderExitAnimate } from "better-react-helper"
+import { renderArray, renderExitAnimateArray, useChange, useEffect, useExitAnimate, useMemo } from "better-react-helper"
 import { CSSProperties, ClsWithStyle, stringifyStyle } from "wy-dom-helper"
 import { emptyArray } from "wy-helper"
 
@@ -56,7 +56,7 @@ export function renderFilter() {
     //   //   div.style.transform = `translate(${rect0.left - rect1.left}px, ${rect0.top - rect1.top}px)`
     //   // })
     // })
-    const mlist = useRenderExitAnimate(filterList, v => v.id, {
+    const mlist = useExitAnimate(filterList, v => v.id, {
       wait: "out-in"
     })
     renderExitAnimateArray(mlist, function (row) {

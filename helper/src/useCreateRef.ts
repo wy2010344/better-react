@@ -1,14 +1,14 @@
 import { useLevelEffect } from "better-react";
-import { emptyArray } from "wy-helper";
+import { alawaysFalse } from "wy-helper";
 
 
 
 
 export function useCreateRef<T>(node: T, setter: (v?: T) => void, level = 0) {
-  useLevelEffect(level, function () {
+  useLevelEffect(level, alawaysFalse, function () {
     setter(node)
     return function () {
       setter(undefined)
     }
-  }, emptyArray)
+  }, undefined)
 }

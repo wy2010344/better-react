@@ -1,6 +1,7 @@
 import { Fiber, VirtaulDomNode } from "./Fiber"
 import { AskNextTimeWork, BatchWork, getReconcile } from "./reconcile"
 import { EnvModel } from "./commitWork"
+import { alawaysTrue } from "wy-helper"
 export { startTransition } from './reconcile'
 export type { REAL_WORK } from './reconcile'
 export {
@@ -30,8 +31,10 @@ export function render<T>(
   getAsk: AskNextTimeWork
 ) {
   const envModel = new EnvModel()
-  const rootFiber = Fiber.createFix(envModel, null!, dom, {
-    render
+  const rootFiber = Fiber.createFix(envModel, null!, dom, alawaysTrue, {
+    render,
+    isNew: true,
+    deps: undefined
   })
   const batchWork = new BatchWork(
     rootFiber,

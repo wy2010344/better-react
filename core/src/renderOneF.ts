@@ -1,15 +1,14 @@
 import { Fiber, VirtaulDomNode, VirtualDomOperator } from "./Fiber"
 import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemoGet, hookParentFiber, useLevelEffect } from "./fc"
-import { emptyArray } from "wy-helper"
+import { alawaysFalse, alawaysTrue } from "wy-helper"
 ////////****single****////////////////////////////////////////////////////////////////////////////////////////////////////////////
-type OneProps<T extends readonly any[] = readonly any[]> = readonly [
+type OneProps<T> = readonly [
   any,
   VirtaulDomNode | undefined,
+  (a: T, b: T) => any,
   (deps: T) => void,
   T
-] | readonly [any,
-  VirtaulDomNode | undefined,
-  () => void]
+]
 
 function initCache() {
   return {} as {
@@ -17,32 +16,35 @@ function initCache() {
     fiber?: Fiber
   }
 }
-export function renderOneF<M>(
+export function renderOneF<M, D>(
   dom: VirtualDomOperator,
   data: M,
-  outRender: (data: M) => OneProps<any[]>,
-  outDeps?: readonly any[]
+  shouldChange: (a: D, b: D) => any,
+  outRender: (data: M) => OneProps<any>,
+  outDeps: D
 ): VirtaulDomNode
-export function renderOneF<M>(
+export function renderOneF<M, D>(
   dom: void,
   data: M,
-  outRender: (data: M) => OneProps<any[]>,
-  outDeps?: readonly any[]
+  shouldChange: (a: D, b: D) => any,
+  outRender: (data: M) => OneProps<any>,
+  outDeps: D
 ): void
-export function renderOneF<M>(
+export function renderOneF<M, D>(
   dom: any,
   data: M,
-  outRender: (data: M) => OneProps<any[]>,
-  outDeps?: readonly any[]
+  shouldChange: (a: D, b: D) => any,
+  outRender: (data: M) => OneProps<any>,
+  outDeps: D
 ) {
-  return renderBaseFiber(dom, true, function () {
+  return renderBaseFiber(dom, true, shouldChange, function () {
     draftParentFiber()
-    const [key, dom, render, deps] = outRender(data)
+    const [key, dom, childShouldChange, render, deps] = outRender(data)
     revertParentFiber()
 
     let commitWork: (() => void) | void = undefined
     const parentFiber = hookParentFiber()
-    const cache = useBaseMemoGet(initCache, emptyArray)()
+    const cache = useBaseMemoGet(alawaysFalse, initCache, undefined)()
     if (cache.key == key && cache.fiber) {
       //key相同复用
       cache.fiber.changeRender(render as any, deps)
@@ -56,7 +58,8 @@ export function renderOneF<M>(
         parentFiber.envModel,
         parentFiber,
         dom,
-        { render, deps })
+        childShouldChange,
+        { render, deps, isNew: true })
       commitWork = () => {
         cache.key = key
         cache.fiber = placeFiber
@@ -66,10 +69,10 @@ export function renderOneF<M>(
       parentFiber.firstChild.set(placeFiber)
     }
 
-    useLevelEffect(0, () => {
+    useLevelEffect(0, alawaysTrue, () => {
       if (commitWork) {
         commitWork()
       }
-    })
-  }, outDeps!)
+    }, undefined)
+  }, outDeps)
 }

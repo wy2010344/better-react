@@ -2,7 +2,7 @@
 import { faker } from "@faker-js/faker";
 import { dom } from "better-react-dom";
 import { renderInput } from "better-react-dom-helper";
-import { renderArray, useAtom, useChange, useEffect, useMemo } from "better-react-helper";
+import { renderArray, useAtom, useChange, useEffect, useMemo, useVersion } from "better-react-helper";
 import { getPageOffset, subscribeRequestAnimationFrame } from "wy-dom-helper";
 import { Point, pointEqual } from "wy-helper";
 
@@ -14,7 +14,7 @@ const list = Array(100).fill(1).map((_, i) => {
     avatar: faker.image.urlLoremFlickr({
       width: 100,
       height: 100,
-      category: 'orchid'
+      category: 'nature'
     })
   }
 })
@@ -24,20 +24,25 @@ export function renderTemplate(
   ) => (ps: Point, lastPS: Point) => void
 ) {
 
+  const [version, updateVersion] = useVersion()
   const [filter, setFilter] = useChange('')
   renderInput("input", {
     value: filter,
     onValueChange(v) {
       setFilter(v.trim())
+      updateVersion()
     },
   })
+  console.log("version", version)
   const filterList = useMemo(() => {
     const fl = filter.toLocaleLowerCase()
+    console.log("render-memo", fl)
     return list.filter(row => {
       const ll = row.name.toLocaleLowerCase()
       return ll.includes(fl) || fl.includes(ll)
     })
   }, [filter])
+  console.log("filter-ilist", filter)
   dom.div({
     style: `
     display:flex;
