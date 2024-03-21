@@ -1,9 +1,9 @@
-import { render, AskNextTimeWork, VirtualDomOperator, RenderWithDep, renderFiber } from "better-react";
+import { render, VirtualDomOperator, RenderWithDep, renderFiber } from "better-react";
 import { DomAttribute, DomElement, DomElementType, SvgAttribute, SvgElement, SvgElementType } from "./html";
 import { EMPTYPROPS, FiberNode, FiberText, GetValueWithDep, domTagNames, emptyFun, svgTagNames, updateProps } from "./updateDom";
-import { alawaysFalse, alawaysTrue, arrayNotEqualDepsWithEmpty, asLazy, emptyArray } from "wy-helper";
+import { AskNextTimeWork, alawaysFalse, alawaysTrue, arrayNotEqualDepsWithEmpty, asLazy, emptyArray } from "wy-helper";
 import { useAttrEffect } from "better-react-helper";
-export { getScheduleAskTime, requestAnimationFrameScheduler } from './schedule'
+export { requestAnimationFrameScheduler } from './schedule'
 export { isSVG, FiberNode, FiberText } from './updateDom'
 export { getAliasOfAttribute, getAttributeAlias } from './getAttributeAlias'
 export * from './html'

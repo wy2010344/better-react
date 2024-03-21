@@ -2,10 +2,8 @@ import { createRoot, dom } from "better-react-dom";
 import insideAnimation from "./insideAnimation/frameLayout";
 import iScroll from "./iScroll/index";
 // import { requestAnimationFrameScheduler } from "better-react-dom";
-import { AskNextTimeWork, createContext } from "better-react";
 import ExpensiveViewSingle from "./ExpensiveViewSingle";
-import { EmptyFun, emptyArray } from "wy-helper";
-import { getScheduleAskTime, requestAnimationFrameScheduler } from "./schedule";
+import { EmptyFun, emptyArray, getScheduleAskTime } from "wy-helper";
 import indexDB from "./indexDB";
 import cssLayout from "./insideAnimation/cssLayout";
 import demo1 from "./better-scroll/demo1";
@@ -13,6 +11,7 @@ import { renderPages } from "./开发AnimatePereference/renderPages";
 import { renderFilter } from "./开发AnimatePereference/renderFilter";
 import { useVersion } from "better-react-helper";
 import bezierPreview from "./bezier-preview";
+import reorderList from "./insideAnimation/reorderList";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(
@@ -21,7 +20,8 @@ export function createBr(app: HTMLElement) {
     // demo,
     // renderFilter,
     // cssLayout,
-    insideAnimation,
+    reorderList,
+    // insideAnimation,
     // indexDB,
     // iScroll,
     // bezierPreview,
@@ -32,7 +32,9 @@ export function createBr(app: HTMLElement) {
     //askIdleTimeWork,
     // askTimeWork,
     // requestAnimationFrameScheduler
-    getScheduleAskTime({})
+    getScheduleAskTime({
+      limitFlush: requestAnimationFrame
+    })
   );
 }
 

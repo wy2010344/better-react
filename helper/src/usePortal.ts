@@ -4,7 +4,7 @@ import { useStoreTriggerRender } from "./useStoreTriggerRender";
 import { renderFragment } from "./renderFragment";
 import { arrayHasValue } from "./renderMap";
 import { useEffect } from "./useEffect";
-import { ValueCenter, EmptyFun, emptyArray } from 'wy-helper'
+import { ValueCenter, EmptyFun, emptyArray, alawaysTrue, arrayNotEqual } from 'wy-helper'
 
 
 
@@ -14,14 +14,19 @@ export function renderSharePortal(store: ValueCenter<SharePortalModel>) {
   return renderFragment(function () {
     const list = useStoreTriggerRender(store)
     // console.log("--list改变--")
-    renderMapF(undefined, list, 0 as number, arrayHasValue, function (data, i) {
-      const row = data[i]
-      return [i + 1, row, undefined, function () {
-        const value = useStoreTriggerRender(row)
-        // console.log("--内容改变--")
-        return value()
-      }, [row]]
-    }, [list])
+    renderMapF(
+      undefined,
+      list,
+      0 as number, arrayHasValue,
+      alawaysTrue,
+      function (data, i) {
+        const row = data[i]
+        return [i + 1, row, undefined, arrayNotEqual, function () {
+          const value = useStoreTriggerRender(row)
+          // console.log("--内容改变--")
+          return value()
+        }, [row]]
+      }, [list])
   }, [store])
 }
 

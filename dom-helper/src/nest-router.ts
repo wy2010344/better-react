@@ -18,12 +18,12 @@ export function useNestRouterProvider(
   hash: string,
   paths: string[]
 ) {
-  NavigateContext.useProvider({
+  NavigateContext.hookProvider({
     navigate,
     searchParams,
     hash
   })
-  RouteContext.useProvider({
+  RouteContext.hookProvider({
     paths,
     getPrefix() {
       return []

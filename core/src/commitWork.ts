@@ -15,17 +15,41 @@ export type Reconcile = (work?: EmptyFun) => void
  */
 export class EnvModel {
   realTime = storeRef(false)
-  flushSync(fun: EmptyFun) {
+
+  setRealTime() {
+    if (this.onWork != 'commit') {
+      throw new Error('只能在commit work中提交')
+    }
+    //对应useLayoutEffect
     const that = this
     that.realTime.set(true)
-    fun()
-    this.reconcile(function () {
+    that.reconcile(function () {
       that.updateEffect(0, function () {
         that.realTime.set(false)
       })
     })
   }
 
+
+  private onWork: boolean | 'commit' = false
+  setOnWork(isCommit?: boolean) {
+    this.onWork = isCommit ? 'commit' : true
+  }
+  finishWork() {
+    this.onWork = false
+  }
+
+  getNextWork!: () => EmptyFun | void
+  commitAll() {
+    if (this.onWork) {
+      throw new Error("render中不能commit all")
+    }
+    let work = this.getNextWork()
+    while (work) {
+      work()
+      work = this.getNextWork()
+    }
+  }
   reconcile: Reconcile = null as any
   /**本次等待删除的fiber*/
   private readonly deletions: Fiber[] = []
@@ -45,6 +69,9 @@ export class EnvModel {
   private readonly changeAtoms: ChangeAtom<any>[]
   private changeAtomsManage: ManageValue<ChangeAtom<any>>
   constructor() {
+    this.setRealTime = this.setRealTime.bind(this)
+    this.commitAll = this.commitAll.bind(this)
+    this.createChangeAtom = this.createChangeAtom.bind(this)
     const changeAtoms: ChangeAtom<any>[] = []
     this.changeAtoms = changeAtoms
     this.changeAtomsManage = {
@@ -55,12 +82,10 @@ export class EnvModel {
         removeEqual(changeAtoms, v)
       },
     }
-    this.flushSync = this.flushSync.bind(this)
-    this.createChangeAtom = this.createChangeAtom.bind(this)
   }
   shouldRender() {
     //changeAtoms说明有状态变化,deletions表示,比如销毁
-    return this.changeAtoms.length > 0 || this.deletions.length > 0
+    return this.changeAtoms.length > 0 || this.deletions.length > 0 || this.updateEffects.size
   }
 
   rollback() {
@@ -113,10 +138,6 @@ export type LoopWork = {
   isLow?: boolean
   work?: EmptyFun
 }
-/**本次所有需要执行的effects 
- * 分为3个等级,更新属性前,更新属性中,更新属性后
-*/
-export type UpdateEffectLevel = 0 | 1 | 2
 /**
  * 需要区分create和update阶段
  */

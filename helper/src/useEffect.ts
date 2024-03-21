@@ -1,10 +1,10 @@
 import { useLevelEffect } from "better-react";
 import { EffectResult } from "better-react";
-import { arrayNotEqualDepsWithEmpty } from "wy-helper";
-import { notEqualChange } from "wy-helper/Vue";
+import { EffectEvent } from "better-react/dist/fc";
+import { arrayNotEqualDepsWithEmpty, simpleNotEqual } from "wy-helper";
 
 export function buildUseEffect(level: number) {
-  function useEffect<T extends readonly any[]>(effect: (oldArgs: T | undefined, isInit: boolean, newArgs: T) => EffectResult<T>, deps: T): void
+  function useEffect<T extends readonly any[]>(effect: (e: EffectEvent<T>) => EffectResult<T>, deps: T): void
   function useEffect(effect: () => EffectResult<any[]>, deps?: readonly any[]): void
   function useEffect(effect: any) {
     return useLevelEffect(level, arrayNotEqualDepsWithEmpty, effect, arguments[1])
@@ -17,8 +17,8 @@ export const useEffect = buildUseEffect(1)
 
 
 export function buildUseOneEffect(level: number) {
-  function useEffect<T>(effect: (oldArgs: T | undefined, isInit: boolean, newArgs: T) => EffectResult<T>, deps: T) {
-    return useLevelEffect(level, notEqualChange, effect, deps)
+  function useEffect<T>(effect: (e: EffectEvent<T>) => EffectResult<T>, deps: T) {
+    return useLevelEffect(level, simpleNotEqual, effect, deps)
   }
   return useEffect
 }

@@ -12,8 +12,8 @@ interface FiberAbsNode<T = any> extends VirtaulDomNode<T> {
   node: Node
 }
 export const EMPTYPROPS = {}
-export type GetValueWithDep<T, F extends readonly any[] = any[]> = readonly [(vs: F) => T, F] | readonly [() => T]
-export class FiberNode implements FiberAbsNode<GetValueWithDep<Props>> {
+export type GetValueWithDep<T, F extends readonly any[] = readonly any[]> = readonly [(vs: F) => T, F] | readonly [() => T]
+export class FiberNode implements FiberAbsNode<GetValueWithDep<Props, any>> {
   private constructor(
     public node: Node,
     private _updateProp: (node: Node, key: string, value: any) => void,
@@ -28,8 +28,8 @@ export class FiberNode implements FiberAbsNode<GetValueWithDep<Props>> {
   private oldProps: Props = EMPTYPROPS
   useUpdate([getProps, deps]: GetValueWithDep<Props>, isFirst: boolean): void {
     const that = this
-    useAttrEffect(function (oldDeps, isInit, deps) {
-      that.props = getProps(deps)
+    useAttrEffect(function (e) {
+      that.props = getProps(deps as any)
       that.updateDomEffect()
       return that.props.onDestroy
     }, deps as any[])

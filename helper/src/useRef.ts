@@ -1,7 +1,6 @@
-import { hookCreateChangeAtom, hookFlushSync, useBaseMemoGet } from 'better-react';
-import { storeRef, quote, emptyArray, emptyFun, arrayNotEqual, arrayNotEqualOrOne } from 'wy-helper'
+import { MemoEvent, hookCommitAll, hookCreateChangeAtom, useBaseMemoGet } from 'better-react';
+import { storeRef, quote, emptyArray, arrayNotEqualOrOne, simpleNotEqual } from 'wy-helper'
 import { useAttrEffect } from './useEffect';
-import { notEqualChange } from 'wy-helper/Vue';
 
 type StoreRef<T> = {
   get(): T
@@ -9,13 +8,13 @@ type StoreRef<T> = {
 }
 
 export function useMemoGet<T, V>(
-  effect: (oldDeps: V | undefined, isNew: boolean, deps: V) => T,
+  effect: (e: MemoEvent<V>) => T,
   deps: V) {
   return useBaseMemoGet(arrayNotEqualOrOne, effect, deps)
 }
 
 export function useMemo<T, V>(
-  effect: (oldDeps: V | undefined, isNew: boolean, deps: V) => T,
+  effect: (e: MemoEvent<V>) => T,
   deps: V): T {
   return useMemoGet(effect, deps)()
 }
@@ -55,8 +54,8 @@ export function useAtomFun<T>(init: () => T) {
   return useAtom(undefined, init)
 }
 
-function getDep<T>(oldDeps: T | undefined, isNew: boolean, dep: T) {
-  return dep
+function getDep<T>(e: MemoEvent<T>) {
+  return e.trigger
 }
 /**
  * 始终获得render上的最新值
@@ -65,7 +64,7 @@ function getDep<T>(oldDeps: T | undefined, isNew: boolean, dep: T) {
  * @returns 
  */
 export function useAlways<T>(init: T) {
-  return useBaseMemoGet(notEqualChange, getDep, init)
+  return useBaseMemoGet(simpleNotEqual, getDep, init)
 }
 
 /**
@@ -82,11 +81,11 @@ export function useEventAlaways<T>(init: T) {
   return ref.get
 }
 
-export function useFlushAlaways<T>(init: T) {
-  const flushSync = hookFlushSync()
+export function useCommitAlaways<T>(init: T) {
+  const flushSync = hookCommitAll()
   const getValue = useAlways(init)
   return function () {
-    flushSync(emptyFun)
+    flushSync()
     return getValue()
   }
 }

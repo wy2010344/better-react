@@ -1,4 +1,4 @@
-import { Fiber, HookEffect, RenderWithDep, VirtaulDomNode, VirtualDomOperator } from "./Fiber";
+import { EffectDestroyEvent, Fiber, HookEffect, MemoEvent, RenderWithDep, VirtaulDomNode, VirtualDomOperator } from "./Fiber";
 import { quote, simpleNotEqual, alawaysTrue, ValueCenter, valueCenterOf, arrayNotEqual } from "wy-helper";
 
 const w = globalThis as any
@@ -46,7 +46,13 @@ export function updateFunctionComponent(fiber: Fiber) {
   cache.wipFiber = undefined
 }
 
-export type EffectResult<T> = (void | ((deps: T) => void))
+export type EffectResult<T> = (void | ((e: EffectDestroyEvent<T>) => void))
+export type EffectEvent<T> = {
+  trigger: T
+  isInit: boolean
+  beforeTrigger?: T
+  setRealTime(): void
+}
 /**
  * 必须有个依赖项,如果没有依赖项,如果组件有useFragment,则会不执行,造成不一致.
  * useMemo如果无依赖,则不需要使用useMemo,但useEffect没有依赖,仍然有意义.有依赖符合幂等,无依赖不需要幂等.
@@ -56,7 +62,7 @@ export type EffectResult<T> = (void | ((deps: T) => void))
 export function useLevelEffect<T>(
   level: number,
   shouldChange: (a: T, b: T) => any,
-  effect: (oldArgs: T | undefined, isInit: boolean, newArgs: T) => EffectResult<T>, deps: T): void {
+  effect: (e: EffectEvent<T>) => EffectResult<T>, deps: T): void {
   const parentFiber = hookParentFiber()
   const isInit = parentFiber.effectTag.get() == 'PLACEMENT'
   if (isInit) {
@@ -65,6 +71,7 @@ export function useLevelEffect<T>(
     parentFiber.hookEffects = hookEffects
     const state: HookEffect<T> = {
       deps,
+      isInit,
       shouldChange
     }
     const hookEffect = parentFiber.envModel.createChangeAtom(state)
@@ -75,7 +82,11 @@ export function useLevelEffect<T>(
     }
     array.push(hookEffect)
     parentFiber.envModel.updateEffect(level, () => {
-      state.destroy = effect(undefined, isInit, deps)
+      state.destroy = effect({
+        beforeTrigger: undefined,
+        isInit, trigger: deps,
+        setRealTime: parentFiber.envModel.setRealTime
+      })
     })
   } else {
     const hookEffects = parentFiber.hookEffects
@@ -99,14 +110,25 @@ export function useLevelEffect<T>(
     if (shouldChange(state.deps, deps)) {
       const newState: HookEffect<T> = {
         deps,
+        isInit: false,
         shouldChange
       }
       hookEffect.set(newState)
       parentFiber.envModel.updateEffect(level, () => {
         if (state.destroy) {
-          state.destroy(deps)
+          state.destroy({
+            trigger: deps,
+            beforeIsInit: state.isInit,
+            beforeTrigger: state.deps,
+            setRealTime: parentFiber.envModel.setRealTime
+          })
         }
-        newState.destroy = effect(state.deps, isInit, deps)
+        newState.destroy = effect({
+          beforeTrigger: state.deps,
+          isInit,
+          trigger: deps,
+          setRealTime: parentFiber.envModel.setRealTime
+        })
       })
     }
   }
@@ -124,7 +146,7 @@ export function hookCreateChangeAtom() {
  */
 export function useBaseMemoGet<T, V>(
   shouldChange: (a: V, b: V) => any,
-  effect: (oldDeps: V | undefined, isCreate: boolean, newDeps: V) => T,
+  effect: (e: MemoEvent<V>) => T,
   deps: V,
 ): () => T {
   const parentFiber = hookParentFiber()
@@ -135,7 +157,10 @@ export function useBaseMemoGet<T, V>(
 
     draftParentFiber()
     const state = {
-      value: effect(undefined, true, deps),
+      value: effect({
+        isInit,
+        trigger: deps
+      }),
       deps
     }
     revertParentFiber()
@@ -167,7 +192,11 @@ export function useBaseMemoGet<T, V>(
       //不处理
       draftParentFiber()
       const newState = {
-        value: effect(state.deps, false, deps),
+        value: effect({
+          beforeTrigger: state.deps,
+          isInit: false,
+          trigger: deps
+        }),
         deps
       }
       revertParentFiber()
@@ -355,9 +384,9 @@ export function hookEffectTag() {
   const parentFiber = hookParentFiber()
   return parentFiber.effectTag.get()!
 }
-export function hookFlushSync() {
+export function hookCommitAll() {
   const parentFiber = hookParentFiber()
-  return parentFiber.envModel.flushSync
+  return parentFiber.envModel.commitAll
 }
 
 export function hookRequestReconcile() {

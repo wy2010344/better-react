@@ -50,8 +50,6 @@ const useReduceList = createUseReducer(function (list: Row[], action: {
 export default function () {
   const [orderList, dispatch] = useReduceList(list)
 
-  const lastScrollY = useAtom(0)
-
   return dom.div({
     style: `
     display:flex;
@@ -149,7 +147,7 @@ export default function () {
             } else {
               div.style.transition = ''
             }
-            div.style.transform = `translate(0px,${value.value}px)`
+            div.style.transform = `translate(0px,${value.value.y}px)`
           })
         }, emptyArray)
         const div = dom.div({
@@ -169,7 +167,7 @@ export default function () {
               y: e.pageY
             }, function () {
               transY.changeTo(pointZero, {
-                duration: 300,
+                duration: 600,
                 value: "ease"
               })
             })

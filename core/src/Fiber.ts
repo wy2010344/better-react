@@ -8,14 +8,20 @@ export type HookMemo<T, D> = {
 export type HookEffect<D> = {
   shouldChange(a: D, b: D): any
   deps: D
-  destroy?: void | ((newDeps: D) => void)
+  isInit: boolean
+  destroy?: void | ((newDeps: EffectDestroyEvent<D>) => void)
 }
-
+export type EffectDestroyEvent<T> = {
+  trigger: T
+  beforeIsInit: boolean,
+  beforeTrigger: T
+  setRealTime(): void
+}
 type RenderDeps<D> = {
   isNew: boolean
   deps: D,
   oldDeps?: D,
-  render(oldDeps: D, isNew: boolean, newDeps: D): void
+  render(e: MemoEvent<D>): void
 }
 
 type EffectTag = "PLACEMENT" | "UPDATE" | void
@@ -81,7 +87,7 @@ export class Fiber<D = any> {
       this.lastChild = storeRef(undefined)
     }
   }
-  changeRender(render: (deps: D) => void, deps: D) {
+  changeRender(render: (e: MemoEvent<D>) => void, deps: D) {
     const { deps: oldDeps } = this.renderDeps.get()
     if (this.shouldChange(oldDeps, deps)) {
       //能改变render,需要UPDATE
@@ -96,7 +102,11 @@ export class Fiber<D = any> {
   }
   render() {
     const { render, deps, oldDeps, isNew } = this.renderDeps.get()
-    render(oldDeps, isNew, deps)
+    render({
+      trigger: deps,
+      beforeTrigger: oldDeps,
+      isInit: isNew
+    })
   }
   /**
    * 创建一个固定节点,该节点是不是MapFiber不一定
@@ -194,9 +204,17 @@ export type VirtualDomOperator<T = any, M = any> = [
   T
 ]
 
+
+
+
+export type MemoEvent<T> = {
+  trigger: T
+  isInit: boolean
+  beforeTrigger?: T
+}
 export type RenderWithDep<T> = [
   (a: T, b: T) => any,
-  (old: T | undefined, isNew: boolean, nv: T) => void,
+  (e: MemoEvent<T>) => void,
   T
 ]
 

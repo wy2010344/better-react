@@ -2,7 +2,7 @@ import { EnvModel, LoopWork } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
 import { Fiber } from "./Fiber"
 import { deepTravelFiber } from "./findParentAndBefore"
-import { EmptyFun, StoreRef } from "wy-helper"
+import { AskNextTimeWork, EmptyFun, NextTimeWork, StoreRef } from "wy-helper"
 
 function getRec1(askNextTimeWork: EmptyFun, appendWork: (work: WorkUnit) => void) {
   let batchUpdateOn = false
@@ -36,7 +36,23 @@ export function getReconcile(
   askWork: AskNextTimeWork
 ) {
   /**业务的工作队列 */
-  const { appendWork, getNextWork } = buildWorkUnits(envModel, batchWork)
+  const { appendWork, getNextWork: originGetNextWork } = buildWorkUnits(envModel, batchWork)
+  function getNextWork() {
+    const work = originGetNextWork()
+    if (work) {
+      const wrapperWork: NextTimeWork = function () {
+        const work = originGetNextWork()
+        if (work) {
+          envModel.setOnWork(work.lastJob)
+          work()
+          envModel.finishWork()
+        }
+      }
+      wrapperWork.lastJob = work.lastJob
+      return wrapperWork
+    }
+  }
+  envModel.getNextWork = getNextWork
   const askNextTimeWork = askWork({
     askNextWork: getNextWork,
     realTime: envModel.realTime,
@@ -68,11 +84,11 @@ export class BatchWork {
         that.workLoop(renderWork, currentTick, nextUnitOfWork)
       })
     } else {
-      const realWork: REAL_WORK = function () {
+      const realWork: NextTimeWork = function () {
         currentTick.commit()
         that.finishRender()
       }
-      realWork.isRender = true
+      realWork.lastJob = true
       renderWork.unshiftWork(realWork)
     }
   }
@@ -149,7 +165,7 @@ function buildWorkUnits(
     appendWork(work: WorkUnit) {
       workList.push(work)
     },
-    getNextWork() {
+    getNextWork(): NextTimeWork | void {
       //寻找批量任务
       const collectWork = getBatchWork()
       if (collectWork) {
@@ -177,7 +193,8 @@ function buildWorkUnits(
             } else {
               console.log("强行中断低优先级任务,执行高优先级")
             }
-            return work!()
+            const work = getRenderWork(true)
+            work?.()
           }
         }
       }
@@ -187,7 +204,6 @@ function buildWorkUnits(
         return renderWork
       }
       //@todo 渲染后的任务可以做在这里....
-
       //寻找渲染任务
       const work = getRenderWork(false)
       if (work) {
@@ -202,25 +218,25 @@ function buildWorkUnits(
   }
 }
 class RenderWorks {
-  private readonly list: REAL_WORK[] = []
+  private readonly list: NextTimeWork[] = []
   rollback() {
     this.list.length = 0
   }
   getFirstWork() {
     const that = this
     if (that.list.length) {
-      const retWork: REAL_WORK = function () {
+      const retWork: NextTimeWork = function () {
         const work = that.list.shift()
         work!()
       }
-      retWork.isRender = this.list[0]?.isRender
+      retWork.lastJob = this.list[0]?.lastJob
       return retWork
     }
   }
   appendWork(work: EmptyFun) {
     this.list.push(work)
   }
-  unshiftWork(work: REAL_WORK) {
+  unshiftWork(work: NextTimeWork) {
     this.list.unshift(work)
   }
 }
@@ -270,14 +286,6 @@ export type BatchCollectWork = {
 }
 //相当于往线程池中添加一个任务
 export type WorkUnit = BatchCollectWork | LoopWork
-
-export type AskNextTimeWork = (data: {
-  realTime: StoreRef<boolean>
-  askNextWork: () => REAL_WORK | void
-}) => EmptyFun
-export type REAL_WORK = EmptyFun & {
-  isRender?: boolean
-}
 
 let currentTaskIsLow = false
 /**
