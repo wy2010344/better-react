@@ -7,6 +7,12 @@ import { AskNextTimeWork, EmptyFun, NextTimeWork, StoreRef } from "wy-helper"
 function getRec1(askNextTimeWork: EmptyFun, appendWork: (work: WorkUnit) => void) {
   let batchUpdateOn = false
   const batchUpdateWorks: LoopWork[] = []
+  function didBatchWork() {
+    //批量提交
+    batchUpdateOn = false
+    batchUpdateWorks.forEach(appendWork)
+    batchUpdateWorks.length = 0
+  }
   return function (work?: EmptyFun): void {
     batchUpdateWorks.push({
       type: "loop",
@@ -17,39 +23,37 @@ function getRec1(askNextTimeWork: EmptyFun, appendWork: (work: WorkUnit) => void
       batchUpdateOn = true
       appendWork({
         type: "batchCollect",
-        work() {
-          //批量提交
-          batchUpdateOn = false
-          batchUpdateWorks.forEach(work => {
-            appendWork(work)
-          })
-          batchUpdateWorks.length = 0
-        }
+        work: didBatchWork
       })
       askNextTimeWork()
     }
   }
 }
 export function getReconcile(
-  batchWork: BatchWork,
+  beginRender: BeginRender,
   envModel: EnvModel,
   askWork: AskNextTimeWork
 ) {
   /**业务的工作队列 */
-  const { appendWork, getNextWork: originGetNextWork } = buildWorkUnits(envModel, batchWork)
+  const { appendWork, getNextWork: originGetNextWork } = buildWorkUnits(envModel, beginRender)
+  function getWrapWork(lastJob: boolean) {
+    const wrapperWork: NextTimeWork = function () {
+      const work = originGetNextWork()
+      if (work) {
+        envModel.setOnWork(work.lastJob)
+        work()
+        envModel.finishWork()
+      }
+    }
+    wrapperWork.lastJob = lastJob
+    return wrapperWork
+  }
+  const wrapWorkLast = getWrapWork(true)
+  const wrapWork = getWrapWork(false)
   function getNextWork() {
     const work = originGetNextWork()
     if (work) {
-      const wrapperWork: NextTimeWork = function () {
-        const work = originGetNextWork()
-        if (work) {
-          envModel.setOnWork(work.lastJob)
-          work()
-          envModel.finishWork()
-        }
-      }
-      wrapperWork.lastJob = work.lastJob
-      return wrapperWork
+      return work.lastJob ? wrapWorkLast : wrapWork
     }
   }
   envModel.getNextWork = getNextWork
@@ -59,108 +63,140 @@ export function getReconcile(
   })
   return getRec1(askNextTimeWork, appendWork)
 }
-/**
- * 顶层全局
- */
-export class BatchWork {
-  constructor(
-    private rootFiber: Fiber,
-    private readonly envModel: EnvModel
-  ) { }
-  beginRender(currentTick: CurrentTick, renderWorks: RenderWorks) {
-    if (this.envModel.shouldRender() && this.rootFiber) {
-      this.workLoop(renderWorks, currentTick, this.rootFiber)
-    }
-  }
-  private workLoop(
+
+export function batchWork(
+  rootFiber: Fiber,
+  envModel: EnvModel,
+) {
+  function workLoop(
     renderWork: RenderWorks,
-    currentTick: CurrentTick,
-    unitOfWork: Fiber
+    unitOfWork: Fiber,
+    commitWork: NextTimeWork
   ) {
-    const that = this
-    const nextUnitOfWork = performUnitOfWork(unitOfWork, that.envModel)
+    const nextUnitOfWork = performUnitOfWork(unitOfWork, envModel)
     if (nextUnitOfWork) {
       renderWork.unshiftWork(function () {
-        that.workLoop(renderWork, currentTick, nextUnitOfWork)
+        workLoop(renderWork, nextUnitOfWork, commitWork)
       })
     } else {
       const realWork: NextTimeWork = function () {
-        currentTick.commit()
-        that.finishRender()
+        commitWork()
+        envModel.commit(rootFiber!)
       }
       realWork.lastJob = true
       renderWork.unshiftWork(realWork)
     }
   }
-  private finishRender() {
-    this.envModel.commit(this.rootFiber!)
+  function clearFiber() {
+    rootFiber = undefined as any
   }
-
-  destroy() {
-    if (this.rootFiber) {
-      const that = this
-      this.envModel.addDelect(that.rootFiber)
-      this.envModel.reconcile(function () {
-        that.envModel.updateEffect(0, function () {
-          that.rootFiber = undefined as any
-        })
-      })
+  function onDestroy() {
+    envModel.updateEffect(0, clearFiber)
+  }
+  return {
+    beginRender(renderWorks: RenderWorks, commitWork: NextTimeWork) {
+      if (envModel.shouldRender() && rootFiber) {
+        workLoop(renderWorks, rootFiber, commitWork)
+      }
+    },
+    destroy() {
+      if (rootFiber) {
+        envModel.addDelect(rootFiber)
+        envModel.reconcile(onDestroy)
+      }
     }
   }
 }
+/**
+ * 顶层全局
+ */
 
+type BeginRender = (renderWorks: RenderWorks, commitWork: EmptyFun) => void
 function buildWorkUnits(
   envModel: EnvModel,
-  batchWork: BatchWork
+  beginRender: BeginRender
 ) {
   let workList: WorkUnit[] = []
   const currentTick = new CurrentTick(function (work) {
     workList.unshift(work)
   })
   const renderWorks = new RenderWorks()
+  function isBatchWork(v: WorkUnit) {
+    return v.type == 'batchCollect'
+  }
+  function runBatchWork() {
+    const index = workList.findIndex(isBatchWork)
+    if (index < 0) {
+      return
+    }
+    const work = workList.splice(index, 1)[0] as BatchCollectWork
+    work.work()
+  }
   function getBatchWork() {
-    const index = workList.findIndex(v => v.type == 'batchCollect')
+    const index = workList.findIndex(isBatchWork)
     if (index > -1) {
-      return function () {
-        const work = workList.splice(index, 1)[0] as BatchCollectWork
-        work.work()
-      }
+      return runBatchWork
     }
   }
-  function getRenderWork(
+
+  function commitWork() {
+    currentTick.commit()
+  }
+
+  function getTheRenderWork(
     isLow: boolean
   ) {
-    // const that = this
-    let loopIndex = -1
-    function shouldAdd(work: LoopWork) {
-      return (isLow && work.isLow) || (!isLow && !work.isLow)
+    function shouldAdd(work: WorkUnit): work is LoopWork {
+      return work.type == 'loop' && ((isLow && work.isLow) || (!isLow && !work.isLow))
     }
-    for (let i = workList.length - 1; i > -1 && loopIndex < 0; i--) {
-      const work = workList[i]
-      if (work.type == 'loop' && shouldAdd(work)) {
-        loopIndex = i
+    //寻找渲染前的任务
+    function openAWork() {
+      if (workList.some(shouldAdd)) {
+        workList = workList.filter(work => {
+          if (shouldAdd(work)) {
+            if (work.work) {
+              renderWorks.appendWork(work.work)
+            }
+            currentTick.appendLowRollback(work)
+            return false
+          }
+          return true
+        })
+        //等到所有执行完,再检查一次.
+        renderWorks.appendWork(openAWork)
+      } else {
+        beginRender(renderWorks, commitWork)
+      }
+    }
+    return function () {
+      if (workList.some(shouldAdd)) {
         return function () {
           currentTick.open(isLow)
-          //寻找渲染前的任务
-          workList = workList.filter(function (work, i) {
-            if (work.type == 'loop' && shouldAdd(work)) {
-              if (work.work) {
-                renderWorks.appendWork(work.work)
-              }
-              currentTick.appendLowRollback(work)
-              return false
-            }
-            return true
-          })
-          //动态添加渲染任务
-          renderWorks.appendWork(() => {
-            batchWork.beginRender(currentTick, renderWorks)
-          })
+          openAWork()
         }
       }
     }
   }
-
+  const getRenderWorkLow = getTheRenderWork(true)
+  const getRenderWork = getTheRenderWork(false)
+  function getRollbackWork(isLow: boolean, getWork: () => void | EmptyFun) {
+    return function () {
+      renderWorks.rollback()
+      currentTick.rollback()
+      envModel.rollback()
+      if (isLow) {
+        console.log("有新的低优先级任务出现,中断之前的低优先级")
+      } else {
+        console.log("强行中断低优先级任务,执行高优先级")
+      }
+      const work = getWork()
+      if (work) {
+        work()
+      }
+    }
+  }
+  const rollBackWorkLow = getRollbackWork(true, getRenderWorkLow)
+  const rollBackWork = getRollbackWork(false, getRenderWork)
   return {
     appendWork(work: WorkUnit) {
       workList.push(work)
@@ -176,26 +212,11 @@ function buildWorkUnits(
          * 寻找是否有渲染任务,如果有,则中断
          * 如果有新的lazywork,则也优先
          */
-        let workType = false
-        let work = getRenderWork(false)
-        if (!work) {
-          workType = true
-          work = getRenderWork(true)
+        if (getRenderWork()) {
+          return rollBackWork
         }
-        if (work) {
-          //这里只是ask,没有回滚吧
-          return function () {
-            renderWorks.rollback()
-            currentTick.rollback()
-            envModel.rollback()
-            if (workType) {
-              console.log("有新的低优先级任务出现,中断之前的低优先级")
-            } else {
-              console.log("强行中断低优先级任务,执行高优先级")
-            }
-            const work = getRenderWork(true)
-            work?.()
-          }
+        if (getRenderWorkLow()) {
+          return rollBackWorkLow
         }
       }
       //执行计划的渲染任务
@@ -205,12 +226,12 @@ function buildWorkUnits(
       }
       //@todo 渲染后的任务可以做在这里....
       //寻找渲染任务
-      const work = getRenderWork(false)
+      const work = getRenderWork()
       if (work) {
         return work
       }
       //寻找低优先级渲染任务
-      const lowWork = getRenderWork(true)
+      const lowWork = getRenderWorkLow()
       if (lowWork) {
         return lowWork
       }
@@ -218,6 +239,17 @@ function buildWorkUnits(
   }
 }
 class RenderWorks {
+  private getRetWork(lastJob: boolean) {
+    const that = this
+    const retWork: NextTimeWork = function () {
+      const work = that.list.shift()
+      work!()
+    }
+    retWork.lastJob = lastJob
+    return retWork
+  }
+  private lastRetWork = this.getRetWork(true)
+  private retWork = this.getRetWork(false)
   private readonly list: NextTimeWork[] = []
   rollback() {
     this.list.length = 0
@@ -225,12 +257,9 @@ class RenderWorks {
   getFirstWork() {
     const that = this
     if (that.list.length) {
-      const retWork: NextTimeWork = function () {
-        const work = that.list.shift()
-        work!()
-      }
-      retWork.lastJob = this.list[0]?.lastJob
-      return retWork
+      return this.list[0]?.lastJob
+        ? this.lastRetWork
+        : this.retWork
     }
   }
   appendWork(work: EmptyFun) {

@@ -25,6 +25,9 @@ export function useReducer(reducer: any, init: any, initFun: any, eq: any) {
   const createChangeAtom = hookCreateChangeAtom()
   const reconcile = hookRequestReconcile()
   const hook = useMemo(() => {
+    /**
+     * 这个memo不能像jetpack compose一样依赖key变化,因为是异步生效的
+     */
     const realEq = eq || simpleEqual
     const trans = initFun || quote
     const value = createChangeAtom(trans(init))

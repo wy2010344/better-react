@@ -1,5 +1,5 @@
 import { Fiber, VirtaulDomNode } from "./Fiber"
-import { BatchWork, getReconcile } from "./reconcile"
+import { batchWork, getReconcile } from "./reconcile"
 import { EnvModel } from "./commitWork"
 import { AskNextTimeWork, alawaysTrue } from "wy-helper"
 export { startTransition } from './reconcile'
@@ -36,16 +36,14 @@ export function render<T>(
     isNew: true,
     deps: undefined
   })
-  const batchWork = new BatchWork(
+  const { destroy, beginRender } = batchWork(
     rootFiber,
     envModel
   )
-  const reconcile = getReconcile(batchWork, envModel, getAsk)
+  const reconcile = getReconcile(beginRender, envModel, getAsk)
   envModel.reconcile = reconcile
   //开始执行
   reconcile()
-  return function () {
-    batchWork.destroy()
-  }
+  return destroy
 }
 

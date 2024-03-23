@@ -1,4 +1,4 @@
-import { ValueCenter, quote, valueCenterOf } from "wy-helper"
+import { ValueCenter, emptyArray, quote, valueCenterOf } from "wy-helper"
 import { useMemo } from "./useRef"
 
 export function useValueCenter<T>(init: T): ValueCenter<T>
@@ -9,7 +9,7 @@ export function useValueCenter() {
   return useMemo(() => {
     const trans = initTrans || quote
     return valueCenterOf(trans(init))
-  }, [])
+  }, emptyArray)
 }
 export function useValueCenterFun<T>(fun: () => T): ValueCenter<T> {
   return useValueCenter(undefined, fun)
