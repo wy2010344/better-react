@@ -87,7 +87,7 @@ export default function renderColorConfig() {
 
     },
     children() {
-      dom.div().text`主题色`
+      dom.div().renderText`主题色`
       renderInput("input", {
         type: "color",
         value: colorTheme.primaryColor || "#ffffff",
@@ -100,16 +100,16 @@ export default function renderColorConfig() {
       })
       dom.table().render(function () {
         dom.tr().render(function () {
-          dom.td().text`名字`
-          dom.td().text`背景`
-          dom.td().text`前景`
+          dom.td().renderText`名字`
+          dom.td().renderText`背景`
+          dom.td().renderText`前景`
         })
         Object.keys(defineColors).forEach(function (_key) {
           const key = _key as keyof ThemeColors
           dom.tr().render(function () {
 
             dom.td().render(function () {
-              dom.span().text`${key}`
+              dom.span().renderText`${key}`
             })
 
             dom.td().render(function () {

@@ -2,33 +2,7 @@ import { EnvModel, LoopWork } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
 import { Fiber } from "./Fiber"
 import { deepTravelFiber } from "./findParentAndBefore"
-import { AskNextTimeWork, EmptyFun, NextTimeWork, StoreRef } from "wy-helper"
-
-function getRec1(askNextTimeWork: EmptyFun, appendWork: (work: WorkUnit) => void) {
-  let batchUpdateOn = false
-  const batchUpdateWorks: LoopWork[] = []
-  function didBatchWork() {
-    //批量提交
-    batchUpdateOn = false
-    batchUpdateWorks.forEach(appendWork)
-    batchUpdateWorks.length = 0
-  }
-  return function (work?: EmptyFun): void {
-    batchUpdateWorks.push({
-      type: "loop",
-      isLow: currentTaskIsLow,
-      work
-    })
-    if (!batchUpdateOn) {
-      batchUpdateOn = true
-      appendWork({
-        type: "batchCollect",
-        work: didBatchWork
-      })
-      askNextTimeWork()
-    }
-  }
-}
+import { AskNextTimeWork, EmptyFun, NextTimeWork } from "wy-helper"
 export function getReconcile(
   beginRender: BeginRender,
   envModel: EnvModel,
@@ -61,7 +35,14 @@ export function getReconcile(
     askNextWork: getNextWork,
     realTime: envModel.realTime,
   })
-  return getRec1(askNextTimeWork, appendWork)
+  return function (work?: EmptyFun): void {
+    appendWork({
+      type: "loop",
+      isLow: currentTaskIsLow,
+      work
+    })
+    askNextTimeWork()
+  }
 }
 
 export function batchWork(
@@ -75,7 +56,7 @@ export function batchWork(
   ) {
     const nextUnitOfWork = performUnitOfWork(unitOfWork, envModel)
     if (nextUnitOfWork) {
-      renderWork.unshiftWork(function () {
+      renderWork.appendWork(function () {
         workLoop(renderWork, nextUnitOfWork, commitWork)
       })
     } else {
@@ -84,7 +65,7 @@ export function batchWork(
         envModel.commit(rootFiber!)
       }
       realWork.lastJob = true
-      renderWork.unshiftWork(realWork)
+      renderWork.appendWork(realWork)
     }
   }
   function clearFiber() {
@@ -96,6 +77,7 @@ export function batchWork(
   return {
     beginRender(renderWorks: RenderWorks, commitWork: NextTimeWork) {
       if (envModel.shouldRender() && rootFiber) {
+        //开始render,不能中止
         workLoop(renderWorks, rootFiber, commitWork)
       }
     },
@@ -116,29 +98,11 @@ function buildWorkUnits(
   envModel: EnvModel,
   beginRender: BeginRender
 ) {
-  let workList: WorkUnit[] = []
+  let workList: LoopWork[] = []
   const currentTick = new CurrentTick(function (work) {
     workList.unshift(work)
   })
   const renderWorks = new RenderWorks()
-  function isBatchWork(v: WorkUnit) {
-    return v.type == 'batchCollect'
-  }
-  function runBatchWork() {
-    const index = workList.findIndex(isBatchWork)
-    if (index < 0) {
-      return
-    }
-    const work = workList.splice(index, 1)[0] as BatchCollectWork
-    work.work()
-  }
-  function getBatchWork() {
-    const index = workList.findIndex(isBatchWork)
-    if (index > -1) {
-      return runBatchWork
-    }
-  }
-
   function commitWork() {
     currentTick.commit()
   }
@@ -146,8 +110,8 @@ function buildWorkUnits(
   function getTheRenderWork(
     isLow: boolean
   ) {
-    function shouldAdd(work: WorkUnit): work is LoopWork {
-      return work.type == 'loop' && ((isLow && work.isLow) || (!isLow && !work.isLow))
+    function shouldAdd(work: LoopWork) {
+      return (isLow && work.isLow) || (!isLow && !work.isLow)
     }
     //寻找渲染前的任务
     function openAWork() {
@@ -198,15 +162,10 @@ function buildWorkUnits(
   const rollBackWorkLow = getRollbackWork(true, getRenderWorkLow)
   const rollBackWork = getRollbackWork(false, getRenderWork)
   return {
-    appendWork(work: WorkUnit) {
+    appendWork(work: LoopWork) {
       workList.push(work)
     },
     getNextWork(): NextTimeWork | void {
-      //寻找批量任务
-      const collectWork = getBatchWork()
-      if (collectWork) {
-        return collectWork
-      }
       if (currentTick.isOnLow()) {
         /**
          * 寻找是否有渲染任务,如果有,则中断
@@ -262,23 +221,18 @@ class RenderWorks {
         : this.retWork
     }
   }
-  appendWork(work: EmptyFun) {
+  appendWork(work: NextTimeWork) {
     this.list.push(work)
-  }
-  unshiftWork(work: NextTimeWork) {
-    this.list.unshift(work)
   }
 }
 class CurrentTick {
   constructor(
     private rollbackWork: (work: LoopWork) => void
   ) { }
-  private on = false
-  private isLow = false
+  private on: boolean | 'low' = false
   private lowRollbackList: LoopWork[] = []
   open(isLow: boolean) {
-    this.on = true
-    this.isLow = isLow
+    this.on = isLow ? 'low' : true
   }
   private close() {
     this.on = false
@@ -298,23 +252,9 @@ class CurrentTick {
     this.close()
   }
   isOnLow() {
-    return this.on && this.isLow
+    return this.on == 'low'
   }
 }
-
-export type BatchCollectWork = {
-  /**
-   * 任务收集不能停止,会动态增加loop和afterLoop
-   * loop可以跳过
-   * beforeLoop不可以减少,每次渲染前
-   * afterLoop不可以减少
-   * lowest为最次---目前是无法实现的
-   */
-  type: "batchCollect"
-  work: EmptyFun
-}
-//相当于往线程池中添加一个任务
-export type WorkUnit = BatchCollectWork | LoopWork
 
 let currentTaskIsLow = false
 /**

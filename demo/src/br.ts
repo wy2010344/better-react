@@ -3,7 +3,7 @@ import insideAnimation from "./insideAnimation/frameLayout";
 import iScroll from "./iScroll/index";
 // import { requestAnimationFrameScheduler } from "better-react-dom";
 import ExpensiveViewSingle from "./ExpensiveViewSingle";
-import { AskNextTimeWork, EmptyFun, createRunSyncTasks, emptyArray, emptyObject, getCurrentTimePerformance, messageChannelCallback } from "wy-helper";
+import { AskNextTimeWork, EmptyFun, NextTimeWork, createRunSyncTasks, emptyArray, emptyObject, getCurrentTimePerformance, messageChannelCallback } from "wy-helper";
 import indexDB from "./indexDB";
 import cssLayout from "./insideAnimation/cssLayout";
 import demo1 from "./better-scroll/demo1";
@@ -54,6 +54,15 @@ export function getScheduleAskTime({
   limitFlush?(fun: EmptyFun): void
 } = emptyObject): AskNextTimeWork {
   const runTaskSync = createRunSyncTasks()
+
+  function logWorkCost(work: NextTimeWork) {
+    let a = getCurrentTimePerformance()
+    work()
+    const b = getCurrentTimePerformance()
+    if (b - a > taskTimeThreadhold) {
+      console.log("warn-cost more", b - a, work.lastJob)
+    }
+  }
   return function ({
     askNextWork,
     realTime
@@ -69,7 +78,7 @@ export function getScheduleAskTime({
       let callback = askNextWork()
       while (callback) {
         if (realTime.get()) {
-          callback()
+          logWorkCost(callback)
           callback = askNextWork()
         } else {
           if (callback.lastJob) {
@@ -78,7 +87,7 @@ export function getScheduleAskTime({
             break
           }
           if (getCurrentTimePerformance() < deadline) {
-            callback()
+            logWorkCost(callback)
             callback = askNextWork()
           } else {
             //需要中止,进入宏任务.原列表未处理完
@@ -97,13 +106,7 @@ export function getScheduleAskTime({
       if (onWork) {
         let work = askNextWork()
         while (work) {
-          if (work.lastJob) {
-            let a = getCurrentTimePerformance()
-            work()
-            console.log("lastJobCost", getCurrentTimePerformance() - a)
-          } else {
-            work()
-          }
+          logWorkCost(work)
           if (work.lastJob && !realTime.get()) {
             if (askNextWork()) {
               beginAsyncWork()
