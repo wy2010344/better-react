@@ -37,21 +37,23 @@ function getKen<V>(v: ExitModel<V>) {
  * 只有一个元素的
  */
 export function useOneExitAnimate<T>(
-  show: T | undefined | null | false | void,
+  value: T,
   {
     ignore,
+    getKey = quote,
     ...args
   }: {
     ignore?: boolean
+    getKey?: (v: T) => any,
     onAnimateComplete?(): void
   } = emptyObject
 ) {
   return useExitAnimate(
-    show ? [show] : emptyArray,
-    alawaysTrue,
+    [value],
+    getKey,
     {
-      enterIgnore: show && ignore ? alawaysTrue : undefined,
-      exitIgnore: !show && ignore ? alawaysTrue : undefined,
+      enterIgnore: ignore ? alawaysTrue : undefined,
+      exitIgnore: ignore ? alawaysTrue : undefined,
       ...args
     }
   )

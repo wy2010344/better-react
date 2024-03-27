@@ -12,10 +12,12 @@ import { renderFilter } from "./开发AnimatePereference/renderFilter";
 import { useVersion } from "better-react-helper";
 import bezierPreview from "./bezier-preview";
 import reorderList from "./insideAnimation/reorderList";
+import dslKanren from "./dsl-kanren";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(
     app,
+    dslKanren,
     // renderPages,
     // demo,
     // renderFilter,
@@ -25,7 +27,7 @@ export function createBr(app: HTMLElement) {
     // indexDB,
     // iScroll,
     // bezierPreview,
-    ExpensiveViewSingle,
+    // ExpensiveViewSingle,
     // reanimated,
     // demo1,
     //askTimeWork,
