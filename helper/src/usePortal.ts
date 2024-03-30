@@ -1,4 +1,4 @@
-import { renderMapF } from "better-react";
+import { FiberConfig, UseAfterRenderMap, renderMapF } from "better-react";
 import { useValueCenter } from "./ValueCenter";
 import { useStoreTriggerRender } from "./useStoreTriggerRender";
 import { renderFragment } from "./renderFragment";
@@ -9,19 +9,23 @@ import { ValueCenter, EmptyFun, emptyArray, alawaysTrue, arrayNotEqual } from 'w
 
 
 export type SharePortalModel = ValueCenter<EmptyFun>[];
-export function renderSharePortal(store: ValueCenter<SharePortalModel>) {
+export function renderSharePortal(
+  config: FiberConfig,
+  useAfterRender: UseAfterRenderMap,
+  childConfig: FiberConfig,
+  store: ValueCenter<SharePortalModel>) {
   // console.log("--顶层改变--")
-  return renderFragment(function () {
+  return renderFragment(config, function () {
     const list = useStoreTriggerRender(store)
     // console.log("--list改变--")
     renderMapF(
-      undefined,
       list,
       0 as number, arrayHasValue,
+      useAfterRender,
       alawaysTrue,
       function (data, i) {
         const row = data[i]
-        return [i + 1, row, undefined, arrayNotEqual, function () {
+        return [i + 1, row, childConfig, arrayNotEqual, function () {
           const value = useStoreTriggerRender(row)
           // console.log("--内容改变--")
           return value()
@@ -65,12 +69,16 @@ export function useAppendSharePop(
 }
 
 
-export function useSharePortal() {
+export function useSharePortal(
+  config: FiberConfig,
+  useAfterRender: UseAfterRenderMap,
+  childConfig: FiberConfig
+) {
   const { list, append } = useCreateSharePortal()
 
   return {
     render() {
-      renderSharePortal(list)
+      renderSharePortal(config, useAfterRender, childConfig, list)
     },
     useAppend(value: EmptyFun, deps?: readonly any[]) {
       useAppendSharePop(append, value, deps)

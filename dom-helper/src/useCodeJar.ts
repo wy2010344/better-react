@@ -1,5 +1,5 @@
 import { emptyArray } from "wy-helper"
-import { React, DomElementType, DomElement, domOf, DomAttribute } from "better-react-dom"
+import { React, DomElementType, DomElement, DomAttribute, dom } from "better-react-dom"
 import { useEffect, useMemo } from "better-react-helper"
 import { CSSProperties, stringifyStyle } from "wy-dom-helper"
 import { mb, contentEditableText, MbRange, getSelection, insertHTML, browser, afterCursor, beforeCursor } from 'wy-dom-helper/contentEditable'
@@ -386,7 +386,7 @@ export function useCodeJar<T extends DomElementType>(tag: T, {
 }: CodeJarOption & Omit<DomAttribute<T>, "style">) {
   //缓存上一次向外的更新,保证下一次生效时,才能更新选择.只能有这一个content.
   // const [content, setInterContent] = useState<string>("")
-  const history = useMemo<HistoryManager>(() => new HistoryManager(setRecord), emptyArray)
+  const history = useMemo(() => new HistoryManager(setRecord), emptyArray)
   function rememberHistory() {
     if (history.focus) {
       const text = editor.textContent || ''
@@ -424,7 +424,7 @@ export function useCodeJar<T extends DomElementType>(tag: T, {
     }
   }, [record])
 
-  const editor = domOf(tag as "div", {
+  const editor = dom[tag as "div"]({
     ...options as DomAttribute<"div">,
     onKeyDown(e) {
       if (e.defaultPrevented) return

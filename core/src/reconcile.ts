@@ -1,7 +1,6 @@
-import { EnvModel, LoopWork } from "./commitWork"
+import { deepTravelFiber, EnvModel, LoopWork } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
 import { Fiber } from "./Fiber"
-import { deepTravelFiber } from "./findParentAndBefore"
 import { AskNextTimeWork, EmptyFun, NextTimeWork } from "wy-helper"
 export function getReconcile(
   beginRender: BeginRender,

@@ -1,5 +1,5 @@
-import { MemoEvent, hookCommitAll, hookCreateChangeAtom, useBaseMemoGet } from 'better-react';
-import { storeRef, quote, emptyArray, arrayNotEqualOrOne, simpleNotEqual, GetValue } from 'wy-helper'
+import { MemoEvent, hookCreateChangeAtom, useBaseMemo } from 'better-react';
+import { storeRef, quote, emptyArray, arrayNotEqualOrOne, GetValue } from 'wy-helper'
 import { useAttrEffect } from './useEffect';
 
 type StoreRef<T> = {
@@ -7,16 +7,17 @@ type StoreRef<T> = {
   set(v: T): void
 }
 
-export function useMemoGet<T, V>(
-  effect: (e: MemoEvent<V>) => T,
-  deps: V) {
-  return useBaseMemoGet(arrayNotEqualOrOne, effect, deps)
-}
-
 export function useMemo<T, V>(
   effect: (e: MemoEvent<V>) => T,
-  deps: V): T {
-  return useMemoGet(effect, deps)
+  deps: V
+): T
+export function useMemo<T>(
+  effect: (e: MemoEvent<undefined>) => T
+): T
+export function useMemo(
+  effect: any,
+  deps?: any) {
+  return useBaseMemo(arrayNotEqualOrOne, effect, deps)
 }
 /**
  * 如果rollback,不允许改变是持久的
@@ -72,7 +73,7 @@ export function useLaterSetGet<T>() {
 export function useAlways<T>(init: T) {
   const ref = useLaterSetGet<GetValue<T>>()
   ref.set(() => init)
-  return ref.get as GetValue<T>
+  return ref.get as unknown as GetValue<T>
 }
 
 /**

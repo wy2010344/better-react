@@ -1,4 +1,4 @@
-import { EffectDestroyEvent, Fiber, HookEffect, MemoEvent, RenderWithDep, VirtaulDomNode, VirtualDomOperator } from "./Fiber";
+import { EffectDestroyEvent, Fiber, FiberConfig, HookEffect, MemoEvent, RenderWithDep } from "./Fiber";
 import { quote, simpleNotEqual, alawaysTrue, ValueCenter, valueCenterOf, arrayNotEqual } from "wy-helper";
 
 const w = globalThis as any
@@ -40,7 +40,8 @@ export function updateFunctionComponent(fiber: Fiber) {
   hookIndex.effects.clear()
   hookIndex.memo = 0
   hookIndex.beforeFiber = undefined
-
+  //新建一个
+  fiber.resultArray.set([])
   fiber.render()
   draftParentFiber();
   cache.wipFiber = undefined
@@ -134,6 +135,15 @@ export function useLevelEffect<T>(
   }
 }
 
+export function hookAddResult(value: any) {
+  const parentFiber = hookParentFiber()
+  if (!parentFiber.config.allowAdd?.(value)) {
+    console.log('该fiber不允许添加这个值', value)
+    throw new Error('该fiber不允许添加这个值')
+  }
+  parentFiber.resultArray.get().push(value)
+}
+
 export function hookCreateChangeAtom() {
   const parentFiber = hookParentFiber()
   return parentFiber.envModel.createChangeAtom
@@ -144,7 +154,7 @@ export function hookCreateChangeAtom() {
  * @param deps 
  * @returns 
  */
-export function useBaseMemoGet<T, V>(
+export function useBaseMemo<T, V>(
   shouldChange: (a: V, b: V) => any,
   effect: (e: MemoEvent<V>) => T,
   deps: V,
@@ -204,32 +214,19 @@ export function useBaseMemoGet<T, V>(
   }
 }
 export function renderBaseFiber<T>(
-  dom: VirtualDomOperator,
   dynamicChild: boolean,
-  ...vs: RenderWithDep<T>
-): VirtaulDomNode
-export function renderBaseFiber<T>(
-  dom: void,
-  dynamicChild: boolean,
-  ...vs: RenderWithDep<T>
-): void
-export function renderBaseFiber(
-  dom: any,
-  dynamicChild: boolean,
-  shouldChange: (a: any, b: any) => any,
-  render: any,
-  deps: any
-): any {
+  config: FiberConfig,
+  ...[shouldChange, render, deps]: RenderWithDep<T>
+) {
   const parentFiber = hookParentFiber()
   let currentFiber: Fiber
   const isInit = parentFiber.effectTag.get() == 'PLACEMENT'
   if (isInit) {
     //新增
-    const vdom = dom ? dom[0](dom[2]) : undefined
     currentFiber = Fiber.createFix(
       parentFiber.envModel,
       parentFiber,
-      vdom,
+      config,
       shouldChange,
       {
         render,
@@ -247,6 +244,7 @@ export function renderBaseFiber(
     //一直组装到最后
     parentFiber.lastChild.set(currentFiber)
     hookIndex.beforeFiber = currentFiber
+
   } else {
     //修改
     let oldFiber: Fiber | void = undefined
@@ -259,6 +257,9 @@ export function renderBaseFiber(
     if (!oldFiber) {
       throw new Error("非预期地多出现了fiber")
     }
+    if (oldFiber.config != config) {
+      throw new Error("FiberConfig发生改变")
+    }
     if (oldFiber.shouldChange != shouldChange) {
       throw new Error("shouldChange发生改变")
     }
@@ -267,14 +268,10 @@ export function renderBaseFiber(
     hookIndex.beforeFiber = currentFiber
     currentFiber.changeRender(render, deps)
   }
-  const currentDom = currentFiber.dom
-  if (currentDom) {
-    if (!dom) {
-      throw new Error('需要更新参数')
-    }
-    currentDom.useUpdate(dom[1], isInit)
+  if (!parentFiber.config.allowFiber) {
+    throw new Error('该fiber不允许添加后继fiber')
   }
-  return currentDom
+  parentFiber.resultArray.get().push(currentFiber.lazyGetResultArray)
 }
 /**
  * 两种方式,一种是传任意props进来,有一个公用的处理函数,和一个判断props是否发生变成
@@ -287,20 +284,10 @@ export function renderBaseFiber(
  * @returns 
  */
 export function renderFiber<T>(
-  dom: VirtualDomOperator,
-  ...vs: RenderWithDep<T>
-): VirtaulDomNode
-export function renderFiber<T>(
-  dom: void,
-  ...vs: RenderWithDep<T>
-): void
-export function renderFiber(
-  dom: any,
-  shouldChange: (a: any, b: any) => any,
-  render: any,
-  deps?: any
+  config: FiberConfig,
+  ...[shouldChange, render, deps]: RenderWithDep<T>
 ) {
-  return renderBaseFiber(dom, false, shouldChange, render, deps)
+  return renderBaseFiber(false, config, shouldChange, render, deps)
 }
 export interface Context<T> {
   hookProvider(v: T): void

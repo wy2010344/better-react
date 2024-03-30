@@ -1,5 +1,6 @@
-import { ReduceRowState, ReduceState, buildSubSetArray, buildSubSetObject } from "wy-helper"
+import { ReduceRowState, ReduceState, alawaysTrue, buildSubSetArray, buildSubSetObject } from "wy-helper"
 import { useMemo } from "./useRef"
+import { FiberConfig } from "better-react"
 
 /**
  * 对react-setState的局部嵌套
@@ -22,3 +23,12 @@ export function useBuildSubSetArray<T>(
 ): ReduceRowState<T> {
   return useMemo(() => buildSubSetArray(parentSet, equal), [])
 }
+
+
+
+export const fiberConfigAlawaysAllow: FiberConfig = {
+  allowFiber: true,
+  allowAdd: alawaysTrue,
+}
+
+export const fiberConfigAlawaysAllowGet = () => fiberConfigAlawaysAllow

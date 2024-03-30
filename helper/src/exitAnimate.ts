@@ -1,8 +1,8 @@
 import { useAtomFun } from "./useRef"
-import { renderArray } from "./renderMap"
+import { RenderKeyArray, renderArray } from "./renderMap"
 import { emptyArray, emptyObject, ExitAnimateArg, buildUseExitAnimate, quote, ExitModel, alawaysTrue, createEmptyExitListCache, FalseType } from "wy-helper"
 import { useEffect } from "./useEffect"
-import { hookMakeDirtyAndRequestUpdate } from "better-react"
+import { FiberConfig, UseAfterRenderMap, hookMakeDirtyAndRequestUpdate } from "better-react"
 
 
 
@@ -22,12 +22,16 @@ export function useExitAnimate<V>(
   return list
 }
 
-export function renderExitAnimateArray<V>(
-  vs: readonly ExitModel<V>[],
-  render: (v: ExitModel<V>) => void) {
-  renderArray(vs, getKen, function (value) {
-    render(value)
-  })
+export function createRenderAnimateArray<V>(
+  renderArray: RenderKeyArray<ExitModel<V>>
+) {
+  return function renderExitAnimateArray(
+    vs: readonly ExitModel<V>[],
+    render: (v: ExitModel<V>) => void) {
+    renderArray(vs, getKen, function (value) {
+      render(value)
+    })
+  }
 }
 
 function getKen<V>(v: ExitModel<V>) {
@@ -61,25 +65,30 @@ export function useOneExitAnimate<T>(
 
 
 
-export function renderIfExitAnimate<T>(
-  show: T,
-  renderTrue: (v: ExitModel<Exclude<T, FalseType>>) => void,
-  other?: ExitAnimateArg<T> & {
-    renderFalse?(v: ExitModel<Extract<T, FalseType>>): void
-  }) {
-
-  const list = useExitAnimate(
-    show ? [show] : other?.renderFalse ? [show] : emptyArray,
-    renderIfGetKey,
-    other)
-  renderExitAnimateArray(list, function (v) {
-    if (v.value) {
-      renderTrue(v)
-    } else if (other?.renderFalse) {
-      other.renderFalse(v)
-    }
-  })
+export function createRenderIfExitAnimate<T>(
+  outRenderArray: RenderKeyArray<ExitModel<T>>
+) {
+  const renderArray = createRenderAnimateArray(outRenderArray)
+  return function (
+    show: T,
+    renderTrue: (v: ExitModel<Exclude<T, FalseType>>) => void,
+    other?: ExitAnimateArg<T> & {
+      renderFalse?(v: ExitModel<Extract<T, FalseType>>): void
+    }) {
+    const list = useExitAnimate(
+      show ? [show] : other?.renderFalse ? [show] : emptyArray,
+      renderIfGetKey,
+      other)
+    renderArray(list, function (v) {
+      if (v.value) {
+        renderTrue(v as any)
+      } else if (other?.renderFalse) {
+        other.renderFalse(v as any)
+      }
+    })
+  }
 }
+
 
 function renderIfGetKey<T>(v: T) {
   return !v

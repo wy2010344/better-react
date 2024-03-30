@@ -1,5 +1,4 @@
 import { Fiber, VirtaulDomNode } from "./Fiber"
-import { deepTravelFiber, findParentAndBefore } from "./findParentAndBefore"
 import { EmptyFun, ManageValue, StoreRef, iterableToList, quote, removeEqual, run, storeRef } from "wy-helper"
 
 
@@ -108,8 +107,8 @@ export class EnvModel {
       commitDeletion(fiber)
     })
     this.deletions.length = 0
-    /******更新属性********************************************************/
-    updateFixDom(rootFiber)
+    // /******更新属性********************************************************/
+    // updateFixDom(rootFiber)
 
     //执行所有effect
     const updateEffects = this.updateEffects
@@ -216,12 +215,12 @@ class ChangeAtom<T> implements StoreRef<T>{
  * 提交变更应该从根dirty节点开始。
  * 找到最顶层dirty节点->计算出新的节点替换当前->对比标记新节点->更新
  */
-function updateFixDom(fiber: Fiber | undefined) {
-  while (fiber) {
-    fiber = fixDomAppend(fiber)
-  }
-}
-const fixDomAppend = deepTravelFiber(findParentAndBefore)
+// function updateFixDom(fiber: Fiber | undefined) {
+//   while (fiber) {
+//     fiber = fixDomAppend(fiber)
+//   }
+// }
+// const fixDomAppend = deepTravelFiber(findParentAndBefore)
 
 
 
@@ -241,15 +240,15 @@ export type FindParentAndBefore = [VirtaulDomNode, VirtaulDomNode | null] | [Vir
  * @param domParent 
  */
 function commitDeletion(fiber: Fiber) {
-  const dom = fiber.dom
-  if (dom) {
-    if (!dom.isPortal) {
-      //portal自己在destroy里移除
-      dom.removeFromParent()
-    }
-  } else {
-    circleCommitDelection(fiber.firstChild.get())
-  }
+  circleCommitDelection(fiber.firstChild.get())
+  // const dom = fiber.dom
+  // if (dom) {
+  //   if (!dom.isPortal) {
+  //     //portal自己在destroy里移除
+  //     dom.removeFromParent()
+  //   }
+  // } else {
+  // }
 }
 function circleCommitDelection(fiber: Fiber | void) {
   if (fiber) {
@@ -284,5 +283,27 @@ function destroyFiber(fiber: Fiber) {
       })
     }
   }
-  fiber.dom?.destroy()
+  // fiber.dom?.destroy()
+}
+
+
+
+export function deepTravelFiber<T extends any[]>(call: (Fiber: Fiber, ...vs: T) => void) {
+  return function (fiber: Fiber, ...vs: T) {
+    call(fiber, ...vs)
+    const child = fiber.firstChild.get()
+    if (child) {
+      return child
+    }
+    /**寻找叔叔节点 */
+    let nextFiber: Fiber | undefined = fiber
+    while (nextFiber) {
+      const next = nextFiber.next.get()
+      if (next) {
+        return next
+      }
+      nextFiber = nextFiber.parent
+    }
+    return undefined
+  }
 }

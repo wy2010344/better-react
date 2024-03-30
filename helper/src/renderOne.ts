@@ -1,10 +1,7 @@
-import { renderOneF } from "better-react";
-import { alawaysTrue } from "wy-helper";
+import { EmptyFun, quote } from "wy-helper";
+import { renderArray } from "./renderMap";
 
-export function renderOne<T>(key: T, render: (v: T) => void) {
-  renderOneF(undefined, key, alawaysTrue, function (key) {
-    return [key, undefined, alawaysTrue, function () {
-      render(key)
-    }, undefined]
-  }, undefined)
+
+export function renderOne(key: any, render: EmptyFun) {
+  renderArray([key], quote, render)
 }

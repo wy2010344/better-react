@@ -1,5 +1,5 @@
 import { EnvModel, FindParentAndBefore } from "./commitWork"
-import { EmptyFun, storeRef, StoreRef, ValueCenter } from "wy-helper"
+import { emptyArray, EmptyFun, objectFreeze, storeRef, StoreRef, ValueCenter } from "wy-helper"
 
 export type HookMemo<T, D> = {
   deps: D
@@ -28,6 +28,13 @@ type EffectTag = "PLACEMENT" | "UPDATE" | void
 function whenCommitEffectTag(v: EffectTag) {
   return undefined
 }
+
+export type FiberConfig = {
+  //是否允许子fiber
+  allowFiber?: boolean
+  allowAdd?(v: any): any
+  useAfterRender?(vs: readonly any[]): readonly any[]
+}
 /**
  * 会调整顺序的,包括useMap的父节点与子结点.但父节点只调整child与lastChild
  * 子节点只调整prev与next
@@ -41,7 +48,7 @@ function whenCommitEffectTag(v: EffectTag) {
  * 可以是MapFiber,只要控制返回值不是render+deps,而是mapFiber的构造参数
  * 如果是oneFiber,父节点的child与lastChild会变化,但子结点的before与next都是空
  */
-export class Fiber<D = any> {
+export class Fiber<D = any, M = any> {
   /**是否已经销毁 */
   destroyed?: boolean
   /**全局key,使帧复用,或keep-alive*/
@@ -52,6 +59,13 @@ export class Fiber<D = any> {
     shouldChange(a: any, b: any): any
     value: StoreRef<HookMemo<any, any>>
   }[]
+  /**
+   * render计算结果的汇总
+   */
+  readonly resultArray = this.envModel.createChangeAtom<M[]>(emptyArray as any)
+  lazyGetResultArray() {
+    return this.resultArray.get()
+  }
   /**初始化或更新 
    * UPDATE可能是setState造成的,可能是更新造成的
    * 这其中要回滚
@@ -69,13 +83,15 @@ export class Fiber<D = any> {
   private constructor(
     public readonly envModel: EnvModel,
     public readonly parent: Fiber | undefined,
-    public readonly dom: VirtaulDomNode | undefined,
     public readonly before: StoreRef<Fiber | void>,
     public readonly next: StoreRef<Fiber | void>,
+    public readonly config: FiberConfig,
     public readonly shouldChange: (a: D, b: D) => any,
     rd: RenderDeps<any>,
     dynamicChild?: boolean
   ) {
+    this.config = objectFreeze(this.config)
+    this.lazyGetResultArray = this.lazyGetResultArray.bind(this)
     this.effectTag = envModel.createChangeAtom<EffectTag>("PLACEMENT", whenCommitEffectTag)
     this.renderDeps = envModel.createChangeAtom(rd)
     if (dynamicChild) {
@@ -106,6 +122,10 @@ export class Fiber<D = any> {
       beforeTrigger: oldDeps,
       isInit: isNew
     })
+    if (this.config.useAfterRender) {
+      const vs = objectFreeze(this.resultArray.get())
+      this.resultArray.set(this.config.useAfterRender(vs) as any[])
+    }
   }
   /**
    * 创建一个固定节点,该节点是不是MapFiber不一定
@@ -115,7 +135,7 @@ export class Fiber<D = any> {
   static createFix<D>(
     envModel: EnvModel,
     parentFiber: Fiber,
-    dom: VirtaulDomNode | undefined,
+    config: FiberConfig,
     shouldChange: (a: D, b: D) => any,
     rd: RenderDeps<D>,
     dynamicChild?: boolean
@@ -123,9 +143,9 @@ export class Fiber<D = any> {
     const fiber = new Fiber(
       envModel,
       parentFiber,
-      dom,
       storeRef(undefined),
       storeRef(undefined),
+      config,
       shouldChange,
       rd,
       dynamicChild)
@@ -141,7 +161,7 @@ export class Fiber<D = any> {
   static createMapChild<D>(
     envModel: EnvModel,
     parentFiber: Fiber,
-    dom: VirtaulDomNode | undefined,
+    config: FiberConfig,
     shouldChange: (a: D, b: D) => any,
     rd: RenderDeps<D>,
     dynamicChild?: boolean
@@ -149,9 +169,9 @@ export class Fiber<D = any> {
     const fiber = new Fiber(
       envModel,
       parentFiber,
-      dom,
       envModel.createChangeAtom(undefined),
       envModel.createChangeAtom(undefined),
+      config,
       shouldChange,
       rd,
       dynamicChild)
@@ -166,7 +186,7 @@ export class Fiber<D = any> {
   static createOneChild<D>(
     envModel: EnvModel,
     parentFiber: Fiber,
-    dom: VirtaulDomNode | undefined,
+    config: FiberConfig,
     shouldChange: (a: D, b: D) => any,
     rd: RenderDeps<D>,
     dynamicChild?: boolean
@@ -174,9 +194,9 @@ export class Fiber<D = any> {
     const fiber = new Fiber(
       envModel,
       parentFiber,
-      dom,
       emptyPlace,
       emptyPlace,
+      config,
       shouldChange,
       rd,
       dynamicChild)
@@ -184,26 +204,6 @@ export class Fiber<D = any> {
   }
 }
 const emptyPlace = storeRef<Fiber | void>(undefined)
-
-/**
- * 构造函数
- * 更新参数...
- * 构造参数
- */
-export type VirtualDomOperator<T = any, M = any> = [
-  (m: M) => VirtaulDomNode<T>,
-  T,
-  M
-] | [
-  (m: undefined) => VirtaulDomNode<T>,
-  T,
-  undefined
-] | [
-  () => VirtaulDomNode<T>,
-  T
-]
-
-
 
 
 export type MemoEvent<T> = {

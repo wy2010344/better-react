@@ -1094,8 +1094,6 @@ export namespace React {
     yChannelSelector?: string | undefined;
     z?: number | string | undefined;
     zoomAndPan?: string | undefined;
-    exit?(node: T, props: SVGAttributes<T>): Promise<any>
-    onDestroy?(node: T): void
   }
   export type SVGProps<T> = {
     attributes: SVGAttributes<T>

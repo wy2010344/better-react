@@ -1,5 +1,4 @@
 
-import { renderOneF } from "better-react";
 import { valueCenterOf } from "wy-helper";
 import { useStoreTriggerRender } from "./useStoreTriggerRender";
 type FunElement = {
@@ -37,7 +36,7 @@ export function createSharePop() {
     useProvider() {
       const { stacks, index } = useStoreTriggerRender(popCenter)
       const currentPop = stacks[index]
-      renderOneF(undefined, currentPop, renderContent)
+      // renderOneF(undefined, currentPop, renderContent)
     },
     push(render: () => void, id: any = render) {
       const { stacks, index } = popCenter.get()

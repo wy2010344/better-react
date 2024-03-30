@@ -1,6 +1,5 @@
 import { createContext } from "better-react";
 import { getMatchRoutes, MatchRoute, MathRule } from "./util";
-import { renderOne } from "../renderOne";
 
 export function renderRoutes(
   path: string[],
@@ -8,7 +7,7 @@ export function renderRoutes(
   other?: (v: string[]) => void
 ) {
   const match = getMatchRoutes(path, matchRules, other)
-  renderOne(match.index, match.render)
+  // renderOne(match.index, match.render)
 }
 function getKey(v: ReturnType<typeof getMatchRoutes>) {
   return v.index

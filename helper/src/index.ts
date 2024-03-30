@@ -1,6 +1,5 @@
 
 
-export * from './renderGuard'
 export * from './useOnlyId'
 export * from './useRef'
 export * from './ValueCenter'
@@ -17,7 +16,6 @@ export * from './useCallback'
 export * from './useInit'
 export * from './useReducer'
 export * from './renderMap'
-export * from './renderOne'
 export * from './renderFragment'
 export * from './Lock'
 export * from './useAsyncPaginate'
@@ -30,5 +28,6 @@ export * from './useCreateRef'
 export * from './util'
 export * from './animationValue'
 export * from './reorder'
+export * from './renderOne'
 export { compileSimpleRule, createMatch, pathExactly, pathStartWith, toAbsolutePath } from "./routes/util"
 export { RouteContext, routeMatch, routeMathWithOther } from "./routes"

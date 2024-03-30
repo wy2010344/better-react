@@ -1,12 +1,13 @@
-import { Fiber, VirtaulDomNode } from "./Fiber"
+import { Fiber, FiberConfig } from "./Fiber"
 import { batchWork, getReconcile } from "./reconcile"
 import { EnvModel } from "./commitWork"
 import { AskNextTimeWork, alawaysTrue } from "wy-helper"
 export { startTransition } from './reconcile'
 export {
-  useLevelEffect, useBaseMemoGet,
+  useLevelEffect, useBaseMemo,
   createContext, renderFiber,
   hookCreateChangeAtom,
+  hookAddResult,
   hookCommitAll,
   hookEffectTag,
   hookRequestReconcile,
@@ -17,21 +18,19 @@ export type {
   Fiber,
   VirtaulDomNode,
   RenderWithDep,
-  VirtualDomOperator,
   MemoEvent,
-  EffectDestroyEvent
+  EffectDestroyEvent,
+  FiberConfig
 } from './Fiber'
 export { CreateChangeAtom } from './commitWork'
-export type { FindParentAndBefore } from './findParentAndBefore'
-export * from './renderOneF'
 export * from './renderMapF'
 export function render<T>(
-  dom: VirtaulDomNode<T>,
+  config: FiberConfig,
   render: () => void,
   getAsk: AskNextTimeWork
 ) {
   const envModel = new EnvModel()
-  const rootFiber = Fiber.createFix(envModel, null!, dom, alawaysTrue, {
+  const rootFiber = Fiber.createFix(envModel, null!, config, alawaysTrue, {
     render,
     isNew: true,
     deps: undefined

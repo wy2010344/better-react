@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker"
 import { dom } from "better-react-dom"
 import { createUseReducer, renderArray, useAtom, useChange, useEffect, useTimeoutAnimateValue } from "better-react-helper"
-import { Point, arrayToMove, emptyArray, pointEqual, pointZero, syncMergeCenter } from "wy-helper"
+import { Point, arrayToMove, emptyArray, pointEqual, pointZero, quote, syncMergeCenter } from "wy-helper"
 import { useEdgeScroll } from "./edgeScroll"
 import { requesetBatchAnimationForceFlow } from "wy-dom-helper"
 import { useReorder } from 'better-react-dom-helper'
@@ -47,6 +47,13 @@ const useReduceList = createUseReducer(function (list: Row[], action: {
   }
   return list
 })
+
+const emptyConfig = {
+  allowAdd(v: any) {
+    return true
+  },
+  allowFiber: true
+}
 export default function () {
   const [orderList, dispatch] = useReduceList(list)
 
@@ -61,7 +68,7 @@ export default function () {
     onTouchMove(event) {
       event.preventDefault()
     },
-  }).render(function () {
+  }).renderFragment(function () {
     const reOrder = useReorder('y',
       function (key) {
         return !orderList.some(v => v.index == key)
@@ -119,7 +126,7 @@ export default function () {
       onScroll(event) {
         reOrder.onScroll(container)
       },
-    }).render(function () {
+    }).renderFragment(function () {
       renderArray(orderList, v => v.index, function (row, index) {
         const transY = useTimeoutAnimateValue<Point, string>(pointZero, pointEqual)
         const reOrderChild = reOrder.useChild(
@@ -172,7 +179,7 @@ export default function () {
               })
             })
           }
-        }).render(function () {
+        }).renderFragment(function () {
           dom.img({
             src: row.avatar
           }).render()

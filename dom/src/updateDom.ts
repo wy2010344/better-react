@@ -1,133 +1,35 @@
-import {
-  FindParentAndBefore,
-  VirtaulDomNode
-} from "better-react"
+import { useMemo } from "better-react-helper"
 import { getAttributeAlias } from "./getAttributeAlias"
-import { DomElementType, SvgElementType } from "./html"
-import { objectDiffDeleteKey } from "wy-helper"
-import { useAttrEffect } from "better-react-helper"
-
+import { DomAttribute, DomElement, DomElementType, SvgAttribute, SvgElement, SvgElementType } from "./html"
+import { emptyObject, objectDiffDeleteKey } from "wy-helper"
+import { MemoEvent } from "better-react"
 export type Props = { [key: string]: any }
-interface FiberAbsNode<T = any> extends VirtaulDomNode<T> {
-  node: Node
-}
-export const EMPTYPROPS = {}
-export type GetValueWithDep<T, F extends readonly any[] = readonly any[]> = readonly [(vs: F) => T, F] | readonly [() => T]
-export class FiberNode implements FiberAbsNode<GetValueWithDep<Props, any>> {
-  private constructor(
-    public node: Node,
-    private _updateProp: (node: Node, key: string, value: any) => void,
-    public readonly isPortal?: boolean,
-  ) { }
-  private updateDomEffect() {
-    updateDom(this, this.props, this.oldProps)
-    this.oldProps = this.props
-  }
-  //这个props不需要AtomValue,因为在运行时不访问
-  private props: Props = EMPTYPROPS
-  private oldProps: Props = EMPTYPROPS
-  useUpdate([getProps, deps]: GetValueWithDep<Props>, isFirst: boolean): void {
-    const that = this
-    useAttrEffect(function (e) {
-      that.props = getProps(deps as any)
-      that.updateDomEffect()
-      return that.props.onDestroy
-    }, deps as any[])
-  }
-  static create(
-    node: Node,
-    updateProps: (node: Node, key: string, value: any) => void,
-    isPortal?: boolean,
-  ) {
-    return new FiberNode(
-      node,
-      updateProps,
-      isPortal
-    )
-  }
-  static createDomWith(node: Node, isPortal?: boolean) {
-    return new FiberNode(node, updateProps, isPortal)
-  }
-  static createDom<T extends DomElementType>(type: T, isPortal?: boolean) {
-    return FiberNode.createDomWith(
-      document.createElement(type),
-      isPortal
-    )
-  }
-  static portalCreateDom<T extends DomElementType>(type: T) {
-    return FiberNode.createDom(type, true)
-  }
-  static createSvgWith(node: Node, isPortal?: boolean) {
-    return new FiberNode(
-      node,
-      updateSVGProps,
-      isPortal
-    )
-  }
-  static createSvg<T extends SvgElementType>(type: T, isPortal?: boolean) {
-    return FiberNode.createSvgWith(
-      document.createElementNS("http://www.w3.org/2000/svg", type),
-      isPortal
-    )
-  }
-  static portalCreateSvg<T extends SvgElementType>(type: T) {
-    return FiberNode.createSvg(type, true)
-  }
-  appendAfter(value?: FindParentAndBefore): void {
-    appendAfter(this, value as any)
-  }
-  destroy(): void {
-    if (this.isPortal) {
-      this.removeFromParent()
-    }
-  }
 
-  removeFromParent() {
-    const props = this.props
-    if (props.exit) {
-      props.exit(this.node, props).then(() => {
-        realRemove(this.node)
-      })
-    } else {
-      realRemove(this.node)
-    }
-  }
-
-  updateProp(key: string, value: any) {
-    this._updateProp(this.node, key, value)
+function createUpdateDom<T extends DomElementType>(e: MemoEvent<DomElement<T>>) {
+  let oldAttrs: DomAttribute<T> = emptyObject
+  return function (attrs: DomAttribute<T>) {
+    updateDom(e.trigger, updateProps, attrs, oldAttrs)
+    oldAttrs = attrs
   }
 }
-
-function realRemove(node: Node) {
-  node.parentElement?.removeChild(node)
+export function useUpdateDomNodeAttr<T extends DomElementType>(
+  node: DomElement<T>
+) {
+  return useMemo(createUpdateDom, node)
 }
 
-export class FiberText implements FiberAbsNode {
-  public node: Node = document.createTextNode("")
-  static create() {
-    return new FiberText()
-  }
-  appendAsPortal(): void {
-
-  }
-  useUpdate(content: string) {
-    if (this.oldContent != content) {
-      this.node.textContent = content
-      this.oldContent = content
-    }
-  }
-  private oldContent: string = ""
-  appendAfter(value: FindParentAndBefore): void {
-    appendAfter(this, value as any)
-  }
-  removeFromParent(): void {
-    this.node.parentElement?.removeChild(this.node)
-  }
-  destroy(): void {
+function createUpdateSvg<T extends SvgElementType>(e: MemoEvent<SvgElement<T>>) {
+  let oldAttrs: SvgAttribute<T> = emptyObject
+  return function (attrs: SvgAttribute<T>) {
+    updateDom(e.trigger, updateSVGProps, attrs, oldAttrs)
+    oldAttrs = attrs
   }
 }
-export const emptyFun = () => { }
-
+export function useUpdateSvgNodeAttr<T extends SvgElementType>(
+  node: SvgElement<T>
+) {
+  return useMemo(createUpdateSvg, node)
+}
 
 function mergeEvent(node: Node, key: string, oldValue: any, newValue?: any) {
   let eventType = key.toLowerCase().substring(2)
@@ -152,17 +54,17 @@ function mergeEvent(node: Node, key: string, oldValue: any, newValue?: any) {
  * @param props 
  */
 function updateDom(
-  dom: FiberNode,
+  node: Node,
+  updateProp: (node: Node, key: string, value?: any) => void,
   props: Props,
   oldProps: Props
 ) {
-  const node = dom.node
   //移除旧事件：新属性中不存在相应事件，或者事件不一样
   objectDiffDeleteKey(oldProps, props, function (key: string) {
     if (isEvent(key)) {
       mergeEvent(node, key, oldProps[key])
     } else if (isProperty(key)) {
-      dom.updateProp(key, undefined)
+      updateProp(node, key, undefined)
     }
   })
 
@@ -173,7 +75,7 @@ function updateDom(
       if (isEvent(key)) {
         mergeEvent(node, key, oldValue, value)
       } else if (isProperty(key)) {
-        dom.updateProp(key, value)
+        updateProp(node, key, value)
       }
     }
   }
@@ -197,13 +99,11 @@ function isEvent(key: string) {
  * @returns 
  */
 function isProperty(key: string) {
-  return key != 'children'
-    && key != 'exit'
-    && key != 'onDestroy'
+  return true
 }
 
 const emptyKeys = ['href', 'className']
-export function updateProps(node: any, key: string, value: any) {
+function updateProps(node: any, key: string, value?: any) {
   if (key.includes('-')) {
     node.setAttribute(key, value)
   } else {
@@ -216,7 +116,7 @@ export function updateProps(node: any, key: string, value: any) {
 }
 
 
-export function updateSVGProps(node: any, key: string, value: any) {
+function updateSVGProps(node: any, key: string, value?: any) {
   if (key == 'innerHTML' || key == 'textContent') {
     updateProps(node, key, value)
   } else {
@@ -229,51 +129,6 @@ export function updateSVGProps(node: any, key: string, value: any) {
     } else {
       node.removeAttribute(key)
     }
-  }
-}
-/**
- * 调整、追加节点
- * @param parent 
- * @param dom 
- * @param before 
- */
-export function appendAfter(dom: FiberAbsNode, parentAndBefore: [FiberAbsNode, FiberAbsNode | null] | [FiberAbsNode | null, FiberAbsNode]) {
-  const [parent, before] = parentAndBefore
-
-  const parentDom = parent ? parent.node : before?.node.parentNode
-  if (parentDom) {
-    const beforeNode = before?.node
-    if (beforeNode) {
-      //如果有前节点
-      const nextNode = beforeNode.nextSibling
-      if (nextNode) {
-        //如果有后继节点,且后继不为自身
-        if (nextNode != dom.node) {
-          //console.log("next-insert-before", dom.node, nextNode)
-          parentDom.insertBefore(dom.node, nextNode)
-        }
-      } else {
-        //如果没有后继节点,直接尾随
-        //console.log("next-append", dom.node)
-        parentDom.appendChild(dom.node)
-      }
-    } else {
-      //如果没有前继节点
-      const firstChild = parentDom.firstChild
-      if (firstChild) {
-        //父元素有子元素,
-        if (firstChild != dom.node) {
-          //console.log("first-insert-before", dom.node, firstChild)
-          parentDom.insertBefore(dom.node, firstChild)
-        }
-      } else {
-        //父元素无子元素,直接尾随
-        //console.log("first-append", dom.node)
-        parentDom.appendChild(dom.node)
-      }
-    }
-  } else {
-    console.error("未找到parent-dom????")
   }
 }
 

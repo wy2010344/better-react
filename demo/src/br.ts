@@ -1,4 +1,4 @@
-import { createRoot, dom } from "better-react-dom";
+import { createRoot } from "better-react-dom";
 import insideAnimation from "./insideAnimation/frameLayout";
 // import iScroll from "./iScroll/index";
 import iScroll from "./iScroll/myScrollFrame";
@@ -14,6 +14,8 @@ import { useVersion } from "better-react-helper";
 import bezierPreview from "./bezier-preview";
 import reorderList from "./insideAnimation/reorderList";
 import dslKanren from "./dsl-kanren";
+import newMode from "./newMode";
+import canvasRender from "./newMode/canvasRender";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(
@@ -24,9 +26,11 @@ export function createBr(app: HTMLElement) {
     // renderFilter,
     // cssLayout,
     // reorderList,
+    canvasRender,
     // insideAnimation,
     // indexDB,
-    iScroll,
+    // iScroll,
+    // newMode,
     // bezierPreview,
     // ExpensiveViewSingle,
     // reanimated,

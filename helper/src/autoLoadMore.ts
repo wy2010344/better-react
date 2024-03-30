@@ -1,31 +1,6 @@
-import { AutoLoadMoreCore, EmptyFun, PromiseAutoLoadMore, PromiseResult, SetValue, VersionPromiseResult, emptyArray, emptyFun } from "wy-helper";
-import { useEvent } from "./useEvent";
-import { createAndFlushAbortController } from "./usePromise";
+import { AutoLoadMoreCore, PromiseAutoLoadMore, PromiseResult, SetValue, VersionPromiseResult, emptyArray } from "wy-helper";
 import { useCallback } from "./useCallback";
-import { useAlways, useAtomBind, useMemo } from "./useRef";
-import { useVersionLock } from "./Lock";
 import { useReducer } from "./useReducer";
-import { useEffect } from "./useEffect";
-
-export type LoadAfterResult<T, K> = {
-  list: T[]
-  nextKey: K
-  hasMore: boolean
-}
-type GetAfter<T, K> = (key: K) => Promise<LoadAfterResult<T, K>>;
-type GetAfterEffect<T, K> = (key: K, signal?: AbortSignal) => Promise<LoadAfterResult<T, K>>;
-type AutoLoadMoreModel<T, K> =
-  | {
-    getAfter: GetAfter<T, K>;
-    data: PromiseResult<
-      LoadAfterResult<T, K> & {
-        /**最新一次加载更多,可能是失败 */
-        loadMoreError?: any;
-        version: number;
-      }
-    >;
-  }
-  | undefined;
 type AutoLoadMoreAction<T, K> =
   {
     type: "reload";

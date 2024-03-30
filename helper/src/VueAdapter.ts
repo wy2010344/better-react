@@ -2,7 +2,7 @@
 import { useAtomBindFun, useMemo } from "./useRef";
 import { Compare, emptyArray, EmptyFun, GetValue, SetValue, simpleNotEqual } from "wy-helper";
 import { useDestroy } from "./useInit";
-import { cacheOf, createVueInstance, valueOf, watch, watchAfter, watchBefore, watchExp } from 'wy-helper/Vue'
+import { cacheOf, valueOf, watch, watchAfter, watchBefore, watchExp } from 'wy-helper/Vue'
 import { createContext } from "better-react";
 
 export function useRefVueValueFrom<T>(init: () => T, shouldChange?: Compare<any>) {
