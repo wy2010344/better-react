@@ -53,7 +53,7 @@ export function renderMapF<M, C, D>(
   deps: D
 ) {
   return renderBaseFiber(dom, true, shouldChange, function () {
-    const mapRef = useBaseMemoGet(alawaysFalse, createMapRef, undefined)();
+    const mapRef = useBaseMemoGet(alawaysFalse, createMapRef, undefined);
     const oldMap = cloneMap(mapRef.get())
     const newMap = new Map<any, Fiber[]>()
     useLevelEffect(0, alawaysTrue, function () {

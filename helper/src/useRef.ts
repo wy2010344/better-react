@@ -1,5 +1,5 @@
 import { MemoEvent, hookCommitAll, hookCreateChangeAtom, useBaseMemoGet } from 'better-react';
-import { storeRef, quote, emptyArray, arrayNotEqualOrOne, simpleNotEqual } from 'wy-helper'
+import { storeRef, quote, emptyArray, arrayNotEqualOrOne, simpleNotEqual, GetValue } from 'wy-helper'
 import { useAttrEffect } from './useEffect';
 
 type StoreRef<T> = {
@@ -16,7 +16,7 @@ export function useMemoGet<T, V>(
 export function useMemo<T, V>(
   effect: (e: MemoEvent<V>) => T,
   deps: V): T {
-  return useMemoGet(effect, deps)()
+  return useMemoGet(effect, deps)
 }
 /**
  * 如果rollback,不允许改变是持久的
@@ -54,8 +54,14 @@ export function useAtomFun<T>(init: () => T) {
   return useAtom(undefined, init)
 }
 
-function getDep<T>(e: MemoEvent<T>) {
-  return e.trigger
+function createStore<T>() {
+  const ref = storeRef<T | undefined>(undefined)
+  ref.set = ref.set.bind(ref)
+  return ref
+}
+
+export function useLaterSetGet<T>() {
+  return useMemo(createStore, undefined) as StoreRef<T>
 }
 /**
  * 始终获得render上的最新值
@@ -64,7 +70,9 @@ function getDep<T>(e: MemoEvent<T>) {
  * @returns 
  */
 export function useAlways<T>(init: T) {
-  return useBaseMemoGet(simpleNotEqual, getDep, init)
+  const ref = useLaterSetGet<GetValue<T>>()
+  ref.set(() => init)
+  return ref.get as GetValue<T>
 }
 
 /**
@@ -79,15 +87,6 @@ export function useEventAlaways<T>(init: T) {
     ref.set(init)
   })
   return ref.get
-}
-
-export function useCommitAlaways<T>(init: T) {
-  const flushSync = hookCommitAll()
-  const getValue = useAlways(init)
-  return function () {
-    flushSync()
-    return getValue()
-  }
 }
 
 /**

@@ -49,7 +49,6 @@ export class Fiber<D = any> {
   contextProvider?: Map<any, ValueCenter<any>>
   hookEffects?: Map<number, StoreRef<HookEffect<any>>[]>
   hookMemo?: {
-    get(): any,
     shouldChange(a: any, b: any): any
     value: StoreRef<HookMemo<any, any>>
   }[]

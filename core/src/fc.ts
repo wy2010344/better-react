@@ -148,7 +148,7 @@ export function useBaseMemoGet<T, V>(
   shouldChange: (a: V, b: V) => any,
   effect: (e: MemoEvent<V>) => T,
   deps: V,
-): () => T {
+): T {
   const parentFiber = hookParentFiber()
   const isInit = parentFiber.effectTag.get() == "PLACEMENT"
   if (isInit) {
@@ -164,15 +164,12 @@ export function useBaseMemoGet<T, V>(
       deps
     }
     revertParentFiber()
-
     const hook = parentFiber.envModel.createChangeAtom(state)
-    const get = () => hook.get().value
     hookMemos.push({
       value: hook,
-      get,
       shouldChange
     })
-    return get
+    return state.value
   } else {
     const hookMemos = parentFiber.hookMemo
     if (!hookMemos) {
@@ -203,7 +200,7 @@ export function useBaseMemoGet<T, V>(
 
       hook.value.set(newState)
     }
-    return hook.get
+    return state.value
   }
 }
 export function renderBaseFiber<T>(

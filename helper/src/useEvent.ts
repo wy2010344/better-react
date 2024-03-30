@@ -1,7 +1,24 @@
-import { emptyArray } from "wy-helper";
+import { GetValue, StoreRef, emptyArray } from "wy-helper";
 import { useCallback } from "./useCallback";
-import { useAlways, useMemo } from "./useRef";
+import { useAlways, useLaterSetGet, useMemo } from "./useRef";
+import { hookCommitAll } from "better-react";
+import { useAttrEffect } from "./useEffect";
 
+export function useCommitAlaways<T>(init: T) {
+  const flushSync = hookCommitAll()
+  const getValue = useAlways(init)
+  return function () {
+    flushSync()
+    return getValue()
+  }
+}
+
+
+function useBuildGet<T extends (...vs: any[]) => any>(get: GetValue<T>) {
+  return useCallback<T>(function (...vs) {
+    return get()(...vs)
+  } as T, emptyArray)
+}
 /**
  * 
  * 只是对应单个函数,如果对应多个函数,就是Map,需要直接useRefConst
@@ -10,13 +27,20 @@ import { useAlways, useMemo } from "./useRef";
  */
 export function useEvent<T extends (...vs: any[]) => any>(fun: T): T {
   const get = useAlways(fun)
-  return useCallback<T>(function (...vs) {
-    return get()(...vs)
-  } as T, [])
+  return useBuildGet(get)
 }
 
-export function useProxy<T extends object>(init: T) {
-  const get = useAlways(init)
+
+export function useAttrEvent<T extends (...vs: any[]) => any>(fun: T): T {
+  const value = useLaterSetGet<T>()
+  useAttrEffect(() => {
+    value.set(fun)
+  })
+  return useBuildGet(value.get)
+}
+
+
+function useBuildProxy<T extends object>(get: GetValue<T>) {
   return useMemo(() => {
     return new Proxy<T>(get(), {
       get(target, p, receiver) {
@@ -30,4 +54,16 @@ export function useProxy<T extends object>(init: T) {
       },
     })
   }, emptyArray)
+}
+export function useProxy<T extends object>(init: T) {
+  const get = useAlways(init)
+  return useBuildProxy(get)
+}
+
+export function useAttrProxy<T extends object>(init: T) {
+  const value = useLaterSetGet<T>()
+  useAttrEffect(() => {
+    value.set(init)
+  })
+  return useBuildProxy(value.get)
 }

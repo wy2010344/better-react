@@ -1,6 +1,6 @@
 import {
   FindParentAndBefore,
-  VirtaulDomNode, useLevelEffect
+  VirtaulDomNode
 } from "better-react"
 import { getAttributeAlias } from "./getAttributeAlias"
 import { DomElementType, SvgElementType } from "./html"

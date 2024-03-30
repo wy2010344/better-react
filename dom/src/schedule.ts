@@ -1,5 +1,5 @@
 
-import { AskNextTimeWork, EmptyFun, emptyObject, messageChannelCallback, supportMicrotask } from "wy-helper"
+import { AskNextTimeWork } from "wy-helper"
 
 /**
  * 尽可能延时到requestAnimationFrame执行,反倒是容错更高?
