@@ -1,7 +1,6 @@
-import { FiberConfig, MemoEvent } from "better-react"
-import { useBeforeAttrEffect } from "better-react-helper"
-import { emptyArray } from "wy-helper"
-import { domTagNames } from "./updateDom"
+import { hookBeforeAttrEffect, useBeforeAttrEffect } from "better-react-helper"
+import { StoreValue, StoreValueCreater, isFiber } from "better-react"
+import { StoreRef, emptyArray, storeRef } from "wy-helper"
 
 export function genTemplateString(ts: TemplateStringsArray, vs: (string | number)[]) {
   const xs: any[] = []
@@ -13,30 +12,45 @@ export function genTemplateString(ts: TemplateStringsArray, vs: (string | number
   return xs.join('')
 }
 
-
-
-export function allowAddAnyNode(v: any) {
-  return v instanceof Node
+function addChild(row: any, newChildren: any[]) {
+  if (isFiber(row)) {
+    const value = row.lazyGetResultValue()
+    addChild(value, newChildren)
+  } else if (Array.isArray(row)) {
+    addChildren(row, newChildren)
+  } else if (row instanceof Node) {
+    newChildren.push(row)
+  } else {
+    console.error("不知道是什么类型,无法加入", row)
+  }
 }
-
-
-function addChildren(list: any[], newChildren: any[]) {
+function addChildren(list: readonly any[], newChildren: any[]) {
   for (let i = 0; i < list.length; i++) {
     const row = list[i]
-    if (typeof row == 'function') {
-      addChildren(row(), newChildren)
-    } else {
-      newChildren.push(row)
-    }
+    addChild(row, newChildren)
   }
 }
 
-export function createUseAfterRender(pNode: Node) {
-  let lastChildren = emptyArray as Node[]
-  return function (vs: any[]) {
-    useBeforeAttrEffect(() => {
+
+
+class StoreValueNode implements StoreValue {
+  constructor(
+    private pNode: Node,
+    private cache: StoreRef<readonly Node[]>
+  ) { }
+  private list: any[] = []
+  hookAddResult(...vs: readonly any[]): void {
+    for (const v of vs) {
+      this.list.push(v)
+    }
+  }
+  useAfterRender() {
+    const that = this
+    hookBeforeAttrEffect(() => {
+      const lastChildren = that.cache.get()
+      const pNode = that.pNode
       const newChildren: Node[] = []
-      addChildren(vs, newChildren)
+      addChildren(that.list, newChildren)
       let changed = false
       let beforeNode: Node | null = null
       for (let i = 0; i < newChildren.length; i++) {
@@ -61,20 +75,17 @@ export function createUseAfterRender(pNode: Node) {
           lastChild.parentNode?.removeChild(lastChild)
         }
       }
-      lastChildren = newChildren
+      that.cache.set(newChildren)
     })
+    //由外部去决定,比较通用,因为可能为portal
     return emptyArray
   }
 }
-
-
-export function createParentTrigger(e: MemoEvent<Node>) {
-  return {
-    allowAdd: allowAddAnyNode,
-    allowFiber: true,
-    useAfterRender: createUseAfterRender(e.trigger)
-  } as FiberConfig
+export function createStoreValueCreater(pNode: Node): StoreValueCreater {
+  const cache = storeRef(emptyArray)
+  return function () {
+    return new StoreValueNode(pNode, cache)
+  }
 }
-
 
 

@@ -1,4 +1,4 @@
-import { FiberConfig, UseAfterRenderMap, renderMapF } from "better-react";
+import { StoreValueCreater, RenderMapStoreValueCreater, renderMapF } from "better-react";
 import { alawaysTrue } from "wy-helper";
 
 
@@ -6,15 +6,15 @@ function hasValueBase<C>(hasValue: (i: C) => any, i: C) {
   return hasValue(i)
 }
 export function renderHasValue<C>(
-  useAfterRender: UseAfterRenderMap,
+  storeValueCreater: RenderMapStoreValueCreater,
   initValue: C,
   hasValue: (i: C) => boolean,
   getNextValue: (v: C) => C,
   getKey: (i: C) => any,
-  getConfig: (i: C) => FiberConfig,
+  getConfig: (i: C) => StoreValueCreater,
   render: (i: C) => void
 ) {
-  renderMapF(hasValue, initValue, hasValueBase, useAfterRender, alawaysTrue, function (_, i) {
+  return renderMapF(hasValue, initValue, hasValueBase, storeValueCreater, alawaysTrue, function (_, i) {
     return [getNextValue(i), getKey(i), getConfig(i), alawaysTrue, function () {
       return render(i)
     }, undefined]
@@ -22,13 +22,13 @@ export function renderHasValue<C>(
 }
 
 export function renderMax(
-  useAfterRender: UseAfterRenderMap,
+  storeValueCreater: RenderMapStoreValueCreater,
   max: number,
   getKey: (i: number) => any,
-  getConfig: (i: number) => FiberConfig,
+  getConfig: (i: number) => StoreValueCreater,
   render: (i: number) => void
 ) {
-  renderHasValue<number>(useAfterRender, 0, (i) => i < max, step, getKey, getConfig, render)
+  renderHasValue<number>(storeValueCreater, 0, (i) => i < max, step, getKey, getConfig, render)
 }
 function step(i: number) {
   return i + 1

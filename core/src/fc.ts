@@ -1,12 +1,13 @@
-import { EffectDestroyEvent, Fiber, FiberConfig, HookEffect, MemoEvent, RenderWithDep } from "./Fiber";
-import { quote, simpleNotEqual, alawaysTrue, ValueCenter, valueCenterOf, arrayNotEqual } from "wy-helper";
+import { Fiber } from "./Fiber";
+import { EffectDestroyEvent, FiberImpl, StoreValueCreater, HookEffect, MemoEvent, RenderWithDep, StoreValue } from "./Fiber";
+import { quote, simpleNotEqual, alawaysTrue, ValueCenter, valueCenterOf, arrayNotEqual, EmptyFun, emptyArray } from "wy-helper";
 
 const w = globalThis as any
 const cache = (w.__better_react_one__ || {
   wipFiber: undefined,
   allowWipFiber: false
 }) as {
-  wipFiber?: Fiber
+  wipFiber?: FiberImpl
   allowWipFiber?: boolean
 }
 w.__better_react_one__ = cache
@@ -30,20 +31,20 @@ export function revertParentFiber() {
 const hookIndex = {
   effects: new Map<number, number>(),
   memo: 0,
-  beforeFiber: undefined as (Fiber | undefined),
+  result: undefined as unknown as StoreValue<any>,
+  beforeFiber: undefined as (FiberImpl | undefined),
 }
-
-export function updateFunctionComponent(fiber: Fiber) {
+export function updateFunctionComponent(fiber: FiberImpl) {
   revertParentFiber()
   cache.wipFiber = fiber
 
   hookIndex.effects.clear()
   hookIndex.memo = 0
+  hookIndex.result = fiber.storeValueCreater()
   hookIndex.beforeFiber = undefined
-  //新建一个
-  fiber.resultArray.set([])
-  fiber.render()
+  fiber.render(hookIndex.result)
   draftParentFiber();
+  hookIndex.result = undefined as any
   cache.wipFiber = undefined
 }
 
@@ -135,13 +136,18 @@ export function useLevelEffect<T>(
   }
 }
 
-export function hookAddResult(value: any) {
+
+export function hookLevelEffect(
+  level: number,
+  effect: EmptyFun
+) {
+
   const parentFiber = hookParentFiber()
-  if (!parentFiber.config.allowAdd?.(value)) {
-    console.log('该fiber不允许添加这个值', value)
-    throw new Error('该fiber不允许添加这个值')
-  }
-  parentFiber.resultArray.get().push(value)
+  parentFiber.envModel.updateEffect(level, effect)
+}
+
+export function hookAddResult(...vs: any[]) {
+  hookIndex.result.hookAddResult(...vs)
 }
 
 export function hookCreateChangeAtom() {
@@ -209,24 +215,25 @@ export function useBaseMemo<T, V>(
       revertParentFiber()
 
       hook.value.set(newState)
+      return newState.value
     }
     return state.value
   }
 }
 export function renderBaseFiber<T>(
   dynamicChild: boolean,
-  config: FiberConfig,
+  storeValueCreater: StoreValueCreater,
   ...[shouldChange, render, deps]: RenderWithDep<T>
-) {
+): Fiber {
   const parentFiber = hookParentFiber()
-  let currentFiber: Fiber
+  let currentFiber: FiberImpl
   const isInit = parentFiber.effectTag.get() == 'PLACEMENT'
   if (isInit) {
     //新增
-    currentFiber = Fiber.createFix(
+    currentFiber = FiberImpl.createFix(
       parentFiber.envModel,
       parentFiber,
-      config,
+      storeValueCreater,
       shouldChange,
       {
         render,
@@ -247,7 +254,7 @@ export function renderBaseFiber<T>(
 
   } else {
     //修改
-    let oldFiber: Fiber | void = undefined
+    let oldFiber: FiberImpl | void = undefined
     if (hookIndex.beforeFiber) {
       oldFiber = hookIndex.beforeFiber.next.get()
     }
@@ -257,7 +264,7 @@ export function renderBaseFiber<T>(
     if (!oldFiber) {
       throw new Error("非预期地多出现了fiber")
     }
-    if (oldFiber.config != config) {
+    if (oldFiber.storeValueCreater != storeValueCreater) {
       throw new Error("FiberConfig发生改变")
     }
     if (oldFiber.shouldChange != shouldChange) {
@@ -268,26 +275,20 @@ export function renderBaseFiber<T>(
     hookIndex.beforeFiber = currentFiber
     currentFiber.changeRender(render, deps)
   }
-  if (!parentFiber.config.allowFiber) {
-    throw new Error('该fiber不允许添加后继fiber')
-  }
-  parentFiber.resultArray.get().push(currentFiber.lazyGetResultArray)
+  return currentFiber
 }
 /**
- * 两种方式,一种是传任意props进来,有一个公用的处理函数,和一个判断props是否发生变成
- * 一种是有一个主函数,有一个deps,deps发生变更,主函数执行,跟useMemo/useEffect一样,这里跟useEffect更相似,依赖是可选的
- * 后者更简单,前者更性能,主要是props可能是构造的object,既然可以构造函数,没必要构造多个object.
- * 之前的useMemo/useEffect是否也可以依赖props与shouldUpdate?
+ * 这里不预设加入result里,是为了可能的portal
  * @param render
  * @param props 
  * @param shouldUpdate 
  * @returns 
  */
 export function renderFiber<T>(
-  config: FiberConfig,
+  storeValueCreater: StoreValueCreater,
   ...[shouldChange, render, deps]: RenderWithDep<T>
 ) {
-  return renderBaseFiber(false, config, shouldChange, render, deps)
+  return renderBaseFiber(false, storeValueCreater, shouldChange, render, deps)
 }
 export interface Context<T> {
   hookProvider(v: T): void
@@ -324,8 +325,8 @@ class ContextFactory<T> implements Context<T>{
     }
     hook.set(v)
   }
-  private findProvider(_fiber: Fiber) {
-    let fiber = _fiber as Fiber | undefined
+  private findProvider(_fiber: FiberImpl) {
+    let fiber = _fiber as FiberImpl | undefined
     while (fiber) {
       if (fiber.contextProvider) {
         const providers = fiber.contextProvider

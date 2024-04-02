@@ -89,7 +89,7 @@ export function useRenderCode<T>(
               }
             }
           },
-        }).render(function () {
+        }).renderFragment(function () {
           render(div)
         })
         useAttrEffect(() => {

@@ -1,6 +1,6 @@
-import { ReduceRowState, ReduceState, alawaysTrue, buildSubSetArray, buildSubSetObject } from "wy-helper"
+import { ReduceRowState, ReduceState, alawaysTrue, buildSubSetArray, buildSubSetObject, quote } from "wy-helper"
 import { useMemo } from "./useRef"
-import { FiberConfig } from "better-react"
+import { StoreValue, StoreValueCreater } from "better-react"
 
 /**
  * 对react-setState的局部嵌套
@@ -26,9 +26,21 @@ export function useBuildSubSetArray<T>(
 
 
 
-export const fiberConfigAlawaysAllow: FiberConfig = {
-  allowFiber: true,
-  allowAdd: alawaysTrue,
+class ArrayStoreValueCreater implements StoreValue {
+  private array: any[] = []
+  hookAddResult(...vs: readonly any[]): void {
+    for (const v of vs) {
+      this.array.push(v)
+    }
+  }
+  useAfterRender() {
+    return this.array
+  }
+}
+export function arrayStoreCreater() {
+  return new ArrayStoreValueCreater()
 }
 
-export const fiberConfigAlawaysAllowGet = () => fiberConfigAlawaysAllow
+export function getArrayStoreCreater() {
+  return arrayStoreCreater
+}

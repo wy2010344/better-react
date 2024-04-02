@@ -1,7 +1,8 @@
-import { AnimationConfig, buildScroll, emptyArray, momentum, scrollEases, syncMergeCenter } from "wy-helper";
+import { AnimationConfig, emptyArray, scrollEases, syncMergeCenter } from "wy-helper";
 import { renderTemplate } from "./template";
 import { useEffect, useMemo } from "better-react-helper";
 import { useAnimationFrameNumber } from "better-react-dom-helper";
+import { buildScroll, momentum, } from 'wy-helper'
 
 
 export default function () {
@@ -34,7 +35,10 @@ export default function () {
             }
           }
         }
-        translateY.changeTo(value, c, onFinish)
+        console.log("config", value)
+        translateY.changeTo(value, c, {
+          onFinish
+        })
       },
       getCurrentValue() {
         return translateY.get()

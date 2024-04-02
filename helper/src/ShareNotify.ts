@@ -1,8 +1,7 @@
-import { renderArray } from "./renderMap";
 import { getOnlyId } from "./useOnlyId";
 import { valueCenterOf } from "wy-helper";
 import { useStoreTriggerRender } from "./useStoreTriggerRender";
-import { FiberConfig, UseAfterRenderMap } from "better-react";
+import { StoreValueCreater, RenderMapStoreValueCreater } from "better-react";
 
 
 
@@ -10,7 +9,7 @@ import { FiberConfig, UseAfterRenderMap } from "better-react";
 
 type NotifyProps = {
   id: number
-  config: FiberConfig
+  config: StoreValueCreater
   render(): void
 }
 
@@ -31,16 +30,16 @@ function renderContent(v: NotifyProps) {
  * @returns 
  */
 export function createSharePop(
-  useAfterRender: UseAfterRenderMap,
+  storeValueCreater: RenderMapStoreValueCreater,
 ) {
   const notifyCenter = valueCenterOf<NotifyProps[]>([])
   return {
     useProvider() {
       const notifys = useStoreTriggerRender(notifyCenter)
-      // return renderArray(useAfterRender, notifys, getId, getConfig, renderContent)
+      // return renderArray(storeValueCreater, notifys, getId, getConfig, renderContent)
     },
     /**返回销毁事件*/
-    add(config: FiberConfig, render: () => void) {
+    add(config: StoreValueCreater, render: () => void) {
       const id = getOnlyId()
       notifyCenter.set(notifyCenter.get().concat({
         id,

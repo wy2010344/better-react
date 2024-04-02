@@ -43,7 +43,7 @@ export function renderTemplate(
 		onTouchMove(event) {
 			event.preventDefault()
 		},
-	}).render(function () {
+	}).renderFragment(function () {
 		const getCss = useRenderScroll(wrapper, () => container)
 
 		const container = dom.div(function () {
@@ -72,7 +72,7 @@ export function renderTemplate(
   ${css}
       `,
 			}
-		}).render(function () {
+		}).renderFragment(function () {
 			dom.ul({
 				style: `
         	list-style: none;
@@ -82,7 +82,7 @@ export function renderTemplate(
 	text-align: left;
 
         `
-			}).render(function () {
+			}).renderFragment(function () {
 				renderArray(list, v => v.index, function (row) {
 					dom.li({
 						style: `

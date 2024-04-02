@@ -1,9 +1,10 @@
-import { Fiber, FiberConfig } from "./Fiber"
+import { FiberImpl, StoreValueCreater } from "./Fiber"
 import { batchWork, getReconcile } from "./reconcile"
 import { EnvModel } from "./commitWork"
 import { AskNextTimeWork, alawaysTrue } from "wy-helper"
 export { startTransition } from './reconcile'
 export {
+  hookLevelEffect,
   useLevelEffect, useBaseMemo,
   createContext, renderFiber,
   hookCreateChangeAtom,
@@ -16,21 +17,22 @@ export {
 export type { EffectResult, EffectEvent } from './fc'
 export type {
   Fiber,
-  VirtaulDomNode,
   RenderWithDep,
   MemoEvent,
   EffectDestroyEvent,
-  FiberConfig
+  StoreValueCreater,
+  StoreValue
 } from './Fiber'
+export { isFiber } from './Fiber'
 export { CreateChangeAtom } from './commitWork'
 export * from './renderMapF'
 export function render<T>(
-  config: FiberConfig,
+  storeValueCreater: StoreValueCreater,
   render: () => void,
   getAsk: AskNextTimeWork
 ) {
   const envModel = new EnvModel()
-  const rootFiber = Fiber.createFix(envModel, null!, config, alawaysTrue, {
+  const rootFiber = FiberImpl.createFix(envModel, null!, storeValueCreater, alawaysTrue, {
     render,
     isNew: true,
     deps: undefined

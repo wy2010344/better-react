@@ -1,11 +1,9 @@
-import { render, MemoEvent, EffectEvent, EffectDestroyEvent, renderFiber, FiberConfig } from "better-react";
-import { DomAttribute, DomElement, DomElementType, SvgAttribute, SvgElement, SvgElementType } from "./html";
-import { AskNextTimeWork, arrayNotEqualDepsWithEmpty, emptyArray } from "wy-helper";
-import { useAttrEffect, useBeforeAttrEffect, useMemo, useOneAttrEffect } from "better-react-helper";
+import { render } from "better-react";
+import { AskNextTimeWork } from "wy-helper";
+import { useAttrEffect, useMemo, useOneAttrEffect } from "better-react-helper";
 import { hookAddResult } from "better-react";
-import { domTagNames, svgTagNames, useUpdateDomNodeAttr } from "./updateDom";
-import { allowAddAnyNode, createUseAfterRender } from "./util";
-export { isSVG, useUpdateDomNodeAttr, useUpdateSvgNodeAttr } from './updateDom'
+import { createStoreValueCreater } from "./util";
+export { isSVG } from './updateDom'
 export { getAliasOfAttribute, getAttributeAlias } from './getAttributeAlias'
 export * from './html'
 export * from './dom'
@@ -23,11 +21,7 @@ export * from './util'
  */
 export function createRoot(node: Node, reconcile: () => void, getAsk: AskNextTimeWork) {
   return render(
-    {
-      allowFiber: true,
-      allowAdd: allowAddAnyNode,
-      useAfterRender: createUseAfterRender(node)
-    },
+    createStoreValueCreater(node),
     reconcile,
     getAsk
   )

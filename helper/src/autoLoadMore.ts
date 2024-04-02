@@ -1,4 +1,4 @@
-import { AutoLoadMoreCore, PromiseAutoLoadMore, PromiseResult, SetValue, VersionPromiseResult, emptyArray } from "wy-helper";
+import { AutoLoadMoreCore, PromiseAutoLoadMore, SetValue, VersionPromiseResult, emptyArray } from "wy-helper";
 import { useCallback } from "./useCallback";
 import { useReducer } from "./useReducer";
 type AutoLoadMoreAction<T, K> =

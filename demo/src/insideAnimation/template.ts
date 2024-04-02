@@ -49,7 +49,7 @@ export function renderTemplate(
     flex-flow:wrap;
     gap:10px;
     `
-  }).render(function () {
+  }).renderFragment(function () {
     renderArray(filterList, v => v.index, function (row) {
       const lastPSAtom = useAtom<Point | undefined>(undefined)
 
@@ -77,7 +77,7 @@ export function renderTemplate(
         flex-direction:column;
         align-items:center;
         `
-      }).render(function () {
+      }).renderFragment(function () {
         dom.img({
           src: row.avatar,
           style: `

@@ -1,6 +1,6 @@
 import { deepTravelFiber, EnvModel, LoopWork } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
-import { Fiber } from "./Fiber"
+import { FiberImpl } from "./Fiber"
 import { AskNextTimeWork, EmptyFun, NextTimeWork } from "wy-helper"
 export function getReconcile(
   beginRender: BeginRender,
@@ -45,12 +45,12 @@ export function getReconcile(
 }
 
 export function batchWork(
-  rootFiber: Fiber,
+  rootFiber: FiberImpl,
   envModel: EnvModel,
 ) {
   function workLoop(
     renderWork: RenderWorks,
-    unitOfWork: Fiber,
+    unitOfWork: FiberImpl,
     commitWork: NextTimeWork
   ) {
     const nextUnitOfWork = performUnitOfWork(unitOfWork, envModel)

@@ -1,35 +1,7 @@
-import { useMemo } from "better-react-helper"
-import { getAttributeAlias } from "./getAttributeAlias"
-import { DomAttribute, DomElement, DomElementType, SvgAttribute, SvgElement, SvgElementType } from "./html"
-import { emptyObject, objectDiffDeleteKey } from "wy-helper"
-import { MemoEvent } from "better-react"
+import { DomElementType, SvgElementType } from "./html"
+import { objectDiffDeleteKey } from "wy-helper"
 export type Props = { [key: string]: any }
 
-function createUpdateDom<T extends DomElementType>(e: MemoEvent<DomElement<T>>) {
-  let oldAttrs: DomAttribute<T> = emptyObject
-  return function (attrs: DomAttribute<T>) {
-    updateDom(e.trigger, updateProps, attrs, oldAttrs)
-    oldAttrs = attrs
-  }
-}
-export function useUpdateDomNodeAttr<T extends DomElementType>(
-  node: DomElement<T>
-) {
-  return useMemo(createUpdateDom, node)
-}
-
-function createUpdateSvg<T extends SvgElementType>(e: MemoEvent<SvgElement<T>>) {
-  let oldAttrs: SvgAttribute<T> = emptyObject
-  return function (attrs: SvgAttribute<T>) {
-    updateDom(e.trigger, updateSVGProps, attrs, oldAttrs)
-    oldAttrs = attrs
-  }
-}
-export function useUpdateSvgNodeAttr<T extends SvgElementType>(
-  node: SvgElement<T>
-) {
-  return useMemo(createUpdateSvg, node)
-}
 
 function mergeEvent(node: Node, key: string, oldValue: any, newValue?: any) {
   let eventType = key.toLowerCase().substring(2)
@@ -53,7 +25,7 @@ function mergeEvent(node: Node, key: string, oldValue: any, newValue?: any) {
  * @param oldProps 
  * @param props 
  */
-function updateDom(
+export function updateDom(
   node: Node,
   updateProp: (node: Node, key: string, value?: any) => void,
   props: Props,
@@ -102,35 +74,6 @@ function isProperty(key: string) {
   return true
 }
 
-const emptyKeys = ['href', 'className']
-function updateProps(node: any, key: string, value?: any) {
-  if (key.includes('-')) {
-    node.setAttribute(key, value)
-  } else {
-    if (emptyKeys.includes(key) && !value) {
-      node.removeAttribute(key)
-    } else {
-      node[key] = value
-    }
-  }
-}
-
-
-function updateSVGProps(node: any, key: string, value?: any) {
-  if (key == 'innerHTML' || key == 'textContent') {
-    updateProps(node, key, value)
-  } else {
-    if (value) {
-      if (key == 'className') {
-        key = 'class'
-      }
-      key = getAttributeAlias(key)
-      node.setAttribute(key, value)
-    } else {
-      node.removeAttribute(key)
-    }
-  }
-}
 
 export function isSVG(name: string) {
   return svgTagNames.includes(name as any)

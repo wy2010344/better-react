@@ -1,5 +1,4 @@
-import { dom } from "better-react-dom";
-import { hookDraw, hookEvent, renderCanvas } from "./canvas";
+import { dom, hookDraw, hookEvent, renderCanvas } from "better-react-dom";
 import { arrayNotEqualDepsWithEmpty, emptyArray } from "wy-helper";
 
 
@@ -49,7 +48,8 @@ export default function () {
           console.log("pointerDown11", e)
         }
       })
-
+      hookDraw.font = "48px serif";
+      hookDraw.strokeText("Hello world", 10, 50);
     }, emptyArray)
   })
 }

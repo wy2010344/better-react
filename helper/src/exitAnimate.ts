@@ -1,8 +1,8 @@
 import { useAtomFun } from "./useRef"
-import { RenderKeyArray, renderArray } from "./renderMap"
+import { RenderKeyArray } from "./renderMap"
 import { emptyArray, emptyObject, ExitAnimateArg, buildUseExitAnimate, quote, ExitModel, alawaysTrue, createEmptyExitListCache, FalseType } from "wy-helper"
 import { useEffect } from "./useEffect"
-import { FiberConfig, UseAfterRenderMap, hookMakeDirtyAndRequestUpdate } from "better-react"
+import { hookMakeDirtyAndRequestUpdate } from "better-react"
 
 
 

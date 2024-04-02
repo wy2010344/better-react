@@ -1,4 +1,4 @@
-import { Fiber, VirtaulDomNode } from "./Fiber"
+import { FiberImpl } from "./Fiber"
 import { EmptyFun, ManageValue, StoreRef, iterableToList, quote, removeEqual, run, storeRef } from "wy-helper"
 
 
@@ -51,8 +51,8 @@ export class EnvModel {
   }
   reconcile: Reconcile = null as any
   /**本次等待删除的fiber*/
-  private readonly deletions: Fiber[] = []
-  addDelect(fiber: Fiber) {
+  private readonly deletions: FiberImpl[] = []
+  addDelect(fiber: FiberImpl) {
     this.deletions.push(fiber)
   }
   private updateEffects = new Map<number, EmptyFun[]>()
@@ -93,7 +93,7 @@ export class EnvModel {
     this.deletions.length = 0
     this.updateEffects.clear()
   }
-  commit(rootFiber: Fiber) {
+  commit(rootFiber: FiberImpl) {
     /**最新更新所有注册的*/
     this.changeAtoms.forEach(atom => atom.commit())
     this.changeAtoms.length = 0
@@ -200,31 +200,6 @@ class ChangeAtom<T> implements StoreRef<T>{
     }
   }
 }
-// function checkRepeat<T>(vs: T[]) {
-//   for (let i = 0; i < vs.length; i++) {
-//     const v = vs[i]
-//     for (let x = i + 1; x < vs.length; x++) {
-//       const r = vs[x]
-//       if (v == r) {
-//         console.log("出错,出现重复的数组", v)
-//       }
-//     }
-//   }
-// }
-/**
- * 提交变更应该从根dirty节点开始。
- * 找到最顶层dirty节点->计算出新的节点替换当前->对比标记新节点->更新
- */
-// function updateFixDom(fiber: Fiber | undefined) {
-//   while (fiber) {
-//     fiber = fixDomAppend(fiber)
-//   }
-// }
-// const fixDomAppend = deepTravelFiber(findParentAndBefore)
-
-
-
-export type FindParentAndBefore = [VirtaulDomNode, VirtaulDomNode | null] | [VirtaulDomNode | null, VirtaulDomNode] | null
 /**
  * portal内的节点不会找到portal外，portal外的节点不会找到portal内。
  * 即向前遍历，如果该节点是portal，跳过再向前
@@ -239,7 +214,7 @@ export type FindParentAndBefore = [VirtaulDomNode, VirtaulDomNode | null] | [Vir
  * @param fiber 
  * @param domParent 
  */
-function commitDeletion(fiber: Fiber) {
+function commitDeletion(fiber: FiberImpl) {
   circleCommitDelection(fiber.firstChild.get())
   // const dom = fiber.dom
   // if (dom) {
@@ -250,25 +225,25 @@ function commitDeletion(fiber: Fiber) {
   // } else {
   // }
 }
-function circleCommitDelection(fiber: Fiber | void) {
+function circleCommitDelection(fiber: FiberImpl | void) {
   if (fiber) {
     commitDeletion(fiber)
     circleCommitDelection(fiber.next.get())
   }
 }
 
-function notifyDel(fiber: Fiber) {
+function notifyDel(fiber: FiberImpl) {
   destroyFiber(fiber)
   const child = fiber.firstChild.get()
   if (child) {
-    let next: Fiber | void = child
+    let next: FiberImpl | void = child
     while (next) {
       notifyDel(next)
       next = next.next.get()
     }
   }
 }
-function destroyFiber(fiber: Fiber) {
+function destroyFiber(fiber: FiberImpl) {
   fiber.destroyed = true
   const effects = fiber.hookEffects
   if (effects) {
@@ -288,15 +263,15 @@ function destroyFiber(fiber: Fiber) {
 
 
 
-export function deepTravelFiber<T extends any[]>(call: (Fiber: Fiber, ...vs: T) => void) {
-  return function (fiber: Fiber, ...vs: T) {
+export function deepTravelFiber<T extends any[]>(call: (Fiber: FiberImpl, ...vs: T) => void) {
+  return function (fiber: FiberImpl, ...vs: T) {
     call(fiber, ...vs)
     const child = fiber.firstChild.get()
     if (child) {
       return child
     }
     /**寻找叔叔节点 */
-    let nextFiber: Fiber | undefined = fiber
+    let nextFiber: FiberImpl | undefined = fiber
     while (nextFiber) {
       const next = nextFiber.next.get()
       if (next) {

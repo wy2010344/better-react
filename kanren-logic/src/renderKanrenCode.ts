@@ -178,7 +178,7 @@ function renderAreaCode(child: AreaAtom, i: number, getBackgroundColor?: (v: num
         style: `
         background:${getBackgroundColor?.(i)};
         `
-      }).render(function () {
+      }).renderFragment(function () {
         child.children.forEach(function (child) {
           renderAreaCode(child, i + 1, getBackgroundColor)
         })
@@ -226,7 +226,7 @@ function renderLToken(row: LToken) {
       position:fixed;
       background:white;
       `
-    }).asPortal().render(function () {
+    }, true).renderFragment(function () {
       errors.forEach(error => {
         dom.div().renderTextContent(error)
       })

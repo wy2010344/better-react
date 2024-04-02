@@ -1,7 +1,8 @@
 import { useLevelEffect } from "better-react";
 import { EffectResult } from "better-react";
 import { EffectEvent } from "better-react";
-import { arrayNotEqualDepsWithEmpty, simpleNotEqual } from "wy-helper";
+import { hookLevelEffect } from "better-react";
+import { EmptyFun, arrayNotEqualDepsWithEmpty, simpleNotEqual } from "wy-helper";
 
 export function buildUseEffect(level: number) {
   function useEffect<T extends readonly any[]>(effect: (e: EffectEvent<T>) => EffectResult<T>, deps: T): void
@@ -28,3 +29,14 @@ export function buildUseOneEffect(level: number) {
 export const useOneBeforeAttrEffect = buildUseOneEffect(-1)
 export const useOneAttrEffect = buildUseOneEffect(0)
 export const useOneEffect = buildUseOneEffect(1)
+
+
+export function buildHookEffect(level: number) {
+  return function (effect: EmptyFun) {
+    return hookLevelEffect(level, effect)
+  }
+}
+
+export const hookBeforeAttrEffect = buildHookEffect(-1)
+export const hookAttrEffect = buildHookEffect(0)
+export const hookEffect = buildHookEffect(1)

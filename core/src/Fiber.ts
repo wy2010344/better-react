@@ -1,5 +1,5 @@
-import { EnvModel, FindParentAndBefore } from "./commitWork"
-import { emptyArray, EmptyFun, objectFreeze, storeRef, StoreRef, ValueCenter } from "wy-helper"
+import { EnvModel } from "./commitWork"
+import { EmptyFun, objectFreeze, storeRef, StoreRef, ValueCenter } from "wy-helper"
 
 export type HookMemo<T, D> = {
   deps: D
@@ -29,11 +29,21 @@ function whenCommitEffectTag(v: EffectTag) {
   return undefined
 }
 
-export type FiberConfig = {
-  //是否允许子fiber
-  allowFiber?: boolean
-  allowAdd?(v: any): any
-  useAfterRender?(vs: readonly any[]): readonly any[]
+
+export type StoreValueCreater<M extends readonly any[] = readonly any[], T = any,> = {
+  (): StoreValue<M, T>
+}
+
+export interface StoreValue<M extends readonly any[] = readonly any[], T = any,> {
+  hookAddResult(...vs: M): void
+  useAfterRender(): T
+}
+
+export interface Fiber<M = any> {
+  lazyGetResultValue(): M
+}
+export function isFiber(v: any): v is Fiber<any> {
+  return v instanceof FiberImpl
 }
 /**
  * 会调整顺序的,包括useMap的父节点与子结点.但父节点只调整child与lastChild
@@ -48,7 +58,7 @@ export type FiberConfig = {
  * 可以是MapFiber,只要控制返回值不是render+deps,而是mapFiber的构造参数
  * 如果是oneFiber,父节点的child与lastChild会变化,但子结点的before与next都是空
  */
-export class Fiber<D = any, M = any> {
+export class FiberImpl<D = any, M = any> implements Fiber<M> {
   /**是否已经销毁 */
   destroyed?: boolean
   /**全局key,使帧复用,或keep-alive*/
@@ -59,13 +69,6 @@ export class Fiber<D = any, M = any> {
     shouldChange(a: any, b: any): any
     value: StoreRef<HookMemo<any, any>>
   }[]
-  /**
-   * render计算结果的汇总
-   */
-  readonly resultArray = this.envModel.createChangeAtom<M[]>(emptyArray as any)
-  lazyGetResultArray() {
-    return this.resultArray.get()
-  }
   /**初始化或更新 
    * UPDATE可能是setState造成的,可能是更新造成的
    * 这其中要回滚
@@ -73,8 +76,8 @@ export class Fiber<D = any, M = any> {
   */
   readonly effectTag: StoreRef<EffectTag>
   /**顺序*/
-  readonly firstChild: StoreRef<Fiber | void> = undefined!
-  readonly lastChild: StoreRef<Fiber | void> = undefined!
+  readonly firstChild: StoreRef<FiberImpl | void> = undefined!
+  readonly lastChild: StoreRef<FiberImpl | void> = undefined!
 
   private renderDeps: StoreRef<RenderDeps<any>>
 
@@ -82,16 +85,14 @@ export class Fiber<D = any, M = any> {
   makeDirtyAndRequestUpdate: EmptyFun | void = undefined
   private constructor(
     public readonly envModel: EnvModel,
-    public readonly parent: Fiber | undefined,
-    public readonly before: StoreRef<Fiber | void>,
-    public readonly next: StoreRef<Fiber | void>,
-    public readonly config: FiberConfig,
+    public readonly parent: FiberImpl | undefined,
+    public readonly before: StoreRef<FiberImpl | void>,
+    public readonly next: StoreRef<FiberImpl | void>,
+    public readonly storeValueCreater: StoreValueCreater,
     public readonly shouldChange: (a: D, b: D) => any,
     rd: RenderDeps<any>,
     dynamicChild?: boolean
   ) {
-    this.config = objectFreeze(this.config)
-    this.lazyGetResultArray = this.lazyGetResultArray.bind(this)
     this.effectTag = envModel.createChangeAtom<EffectTag>("PLACEMENT", whenCommitEffectTag)
     this.renderDeps = envModel.createChangeAtom(rd)
     if (dynamicChild) {
@@ -115,17 +116,19 @@ export class Fiber<D = any, M = any> {
       this.effectTag.set("UPDATE")
     }
   }
-  render() {
+  render(result: StoreValue<any[], M>) {
     const { render, deps, oldDeps, isNew } = this.renderDeps.get()
     render({
       trigger: deps,
       beforeTrigger: oldDeps,
       isInit: isNew
     })
-    if (this.config.useAfterRender) {
-      const vs = objectFreeze(this.resultArray.get())
-      this.resultArray.set(this.config.useAfterRender(vs) as any[])
-    }
+    const out = result.useAfterRender()
+    this.resultValue.set(out)
+  }
+  private resultValue = this.envModel.createChangeAtom<M>(null as any)
+  lazyGetResultValue() {
+    return this.resultValue.get()
   }
   /**
    * 创建一个固定节点,该节点是不是MapFiber不一定
@@ -134,13 +137,13 @@ export class Fiber<D = any, M = any> {
    */
   static createFix<D>(
     envModel: EnvModel,
-    parentFiber: Fiber,
-    config: FiberConfig,
+    parentFiber: FiberImpl,
+    config: StoreValueCreater,
     shouldChange: (a: D, b: D) => any,
     rd: RenderDeps<D>,
     dynamicChild?: boolean
   ) {
-    const fiber = new Fiber(
+    const fiber = new FiberImpl(
       envModel,
       parentFiber,
       storeRef(undefined),
@@ -160,13 +163,13 @@ export class Fiber<D = any, M = any> {
    */
   static createMapChild<D>(
     envModel: EnvModel,
-    parentFiber: Fiber,
-    config: FiberConfig,
+    parentFiber: FiberImpl,
+    config: StoreValueCreater,
     shouldChange: (a: D, b: D) => any,
     rd: RenderDeps<D>,
     dynamicChild?: boolean
   ) {
-    const fiber = new Fiber(
+    const fiber = new FiberImpl(
       envModel,
       parentFiber,
       envModel.createChangeAtom(undefined),
@@ -185,13 +188,13 @@ export class Fiber<D = any, M = any> {
    */
   static createOneChild<D>(
     envModel: EnvModel,
-    parentFiber: Fiber,
-    config: FiberConfig,
+    parentFiber: FiberImpl,
+    config: StoreValueCreater,
     shouldChange: (a: D, b: D) => any,
     rd: RenderDeps<D>,
     dynamicChild?: boolean
   ) {
-    const fiber = new Fiber(
+    const fiber = new FiberImpl(
       envModel,
       parentFiber,
       emptyPlace,
@@ -203,7 +206,7 @@ export class Fiber<D = any, M = any> {
     return fiber
   }
 }
-const emptyPlace = storeRef<Fiber | void>(undefined)
+const emptyPlace = storeRef<FiberImpl | void>(undefined)
 
 
 export type MemoEvent<T> = {
@@ -216,21 +219,3 @@ export type RenderWithDep<T> = [
   (e: MemoEvent<T>) => void,
   T
 ]
-
-export type VirtaulDomNode<T = any> = {
-  useUpdate(props: T, isFirst: boolean): void
-  isPortal?: boolean
-  //创建
-  //在update之前,所以要更新props
-  // isPortal(): boolean
-  appendAfter(value: FindParentAndBefore): void
-  //只对部分元素执行删除
-  removeFromParent(): void
-  //所有都会执行
-  destroy(): void
-}
-export type StoreValue<T> = {
-  setFiber(v: Fiber): void
-  get(): T
-  set(v: T, callback?: () => void): void
-}
