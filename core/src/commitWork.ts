@@ -1,5 +1,5 @@
 import { FiberImpl } from "./Fiber"
-import { EmptyFun, ManageValue, StoreRef, iterableToList, quote, removeEqual, run, storeRef } from "wy-helper"
+import { EmptyFun, ManageValue, NextTimeWork, StoreRef, emptyFun, iterableToList, quote, removeEqual, run, storeRef } from "wy-helper"
 
 
 export type CreateChangeAtom<T> = (v: T, didCommit?: (v: T) => T) => StoreRef<T>
@@ -34,21 +34,13 @@ export class EnvModel {
   setOnWork(isCommit?: boolean) {
     this.onWork = isCommit ? 'commit' : true
   }
+  isOnWork() {
+    return this.onWork
+  }
   finishWork() {
     this.onWork = false
   }
-
-  getNextWork!: () => EmptyFun | void
-  commitAll() {
-    if (this.onWork) {
-      throw new Error("render中不能commit all")
-    }
-    let work = this.getNextWork()
-    while (work) {
-      work()
-      work = this.getNextWork()
-    }
-  }
+  commitAll: () => void = emptyFun
   reconcile: Reconcile = null as any
   /**本次等待删除的fiber*/
   private readonly deletions: FiberImpl[] = []
@@ -69,7 +61,6 @@ export class EnvModel {
   private changeAtomsManage: ManageValue<ChangeAtom<any>>
   constructor() {
     this.setRealTime = this.setRealTime.bind(this)
-    this.commitAll = this.commitAll.bind(this)
     this.createChangeAtom = this.createChangeAtom.bind(this)
     const changeAtoms: ChangeAtom<any>[] = []
     this.changeAtoms = changeAtoms
@@ -93,7 +84,7 @@ export class EnvModel {
     this.deletions.length = 0
     this.updateEffects.clear()
   }
-  commit(rootFiber: FiberImpl) {
+  commit() {
     /**最新更新所有注册的*/
     this.changeAtoms.forEach(atom => atom.commit())
     this.changeAtoms.length = 0
@@ -131,10 +122,12 @@ export class EnvModel {
     return new ChangeAtom(this.changeAtomsManage, value, didCommit || quote)
   }
 }
+
+//优先级,1是及时,2是普通,3是延迟
+export type LoopWorkLevel = 1 | 2 | 3
 export type LoopWork = {
   type: "loop"
-  //是否是低优先级
-  isLow?: boolean
+  level: LoopWorkLevel
   work?: EmptyFun
 }
 /**

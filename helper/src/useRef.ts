@@ -55,14 +55,14 @@ export function useAtomFun<T>(init: () => T) {
   return useAtom(undefined, init)
 }
 
-function createStore<T>() {
+function createLaterGet<T>() {
   const ref = storeRef<T | undefined>(undefined)
-  ref.set = ref.set.bind(ref)
+  ref.get = ref.get.bind(ref)
   return ref
 }
 
 export function useLaterSetGet<T>() {
-  return useMemo(createStore, undefined) as StoreRef<T>
+  return useMemo(createLaterGet, undefined) as StoreRef<T>
 }
 /**
  * 始终获得render上的最新值

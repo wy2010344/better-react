@@ -1,17 +1,16 @@
-import { deepTravelFiber, EnvModel, LoopWork } from "./commitWork"
+import { deepTravelFiber, EnvModel, LoopWork, LoopWorkLevel } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
 import { FiberImpl } from "./Fiber"
-import { AskNextTimeWork, EmptyFun, NextTimeWork } from "wy-helper"
-export function getReconcile(
-  beginRender: BeginRender,
+import { AskNextTimeWork, EmptyFun, NextTimeWork, run } from "wy-helper"
+
+
+function wrapNextWorkWork(
   envModel: EnvModel,
-  askWork: AskNextTimeWork
+  getNextWork: () => NextTimeWork | void
 ) {
-  /**业务的工作队列 */
-  const { appendWork, getNextWork: originGetNextWork } = buildWorkUnits(envModel, beginRender)
   function getWrapWork(lastJob: boolean) {
     const wrapperWork: NextTimeWork = function () {
-      const work = originGetNextWork()
+      const work = getNextWork()
       if (work) {
         envModel.setOnWork(work.lastJob)
         work()
@@ -23,21 +22,66 @@ export function getReconcile(
   }
   const wrapWorkLast = getWrapWork(true)
   const wrapWork = getWrapWork(false)
-  function getNextWork() {
-    const work = originGetNextWork()
+  return function () {
+    const work = getNextWork()
     if (work) {
       return work.lastJob ? wrapWorkLast : wrapWork
     }
   }
-  envModel.getNextWork = getNextWork
+}
+
+export function getReconcile(
+  beginRender: BeginRender,
+  envModel: EnvModel,
+  askWork: AskNextTimeWork
+) {
+  /**业务的工作队列 */
+  const { appendWork,
+    getNextWork: originGetNextWork,
+    hasFlushWork,
+    getFlushWork: originGetFlushWork
+  } = buildWorkUnits(envModel, beginRender)
+  const getNextWork = wrapNextWorkWork(envModel, originGetNextWork)
+
+  envModel.commitAll = function () {
+    if (envModel.isOnWork()) {
+      throw new Error("render中不能commit all")
+    }
+    let work = getNextWork()
+    while (work) {
+      work()
+      work = getNextWork()
+    }
+  }
+
   const askNextTimeWork = askWork({
     askNextWork: getNextWork,
     realTime: envModel.realTime,
   })
+
+  const getFlushWork = wrapNextWorkWork(envModel, originGetFlushWork)
+  flushWorkMap.set(envModel, function () {
+    if (hasFlushWork()) {
+      if (envModel.isOnWork()) {
+        throw new Error("render中不能commit all")
+      }
+      //把实时任务执行了
+      let work = getFlushWork()
+      while (work) {
+        work()
+        work = getFlushWork()
+      }
+      //其余任务可能存储,再申请异步
+      if (getNextWork()) {
+        console.log("继续执行普通任务")
+        askNextTimeWork()
+      }
+    }
+  })
   return function (work?: EmptyFun): void {
     appendWork({
       type: "loop",
-      isLow: currentTaskIsLow,
+      level: currentTaskLevel,
       work
     })
     askNextTimeWork()
@@ -61,7 +105,7 @@ export function batchWork(
     } else {
       const realWork: NextTimeWork = function () {
         commitWork()
-        envModel.commit(rootFiber!)
+        envModel.commit()
       }
       realWork.lastJob = true
       renderWork.appendWork(realWork)
@@ -82,12 +126,16 @@ export function batchWork(
     },
     destroy() {
       if (rootFiber) {
+        flushWorkMap.delete(envModel)
         envModel.addDelect(rootFiber)
         envModel.reconcile(onDestroy)
       }
     }
   }
 }
+
+
+const flushWorkMap = new Map<EnvModel, () => NextTimeWork | void>()
 /**
  * 顶层全局
  */
@@ -107,10 +155,10 @@ function buildWorkUnits(
   }
 
   function getTheRenderWork(
-    isLow: boolean
+    level: LoopWorkLevel
   ) {
     function shouldAdd(work: LoopWork) {
-      return (isLow && work.isLow) || (!isLow && !work.isLow)
+      return work.level == level
     }
     //寻找渲染前的任务
     function openAWork() {
@@ -134,20 +182,21 @@ function buildWorkUnits(
     return function () {
       if (workList.some(shouldAdd)) {
         return function () {
-          currentTick.open(isLow)
+          currentTick.open(level)
           openAWork()
         }
       }
     }
   }
-  const getRenderWorkLow = getTheRenderWork(true)
-  const getRenderWork = getTheRenderWork(false)
-  function getRollbackWork(isLow: boolean, getWork: () => void | EmptyFun) {
+  const getRenderWorkLow = getTheRenderWork(3)
+  const getRenderWork = getTheRenderWork(2)
+  const getFlushRenderWork = getTheRenderWork(1)
+  function getRollbackWork(level: number, getWork: () => void | EmptyFun) {
     return function () {
       renderWorks.rollback()
       currentTick.rollback()
       envModel.rollback()
-      if (isLow) {
+      if (level > 1) {
         console.log("有新的低优先级任务出现,中断之前的低优先级")
       } else {
         console.log("强行中断低优先级任务,执行高优先级")
@@ -158,14 +207,33 @@ function buildWorkUnits(
       }
     }
   }
-  const rollBackWorkLow = getRollbackWork(true, getRenderWorkLow)
-  const rollBackWork = getRollbackWork(false, getRenderWork)
+  const rollBackWorkLow = getRollbackWork(3, getRenderWorkLow)
+  const rollBackWork = getRollbackWork(2, getRenderWork)
+  const rollBackWorkFlush = getRollbackWork(1, getFlushRenderWork)
   return {
     appendWork(work: LoopWork) {
       workList.push(work)
     },
+    hasFlushWork() {
+      return getFlushRenderWork()
+    },
+    getFlushWork() {
+      if (currentTick.level() > 1) {
+        if (getFlushRenderWork()) {
+          return rollBackWorkFlush
+        }
+      }
+      const renderWork = renderWorks.getFirstWork()
+      if (renderWork) {
+        return renderWork
+      }
+      const flushWork = getFlushRenderWork()
+      if (flushWork) {
+        return flushWork
+      }
+    },
     getNextWork(): NextTimeWork | void {
-      if (currentTick.isOnLow()) {
+      if (currentTick.level() > 2) {
         /**
          * 寻找是否有渲染任务,如果有,则中断
          * 如果有新的lazywork,则也优先
@@ -228,13 +296,13 @@ class CurrentTick {
   constructor(
     private rollbackWork: (work: LoopWork) => void
   ) { }
-  private on: boolean | 'low' = false
+  private on: LoopWorkLevel | 0 = 0
   private lowRollbackList: LoopWork[] = []
-  open(isLow: boolean) {
-    this.on = isLow ? 'low' : true
+  open(level: LoopWorkLevel) {
+    this.on = level
   }
   private close() {
-    this.on = false
+    this.on = 0
     this.lowRollbackList.length = 0
   }
   appendLowRollback(work: LoopWork) {
@@ -250,21 +318,29 @@ class CurrentTick {
     }
     this.close()
   }
-  isOnLow() {
-    return this.on == 'low'
+  level() {
+    return this.on
   }
 }
 
-let currentTaskIsLow = false
+let currentTaskLevel: LoopWorkLevel = 2
 /**
  * 按理说,与flushSync相反,这个是尽量慢
  * 但fun里面仍然是setState,不会减少触发呢
  * @param fun 
  */
 export function startTransition(fun: () => void) {
-  currentTaskIsLow = true
+  currentTaskLevel = 3
   fun()
-  currentTaskIsLow = false
+  currentTaskLevel = 2
+}
+
+
+export function flushSync(fun: () => void) {
+  currentTaskLevel = 1
+  fun()
+  currentTaskLevel = 2
+  flushWorkMap.forEach(run)
 }
 /**
  * 当前工作结点，返回下一个工作结点

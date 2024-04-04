@@ -29,7 +29,9 @@ export default function (renderBody: (
   getDiv: () => HTMLDivElement,
   addIndex: (v: number) => void,
   getContainer: () => HTMLDivElement
-) => DomAttribute<"div">) {
+) => DomAttribute<"div"> & {
+  wrapperAdd: (v: number) => void
+}) {
   dom.div({
     style: `
     width:100vw;
@@ -45,6 +47,19 @@ export default function (renderBody: (
     },
   }).renderFragment(function () {
     const [index, dispatchIndex] = useIndex(0)
+
+    const { style, wrapperAdd, ...attrs } = renderBody(
+      index,
+      () => wrapRef.get()!,
+      n => {
+        dispatchIndex({
+          type: "add",
+          value: n
+        })
+      }, () => ctRef.get()!)
+
+    const wrapRef = useAtom<HTMLDivElement | undefined>(undefined)
+    const ctRef = useAtom<HTMLDivElement | undefined>(undefined)
     dom.div({
       style: `
       display:flex;
@@ -53,19 +68,14 @@ export default function (renderBody: (
     }).renderFragment(function () {
       dom.button({
         onClick() {
-          dispatchIndex({
-            type: "add",
-            value: -1
-          })
+          wrapperAdd(-5)
         }
       }).renderText`-`
       dom.div().renderText`index${index}value${list[index]}`
       dom.button({
         onClick() {
-          dispatchIndex({
-            type: "add",
-            value: 1
-          })
+
+          wrapperAdd(5)
         }
 
       }).renderText`+`
@@ -78,18 +88,6 @@ export default function (renderBody: (
       position:relative;
       `
     }).renderFragment(function () {
-
-      const { style, ...attrs } = renderBody(
-        index,
-        () => div,
-        n => {
-          dispatchIndex({
-            type: "add",
-            value: n
-          })
-        }, () => ctRef.get()!)
-
-      const ctRef = useAtom<HTMLDivElement | undefined>(undefined)
       const div = dom.div({
         className: cls.scroll,
         style: `
@@ -101,7 +99,7 @@ export default function (renderBody: (
       }).renderFragment(function () {
         const container = dom.div().renderFragment(function () {
           const cacheList = useMemo(() => {
-            return readArraySliceCircle(list, index - 6, index + 6)
+            return readArraySliceCircle(list, index - 5, index + 6)
           }, index)
           renderArray(cacheList, quote, function (row, i) {
             dom.div({
@@ -116,7 +114,7 @@ export default function (renderBody: (
         })
         ctRef.set(container)
       })
-
+      wrapRef.set(div)
       dom.div({
         style: `
         position:absolute;

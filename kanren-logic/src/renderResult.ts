@@ -1,9 +1,9 @@
 import { emptyArray } from "wy-helper"
-import { renderArrayWithIndexAsKey, renderIf, useMemo, useReducer } from "better-react-helper";
+import { renderIf, useMemo, useReducer } from "better-react-helper";
 import { VarPool } from "./evalExp";
 import { DelayStream, KSubsitution, Stream, walk } from "wy-helper/kanren";
 import { stringifyLog } from "./stringify";
-import { domOf } from "better-react-dom";
+import { dom } from "better-react-dom";
 
 
 export function useRenderResult() {
@@ -34,13 +34,13 @@ export function useRenderResult() {
             }, [sub])
             if (value?.length) {
               value.forEach(v => {
-                domOf("div").render(function () {
+                dom.div().renderFragment(function () {
                   domOf("label").renderTextContent(v.key)
                   domOf("span").renderTextContent(v.value)
                 })
               })
             } else {
-              domOf("div").renderTextContent("成功")
+              dom.div().renderTextContent("成功")
             }
           })
           renderIf(model.next, function () {
@@ -50,7 +50,7 @@ export function useRenderResult() {
               }
             }).renderTextContent("更多结果")
           }, function () {
-            domOf("div").renderTextContent("没有更多结果")
+            dom.div().renderTextContent("没有更多结果")
           })
         })
       })

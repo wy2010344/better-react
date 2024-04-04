@@ -2,7 +2,7 @@ import { FiberImpl, StoreValueCreater } from "./Fiber"
 import { batchWork, getReconcile } from "./reconcile"
 import { EnvModel } from "./commitWork"
 import { AskNextTimeWork, alawaysTrue } from "wy-helper"
-export { startTransition } from './reconcile'
+export { startTransition, flushSync } from './reconcile'
 export {
   hookLevelEffect,
   useLevelEffect, useBaseMemo,
