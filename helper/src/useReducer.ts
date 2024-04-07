@@ -3,7 +3,7 @@ import { SetValue, emptyArray, quote, simpleEqual } from "wy-helper";
 import { useMemo } from "./useRef";
 
 
-export type ReducerFun<F, T> = (old: T, action: F) => T
+export type ReducerFun<F, T> = (old: T, action: F, dispatch: (v: F) => void) => T
 export type ReducerResult<F, T> = [T, SetValue<F>];
 
 export function useReducer<F, M, T>(
@@ -34,7 +34,7 @@ export function useReducer(reducer: any, init: any, initFun: any, eq: any) {
     function set(action: any) {
       reconcile(function () {
         const oldValue = value.get()
-        const newValue = reducer(oldValue, action)
+        const newValue = reducer(oldValue, action, set)
         if (!realEq(oldValue, newValue)) {
           value.set(newValue)
           return true

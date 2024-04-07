@@ -1,5 +1,5 @@
 import { FiberImpl } from "./Fiber"
-import { EmptyFun, ManageValue, NextTimeWork, StoreRef, emptyFun, iterableToList, quote, removeEqual, run, storeRef } from "wy-helper"
+import { EmptyFun, ManageValue, StoreRef, emptyFun, iterableToList, quote, removeEqual, run, storeRef } from "wy-helper"
 
 
 export type CreateChangeAtom<T> = (v: T, didCommit?: (v: T) => T) => StoreRef<T>
@@ -91,12 +91,7 @@ export class EnvModel {
     /******清理删除********************************************************/
     /******清理所有的draft********************************************************/
     // checkRepeat(deletions)
-    this.deletions.forEach(function (fiber) {
-      //清理effect
-      notifyDel(fiber)
-      //删除
-      commitDeletion(fiber)
-    })
+    this.deletions.forEach(notifyDel)
     this.deletions.length = 0
     // /******更新属性********************************************************/
     // updateFixDom(rootFiber)
@@ -200,30 +195,6 @@ class ChangeAtom<T> implements StoreRef<T>{
  * @param fiber 
  * @returns 
  */
-
-
-/**
- * 需要一直找到具有dom节点的子项
- * @param fiber 
- * @param domParent 
- */
-function commitDeletion(fiber: FiberImpl) {
-  circleCommitDelection(fiber.firstChild.get())
-  // const dom = fiber.dom
-  // if (dom) {
-  //   if (!dom.isPortal) {
-  //     //portal自己在destroy里移除
-  //     dom.removeFromParent()
-  //   }
-  // } else {
-  // }
-}
-function circleCommitDelection(fiber: FiberImpl | void) {
-  if (fiber) {
-    commitDeletion(fiber)
-    circleCommitDelection(fiber.next.get())
-  }
-}
 
 function notifyDel(fiber: FiberImpl) {
   destroyFiber(fiber)

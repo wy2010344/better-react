@@ -5,12 +5,10 @@ type AutoLoadMoreAction<T, K> =
   {
     type: "reload";
     getAfter(k: K, abort?: AbortSignal): Promise<AutoLoadMoreCore<T, K>>
-    first: K,
-    dispatch(v: VersionPromiseResult<AutoLoadMoreCore<T, K>>): void
+    first: K
   } | {
     type: "loadMore";
     version: number
-    dispatch: SetValue<VersionPromiseResult<AutoLoadMoreCore<T, K>>>
   } | {
     type: "reloadBack"
     value: VersionPromiseResult<AutoLoadMoreCore<T, K>>
@@ -24,17 +22,29 @@ type Update<T> = {
   type: "update";
   callback(old: T[]): T[]
 }
+
 function reducerAutoLoadMore<T, K>(
   old: PromiseAutoLoadMore<T, K>,
-  action: AutoLoadMoreAction<T, K>
+  action: AutoLoadMoreAction<T, K>,
+  dispatch: (v: AutoLoadMoreAction<T, K>) => void
 ): PromiseAutoLoadMore<T, K> {
   if (action.type == "reload") {
     return old.reload(
       action.getAfter,
       action.first,
-      action.dispatch)
+      function (value) {
+        dispatch({
+          type: "reloadBack",
+          value
+        })
+      })
   } else if (action.type == "loadMore") {
-    return old.loadMore(action.version, action.dispatch)
+    return old.loadMore(action.version, function (value) {
+      dispatch({
+        type: "loadMoreBack",
+        value
+      })
+    })
   } else if (action.type == 'reloadBack') {
     return old.reloadBack(action.value)
   } else if (action.type == 'loadMoreBack') {
@@ -64,38 +74,5 @@ export function useAutoLoadMore<T, K>() {
   const [data, dispatch] = useReducer<AutoLoadMoreAction<T, K>, PromiseAutoLoadMore<T, K>>(
     reducerAutoLoadMore,
   );
-
-  const outDispatch = useCallback((action: {
-    type: "reload";
-    getAfter(k: K, abort?: AbortSignal): Promise<AutoLoadMoreCore<T, K>>
-    first: K,
-  } | {
-    type: "loadMore";
-    version: number
-  } | Update<T>) => {
-    if (action.type == 'reload') {
-      dispatch({
-        ...action,
-        dispatch(value: VersionPromiseResult<AutoLoadMoreCore<T, K>>) {
-          dispatch({
-            type: "reloadBack",
-            value
-          })
-        }
-      })
-    } else if (action.type == "loadMore") {
-      dispatch({
-        ...action,
-        dispatch(value: VersionPromiseResult<AutoLoadMoreCore<T, K>>) {
-          dispatch({
-            type: "loadMoreBack",
-            value
-          })
-        }
-      })
-    } else if (action.type == "update") {
-      dispatch(action)
-    }
-  }, emptyArray)
-  return [data, outDispatch]
+  return [data, dispatch]
 }

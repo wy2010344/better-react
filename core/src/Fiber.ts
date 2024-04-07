@@ -1,5 +1,5 @@
 import { EnvModel } from "./commitWork"
-import { EmptyFun, objectFreeze, storeRef, StoreRef, ValueCenter } from "wy-helper"
+import { EmptyFun, storeRef, StoreRef, ValueCenter } from "wy-helper"
 
 export type HookMemo<T, D> = {
   deps: D

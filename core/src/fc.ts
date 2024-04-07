@@ -1,6 +1,6 @@
 import { Fiber } from "./Fiber";
 import { EffectDestroyEvent, FiberImpl, StoreValueCreater, HookEffect, MemoEvent, RenderWithDep, StoreValue } from "./Fiber";
-import { quote, simpleNotEqual, alawaysTrue, ValueCenter, valueCenterOf, arrayNotEqual, EmptyFun, emptyArray } from "wy-helper";
+import { quote, simpleNotEqual, alawaysTrue, ValueCenter, valueCenterOf, arrayNotEqual, EmptyFun } from "wy-helper";
 
 const w = globalThis as any
 const cache = (w.__better_react_one__ || {

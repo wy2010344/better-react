@@ -166,7 +166,7 @@ export class DomCreater<T extends DomElementType>{
     }
     return helper.node
   }
-  renderFragment<D extends any[]>(fun: (e: MemoEvent<D>) => void, deps: D): DomElement<T>
+  renderFragment<D extends readonly any[]>(fun: (e: MemoEvent<D>) => void, deps: D): DomElement<T>
   renderFragment(fun: (e: MemoEvent<undefined>) => void): DomElement<T>
   renderFragment(fun: any, deps?: any) {
     const helper = useMemo(DomHelper.create, this.type)
