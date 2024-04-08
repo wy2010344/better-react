@@ -62,6 +62,7 @@ export class EnvModel {
   constructor() {
     this.setRealTime = this.setRealTime.bind(this)
     this.createChangeAtom = this.createChangeAtom.bind(this)
+    this.updateEffect = this.updateEffect.bind(this)
     const changeAtoms: ChangeAtom<any>[] = []
     this.changeAtoms = changeAtoms
     this.changeAtomsManage = {
@@ -90,12 +91,9 @@ export class EnvModel {
     this.changeAtoms.length = 0
     /******清理删除********************************************************/
     /******清理所有的draft********************************************************/
-    // checkRepeat(deletions)
     this.deletions.forEach(notifyDel)
     this.deletions.length = 0
     // /******更新属性********************************************************/
-    // updateFixDom(rootFiber)
-
     //执行所有effect
     const updateEffects = this.updateEffects
     const keys = iterableToList(updateEffects.keys()).sort()
@@ -241,6 +239,7 @@ export function deepTravelFiber<T extends any[]>(call: (Fiber: FiberImpl, ...vs:
       if (next) {
         return next
       }
+      nextFiber.onRenderBack()
       nextFiber = nextFiber.parent
     }
     return undefined

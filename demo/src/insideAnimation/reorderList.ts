@@ -1,10 +1,11 @@
 import { faker } from "@faker-js/faker"
 import { dom } from "better-react-dom"
-import { createUseReducer, renderArray, useAtom, useChange, useEffect, useTimeoutAnimateValue } from "better-react-helper"
+import { createUseReducer, renderArray, renderFragment, useAtom, useChange, useEffect, useTimeoutAnimateValue } from "better-react-helper"
 import { Point, arrayToMove, emptyArray, pointEqual, pointZero, quote, syncMergeCenter } from "wy-helper"
 import { useEdgeScroll } from "./edgeScroll"
 import { requesetBatchAnimationForceFlow } from "wy-dom-helper"
 import { useReorder } from 'better-react-dom-helper'
+import { useStyle } from "better-react-dom-helper"
 /**
  * 拖拽的render,依赖拖拽事件,不是react的render与requestAnimateFrame
  * 动画生成异步的,因为dom生效本来是异步的.
@@ -55,7 +56,6 @@ const emptyConfig = {
   allowFiber: true
 }
 export default function () {
-  const [orderList, dispatch] = useReduceList(list)
 
   return dom.div({
     style: `
@@ -69,6 +69,9 @@ export default function () {
       event.preventDefault()
     },
   }).renderFragment(function () {
+
+    const [orderList, dispatch] = useReduceList(list)
+    const [onMove, setOnMove] = useChange<{ index: number }>()
     const reOrder = useReorder('y',
       function (key) {
         return !orderList.some(v => v.index == key)
@@ -80,41 +83,6 @@ export default function () {
           base: baseKey
         })
       })
-    const [onMove, setOnMove] = useChange<{ index: number }>()
-
-    const setPoint = useEdgeScroll(() => container, {
-      y: true,
-      padding: 10
-    })
-    useEffect(() => {
-      function move(e: PointerEvent) {
-        const p = {
-          x: e.pageX,
-          y: e.pageY
-        }
-        if (reOrder.move(p)) {
-          setPoint(p)
-        }
-      }
-      function end(e: PointerEvent) {
-        if (reOrder.end({
-          x: e.pageX,
-          y: e.pageY
-        })) {
-          setOnMove(undefined)
-          setPoint(undefined)
-        }
-      }
-
-      window.addEventListener("pointermove", move)
-      window.addEventListener("pointerup", end)
-      window.addEventListener("pointercancel", end)
-      return function () {
-        window.removeEventListener("pointermove", move)
-        window.removeEventListener("pointerup", end)
-        window.removeEventListener("pointercancel", end)
-      }
-    }, emptyArray)
     const container = dom.div({
       style: `
       width:300px;
@@ -127,6 +95,40 @@ export default function () {
         reOrder.onScroll(container)
       },
     }).renderFragment(function () {
+      const setPoint = useEdgeScroll(() => container, {
+        y: true,
+        padding: 10
+      })
+      useEffect(() => {
+        function move(e: PointerEvent) {
+          const p = {
+            x: e.pageX,
+            y: e.pageY
+          }
+          if (reOrder.move(p)) {
+            setPoint(p)
+          }
+        }
+        function end(e: PointerEvent) {
+          if (reOrder.end({
+            x: e.pageX,
+            y: e.pageY
+          })) {
+            setOnMove(undefined)
+            setPoint(undefined)
+          }
+        }
+
+        window.addEventListener("pointermove", move)
+        window.addEventListener("pointerup", end)
+        window.addEventListener("pointercancel", end)
+        return function () {
+          window.removeEventListener("pointermove", move)
+          window.removeEventListener("pointerup", end)
+          window.removeEventListener("pointercancel", end)
+        }
+      }, emptyArray)
+
       renderArray(orderList, v => v.index, function (row, index) {
         const transY = useTimeoutAnimateValue<Point, string>(pointZero, pointEqual)
         const reOrderChild = reOrder.useChild(
@@ -164,7 +166,6 @@ export default function () {
     margin-top:10px;
     background:yellow;
     position:relative;
-    z-index:${onMove?.index == row.index ? 1 : 0};
     `,
           onPointerDown(e) {
             // transX.changeTo(e.pageY - cb.get()!.y.min)
@@ -183,10 +184,17 @@ export default function () {
           dom.img({
             src: row.avatar
           }).render()
-
           dom.span().renderText`${row.name}`
         })
+        /**
+         * 
+            z-index:${onMove?.index == row.index ? 1 : 0};
+         */
+        useStyle(div, {
+          zIndex: onMove?.index == row.index ? 1 : 0
+        })
       })
+
     })
   })
 }

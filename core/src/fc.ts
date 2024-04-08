@@ -141,7 +141,6 @@ export function hookLevelEffect(
   level: number,
   effect: EmptyFun
 ) {
-
   const parentFiber = hookParentFiber()
   parentFiber.envModel.updateEffect(level, effect)
 }

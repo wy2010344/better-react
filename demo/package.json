@@ -33,6 +33,7 @@
     "kanren-logic": "file:.yalc/kanren-logic",
     "motion": "^10.11.0",
     "stylis": "^4.3.1",
+    "stylis-creater": "file:.yalc/stylis-creater",
     "three": "^0.163.0",
     "topojson": "^3.0.2",
     "wy-dom-helper": "file:.yalc/wy-dom-helper",

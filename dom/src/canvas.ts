@@ -1,6 +1,6 @@
-import { Fiber, MemoEvent, RenderWithDep, StoreValue, hookAddResult, renderFiber } from "better-react";
-import { EmptyFun, Point, emptyArray, emptyObject, run, arrayPushAll } from "wy-helper";
-import { hookAttrEffect, hookBeforeAttrEffect, hookEffect, useAttrEffect, useBeforeAttrEffect, useMemo } from "better-react-helper";
+import { Fiber, MemoEvent, RenderWithDep, StoreValue, hookAddResult, hookCreateChangeAtom, renderFiber } from "better-react";
+import { EmptyFun, Point, emptyArray, emptyObject, run, arrayPushAll, alawaysFalse } from "wy-helper";
+import { useAttrEffect, useMemo } from "better-react-helper";
 
 
 
@@ -16,6 +16,14 @@ function drawCanvas(c: HTMLCanvasElement, drawList: any[]) {
         (ctx as any)[v.name] = v.value
       }
     }
+  }
+  return ctx!
+}
+
+function drawSubCanvas(ctx: CanvasRenderingContext2D, subFibers: SubFiber[]) {
+  for (const subFiber of subFibers) {
+    const value = subFiber.fiber.lazyGetResultValue()
+    ctx.drawImage(value.canvas, subFiber.x, subFiber.y, value.canvas.width, value.canvas.height)
   }
 }
 class CanvasStoreValue implements StoreValue {
@@ -38,88 +46,81 @@ class CanvasStoreValue implements StoreValue {
       console.log("不知道什么类型,无法处理", type, args)
     }
   }
+
+
+  //这几个参数都要做成可回滚的,虽然都不是持久的,但可能
+  readonly childrenDirty = hookCreateChangeAtom()(false, alawaysFalse)
+  private finallyEvents: any[] = emptyArray as any
   useAfterRender() {
+    this.childrenDirty.set(true)
     const that = this
     useAttrEffect(() => {
       //在attr里面绘制,因为设置尺寸可能导致绘制结果丢失
       const c = that.canvas
-      const drawList = that.drawList
-      drawCanvas(c, drawList)
-
-
-
-      const eventList = [...that.eventList]
-      function addAllEvent(subFibers: SubFiber[]) {
-        for (const subFiber of subFibers) {
-          const value = subFiber.fiber.lazyGetResultValue()
-          arrayPushAll(eventList, value.eventList)
-          addAllEvent(value.subFibers)
-        }
-      }
-      addAllEvent(that.subFibers)
-
-
-      const hasEvent: {
-        [key in CanvasEvent]?: boolean
-      } = {}
-      for (const event of eventList) {
-        canvasEvents.forEach(c => {
-          if (event.events[c]) {
-            hasEvent[c] = true
-          }
-        })
-      }
       const destroys: EmptyFun[] = []
       canvasEvents.forEach(s => {
-        if (hasEvent[s]) {
-          const fun = (e: PointerEvent) => {
-            const canvas = {
-              x: e.clientX,
-              y: e.clientY
-            }
-            for (let i = eventList.length - 1; i > -1; i--) {
-              const v = eventList[i]
-              if (v.x < canvas.x && v.y < canvas.y
-                && v.x + v.width > canvas.x && v.y + v.height > canvas.y) {
-                const event = v.events[s]
-                if (event) {
-                  event({
-                    canvas,
-                    client: {
-                      x: canvas.x - v.x,
-                      y: canvas.y - v.y
-                    }
-                  })
-                }
+        const fun = (e: PointerEvent) => {
+          if (!e) {
+            return
+          }
+          const canvas = {
+            x: e.clientX,
+            y: e.clientY
+          }
+          for (let i = that.finallyEvents.length - 1; i > -1; i--) {
+            const v = that.finallyEvents[i]
+
+            if (v.x < canvas.x && v.y < canvas.y
+              && v.x + v.width > canvas.x && v.y + v.height > canvas.y) {
+              const event = v.events[s]
+              let ct = false
+              if (event) {
+                ct = event({
+                  canvas,
+                  client: {
+                    x: canvas.x - v.x,
+                    y: canvas.y - v.y
+                  }
+                })
+              }
+              if (!ct) {
                 return
               }
             }
           }
-          c.addEventListener(s, fun)
-          destroys.push(fun)
         }
-      })
+        c.addEventListener(s, fun)
+        destroys.push(fun)
+      }, emptyArray)
       return function () {
         destroys.forEach(run)
       }
-    })
-
-    hookEffect(() => {
-      const c = that.canvas
-      const ctx = c.getContext("2d")!
-      function addAllCanvas(subFibers: SubFiber[]) {
-        for (const subFiber of subFibers) {
-          const value = subFiber.fiber.lazyGetResultValue()
-          ctx.drawImage(value.canvas, subFiber.x, subFiber.y, value.canvas.width, value.canvas.height)
-          addAllCanvas(value.subFibers)
-        }
-      }
-      addAllCanvas(that.subFibers)
-    })
-
-    useBeforeAttrEffect(() => {
-    })
+    }, emptyArray)
     return emptyArray
+  }
+
+  onRenderBack(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void {
+    if (this.childrenDirty.get()) {
+      const that = this
+      addLevelEffect(1, function () {
+        const drawList = that.drawList
+        const ctx = drawCanvas(that.canvas, drawList)
+        drawSubCanvas(ctx, that.subFibers)
+
+
+
+        const eventList = [...that.eventList]
+        function addAllEvent(subFibers: SubFiber[]) {
+          for (const subFiber of subFibers) {
+            const value = subFiber.fiber.lazyGetResultValue()
+            arrayPushAll(eventList, value.eventList)
+            addAllEvent(value.subFibers)
+          }
+        }
+        addAllEvent(that.subFibers)
+        that.finallyEvents = eventList
+      })
+    }
   }
 }
 
@@ -212,19 +213,30 @@ class SubCanvasStoreValue implements StoreValue {
       console.log("不知道什么类型,无法处理", type, args)
     }
   }
+  //这几个参数都要做成可回滚的,虽然都不是持久的.
+  readonly childrenDirty = hookCreateChangeAtom()(false, alawaysFalse)
   useAfterRender() {
-    const that = this
-    hookAttrEffect(() => {
-      const c = that.canvas
-      c.width = that.size.width
-      c.height = that.size.height
-      const drawList = that.drawList
-      drawCanvas(c, drawList)
-    })
+    this.childrenDirty.set(true)
     return {
       canvas: this.canvas,
       eventList: this.eventList,
       subFibers: this.subFibers
+    }
+  }
+
+  onRenderBack(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void {
+    if (this.childrenDirty.get()) {
+      parentResult.childrenDirty.set(true)
+      const that = this
+      addLevelEffect(1, function () {
+        //自身必须重新绘制,因为叠加层可能是透明的.只有某些子节点可以缓存
+        const c = that.canvas
+        c.width = that.size.width
+        c.height = that.size.height
+        const drawList = that.drawList
+        const ctx = drawCanvas(c, drawList)
+        drawSubCanvas(ctx, that.subFibers)
+      })
     }
   }
 }

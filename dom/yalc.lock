@@ -2,15 +2,15 @@
   "version": "v1",
   "packages": {
     "better-react": {
-      "signature": "12e10ac6b8d59d99a3937e358526d733",
+      "signature": "9e909c783ef239e53d313f298db1d1f1",
       "file": true
     },
     "better-react-helper": {
-      "signature": "f2e3e7cd30ef40bd392cb5dd76caabc7",
+      "signature": "698019e6eb61775acec148816fb0aebc",
       "file": true
     },
     "wy-helper": {
-      "signature": "a9ce636ac2f16e86cb339887d2ea899e",
+      "signature": "afafde7460243169f4d7e7aa135ad491",
       "file": true
     }
   }

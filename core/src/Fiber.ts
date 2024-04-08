@@ -35,6 +35,7 @@ export type StoreValueCreater<M extends readonly any[] = readonly any[], T = any
 }
 
 export interface StoreValue<M extends readonly any[] = readonly any[], T = any,> {
+  onRenderBack?(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void
   hookAddResult(...vs: M): void
   useAfterRender(): T
 }
@@ -125,6 +126,11 @@ export class FiberImpl<D = any, M = any> implements Fiber<M> {
     })
     const out = result.useAfterRender()
     this.resultValue.set(out)
+    this.result = result
+  }
+  private result: StoreValue<any[], M> = undefined as any
+  onRenderBack() {
+    this.result.onRenderBack?.(this.envModel.updateEffect, this.parent?.result)
   }
   private resultValue = this.envModel.createChangeAtom<M>(null as any)
   lazyGetResultValue() {
@@ -180,35 +186,7 @@ export class FiberImpl<D = any, M = any> implements Fiber<M> {
       dynamicChild)
     return fiber
   }
-  /**
-   * One的子节点,子节点是不是Map不一定
-   * @param parentFiber 
-   * @param rd 
-   * @param dynamicChild 
-   */
-  static createOneChild<D>(
-    envModel: EnvModel,
-    parentFiber: FiberImpl,
-    config: StoreValueCreater,
-    shouldChange: (a: D, b: D) => any,
-    rd: RenderDeps<D>,
-    dynamicChild?: boolean
-  ) {
-    const fiber = new FiberImpl(
-      envModel,
-      parentFiber,
-      emptyPlace,
-      emptyPlace,
-      config,
-      shouldChange,
-      rd,
-      dynamicChild)
-    return fiber
-  }
 }
-const emptyPlace = storeRef<FiberImpl | void>(undefined)
-
-
 export type MemoEvent<T> = {
   trigger: T
   isInit: boolean

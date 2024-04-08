@@ -1,6 +1,6 @@
-import { ReduceRowState, ReduceState, buildSubSetArray, buildSubSetObject } from "wy-helper"
+import { EmptyFun, ReduceRowState, ReduceState, alawaysFalse, buildSubSetArray, buildSubSetObject } from "wy-helper"
 import { useMemo } from "./useRef"
-import { StoreValue } from "better-react"
+import { StoreValue, hookCreateChangeAtom } from "better-react"
 
 /**
  * 对react-setState的局部嵌套
@@ -33,8 +33,16 @@ class ArrayStoreValueCreater implements StoreValue {
       this.array.push(v)
     }
   }
+  private childrenDirty = hookCreateChangeAtom()(false, alawaysFalse)
   useAfterRender() {
+    this.childrenDirty.set(true)
     return this.array
+  }
+
+  onRenderBack(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void {
+    if (this.childrenDirty.get()) {
+      parentResult.childrenDirty.set(true)
+    }
   }
 }
 export function arrayStoreCreater() {
