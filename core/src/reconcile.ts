@@ -97,7 +97,7 @@ export function batchWork(
     unitOfWork: FiberImpl,
     commitWork: NextTimeWork
   ) {
-    const nextUnitOfWork = performUnitOfWork(unitOfWork, envModel)
+    const nextUnitOfWork = performUnitOfWork(unitOfWork)
     if (nextUnitOfWork) {
       renderWork.appendWork(function () {
         workLoop(renderWork, nextUnitOfWork, commitWork)
@@ -351,7 +351,7 @@ export function flushSync(fun: () => void) {
  * @param fiber 
  * @returns 
  */
-const performUnitOfWork = deepTravelFiber<EnvModel[]>(function (fiber, envModel) {
+const performUnitOfWork = deepTravelFiber(function (fiber) {
   //当前fiber脏了，需要重新render
   if (fiber.effectTag.get()) {
     updateFunctionComponent(fiber)

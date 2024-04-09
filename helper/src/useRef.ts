@@ -71,9 +71,9 @@ export function useLaterSetGet<T>() {
  * @returns 
  */
 export function useAlways<T>(init: T) {
-  const ref = useLaterSetGet<GetValue<T>>()
-  ref.set(() => init)
-  return ref.get as unknown as GetValue<T>
+  const ref = useLaterSetGet<T>()
+  ref.set(init)
+  return ref.get as GetValue<T>
 }
 
 /**

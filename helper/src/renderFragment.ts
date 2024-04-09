@@ -1,13 +1,13 @@
-import { Fiber, StoreValueCreater, hookAddResult, renderFiber } from "better-react";
+import { Fiber, MemoEvent, StoreValueCreater, hookAddResult, renderFiber } from "better-react";
 import { arrayNotEqualDepsWithEmpty } from "wy-helper";
 import { arrayStoreCreater } from "./util";
 
 
 export function createRenderFragment(storeValueCreater: StoreValueCreater) {
   function renderFragment<T extends readonly any[] = any[]>(
-    fun: (old: T | undefined, isNew: boolean, nv: T) => void, dep: T, asPortal?: boolean): Fiber
+    fun: (e: MemoEvent<T>) => void, dep: T, asPortal?: boolean): Fiber
   function renderFragment(
-    fun: (old: undefined, isNew: boolean, nv: undefined) => void): void
+    fun: (e: MemoEvent<undefined>) => void): void
   function renderFragment() {
     const [render, deps, asPortal] = arguments
     const fiber = renderFiber(storeValueCreater, arrayNotEqualDepsWithEmpty, render, deps)

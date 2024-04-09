@@ -126,7 +126,7 @@ export type LoopWork = {
 /**
  * 需要区分create和update阶段
  */
-class ChangeAtom<T> implements StoreRef<T>{
+class ChangeAtom<T> implements StoreRef<T> {
   private isCreate = true
   constructor(
     private manage: ManageValue<ChangeAtom<any>>,
@@ -236,10 +236,10 @@ export function deepTravelFiber<T extends any[]>(call: (Fiber: FiberImpl, ...vs:
     let nextFiber: FiberImpl | undefined = fiber
     while (nextFiber) {
       const next = nextFiber.next.get()
+      nextFiber.onRenderBack()
       if (next) {
         return next
       }
-      nextFiber.onRenderBack()
       nextFiber = nextFiber.parent
     }
     return undefined

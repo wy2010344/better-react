@@ -153,6 +153,17 @@ export function hookCreateChangeAtom() {
   const parentFiber = hookParentFiber()
   return parentFiber.envModel.createChangeAtom
 }
+export type MemoCacheEvent<T, M> = {
+  trigger: T
+  isInit: boolean
+  beforeTrigger?: never
+  beforeValue?: never
+} | {
+  trigger: T
+  isInit: boolean
+  beforeTrigger: T
+  beforeValue: M
+}
 /**
  * 通过返回函数,能始终通过函数访问fiber上的最新值
  * @param effect 
@@ -161,7 +172,7 @@ export function hookCreateChangeAtom() {
  */
 export function useBaseMemo<T, V>(
   shouldChange: (a: V, b: V) => any,
-  effect: (e: MemoEvent<V>) => T,
+  effect: (e: MemoCacheEvent<V, T>) => T,
   deps: V,
 ): T {
   const parentFiber = hookParentFiber()
@@ -207,7 +218,8 @@ export function useBaseMemo<T, V>(
         value: effect({
           beforeTrigger: state.deps,
           isInit: false,
-          trigger: deps
+          trigger: deps,
+          beforeValue: state.value
         }),
         deps
       }
@@ -303,7 +315,7 @@ export function createContext<T>(v: T): Context<T> {
   return new ContextFactory(v)
 }
 let contextUid = 0
-class ContextFactory<T> implements Context<T>{
+class ContextFactory<T> implements Context<T> {
   id = contextUid++
   constructor(
     public readonly out: T

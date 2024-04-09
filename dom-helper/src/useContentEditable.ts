@@ -1,6 +1,6 @@
 import { hookCommitAll } from "better-react"
 import { useEffect, useMemo, useReducer, renderOne } from "better-react-helper"
-import { ContentEditableModel, EditRecord, MbRange, appendRecord, contentEditableText, fixScroll, mb } from "wy-dom-helper/contentEditable"
+import { ContentEditableModel, EditRecord, appendRecord, contentEditableText, fixScroll } from "wy-dom-helper/contentEditable"
 import { emptyArray } from "wy-helper"
 
 

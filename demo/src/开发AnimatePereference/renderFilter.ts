@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker"
 import { dom } from "better-react-dom"
 import { getTimeoutPromise, renderInput, useTriggerStyleWithShow } from "better-react-dom-helper"
-import { renderArray, renderExitAnimateArray, useChange, useEffect, useExitAnimate, useMemo } from "better-react-helper"
+import { renderArray, createRenderAnimateArray, useChange, useEffect, useExitAnimate, useMemo } from "better-react-helper"
 import { CSSProperties, ClsWithStyle, stringifyStyle } from "wy-dom-helper"
 import { emptyArray } from "wy-helper"
 

@@ -1,4 +1,4 @@
-import { createRoot } from "better-react-dom";
+import { createRoot, dom } from "better-react-dom";
 import insideAnimation from "./insideAnimation/frameLayout";
 // import iScroll from "./iScroll/index";
 import iScroll from "./iScroll/myScrollFrame";
@@ -26,6 +26,7 @@ export function createBr(app: HTMLElement) {
     // demo,
     // renderFilter,
     // cssLayout,
+    // demo,
     reorderList,
     // canvasRender,
     // insideAnimation,
@@ -48,3 +49,52 @@ export function createBr(app: HTMLElement) {
 }
 
 
+
+
+function demo() {
+
+
+  dom.div({
+    style: `
+          background:blue;
+          `
+  }).renderFragment(function () {
+    dom.div({
+      style: `
+          background:green;
+          `
+    }).renderFragment(function () {
+      dom.div({
+        style: `
+          background:yellow;
+          `
+      }).render()
+      dom.div({
+        style: `
+          background:yellow;
+          `
+      }).render()
+    })
+    dom.div({
+      style: `
+          background:yellow;
+          `
+    }).render()
+  })
+  dom.div({
+    style: `
+          background:blue;
+          `
+  }).renderFragment(function () {
+    dom.div({
+      style: `
+          background:yellow;
+          `
+    }).render()
+  })
+  dom.div({
+    style: `
+          background:yellow;
+          `
+  }).render()
+}

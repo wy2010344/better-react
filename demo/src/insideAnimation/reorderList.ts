@@ -48,13 +48,6 @@ const useReduceList = createUseReducer(function (list: Row[], action: {
   }
   return list
 })
-
-const emptyConfig = {
-  allowAdd(v: any) {
-    return true
-  },
-  allowFiber: true
-}
 export default function () {
 
   return dom.div({
