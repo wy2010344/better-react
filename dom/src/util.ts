@@ -52,7 +52,7 @@ class StoreValueNode implements StoreValue {
     return emptyArray
   }
 
-  onRenderBack(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void {
+  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void {
     if (this.childrenDirty.get()) {
       const that = this
       addLevelEffect(-1, () => {

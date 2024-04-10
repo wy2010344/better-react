@@ -215,7 +215,11 @@ function destroyFiber(fiber: FiberImpl) {
         const state = effect.get()
         const destroy = state.destroy
         if (destroy) {
-          destroy(state.deps)
+          destroy({
+            beforeIsInit: state.isInit,
+            beforeTrigger: state.deps,
+            setRealTime: fiber.envModel.setRealTime
+          })
         }
       })
     }
@@ -236,7 +240,7 @@ export function deepTravelFiber<T extends any[]>(call: (Fiber: FiberImpl, ...vs:
     let nextFiber: FiberImpl | undefined = fiber
     while (nextFiber) {
       const next = nextFiber.next.get()
-      nextFiber.onRenderBack()
+      nextFiber.onRenderLeave()
       if (next) {
         return next
       }

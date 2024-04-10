@@ -99,7 +99,7 @@ class CanvasStoreValue implements StoreValue {
     return emptyArray
   }
 
-  onRenderBack(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void {
+  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void {
     if (this.childrenDirty.get()) {
       const that = this
       addLevelEffect(1, function () {
@@ -224,7 +224,7 @@ class SubCanvasStoreValue implements StoreValue {
     }
   }
 
-  onRenderBack(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void {
+  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void {
     if (this.childrenDirty.get()) {
       parentResult.childrenDirty.set(true)
       const that = this

@@ -12,7 +12,7 @@ export type HookEffect<D> = {
   destroy?: void | ((newDeps: EffectDestroyEvent<D>) => void)
 }
 export type EffectDestroyEvent<T> = {
-  trigger: T
+  trigger?: T
   beforeIsInit: boolean,
   beforeTrigger: T
   setRealTime(): void
@@ -35,7 +35,7 @@ export type StoreValueCreater<M extends readonly any[] = readonly any[], T = any
 }
 
 export interface StoreValue<M extends readonly any[] = readonly any[], T = any,> {
-  onRenderBack?(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void
+  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void
   hookAddResult(...vs: M): void
   useAfterRender(): T
 }
@@ -129,8 +129,8 @@ export class FiberImpl<D = any, M = any> implements Fiber<M> {
     this.result = result
   }
   private result: StoreValue<any[], M> = undefined as any
-  onRenderBack() {
-    this.result.onRenderBack?.(this.envModel.updateEffect, this.parent?.result)
+  onRenderLeave() {
+    this.result.onRenderLeave(this.envModel.updateEffect, this.parent?.result)
   }
   private resultValue = this.envModel.createChangeAtom<M>(null as any)
   lazyGetResultValue() {

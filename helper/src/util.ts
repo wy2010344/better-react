@@ -39,7 +39,7 @@ class ArrayStoreValueCreater implements StoreValue {
     return this.array
   }
 
-  onRenderBack(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void {
+  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void {
     if (this.childrenDirty.get()) {
       parentResult.childrenDirty.set(true)
     }
