@@ -33,16 +33,12 @@ class ArrayStoreValueCreater implements StoreValue {
       this.array.push(v)
     }
   }
-  private childrenDirty = hookCreateChangeAtom()(false, alawaysFalse)
-  useAfterRender() {
-    this.childrenDirty.set(true)
-    return this.array
-  }
-
-  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void {
+  private childrenDirty = hookCreateChangeAtom()(true, alawaysFalse)
+  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any) {
     if (this.childrenDirty.get()) {
       parentResult.childrenDirty.set(true)
     }
+    return this.array
   }
 }
 export function arrayStoreCreater() {

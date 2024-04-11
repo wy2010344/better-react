@@ -45,14 +45,9 @@ class StoreValueNode implements StoreValue {
     }
   }
 
-  private childrenDirty = hookCreateChangeAtom()(false, alawaysFalse)
-  useAfterRender() {
-    this.childrenDirty.set(true)
-    //由外部去决定,比较通用,因为可能为portal
-    return emptyArray
-  }
+  private childrenDirty = hookCreateChangeAtom()(true, alawaysFalse)
 
-  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void {
+  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any) {
     if (this.childrenDirty.get()) {
       const that = this
       addLevelEffect(-1, () => {
@@ -87,6 +82,7 @@ class StoreValueNode implements StoreValue {
         that.cache.set(newChildren)
       })
     }
+    return emptyArray
   }
 }
 export function createStoreValueCreater(pNode: Node): StoreValueCreater {

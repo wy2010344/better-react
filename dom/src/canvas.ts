@@ -49,7 +49,7 @@ class CanvasStoreValue implements StoreValue {
 
 
   //这几个参数都要做成可回滚的,虽然都不是持久的,但可能
-  readonly childrenDirty = hookCreateChangeAtom()(false, alawaysFalse)
+  readonly childrenDirty = hookCreateChangeAtom()(true, alawaysFalse)
   private finallyEvents: any[] = emptyArray as any
   useAfterRender() {
     this.childrenDirty.set(true)
@@ -96,10 +96,9 @@ class CanvasStoreValue implements StoreValue {
         destroys.forEach(run)
       }
     }, emptyArray)
-    return emptyArray
   }
 
-  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void {
+  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any) {
     if (this.childrenDirty.get()) {
       const that = this
       addLevelEffect(1, function () {
@@ -121,6 +120,7 @@ class CanvasStoreValue implements StoreValue {
         that.finallyEvents = eventList
       })
     }
+    return emptyArray
   }
 }
 
@@ -214,17 +214,9 @@ class SubCanvasStoreValue implements StoreValue {
     }
   }
   //这几个参数都要做成可回滚的,虽然都不是持久的.
-  readonly childrenDirty = hookCreateChangeAtom()(false, alawaysFalse)
-  useAfterRender() {
-    this.childrenDirty.set(true)
-    return {
-      canvas: this.canvas,
-      eventList: this.eventList,
-      subFibers: this.subFibers
-    }
-  }
+  readonly childrenDirty = hookCreateChangeAtom()(true, alawaysFalse)
 
-  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void {
+  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any) {
     if (this.childrenDirty.get()) {
       parentResult.childrenDirty.set(true)
       const that = this
@@ -237,6 +229,11 @@ class SubCanvasStoreValue implements StoreValue {
         const ctx = drawCanvas(c, drawList)
         drawSubCanvas(ctx, that.subFibers)
       })
+    }
+    return {
+      canvas: this.canvas,
+      eventList: this.eventList,
+      subFibers: this.subFibers
     }
   }
 }

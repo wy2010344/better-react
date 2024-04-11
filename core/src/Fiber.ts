@@ -35,9 +35,9 @@ export type StoreValueCreater<M extends readonly any[] = readonly any[], T = any
 }
 
 export interface StoreValue<M extends readonly any[] = readonly any[], T = any,> {
-  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): void
+  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): T
   hookAddResult(...vs: M): void
-  useAfterRender(): T
+  useAfterRender?(): void
 }
 
 export interface Fiber<M = any> {
@@ -124,13 +124,13 @@ export class FiberImpl<D = any, M = any> implements Fiber<M> {
       beforeTrigger: oldDeps,
       isInit: isNew
     })
-    const out = result.useAfterRender()
-    this.resultValue.set(out)
+    result.useAfterRender?.()
     this.result = result
   }
   private result: StoreValue<any[], M> = undefined as any
   onRenderLeave() {
-    this.result.onRenderLeave(this.envModel.updateEffect, this.parent?.result)
+    const out = this.result.onRenderLeave(this.envModel.updateEffect, this.parent?.result)
+    this.resultValue.set(out)
   }
   private resultValue = this.envModel.createChangeAtom<M>(null as any)
   lazyGetResultValue() {

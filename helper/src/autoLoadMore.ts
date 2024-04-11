@@ -26,13 +26,16 @@ type Update<T> = {
 function reducerAutoLoadMore<T, K>(
   old: PromiseAutoLoadMore<T, K>,
   action: AutoLoadMoreAction<T, K>,
-  dispatch: (v: AutoLoadMoreAction<T, K>) => void
+  nextTick: SetValue<SetValue<SetValue<AutoLoadMoreAction<T, K>>>>
 ): PromiseAutoLoadMore<T, K> {
   if (action.type == "reload") {
     return old.reload(
       action.getAfter,
       action.first,
       function (value) {
+        nextTick(function () {
+
+        })
         dispatch({
           type: "reloadBack",
           value
