@@ -16,7 +16,8 @@ import reorderList from "./insideAnimation/reorderList";
 import dslKanren from "./dsl-kanren";
 import newMode from "./newMode";
 import canvasRender from "./newMode/canvasRender";
-import centerPicker from "./insideAnimation/centerPicker/frame";
+import centerPicker from "./insideAnimation/centerPicker/centerPicker";
+import todoList from "./todoList/index_new";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(
@@ -33,7 +34,8 @@ export function createBr(app: HTMLElement) {
     // indexDB,
     // iScroll,
     // newMode,
-    centerPicker,
+    // centerPicker,
+    todoList,
     // bezierPreview,
     // ExpensiveViewSingle,
     // reanimated,

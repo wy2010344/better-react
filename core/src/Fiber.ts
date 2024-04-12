@@ -12,7 +12,14 @@ export type HookEffect<D> = {
   destroy?: void | ((newDeps: EffectDestroyEvent<D>) => void)
 }
 export type EffectDestroyEvent<T> = {
-  trigger?: T
+  isDestroy: false
+  trigger: T
+  beforeIsInit: boolean,
+  beforeTrigger: T
+  setRealTime(): void
+} | {
+  isDestroy: true
+  trigger?: never
   beforeIsInit: boolean,
   beforeTrigger: T
   setRealTime(): void
@@ -46,6 +53,8 @@ export interface Fiber<M = any> {
 export function isFiber(v: any): v is Fiber<any> {
   return v instanceof FiberImpl
 }
+
+export type ReconcileFun = (fun: () => (void | (readonly EmptyFun[]))) => void
 /**
  * 会调整顺序的,包括useMap的父节点与子结点.但父节点只调整child与lastChild
  * 子节点只调整prev与next
@@ -82,7 +91,7 @@ export class FiberImpl<D = any, M = any> implements Fiber<M> {
 
   private renderDeps: StoreRef<RenderDeps<any>>
 
-  requestReconcile: ((fun: () => any) => void) | void = undefined
+  requestReconcile: (ReconcileFun) | void = undefined
   makeDirtyAndRequestUpdate: EmptyFun | void = undefined
   private constructor(
     public readonly envModel: EnvModel,

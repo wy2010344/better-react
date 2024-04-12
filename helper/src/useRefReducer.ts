@@ -1,10 +1,10 @@
 import { useMemo } from './useRef'
-import { ReducerFun, useReducer } from './useReducer'
-import { emptyArray, quote } from "wy-helper"
+import { useReducer } from './useReducer'
+import { Reducer, emptyArray, quote } from "wy-helper"
 
 
 export type BaseInit<T, F, G> = (
-  reducer: ReducerFun<F, T>,
+  reducer: Reducer<T, F>,
   init: T,
   dispatch: (f: F) => void
 ) => G
@@ -14,19 +14,19 @@ export type BaseInit<T, F, G> = (
 export type RefReducerResult<T, G> = [T, G];
 export function useRefReducer<G, F, M, T>(
   baseInit: BaseInit<T, F, G>,
-  reducer: ReducerFun<F, T>,
+  reducer: Reducer<T, F>,
   init: M,
   initFun: (m: M) => T,
   eq?: (a: T, b: T) => any): RefReducerResult<F, T>;
 export function useRefReducer<G, F, T>(
   baseInit: BaseInit<T, F, G>,
-  reducer: ReducerFun<F, T>,
+  reducer: Reducer<T, F>,
   init: T,
   initFun?: (m: T) => T,
   eq?: (a: T, b: T) => any): RefReducerResult<F, T>;
 export function useRefReducer<G, F, T = undefined>(
   baseInit: BaseInit<T, F, G>,
-  reducer: ReducerFun<F, T>,
+  reducer: Reducer<T, F>,
   init?: T,
   initFun?: (m: T) => T,
   eq?: (a: T, b: T) => any): RefReducerResult<F, T>

@@ -216,6 +216,7 @@ function destroyFiber(fiber: FiberImpl) {
         const destroy = state.destroy
         if (destroy) {
           destroy({
+            isDestroy: true,
             beforeIsInit: state.isInit,
             beforeTrigger: state.deps,
             setRealTime: fiber.envModel.setRealTime

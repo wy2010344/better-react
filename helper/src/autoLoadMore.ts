@@ -1,6 +1,8 @@
-import { AutoLoadMoreCore, PromiseAutoLoadMore, SetValue, VersionPromiseResult, emptyArray } from "wy-helper";
+import { AutoLoadMoreCore, PromiseAutoLoadMore, ReducerWithDispatchResult, SetValue, VersionPromiseResult, emptyArray, mapReducerDispatchList } from "wy-helper";
 import { useCallback } from "./useCallback";
-import { useReducer } from "./useReducer";
+import { useReducer, useSideReducer } from "./useReducer";
+
+
 type AutoLoadMoreAction<T, K> =
   {
     type: "reload";
@@ -22,40 +24,43 @@ type Update<T> = {
   type: "update";
   callback(old: T[]): T[]
 }
-
-function reducerAutoLoadMore<T, K>(
+export function reducerAutoLoadMore<T, K>(
   old: PromiseAutoLoadMore<T, K>,
-  action: AutoLoadMoreAction<T, K>,
-  nextTick: SetValue<SetValue<SetValue<AutoLoadMoreAction<T, K>>>>
-): PromiseAutoLoadMore<T, K> {
+  action: AutoLoadMoreAction<T, K>
+): ReducerWithDispatchResult<PromiseAutoLoadMore<T, K>, AutoLoadMoreAction<T, K>> {
   if (action.type == "reload") {
-    return old.reload(
+    const [value, acts] = old.reload(
       action.getAfter,
-      action.first,
-      function (value) {
-        nextTick(function () {
-
-        })
-        dispatch({
-          type: "reloadBack",
-          value
-        })
-      })
+      action.first
+    )
+    /**
+       return {
+        type: "reloadBack",
+        value
+      } as const
+     */
+    return [value, mapReducerDispatchList(acts, value => {
+      return {
+        type: "reloadBack",
+        value
+      }
+    })]
   } else if (action.type == "loadMore") {
-    return old.loadMore(action.version, function (value) {
-      dispatch({
+    const [value, acts] = old.loadMore(action.version)
+    return [value, mapReducerDispatchList(acts, value => {
+      return {
         type: "loadMoreBack",
         value
-      })
-    })
+      }
+    })]
   } else if (action.type == 'reloadBack') {
-    return old.reloadBack(action.value)
+    return [old.reloadBack(action.value), emptyArray]
   } else if (action.type == 'loadMoreBack') {
-    return old.loadMoreBack(action.value)
+    return [old.loadMoreBack(action.value), emptyArray]
   } else if (action.type == 'update') {
-    return old.update(action.callback)
+    return [old.update(action.callback), emptyArray]
   }
-  return old;
+  return [old, emptyArray];
 }
 /**
  * 
@@ -74,8 +79,8 @@ function reducerAutoLoadMore<T, K>(
  */
 export function useAutoLoadMore<T, K>() {
   PromiseAutoLoadMore
-  const [data, dispatch] = useReducer<AutoLoadMoreAction<T, K>, PromiseAutoLoadMore<T, K>>(
-    reducerAutoLoadMore,
+  const [data, dispatch] = useSideReducer<AutoLoadMoreAction<T, K>, PromiseAutoLoadMore<T, K>>(
+    reducerAutoLoadMore as any,
   );
   return [data, dispatch]
 }

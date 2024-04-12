@@ -23,7 +23,7 @@ export function useExitAnimate<V>(
 }
 
 export function createRenderAnimateArray<V>(
-  renderArray: RenderKeyArray<ExitModel<V>>
+  renderArray: RenderKeyArray
 ) {
   return function renderExitAnimateArray(
     vs: readonly ExitModel<V>[],
@@ -66,7 +66,7 @@ export function useOneExitAnimate<T>(
 
 
 export function createRenderIfExitAnimate<T>(
-  outRenderArray: RenderKeyArray<ExitModel<T>>
+  outRenderArray: RenderKeyArray
 ) {
   const renderArray = createRenderAnimateArray(outRenderArray)
   return function (

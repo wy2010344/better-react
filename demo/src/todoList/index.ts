@@ -1,8 +1,8 @@
-import { useDom } from "better-react-dom";
+import { dom } from "better-react-dom";
 import { initJsStore } from "../jsStore";
 import { normalPanel } from "../panel/PanelContext";
 import { renderInput } from "better-react-dom-helper";
-import { useChange, useVersion, PromiseResult, useInit, renderGuard, renderIf, useState, useCallbackPromiseCall, arrayHasValue } from "better-react-helper";
+import { useChange, useVersion, useInit, renderIf, useState, useCallbackPromiseCall, arrayHasValue } from "better-react-helper";
 import { TodoModel, todoService } from "../jsStore/todo";
 import { renderMapF } from "better-react";
 import Counter from "../test/Counter";

@@ -72,7 +72,7 @@ export function createRenderArray(
   }
 }
 
-export const renderArray = createBaseRenderArray(arrayStoreCreater, getArrayStoreCreater)
+export const renderArray = createBaseRenderArray(arrayStoreCreater, getArrayStoreCreater) as RenderKeyArray
 
 
 function iterableHasValue<T>(m: IterableIterator<T>, v: IteratorResult<T, any>) {
@@ -150,9 +150,9 @@ export function createRenderSet<V>(
 
 export const renderSet = createRenderSet(baseRenderIterableIterator as any)
 
-export type RenderKeyArray<T> = (vs: ReadArray<T>, getKey: (v: T) => any, render: (v: T, i: number) => void) => void
+export type RenderKeyArray = <T>(vs: ReadArray<T>, getKey: (v: T) => any, render: (v: T, i: number) => void) => void
 export function createRenderObject<V>(
-  renderArray: RenderKeyArray<[string, V]>
+  renderArray: RenderKeyArray
 ) {
   return function (
     object: {

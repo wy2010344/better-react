@@ -1,7 +1,7 @@
 
-import { ReducerFun, ReducerResult, useReducer } from "./useReducer";
+import { ReducerResult, useReducer } from "./useReducer";
 import { useRefReducer } from "./useRefReducer";
-import { GetValue, RWValue, SetValue, initRWValue, quote, run } from "wy-helper";
+import { GetValue, RWValue, Reducer, SetValue, initRWValue, quote, run } from "wy-helper";
 
 
 
@@ -119,7 +119,7 @@ export function createUseRefValue<T, O, M = T>(
   }
 ) {
   function initRef(
-    reducer: ReducerFun<T, T>,
+    reducer: Reducer<T, T>,
     value: T,
     dispatch: (f: T) => void) {
     function setValue(v: T) {
@@ -146,7 +146,7 @@ export function useRefValueFun<T>(fun: () => T): RefValueOut<T> {
   return useRefValue(undefined, fun)
 }
 
-function initRef<T>(reducer: ReducerFun<T, T>, value: T, dispatch: (f: T) => void) {
+function initRef<T>(reducer: Reducer<T, T>, value: T, dispatch: (f: T) => void) {
   function setValue(v: T) {
     dispatch(v)
     value = reducer(value, v)

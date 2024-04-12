@@ -1,6 +1,6 @@
-import { Fiber } from "./Fiber";
+import { Fiber, ReconcileFun } from "./Fiber";
 import { EffectDestroyEvent, FiberImpl, StoreValueCreater, HookEffect, MemoEvent, RenderWithDep, StoreValue } from "./Fiber";
-import { quote, simpleNotEqual, alawaysTrue, ValueCenter, valueCenterOf, arrayNotEqual, EmptyFun } from "wy-helper";
+import { quote, simpleNotEqual, alawaysTrue, ValueCenter, valueCenterOf, arrayNotEqual, EmptyFun, getTheEmptyArray } from "wy-helper";
 
 const w = globalThis as any
 const cache = (w.__better_react_one__ || {
@@ -51,8 +51,13 @@ export function updateFunctionComponent(fiber: FiberImpl) {
 export type EffectResult<T> = (void | ((e: EffectDestroyEvent<T>) => void))
 export type EffectEvent<T> = {
   trigger: T
-  isInit: boolean
-  beforeTrigger?: T
+  isInit: true
+  beforeTrigger?: never
+  setRealTime(): void
+} | {
+  trigger: T
+  isInit: false
+  beforeTrigger: T
   setRealTime(): void
 }
 /**
@@ -119,6 +124,7 @@ export function useLevelEffect<T>(
       parentFiber.envModel.updateEffect(level, () => {
         if (state.destroy) {
           state.destroy({
+            isDestroy: false,
             trigger: deps,
             beforeIsInit: state.isInit,
             beforeTrigger: state.deps,
@@ -385,7 +391,7 @@ export function hookCommitAll() {
   return parentFiber.envModel.commitAll
 }
 
-export function hookRequestReconcile() {
+export function hookRequestReconcile(): ReconcileFun {
   const parentFiber = hookParentFiber()
   if (!parentFiber.requestReconcile) {
     parentFiber.requestReconcile = function (callback) {
@@ -394,10 +400,14 @@ export function hookRequestReconcile() {
         return
       }
       parentFiber.envModel.reconcile(function () {
-        if (callback()) {
+        const list = callback()
+        if (list) {
           if (parentFiber.destroyed) {
             console.log("更新已经销毁的fiber,1")
             return
+          }
+          for (const fun of list) {
+            parentFiber.envModel.updateEffect(1, fun)
           }
           parentFiber.effectTag.set("UPDATE")
         }
@@ -412,7 +422,7 @@ export function hookMakeDirtyAndRequestUpdate() {
   if (!parentFiber.makeDirtyAndRequestUpdate) {
     const requestReconcile = hookRequestReconcile()
     parentFiber.makeDirtyAndRequestUpdate = function () {
-      requestReconcile(alawaysTrue)
+      requestReconcile(getTheEmptyArray)
     }
   }
   return parentFiber.makeDirtyAndRequestUpdate

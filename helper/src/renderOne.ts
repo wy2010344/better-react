@@ -16,9 +16,9 @@ export function renderIf<T>(
 ) {
   renderArray([value], getOpposite, function (v) {
     if (v) {
-      renderTrue(v)
+      renderTrue(v as any)
     } else {
-      renderFalse(v)
+      renderFalse(v as any)
     }
   })
 }
