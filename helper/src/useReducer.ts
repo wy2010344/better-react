@@ -41,6 +41,7 @@ function useBaseReducer(reducer: any, init: any, initFun: any, eq: any, asSingle
         let newValue = out
         let list = emptyArray
         if (!asSingle) {
+          //因为自动合并多次reducer,如果不提前申请到effect,则会丢失
           newValue = out[0]
           list = out[1]
         }
