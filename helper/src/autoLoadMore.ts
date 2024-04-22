@@ -1,4 +1,4 @@
-import { AutoLoadMoreCore, PromiseAutoLoadMore, ReducerWithDispatchResult, VersionPromiseResult, emptyArray, mapReducerDispatchList } from "wy-helper";
+import { AutoLoadMoreCore, PromiseAutoLoadMore, ReducerWithDispatchResult, VersionPromiseResult, emptyArray, mapReducerDispatch, mapReducerDispatchList } from "wy-helper";
 import { useSideReducer } from "./useReducer";
 
 
@@ -40,7 +40,7 @@ export function reducerAutoLoadMore<T, K>(
         value
       } as const
      */
-    return [value, mapReducerDispatchList(act, value => {
+    return [value, mapReducerDispatch(act, value => {
       return {
         type: "reloadBack",
         value
@@ -48,7 +48,7 @@ export function reducerAutoLoadMore<T, K>(
     })]
   } else if (action.type == "loadMore") {
     const [value, act] = old.loadMore(action.version)
-    return [value, mapReducerDispatchList(act, value => {
+    return [value, mapReducerDispatch(act, value => {
       return {
         type: "loadMoreBack",
         value

@@ -1,20 +1,21 @@
-import { PointKey, Reorder, emptyArray, pointZero } from "wy-helper";
+import { PointKey, ReadArray, Reorder, emptyArray, pointZero } from "wy-helper";
 import { useMemo } from "./useRef";
 import { useEffect } from "./useEffect";
 
 
 
-export function useReorder(
+export function useReorder<T, K>(
   axis: PointKey,
-  shouldRemove: (key: any) => boolean,
-  moveItem: (itemKey: any, baseKey: any) => void
+  list: ReadArray<T>,
+  getKey: (v: T) => K,
+  moveItem: (itemKey: K, baseKey: K) => void
 ) {
   const rd = useMemo(() => {
     const rd = new Reorder(moveItem)
     return rd
   }, emptyArray)
   useEffect(() => {
-    rd.updateLayoutList(axis, shouldRemove)
+    rd.updateLayoutList(axis, list, getKey)
   })
   useEffect(() => {
     rd.end(pointZero)

@@ -5,7 +5,8 @@ import { Point, arrayToMove, emptyArray, pointEqual, pointZero, quote, syncMerge
 import { useEdgeScroll } from "./edgeScroll"
 import { requesetBatchAnimationForceFlow } from "wy-dom-helper"
 import { useReorder } from 'better-react-dom-helper'
-import { useStyle } from "better-react-dom-helper"
+import { useStyle, useOnMove } from "better-react-dom-helper"
+import { flushSync } from "better-react"
 /**
  * 拖拽的render,依赖拖拽事件,不是react的render与requestAnimateFrame
  * 动画生成异步的,因为dom生效本来是异步的.
@@ -65,16 +66,23 @@ export default function () {
 
     const [orderList, dispatch] = useReduceList(list)
     const [onMove, setOnMove] = useChange<{ index: number }>()
-    const reOrder = useReorder('y',
-      function (key) {
-        return !orderList.some(v => v.index == key)
-      },
+    const reOrder = useReorder(
+      'y',
+      orderList,
+      v => v.index,
       function (itemKey, baseKey) {
         dispatch({
           type: "change",
           value: itemKey,
           base: baseKey
         })
+        // flushSync(() => {
+        //   dispatch({
+        //     type: "change",
+        //     value: itemKey,
+        //     base: baseKey
+        //   })
+        // })
       })
     const container = dom.div({
       style: `
@@ -92,41 +100,26 @@ export default function () {
         y: true,
         padding: 10
       })
-      useEffect(() => {
-        function move(e: PointerEvent) {
-          const p = {
-            x: e.pageX,
-            y: e.pageY
+
+      useOnMove(function (e, end) {
+        const p = {
+          x: e.pageX,
+          y: e.pageY
+        }
+        if (end) {
+          if (reOrder.end(p)) {
+            setPoint(undefined)
           }
+        } else {
           if (reOrder.move(p)) {
             setPoint(p)
           }
         }
-        function end(e: PointerEvent) {
-          if (reOrder.end({
-            x: e.pageX,
-            y: e.pageY
-          })) {
-            setOnMove(undefined)
-            setPoint(undefined)
-          }
-        }
-
-        window.addEventListener("pointermove", move)
-        window.addEventListener("pointerup", end)
-        window.addEventListener("pointercancel", end)
-        return function () {
-          window.removeEventListener("pointermove", move)
-          window.removeEventListener("pointerup", end)
-          window.removeEventListener("pointercancel", end)
-        }
-      }, emptyArray)
-
+      })
       renderArray(orderList, v => v.index, function (row, index) {
         const transY = useTimeoutAnimateValue<Point, string>(pointZero, pointEqual)
         const reOrderChild = reOrder.useChild(
           row.index,
-          index,
           () => div,
           function () {
             return transY.get().value
@@ -170,6 +163,10 @@ export default function () {
               transY.changeTo(pointZero, {
                 duration: 600,
                 value: "ease"
+              }, function (bool) {
+                if (bool) {
+                  setOnMove(undefined)
+                }
               })
             })
           }
