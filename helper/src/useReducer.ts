@@ -1,5 +1,5 @@
 import { hookCreateChangeAtom, hookRequestReconcile } from "better-react";
-import { Reducer, ReducerWithDispatch, SetValue, emptyArray, quote, simpleEqual } from "wy-helper";
+import { EmptyFun, Reducer, ReducerWithDispatch, SetValue, emptyArray, objectDeepFreeze, quote, simpleEqual } from "wy-helper";
 import { useMemo } from "./useRef";
 
 
@@ -39,19 +39,21 @@ function useBaseReducer(reducer: any, init: any, initFun: any, eq: any, asSingle
         const oldValue = value.get()
         const out = reducer(oldValue, action)
         let newValue = out
-        let list = emptyArray
+        let fun: EmptyFun | undefined = undefined
         if (!asSingle) {
           //因为自动合并多次reducer,如果不提前申请到effect,则会丢失
           newValue = out[0]
-          list = out[1]
+          fun = out[1]
         }
         if (!realEq(oldValue, newValue)) {
-          value.set(newValue)
-          return list.map(act => {
-            return function () {
-              act(set)
-            }
-          })
+          value.set(objectDeepFreeze(newValue))
+          if (fun) {
+            return [function () {
+              fun!(set)
+            }]
+          } else {
+            return emptyArray
+          }
         }
       })
     }

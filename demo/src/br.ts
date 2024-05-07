@@ -12,23 +12,26 @@ import { renderPages } from "./开发AnimatePereference/renderPages";
 import { renderFilter } from "./开发AnimatePereference/renderFilter";
 import { useVersion } from "better-react-helper";
 import bezierPreview from "./bezier-preview";
-import reorderList from "./insideAnimation/reorderList";
+import reorderList from "./demo/reorderList";
 import dslKanren from "./dsl-kanren";
 import newMode from "./newMode";
 import canvasRender from "./newMode/canvasRender";
-import centerPicker from "./insideAnimation/centerPicker/centerPicker";
+import centerPicker from "./demo/centerPicker-reducer";
 import todoList from "./todoList/index_new";
+import newTokenize from "./newTokenize";
+import demo from "./demo";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(
     app,
+    // newTokenize,
     // dslKanren,
     // renderPages,
     // demo,
     // renderFilter,
     // cssLayout,
-    // demo,
-    reorderList,
+    demo,
+    // reorderList,
     // canvasRender,
     // insideAnimation,
     // indexDB,
@@ -53,50 +56,50 @@ export function createBr(app: HTMLElement) {
 
 
 
-function demo() {
+// function demo() {
 
 
-  dom.div({
-    style: `
-          background:blue;
-          `
-  }).renderFragment(function () {
-    dom.div({
-      style: `
-          background:green;
-          `
-    }).renderFragment(function () {
-      dom.div({
-        style: `
-          background:yellow;
-          `
-      }).render()
-      dom.div({
-        style: `
-          background:yellow;
-          `
-      }).render()
-    })
-    dom.div({
-      style: `
-          background:yellow;
-          `
-    }).render()
-  })
-  dom.div({
-    style: `
-          background:blue;
-          `
-  }).renderFragment(function () {
-    dom.div({
-      style: `
-          background:yellow;
-          `
-    }).render()
-  })
-  dom.div({
-    style: `
-          background:yellow;
-          `
-  }).render()
-}
+//   dom.div({
+//     style: `
+//           background:blue;
+//           `
+//   }).renderFragment(function () {
+//     dom.div({
+//       style: `
+//           background:green;
+//           `
+//     }).renderFragment(function () {
+//       dom.div({
+//         style: `
+//           background:yellow;
+//           `
+//       }).render()
+//       dom.div({
+//         style: `
+//           background:yellow;
+//           `
+//       }).render()
+//     })
+//     dom.div({
+//       style: `
+//           background:yellow;
+//           `
+//     }).render()
+//   })
+//   dom.div({
+//     style: `
+//           background:blue;
+//           `
+//   }).renderFragment(function () {
+//     dom.div({
+//       style: `
+//           background:yellow;
+//           `
+//     }).render()
+//   })
+//   dom.div({
+//     style: `
+//           background:yellow;
+//           `
+//   }).render()
+// }

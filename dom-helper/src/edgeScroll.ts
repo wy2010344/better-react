@@ -1,8 +1,10 @@
-import { useEffect, useMemo } from "better-react-helper";
+import { useEffect, useEvent, useMemo } from "better-react-helper";
 import { subscribeRequestAnimationFrame } from "wy-dom-helper";
-import { EdgeScroll, EdgeScrollConfig, Point, emptyArray, emptyObject } from "wy-helper";
+import { edgeScrollChange, EdgeScrollConfig, Point, emptyArray, emptyObject } from "wy-helper";
+
 
 export function useEdgeScroll(
+  getPoint: () => Point | undefined,
   getContainer: () => HTMLElement,
   config: EdgeScrollConfig,
   arg: {
@@ -11,27 +13,23 @@ export function useEdgeScroll(
     scrollDiffTop?(d: number): void
   } = emptyObject
 ) {
-  const edgeScroll = useMemo(() => new EdgeScroll(), emptyArray)
   useEffect(() => {
     if (!arg.disabled) {
       return subscribeRequestAnimationFrame(function () {
         const container = getContainer()
-        edgeScroll.change(() => container.getBoundingClientRect(), config, function (dir, diff) {
-          if (dir == 'left') {
-            container.scrollLeft += diff
-            arg.scrollDiffLeft?.(diff)
-          } else if (dir == 'top') {
-            container.scrollTop += diff
-            arg.scrollDiffTop?.(diff)
-          }
-        })
+        const point = getPoint()
+        if (point) {
+          edgeScrollChange(point, () => container.getBoundingClientRect(), config, function (dir, diff) {
+            if (dir == 'left') {
+              container.scrollLeft += diff
+              arg.scrollDiffLeft?.(diff)
+            } else if (dir == 'top') {
+              container.scrollTop += diff
+              arg.scrollDiffTop?.(diff)
+            }
+          })
+        }
       })
     }
   }, [!arg.disabled])
-  /**
-   * 光标落处
-   */
-  return function (point?: Point) {
-    edgeScroll.setPoint(point)
-  }
 }

@@ -1,7 +1,7 @@
 
 
 import { useReorder as useBaseReorder, useEffect, useMemo } from "better-react-helper"
-import { getDiffOnScroll, reorderChildChangeIndex } from "wy-dom-helper"
+import { getChangeOnScroll, reorderChildChangeIndex } from "wy-dom-helper"
 import { Box, EmptyFun, Point, ReorderChild, PointKey, emptyArray, ReadArray } from "wy-helper"
 
 
@@ -16,14 +16,15 @@ export function useReorder<T, K>(
     return {
       end: rd.end.bind(rd),
       move: rd.move.bind(rd),
-      onScroll: getDiffOnScroll(rd.setMoveDiff)
+      onScroll: getChangeOnScroll(rd.setMoveDiff)
     }
   }, emptyArray)
 
   return {
     ...data,
     useChild(
-      key: any,
+      key: K,
+      index: number,
       getDiv: () => HTMLElement,
       getTrans: () => Point,
       changeTo: (value: Point) => void,
@@ -35,7 +36,7 @@ export function useReorder<T, K>(
       }, emptyArray)
       useEffect(() => {
         return reorderChildChangeIndex(child, getDiv(), onLayout, updateBox)
-      }, emptyArray)
+      }, [index])
       return function (loc: Point, onFinish: EmptyFun) {
         child.start(loc, onFinish)
       }
