@@ -1,9 +1,16 @@
+import { createContext } from "better-react";
 import { dom } from "better-react-dom";
 import { renderIf, renderObject } from "better-react-helper";
-import { EmptyFun } from "wy-helper";
+import { EmptyFun, SetValue } from "wy-helper";
 
 
 
+
+export type Page = (fun: SetValue<Page>) => void
+export const GlobalContext = createContext<{
+  mainPage: Page,
+  setPage: SetValue<Page>
+}>(undefined as any)
 
 
 export function renderPage({

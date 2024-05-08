@@ -37,7 +37,7 @@ export default function () {
         value: n
       })
     }, 26, momentum.iScrollIdeal({
-      deceleration: 0.003
+      // deceleration: 0.003
     }), easeScroll)
   })
 
@@ -104,8 +104,8 @@ export default function () {
       style: `
         position:absolute;
         inset:0;
-      user-select: none;
-overflow:hidden;
+        user-select: none;
+        overflow:hidden;
       `,
       onPointerDown(event) {
         scroll.start(event.pageY)

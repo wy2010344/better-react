@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { dom } from "better-react-dom";
 import { renderArray, useEffect, useReducer, useVersion } from "better-react-helper";
-import { Reducer, arrayToMove, emptyArray } from "wy-helper";
+import { Reducer, arrayMove, emptyArray } from "wy-helper";
 
 type Row = {
   index: number,
@@ -29,7 +29,7 @@ const reduceList: Reducer<Row[], {
     list.splice(action.index, 1)
     return list
   } else if (action.type == "move") {
-    return arrayToMove(list, action.index, action.toIndex)
+    return arrayMove(list, action.index, action.toIndex, true)
   }
   return list
 }

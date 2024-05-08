@@ -23,7 +23,7 @@ export default function () {
       })
     },
     momentum: momentum.iScrollIdeal({
-      deceleration: 0.003
+      // deceleration: 0.003
     })
   }))
   useEffect((e) => {

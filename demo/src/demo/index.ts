@@ -1,17 +1,17 @@
-import { dom } from "better-react-dom";
-import { renderPage } from "./util/page";
-import { EmptyFun, SetValue } from "wy-helper";
-import { renderIf, renderOne, useChange } from "better-react-helper";
-import reorderList from "./reorderList";
-import centerPickerReducer from "./centerPicker-reducer";
-import centerPickerFlushSync from "./centerPicker-flushSync";
-import reorderListReducer from "./reorderList-reducer";
+import { GlobalContext, renderPage } from "./util/page";
+import { SetValue } from "wy-helper";
+import { renderOne, useChange } from "better-react-helper";
+import renderLkPage from "./util/renderLink";
 
 
 export default function () {
 
 
   const [page, setPage] = useChange(mainPage)
+  GlobalContext.hookProvider({
+    setPage,
+    mainPage
+  })
   renderOne(page, () => page(setPage))
 }
 type Page = (fun: SetValue<Page>) => void
@@ -27,40 +27,8 @@ function mainPage(setPage: (v: SetValue<Page>) => void) {
     `
   }, function () {
 
-
-    function renderLkPage(title: string, content: EmptyFun) {
-      renderA(title, () => {
-        setPage(function () {
-          renderPage({
-            onBack() {
-              setPage(mainPage)
-            },
-            title,
-            bodyStyle: `
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-            gap:10px;
-            min-height:0;
-          `
-          }, content)
-        })
-      })
-    }
-    renderLkPage("滚动", reorderList)
-    renderLkPage("滚动-reducer", reorderListReducer)
-    renderLkPage("循环滚动-reducer", centerPickerReducer)
-    renderLkPage("循环滚动-flushSync", centerPickerFlushSync)
-
+    renderLkPage("拖动", () => import("./reorder"))
+    renderLkPage("循环滚动", () => import("./centerPicker"))
+    renderLkPage("scroller", () => import("./scroller"))
   })
-}
-
-
-function renderA(text: string, onClick: EmptyFun) {
-
-  dom.a({
-    onClick,
-    href: "javascript:void(0)"
-  }).renderTextContent(text)
 }

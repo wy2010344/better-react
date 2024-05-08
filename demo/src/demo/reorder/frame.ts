@@ -1,12 +1,12 @@
 import { faker } from "@faker-js/faker"
 import { dom } from "better-react-dom"
-import { createUseReducer, renderArray, useAtom, useChange, useEffect, useMemo, useTimeoutAnimateValue } from "better-react-helper"
-import { GetValue, Point, arrayToMove, emptyArray, pointEqual, pointZero, syncMergeCenter } from "wy-helper"
+import { createUseReducer, renderArray, useAtom, useChange, useEffect, useTimeoutAnimateValue } from "better-react-helper"
+import { Point, arrayMove, emptyArray, pointEqual, pointZero, syncMergeCenter } from "wy-helper"
 
-import { getChangeOnScroll, requesetBatchAnimationForceFlow, subscribeMove } from "wy-dom-helper"
+import { requesetBatchAnimationForceFlow, subscribeMove } from "wy-dom-helper"
 import { useEdgeScroll, useReorder } from 'better-react-dom-helper'
 import { useStyle } from "better-react-dom-helper"
-import renderTimeType, { setTimeType } from "./util/timeType"
+import renderTimeType, { setTimeType } from "../util/timeType"
 /**
  * 拖拽的render,依赖拖拽事件,不是react的render与requestAnimateFrame
  * 动画生成异步的,因为dom生效本来是异步的.
@@ -45,7 +45,7 @@ const useReduceList = createUseReducer(function (list: Row[], action: {
     if (idx1 < 0) {
       return list
     }
-    return arrayToMove(list, idx, idx1)
+    return arrayMove(list, idx, idx1, true)
   }
   return list
 })
@@ -84,10 +84,11 @@ export default function () {
     const point = useAtom<Point | undefined>(undefined)
     useEdgeScroll(
       () => point.get(),
-      () => container, {
-      y: true,
-      padding: 10
-    })
+      () => container,
+      {
+        y: true,
+        padding: 10
+      })
 
     useEffect(() => {
       return subscribeMove(function (e, end) {

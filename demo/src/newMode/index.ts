@@ -2,7 +2,6 @@ import { faker } from "@faker-js/faker";
 import { dom } from "better-react-dom";
 import { createUseReducer, renderArray, useVersion } from "better-react-helper";
 import { version } from "d3";
-import { arrayToMove } from "wy-helper";
 
 export default function () {
   dom.div({
