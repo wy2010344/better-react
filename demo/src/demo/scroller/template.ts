@@ -2,6 +2,7 @@ import { faker } from "@faker-js/faker";
 import { DomAttribute, dom } from "better-react-dom";
 import { renderArray } from "better-react-helper";
 import { emptyObject } from "wy-helper";
+import { renderPage } from "../util/page";
 
 const list = Array(2000).fill(1).map((_, i) => {
 	return {
@@ -10,11 +11,16 @@ const list = Array(2000).fill(1).map((_, i) => {
 	}
 })
 export function renderTemplate(
+	title: string,
 	useRenderScroll: (wrapper: HTMLElement, container: HTMLElement) => (() => DomAttribute<"div">) | void
 ) {
 
-	dom.div({
-		style: `
+	renderPage({
+		title
+	}, () => {
+
+		dom.div({
+			style: `
 	position: absolute;
 	z-index: 2;
 	top: 0;
@@ -29,9 +35,9 @@ export function renderTemplate(
 	text-align: center;
 	font-weight: bold;
     `
-	}).renderText`iScroll`
-	const wrapper = dom.div({
-		style: `
+		}).renderText`iScroll`
+		const wrapper = dom.div({
+			style: `
     position: absolute;
 		z-index: 1;
 		top: 45px;
@@ -41,16 +47,16 @@ export function renderTemplate(
 		background: #ccc;
 		overflow: hidden;
     `,
-		onTouchMove(event) {
-			event.preventDefault()
-		},
-	}).renderFragment(function () {
+			onTouchMove(event) {
+				event.preventDefault()
+			},
+		}).renderFragment(function () {
 
-		const container = dom.div(function () {
-			const attrs = getAttrs?.() || emptyObject as DomAttribute<"div">
-			return {
-				...attrs,
-				style: `
+			const container = dom.div(function () {
+				const attrs = getAttrs?.() || emptyObject as DomAttribute<"div">
+				return {
+					...attrs,
+					style: `
       	position: absolute;
 				z-index: 1;
 				-webkit-tap-highlight-color: rgba(0,0,0,0);
@@ -60,10 +66,10 @@ export function renderTemplate(
 				text-size-adjust: none;
 				${attrs?.style || ''}
       `,
-			}
-		}).renderFragment(function () {
-			dom.ul({
-				style: `
+				}
+			}).renderFragment(function () {
+				dom.ul({
+					style: `
         	list-style: none;
 	padding: 0;
 	margin: 0;
@@ -71,10 +77,10 @@ export function renderTemplate(
 	text-align: left;
 
         `
-			}).renderFragment(function () {
-				renderArray(list, v => v.index, function (row) {
-					dom.li({
-						style: `
+				}).renderFragment(function () {
+					renderArray(list, v => v.index, function (row) {
+						dom.li({
+							style: `
             	padding: 0 10px;
 	height: 40px;
 	line-height: 40px;
@@ -83,14 +89,14 @@ export function renderTemplate(
 	background-color: #fafafa;
 	font-size: 14px;
             `
-					}).renderText`${row.index} ${row.name}`
+						}).renderText`${row.index} ${row.name}`
+					})
 				})
 			})
+			const getAttrs = useRenderScroll(wrapper, container)
 		})
-		const getAttrs = useRenderScroll(wrapper, container)
-	})
-	dom.div({
-		style: `
+		dom.div({
+			style: `
     position: absolute;
 		z-index: 2;
 		bottom: 0;
@@ -101,5 +107,6 @@ export function renderTemplate(
 		padding: 0;
 		border-top: 1px solid #444;
     `
-	}).render()
+		}).render()
+	})
 }

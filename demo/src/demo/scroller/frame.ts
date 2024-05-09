@@ -6,7 +6,7 @@ import { buildScroll, momentum, } from 'wy-helper'
 import { subscribeMove } from "wy-dom-helper";
 
 export default function () {
-  renderTemplate(function (wrapper, container) {
+  renderTemplate("frame", function (wrapper, container) {
     const translateY = useAnimationFrameNumber(0)
     const handleDown = useMemo(() => buildScroll({
       wrapperSize() {

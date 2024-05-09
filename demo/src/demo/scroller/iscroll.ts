@@ -6,7 +6,7 @@ import IScroll from './lite'
 import BScroll from "@better-scroll/core";
 import { renderTemplate } from "./template";
 export default function () {
-  return renderTemplate(function (wrapper, getContainer) {
+  return renderTemplate("iScroll", function (wrapper, getContainer) {
 
     useEffect(() => {
       new IScroll(wrapper, {

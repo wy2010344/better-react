@@ -4,8 +4,9 @@ import { animateNumberFrameReducer, getChangeOnScroll, subscribeMove } from "wy-
 import { useEdgeScroll } from "better-react-dom-helper"
 import { easeFns, ReorderModel, createReorderReducer, } from "wy-helper"
 import { dom } from "better-react-dom"
-import { renderArray, useAtomFun, useEffect, useEvent, useInit, useMemo, useSideReducer } from "better-react-helper"
+import { renderArray, useAtom, useAtomFun, useEffect, useEvent, useInit, useMemo, useSideReducer } from "better-react-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
+import { renderPage } from "../util/page"
 /**
  * 拖拽的render,依赖拖拽事件,不是react的render与requestAnimateFrame
  * 动画生成异步的,因为dom生效本来是异步的.
@@ -35,12 +36,14 @@ const orderReducer = createReorderReducer(
     fn: easeFns.out(easeFns.circ)
   },
   animateNumberFrameReducer,
-  (v: HTMLElement) => v.clientHeight,
-  (after: HTMLElement, before: HTMLElement) => after.offsetTop - before.offsetTop
+  (v: HTMLElement) => v.clientHeight + 2
 )
 
 function initValue(): ReorderModel<Row, number> {
   return {
+    gap: 10,
+    version: 0,
+    scrollTop: 0,
     list: list.map(value => {
       return {
         transY: {
@@ -58,93 +61,107 @@ function createMap<K, V>() {
 }
 
 export default function () {
-
-  const [orderModel, dispatch_1] = useSideReducer(orderReducer<ReorderModel<Row, number>>, '', initValue)
-
-  const timetype = renderTimeType()
-
-  const dispatch: typeof dispatch_1 = useEvent(function (arg) {
-    setTimeType(timetype, function () {
-      dispatch_1(arg)
+  renderPage({
+    title: "reducer"
+  }, () => {
+    const [orderModel, dispatch_1] = useSideReducer(orderReducer<ReorderModel<Row, number>>, '', initValue)
+    const timetype = renderTimeType()
+    const dispatch = useEvent(function (arg: Parameters<typeof dispatch_1>[0]) {
+      setTimeType(timetype, function () {
+        dispatch_1(arg)
+      })
     })
-  })
-  const getOrderModel = useEvent(() => {
-    const map = rowMap.get()
-    const list: {
-      key: number
-      div: HTMLElement
-    }[] = []
+    const getOrderModel = useEvent(() => {
+      const map = rowMap.get()
+      const list: {
+        key: number
+        div: HTMLElement
+      }[] = []
 
-    orderModel.list.map(row => {
-      const key = row.value.index
-      const div = map.get(key)
-      if (div) {
-        list.push({
-          key,
-          div
-        })
-      }
+      orderModel.list.map(row => {
+        const key = row.value.index
+        const div = map.get(key)
+        if (div) {
+          list.push({
+            key,
+            div
+          })
+        }
+      })
+      return list
     })
-    return list
-  })
-  const rowMap = useAtomFun<Map<number, HTMLElement>>(createMap)
-
-
-
-
-  const diffOnScroll = useMemo(() => getChangeOnScroll(function (p) {
-    dispatch({
-      type: "changeDiff",
-      elements: getOrderModel(),
-      diffY: p.y
-    })
-  }))
-  const container = dom.div({
-    style: `
+    const rowMap = useAtomFun<Map<number, HTMLElement>>(createMap)
+    const container = dom.div({
+      style: `
       width:300px;
       height:600px;
       overflow:auto;
       background:white;
       user-select:${orderModel.onMove ? 'none' : 'unset'};
       `,
-    onScroll(event) {
-      diffOnScroll(container)
-    },
-  }).renderFragment(function () {
-    useEdgeScroll(
-      useEvent(() => orderModel.onMove?.info?.lastPoint),
-      () => container,
-      {
-        y: true,
-        padding: 10
-      })
-    useEffect(() => {
-      return subscribeMove(function (e, end) {
-        const p = {
-          x: e.pageX,
-          y: e.pageY
-        }
+      onScroll(event) {
         dispatch({
-          type: "didMove",
-          point: p,
+          type: "onScroll",
           elements: getOrderModel(),
-          end: end ? {
-            duration: 400,
-            fn: easeFns.out(easeFns.circ)
-          } : undefined,
+          scrollTop: container.scrollTop,
+          version: orderModel.version
+        })
+      },
+    }).renderFragment(function () {
+      useEdgeScroll(
+        useEvent(() => orderModel.onMove?.info?.lastPoint),
+        () => container,
+        {
+          y: true,
+          padding: 10
+        })
+      useEffect(() => {
+        return subscribeMove(function (e, end) {
+          const p = {
+            x: e.pageX,
+            y: e.pageY
+          }
+          if (end) {
+            dispatch({
+              type: "end",
+              point: p,
+            })
+          } else {
+            dispatch({
+              type: "didMove",
+              version: orderModel.version,
+              point: p,
+              elements: getOrderModel(),
+              scrollTop: container.scrollTop
+            })
+          }
         })
       })
-    })
 
 
+      const hasEnd = orderModel.onMove?.endAt
+      useEffect(() => {
+        if (hasEnd) {
+          dispatch({
+            type: "didEnd",
+            scrollTop: container.scrollTop,
+            elements: getOrderModel(),
+            config: {
+              duration: 400,
+              fn: easeFns.out(easeFns.circ)
+            }
+          })
+        }
+      }, [hasEnd])
 
-    renderArray(
-      orderModel.list,
-      v => v.value.index,
-      function (row, index) {
-        const height = 100 + row.value.index % 3 * 4
-        const div = dom.div({
-          style: `
+      renderArray(
+        orderModel.list,
+        v => v.value.index,
+        function (row, index) {
+          const height = 100// + row.value.index % 3 * 4
+          const div = dom.div({
+            style: `
+            border:1px solid black;
             height:${height}px;
     display:flex;
     align-items:center;
@@ -154,36 +171,44 @@ export default function () {
     transform:translate(0px,${row.transY.value}px);
     z-index: ${orderModel.onMove?.key == row.value.index ? 1 : 0};
     `,
-          onPointerDown(e) {
-            dispatch({
-              type: "moveBegin",
-              key: row.value.index,
-              point: {
-                x: e.pageX,
-                y: e.pageY
-              }
-            })
-          }
-        }).renderFragment(function () {
-          dom.img({
-            src: row.value.avatar
-          }).render()
-          dom.span().renderText`${height}`
-          dom.span().renderText`${row.value.name}`
-        })
+            onPointerDown(e) {
+              dispatch({
+                type: "moveBegin",
+                key: row.value.index,
+                scrollTop: container.scrollTop,
+                point: {
+                  x: e.pageX,
+                  y: e.pageY
+                }
+              })
+            }
+          }).renderFragment(function () {
+            dom.img({
+              src: row.value.avatar
+            }).render()
+            dom.span().renderText`${height}`
+            dom.span().renderText`${row.value.name}`
 
-        useInit(() => {
-          const key = row.value.index
-          rowMap.get().set(key, div)
-          return () => {
-            rowMap.get().delete(key)
+            dom.hr({
+              style: `
+            flex:1;
+            `
+            }).render()
+          })
+
+          useInit(() => {
+            const key = row.value.index
+            rowMap.get().set(key, div)
+            return () => {
+              rowMap.get().delete(key)
+            }
+          })
+          return {
+            div,
+            key: row.value.index
           }
-        })
-        return {
-          div,
-          key: row.value.index
         }
-      }
-    )
+      )
+    })
   })
 }

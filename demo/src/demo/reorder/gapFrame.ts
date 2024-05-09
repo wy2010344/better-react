@@ -1,11 +1,10 @@
 import { faker } from "@faker-js/faker"
 import { dom } from "better-react-dom"
-import { createUseReducer, renderArray, useAtom, useChange, useEffect, useTimeoutAnimateValue } from "better-react-helper"
-import { Point, arrayMove, emptyArray, pointEqual, pointZero, syncMergeCenter } from "wy-helper"
+import { createUseReducer, renderArray, useAtom, useChange, useEffect, useMemo, useValueCenter } from "better-react-helper"
+import { Point, arrayMove, easeFns, emptyArray, pointZero, syncMergeCenterArray } from "wy-helper"
 
-import { requesetBatchAnimationForceFlow, subscribeMove } from "wy-dom-helper"
-import { useEdgeScroll, useReorder } from 'better-react-dom-helper'
-import { useStyle } from "better-react-dom-helper"
+import { animatePointFrame, requesetBatchAnimationForceFlow, subscribeMove } from "wy-dom-helper"
+import { useEdgeScroll, useStyle, useReorderFix } from "better-react-dom-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
 import { renderPage } from "../util/page"
 /**
@@ -54,13 +53,13 @@ const useReduceList = createUseReducer(function (list: Row[], action: {
 export default function () {
 
   renderPage({ title: "frame" }, () => {
-
     const timetype = renderTimeType()
     const [orderList, dispatch] = useReduceList(list)
     const [onMove, setOnMove] = useChange<{ index: number }>()
-    const reOrder = useReorder(
+    const reOrder = useReorderFix(
       orderList,
       v => v.index,
+      102,
       function (itemKey, baseKey) {
         setTimeType(timetype, function () {
           dispatch({
@@ -69,7 +68,10 @@ export default function () {
             base: baseKey
           })
         })
-      })
+      }, {
+      gap: 10,
+      // endToMove: true
+    })
     const container = dom.div({
       style: `
       flex:1;
@@ -109,54 +111,38 @@ export default function () {
         })
       }, emptyArray)
       renderArray(orderList, v => v.index, function (row, index) {
-        const transY = useTimeoutAnimateValue<Point, string>(pointZero, pointEqual)
+        const offsetY = useValueCenter(0)
+        const transY = useMemo(() => animatePointFrame(pointZero))
         const reOrderChild = reOrder.useChild(
           row.index,
-          index,
-          () => div,
           function () {
-            return transY.get().value
+            return transY.get()
+          },
+          function (value) {
+            transY.changeTo({
+              x: transY.get().x,
+              y: value
+            })
+            requesetBatchAnimationForceFlow(div, function () {
+              transY.changeTo(pointZero, {
+                duration: 600,
+                fn: easeFns.out(easeFns.circ)
+              })
+            })
           },
           function (value) {
             transY.changeTo(value)
           },
-          function (diff) {
-            transY.changeTo(diff)
-
-            //使用animate接口来创建动画,感觉有一些闪烁???
-            // transY.changeTo(pointZero, {
-            //   duration: 600,
-            //   value: 'ease'
-            // })
-            //使用回流来触发动画
-            requesetBatchAnimationForceFlow(div, function () {
-              transY.changeTo(pointZero, {
-                duration: 600,
-                value: 'ease'
-              })
-            })
-          })
+          () => offsetY.get(),
+          (v) => offsetY.set(v)
+        )
         useEffect(() => {
-          return syncMergeCenter(transY, function (value) {
-            // if (value.config) {
-            //   div.animate([
-            //     {
-            //       transform: `translate(0px,${value.value.y}px)`
-            //     }
-            //   ], {
-            //     duration: value.config.duration,
-            //     easing: value.config.value
-            //   })
-            // } else {
-            //   div.getAnimations().map(v => v.cancel())
-            //   div.style.transform = `translate(0px,${value.value.y}px)`
-            // }
-            if (value.config) {
-              div.style.transition = `transform ${value.config.value} ${value.config.duration}ms`
-            } else {
-              div.style.transition = ''
-            }
-            div.style.transform = `translate(0px,${value.value.y}px)`
+          //恢复
+          offsetY.set(0)
+        })
+        useEffect(() => {
+          return syncMergeCenterArray([transY, offsetY] as const, function ([value, oy]) {
+            div.style.transform = `translate(0px,${(value.y + oy)}px)`
           })
         }, emptyArray)
         const div = dom.div({
@@ -164,24 +150,27 @@ export default function () {
     display:flex;
     align-items:center;
     margin-top:10px;
+    border:1px solid black;
     background:yellow;
     position:relative;
     `,
           onPointerDown(e) {
+            reOrder.scroller.reset(container)
             // transX.changeTo(e.pageY - cb.get()!.y.min)
             setOnMove(row)
-            reOrder.scroller.reset(container)
             reOrderChild({
               x: e.pageX,
               y: e.pageY
             }, function () {
               transY.changeTo(pointZero, {
                 duration: 600,
-                value: "ease"
-              }, function (bool) {
-                if (bool) {
-                  setOnMove(undefined)
-                }
+                fn: easeFns.out(easeFns.circ)
+              }, {
+                onFinish(bool) {
+                  if (bool) {
+                    setOnMove(undefined)
+                  }
+                },
               })
             })
           }
@@ -190,11 +179,12 @@ export default function () {
             src: row.avatar
           }).render()
           dom.span().renderText`${row.name}`
+          dom.hr({
+            style: `
+            flex:1;
+            `
+          }).render()
         })
-        /**
-         * 
-            z-index:${onMove?.index == row.index ? 1 : 0};
-         */
         useStyle(div, {
           zIndex: onMove?.index == row.index ? 1 : 0
         })

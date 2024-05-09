@@ -22,3 +22,25 @@ export function renderIf<T>(
     }
   })
 }
+
+
+
+export function renderGuard<T, V>(
+  data: T,
+  callback: (d: T, v: V) => EmptyFun | void,
+  list: V[],
+  notFun = emptyFun
+) {
+  let outKey = -1
+  let renderFun = notFun
+  for (let i = 0; i < list.length; i++) {
+    const out = list[i]
+    const fun = callback(data, out)
+    if (fun) {
+      outKey = i
+      renderFun = fun
+      break
+    }
+  }
+  renderOne(outKey, renderFun)
+}

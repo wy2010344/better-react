@@ -1,34 +1,54 @@
 import { GlobalContext, renderPage } from "./util/page";
-import { SetValue } from "wy-helper";
-import { renderOne, useChange } from "better-react-helper";
+import { EmptyFun, SetValue, emptyArray, emptyFun } from "wy-helper";
+import { renderGuard, renderIf, renderOne, useCallbackPromiseState, useChange, useEffect, useMemo } from "better-react-helper";
 import renderLkPage from "./util/renderLink";
+import { createBrowserHistory, Location } from "history";
+import { dom } from "better-react-dom";
+import { createRouter, locationMatch, trueForEmpty } from "./util/createRouter";
+import { reorderRoutes } from "./reorder";
+import { centerPickerRoutes } from "./centerPicker";
+import { scrollerRoutes } from "./scroller";
 
 
 export default function () {
-
-
-  const [page, setPage] = useChange(mainPage)
+  const history = useMemo(() => {
+    return createBrowserHistory()
+  }, emptyArray)
+  const [location, setRouter] = useChange(history.location)
+  useEffect(() => {
+    history.listen((update) => {
+      setRouter(update.location)
+    })
+  }, emptyArray)
   GlobalContext.hookProvider({
-    setPage,
-    mainPage
+    history
   })
-  renderOne(page, () => page(setPage))
+  console.log(location)
+  renderRouter(location)
 }
 type Page = (fun: SetValue<Page>) => void
-function mainPage(setPage: (v: SetValue<Page>) => void) {
+function mainPage() {
   renderPage({
     title: "一些demo",
-    bodyStyle: `
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:10px;
-    `
   }, function () {
 
-    renderLkPage("拖动", () => import("./reorder"))
-    renderLkPage("循环滚动", () => import("./centerPicker"))
-    renderLkPage("scroller", () => import("./scroller"))
+
+    renderLkPage("拖动", (history) => history.push('/reorder'))
+    renderLkPage("循环滚动", history => history.push("/centerPicker"))
+    renderLkPage("scroller", history => history.push("./scroller"))
   })
 }
+
+
+
+const renderRouter = createRouter(
+  {
+    match(location) {
+      return trueForEmpty(location.pathname == '/')
+    },
+    page: mainPage
+  },
+  ...reorderRoutes,
+  ...centerPickerRoutes,
+  ...scrollerRoutes
+)

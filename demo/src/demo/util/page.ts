@@ -1,15 +1,15 @@
 import { createContext } from "better-react";
 import { dom } from "better-react-dom";
 import { renderIf, renderObject } from "better-react-helper";
+import { BrowserHistory } from "history";
 import { EmptyFun, SetValue } from "wy-helper";
 
 
 
 
-export type Page = (fun: SetValue<Page>) => void
+// export type Page = (fun: SetValue<Page>) => void
 export const GlobalContext = createContext<{
-  mainPage: Page,
-  setPage: SetValue<Page>
+  history: BrowserHistory
 }>(undefined as any)
 
 
@@ -22,6 +22,10 @@ export function renderPage({
   onBack?: EmptyFun
   bodyStyle?: string
 }, renderBody: EmptyFun) {
+  const { history } = GlobalContext.useConsumer()
+  onBack = onBack || (() => {
+    history.back()
+  });
   dom.div({
     style: `
     position:relative;
@@ -44,19 +48,12 @@ export function renderPage({
       padding-bottom:0;
       `
     }).renderFragment(function () {
-      renderIf(onBack, function () {
-        dom.button({
-          onClick: onBack,
-          style: `
+      dom.button({
+        onClick: onBack,
+        style: `
         min-width:50px;
         `
-        }).renderText`返回`
-      }, function () {
-        dom.div({
-          style: `
-        min-width:50px;
-        `}).render()
-      })
+      }).renderText`返回`
       dom.h1({
         style: `
         font-size:15px;
@@ -72,6 +69,13 @@ export function renderPage({
       style: `
       flex:1;
       padding:10px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      min-height:0;
+      position:relative;
       ${bodyStyle}
       `
     }).renderFragment(renderBody)

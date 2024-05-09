@@ -4,7 +4,7 @@ import { TimeoutAnimateConfig, buildScroll, emptyArray, momentum, scrollEases, s
 import { renderTemplate } from "./template";
 import { getPageOffset, subscribeMove } from "wy-dom-helper";
 export default function () {
-  renderTemplate(function (wrapper, container) {
+  renderTemplate("css", function (wrapper, container) {
     const translateY = useTimeoutAnimateValue<number, string>(0)
     const handleDown = useMemo(() => buildScroll({
       wrapperSize() {
