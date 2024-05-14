@@ -1,30 +1,39 @@
 import { hookCreateChangeAtom, hookRequestReconcile } from "better-react";
 import { EmptyFun, Reducer, ReducerWithDispatch, SetValue, emptyArray, objectDeepFreeze, quote, simpleEqual } from "wy-helper";
 import { useMemo } from "./useRef";
-
-
 export type ReducerResult<F, T> = [T, SetValue<F>];
 
 export function useSideReducer<F, M, T>(
   reducer: ReducerWithDispatch<T, F>,
   init: M,
   initFun: (m: M) => T,
-  eq?: (a: T, b: T) => any): ReducerResult<F, T>;
+  eq?: (a: T, b: T) => any,
+  sideCall?: SideCall<F>): ReducerResult<F, T>;
 export function useSideReducer<F, T>(
   reducer: ReducerWithDispatch<T, F>,
   init: T,
   initFun?: (m: T) => T,
-  eq?: (a: T, b: T) => any): ReducerResult<F, T>;
+  eq?: (a: T, b: T) => any,
+  sideCall?: SideCall<F>
+): ReducerResult<F, T>;
 export function useSideReducer<F, T = undefined>(
   reducer: ReducerWithDispatch<T, F>,
   init?: T,
   initFun?: (m: T) => T,
-  eq?: (a: T, b: T) => any): ReducerResult<F, T>
-export function useSideReducer(reducer: any, init: any, initFun: any, eq: any, asSingle?: any) {
-  return useBaseReducer(reducer, init, initFun, eq)
+  eq?: (a: T, b: T) => any,
+  sideCall?: SideCall<F>): ReducerResult<F, T>
+export function useSideReducer(reducer: any, init: any, initFun: any, eq: any, sideCall?: any) {
+  return useBaseReducer(reducer, init, initFun, eq, sideCall || defaultSideCall)
 }
 
-function useBaseReducer(reducer: any, init: any, initFun: any, eq: any, asSingle?: any) {
+type SideCall<F> = (updateEffect: (level: number, effect: EmptyFun) => void, fun: SetValue<SetValue<F>>, set: SetValue<F>) => void
+function defaultSideCall<F>(updateEffect: (level: number, effect: EmptyFun) => void, fun: SetValue<SetValue<F>>, set: SetValue<F>,) {
+  updateEffect(1, function () {
+    fun(set)
+  })
+}
+
+function useBaseReducer(reducer: any, init: any, initFun: any, eq: any, sideCall?: any) {
   const createChangeAtom = hookCreateChangeAtom()
   const reconcile = hookRequestReconcile()
   const hook = useMemo(() => {
@@ -33,27 +42,24 @@ function useBaseReducer(reducer: any, init: any, initFun: any, eq: any, asSingle
      */
     const realEq = eq || simpleEqual
     const trans = initFun || quote
-    const value = createChangeAtom(trans(init))
+    const initData = trans(init)
+    const value = createChangeAtom(initData)
     function set(action: any) {
-      reconcile(function () {
+      reconcile(function (updateEffect) {
         const oldValue = value.get()
-        const out = reducer(oldValue, action)
-        let newValue = out
-        let fun: EmptyFun | undefined = undefined
-        if (!asSingle) {
-          //因为自动合并多次reducer,如果不提前申请到effect,则会丢失
-          newValue = out[0]
-          fun = out[1]
+        let newValue = reducer(oldValue, action)
+        if (sideCall) {
+          const fun = newValue[1]
+          newValue = newValue[0]
+          if (fun) {
+            //只能这样做!!!!
+            sideCall(updateEffect, fun, set)
+          }
         }
+        //这里,合并多次,如果动作被执行了
         if (!realEq(oldValue, newValue)) {
           value.set(objectDeepFreeze(newValue))
-          if (fun) {
-            return [function () {
-              fun!(set)
-            }]
-          } else {
-            return emptyArray
-          }
+          return true
         }
       })
     }
@@ -69,7 +75,8 @@ function useBaseReducer(reducer: any, init: any, initFun: any, eq: any, asSingle
   if (reducer != hook.reducer) {
     console.warn("reducer上的reducer变化!!")
   }
-  return [hook.value.get(), hook.set]
+  const data = hook.value.get()
+  return [data, hook.set]
 }
 
 export function useReducerFun<F, T>(
@@ -98,7 +105,6 @@ export function createUseReducerFun<A, M>(
     return useReducer(reducer, undefined, initFun, eq)
   }
 }
-
 export function useReducer<F, M, T>(
   reducer: Reducer<T, F>,
   init: M,
@@ -115,5 +121,5 @@ export function useReducer<F, T = undefined>(
   initFun?: (m: T) => T,
   eq?: (a: T, b: T) => any): ReducerResult<F, T>
 export function useReducer(reducer: any, init: any, initFun: any, eq: any) {
-  return useBaseReducer(reducer, init, initFun, eq, true)
+  return useBaseReducer(reducer, init, initFun, eq)
 }

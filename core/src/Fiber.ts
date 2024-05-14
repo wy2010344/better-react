@@ -11,18 +11,22 @@ export type HookEffect<D> = {
   isInit: boolean
   destroy?: void | ((newDeps: EffectDestroyEvent<D>) => void)
 }
+
+export type LayoutEffect = (fun: EmptyFun) => void
 export type EffectDestroyEvent<T> = {
   isDestroy: false
   trigger: T
   beforeIsInit: boolean,
   beforeTrigger: T
   setRealTime(): void
+  layoutEffect: LayoutEffect
 } | {
   isDestroy: true
   trigger?: never
   beforeIsInit: boolean,
   beforeTrigger: T
   setRealTime(): void
+  layoutEffect: LayoutEffect
 }
 type RenderDeps<D> = {
   isNew: boolean
@@ -54,7 +58,7 @@ export function isFiber(v: any): v is Fiber<any> {
   return v instanceof FiberImpl
 }
 
-export type ReconcileFun = (fun: () => (void | (readonly EmptyFun[]))) => void
+export type ReconcileFun = (fun: (updateEffect: (level: number, set: EmptyFun) => void) => any) => void
 /**
  * 会调整顺序的,包括useMap的父节点与子结点.但父节点只调整child与lastChild
  * 子节点只调整prev与next

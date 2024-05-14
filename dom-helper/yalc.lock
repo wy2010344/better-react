@@ -7,7 +7,7 @@
       "replaced": "^1.2.5"
     },
     "better-react": {
-      "signature": "e4eb0ba2d1a9839a23fbebd3f8b95660",
+      "signature": "9913b771333d531b1e0e52ab6cd679df",
       "file": true,
       "replaced": "^1.2.4"
     },
@@ -17,7 +17,7 @@
       "replaced": "^1.2.4"
     },
     "wy-helper": {
-      "signature": "457ed0bf796d4cd65a13cb66d5d00bb9",
+      "signature": "1bb20613f22439e701b8ca617378a6e7",
       "file": true
     },
     "wy-dom-helper": {

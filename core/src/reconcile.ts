@@ -39,7 +39,9 @@ export function getReconcile(
   const { appendWork,
     getNextWork: originGetNextWork,
     hasFlushWork,
-    getFlushWork: originGetFlushWork
+    getFlushWork: originGetFlushWork,
+    hasLayoutWork,
+    getLayoutWork: originalGetLayoutWork
   } = buildWorkUnits(envModel, beginRender)
   const getNextWork = wrapNextWorkWork(envModel, originGetNextWork)
 
@@ -60,6 +62,18 @@ export function getReconcile(
   })
 
   const getFlushWork = wrapNextWorkWork(envModel, originGetFlushWork)
+  const getLayoutWork = wrapNextWorkWork(envModel, originalGetLayoutWork)
+  envModel.layoutWork = function () {
+    if (hasLayoutWork()) {
+      //把实时任务执行了
+      let work = getLayoutWork()
+      while (work) {
+        work()
+        work = getLayoutWork()
+      }
+    }
+  }
+  envModel.layoutEffect = layoutEffect
   flushWorkMap.set(envModel, function () {
     if (hasFlushWork()) {
       if (envModel.isOnWork()) {
@@ -188,8 +202,9 @@ function buildWorkUnits(
       }
     }
   }
-  const getRenderWorkLow = getTheRenderWork(3)
-  const getRenderWork = getTheRenderWork(2)
+  const getRenderWorkLow = getTheRenderWork(4)
+  const getRenderWork = getTheRenderWork(3)
+  const getLayoutRenderWork = getTheRenderWork(2)
   const getFlushRenderWork = getTheRenderWork(1)
   function getRollbackWork(level: number, getWork: () => void | EmptyFun) {
     return function () {
@@ -207,8 +222,9 @@ function buildWorkUnits(
       }
     }
   }
-  const rollBackWorkLow = getRollbackWork(3, getRenderWorkLow)
-  const rollBackWork = getRollbackWork(2, getRenderWork)
+  const rollBackWorkLow = getRollbackWork(4, getRenderWorkLow)
+  const rollBackWork = getRollbackWork(3, getRenderWork)
+  const rollBackLayoutWork = getRollbackWork(2, getLayoutRenderWork)
   const rollBackWorkFlush = getRollbackWork(1, getFlushRenderWork)
   return {
     appendWork(work: LoopWork) {
@@ -232,9 +248,28 @@ function buildWorkUnits(
         return flushWork
       }
     },
-    getNextWork(): NextTimeWork | void {
+    hasLayoutWork() {
+      return getLayoutRenderWork()
+    },
+    getLayoutWork() {
       if (currentTick.level() > 2) {
+        if (getLayoutRenderWork()) {
+          return rollBackLayoutWork
+        }
+      }
+      const renderWork = renderWorks.getFirstWork()
+      if (renderWork) {
+        return renderWork
+      }
+      const layoutWork = getLayoutRenderWork()
+      if (layoutWork) {
+        return layoutWork
+      }
+    },
+    getNextWork(): NextTimeWork | void {
+      if (currentTick.level() > 3) {
         /**
+         * 如果当前是延迟任务
          * 寻找是否有渲染任务,如果有,则中断
          * 如果有新的lazywork,则也优先
          */
@@ -323,23 +358,31 @@ class CurrentTick {
   }
 }
 
-let currentTaskLevel: LoopWorkLevel = 2
+let currentTaskLevel: LoopWorkLevel = 3
 /**
  * 按理说,与flushSync相反,这个是尽量慢
  * 但fun里面仍然是setState,不会减少触发呢
  * @param fun 
  */
 export function startTransition(fun: () => void) {
-  currentTaskLevel = 3
+  const old = currentTaskLevel
+  currentTaskLevel = 4
   fun()
-  currentTaskLevel = 2
+  currentTaskLevel = old
 }
 
+function layoutEffect(fun: EmptyFun) {
+  const old = currentTaskLevel
+  currentTaskLevel = 2
+  fun()
+  currentTaskLevel = old
+}
 
 export function flushSync(fun: () => void) {
+  const old = currentTaskLevel
   currentTaskLevel = 1
   fun()
-  currentTaskLevel = 2
+  currentTaskLevel = old
   flushWorkMap.forEach(run)
 }
 /**

@@ -1,4 +1,4 @@
-import { Fiber, ReconcileFun } from "./Fiber";
+import { Fiber, LayoutEffect, ReconcileFun } from "./Fiber";
 import { EffectDestroyEvent, FiberImpl, StoreValueCreater, HookEffect, MemoEvent, RenderWithDep, StoreValue } from "./Fiber";
 import { quote, simpleNotEqual, alawaysTrue, ValueCenter, valueCenterOf, arrayNotEqual, EmptyFun, getTheEmptyArray } from "wy-helper";
 
@@ -54,11 +54,13 @@ export type EffectEvent<T> = {
   isInit: true
   beforeTrigger?: never
   setRealTime(): void
+  layoutEffect: LayoutEffect
 } | {
   trigger: T
   isInit: false
   beforeTrigger: T
   setRealTime(): void
+  layoutEffect: LayoutEffect
 }
 /**
  * 必须有个依赖项,如果没有依赖项,如果组件有useFragment,则会不执行,造成不一致.
@@ -92,7 +94,8 @@ export function useLevelEffect<T>(
       state.destroy = effect({
         beforeTrigger: undefined,
         isInit, trigger: deps,
-        setRealTime: parentFiber.envModel.setRealTime
+        setRealTime: parentFiber.envModel.setRealTime,
+        layoutEffect: parentFiber.envModel.layoutEffect
       })
     })
   } else {
@@ -128,14 +131,16 @@ export function useLevelEffect<T>(
             trigger: deps,
             beforeIsInit: state.isInit,
             beforeTrigger: state.deps,
-            setRealTime: parentFiber.envModel.setRealTime
+            setRealTime: parentFiber.envModel.setRealTime,
+            layoutEffect: parentFiber.envModel.layoutEffect
           })
         }
         newState.destroy = effect({
           beforeTrigger: state.deps,
           isInit,
           trigger: deps,
-          setRealTime: parentFiber.envModel.setRealTime
+          setRealTime: parentFiber.envModel.setRealTime,
+          layoutEffect: parentFiber.envModel.layoutEffect
         })
       })
     }
@@ -400,14 +405,10 @@ export function hookRequestReconcile(): ReconcileFun {
         return
       }
       parentFiber.envModel.reconcile(function () {
-        const list = callback()
-        if (list) {
+        if (callback(parentFiber.envModel.updateEffect)) {
           if (parentFiber.destroyed) {
             console.log("更新已经销毁的fiber,1")
             return
-          }
-          for (const fun of list) {
-            parentFiber.envModel.updateEffect(1, fun)
           }
           parentFiber.effectTag.set("UPDATE")
         }
@@ -422,7 +423,7 @@ export function hookMakeDirtyAndRequestUpdate() {
   if (!parentFiber.makeDirtyAndRequestUpdate) {
     const requestReconcile = hookRequestReconcile()
     parentFiber.makeDirtyAndRequestUpdate = function () {
-      requestReconcile(getTheEmptyArray)
+      requestReconcile(alawaysTrue)
     }
   }
   return parentFiber.makeDirtyAndRequestUpdate

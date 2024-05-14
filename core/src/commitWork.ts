@@ -85,6 +85,9 @@ export class EnvModel {
     this.deletions.length = 0
     this.updateEffects.clear()
   }
+  layoutWork: EmptyFun = emptyFun
+
+  layoutEffect: EmptyFun = emptyFun
   commit() {
     /**最新更新所有注册的*/
     this.changeAtoms.forEach(atom => atom.commit())
@@ -101,6 +104,7 @@ export class EnvModel {
       updateEffects.get(key)?.forEach(run)
     }
     updateEffects.clear()
+    this.layoutWork()
   }
   /**
  * 在commit期间修改后,都是最新值,直到commit前,都可以回滚
@@ -116,8 +120,8 @@ export class EnvModel {
   }
 }
 
-//优先级,1是及时,2是普通,3是延迟
-export type LoopWorkLevel = 1 | 2 | 3
+//优先级,1是及时,2是Layout,3是普通,4是延迟
+export type LoopWorkLevel = 1 | 2 | 3 | 4
 export type LoopWork = {
   type: "loop"
   level: LoopWorkLevel
@@ -219,7 +223,8 @@ function destroyFiber(fiber: FiberImpl) {
             isDestroy: true,
             beforeIsInit: state.isInit,
             beforeTrigger: state.deps,
-            setRealTime: fiber.envModel.setRealTime
+            setRealTime: fiber.envModel.setRealTime,
+            layoutEffect: fiber.envModel.layoutEffect
           })
         }
       })

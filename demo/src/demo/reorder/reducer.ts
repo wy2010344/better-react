@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { animateNumberFrameReducer, getChangeOnScroll, subscribeMove } from "wy-dom-helper"
+import { animateNumberFrameReducer, getChangeOnScroll, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
 
 import { useEdgeScroll } from "better-react-dom-helper"
 import { easeFns, ReorderModel, createReorderReducer, } from "wy-helper"
@@ -7,6 +7,7 @@ import { dom } from "better-react-dom"
 import { renderArray, useAtom, useAtomFun, useEffect, useEvent, useInit, useMemo, useSideReducer } from "better-react-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
 import { renderPage } from "../util/page"
+import { useReducerReorder } from "./useReduceReorder"
 /**
  * 拖拽的render,依赖拖拽事件,不是react的render与requestAnimateFrame
  * 动画生成异步的,因为dom生效本来是异步的.
@@ -64,7 +65,13 @@ export default function () {
   renderPage({
     title: "reducer"
   }, () => {
-    const [orderModel, dispatch_1] = useSideReducer(orderReducer<ReorderModel<Row, number>>, '', initValue)
+    const [orderModel, dispatch_1] = useSideReducer(orderReducer<ReorderModel<Row, number>>, '', initValue, undefined,
+      function (update, fun, set) {
+        update(1, function () {
+          fun(dispatch)
+        })
+      }
+    )
     const timetype = renderTimeType()
     const dispatch = useEvent(function (arg: Parameters<typeof dispatch_1>[0]) {
       setTimeType(timetype, function () {
@@ -91,6 +98,7 @@ export default function () {
       return list
     })
     const rowMap = useAtomFun<Map<number, HTMLElement>>(createMap)
+    const reOrder = useReducerReorder(orderModel, dispatch)
     const container = dom.div({
       style: `
       width:300px;
@@ -100,65 +108,14 @@ export default function () {
       user-select:${orderModel.onMove ? 'none' : 'unset'};
       `,
       onScroll(event) {
-        dispatch({
-          type: "onScroll",
-          elements: getOrderModel(),
-          scrollTop: container.scrollTop,
-          version: orderModel.version
-        })
+        reOrder.onScroll(container, getOrderModel())
       },
     }).renderFragment(function () {
-      useEdgeScroll(
-        useEvent(() => orderModel.onMove?.info?.lastPoint),
-        () => container,
-        {
-          y: true,
-          padding: 10
-        })
-      useEffect(() => {
-        return subscribeMove(function (e, end) {
-          const p = {
-            x: e.pageX,
-            y: e.pageY
-          }
-          if (end) {
-            dispatch({
-              type: "end",
-              point: p,
-            })
-          } else {
-            dispatch({
-              type: "didMove",
-              version: orderModel.version,
-              point: p,
-              elements: getOrderModel(),
-              scrollTop: container.scrollTop
-            })
-          }
-        })
-      })
-
-
-      const hasEnd = orderModel.onMove?.endAt
-      useEffect(() => {
-        if (hasEnd) {
-          dispatch({
-            type: "didEnd",
-            scrollTop: container.scrollTop,
-            elements: getOrderModel(),
-            config: {
-              duration: 400,
-              fn: easeFns.out(easeFns.circ)
-            }
-          })
-        }
-      }, [hasEnd])
-
       renderArray(
         orderModel.list,
         v => v.value.index,
         function (row, index) {
-          const height = 100// + row.value.index % 3 * 4
+          const height = 100 + row.value.index % 3 * 20
           const div = dom.div({
             style: `
             border:1px solid black;
@@ -172,15 +129,7 @@ export default function () {
     z-index: ${orderModel.onMove?.key == row.value.index ? 1 : 0};
     `,
             onPointerDown(e) {
-              dispatch({
-                type: "moveBegin",
-                key: row.value.index,
-                scrollTop: container.scrollTop,
-                point: {
-                  x: e.pageX,
-                  y: e.pageY
-                }
-              })
+              reOrder.start(e as any, row.value.index, container)
             }
           }).renderFragment(function () {
             dom.img({
@@ -210,5 +159,6 @@ export default function () {
         }
       )
     })
+    reOrder.useBody(container, getOrderModel)
   })
 }

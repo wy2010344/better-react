@@ -4,12 +4,12 @@ import { query1, seriesNot, topFun, parallel, add, unify, pair, list, walk, exte
 
 
 
-const listContain = topFun((V, list, value) => {
+const listContain = topFun((list, value) => {
   parallel(
-    () => {
+    (V) => {
       add(unify(list, pair(value, V._)))
     },
-    () => {
+    (V) => {
       add(unify(list, pair(V._, V.Rest)))
       listContain(V.Rest, value)
     }
@@ -17,13 +17,13 @@ const listContain = topFun((V, list, value) => {
 })
 
 
-const append = topFun((V, a, b, c) => {
+const append = topFun((a, b, c) => {
   parallel(
     () => {
       add(unify(a, null))
       add(unify(b, c))
     },
-    () => {
+    (V) => {
       add(unify(a, pair(V.A, V.H)))
       add(unify(c, pair(V.A, V.Y)))
       append(V.H, b, V.Y)
@@ -31,13 +31,13 @@ const append = topFun((V, a, b, c) => {
   )
 })
 
-const listToSet = topFun((V, list, set) => {
+const listToSet = topFun((list, set) => {
   parallel(
-    () => {
+    (V) => {
       add(unify(list, null))
       add(unify(set, null))
     },
-    () => {
+    (V) => {
       add(unify(list, pair(V.H, V.Rest)))
       parallel(
         () => {
@@ -57,13 +57,13 @@ const listToSet = topFun((V, list, set) => {
 })
 
 
-const listMap = topFun((V, list, fun, out) => {
+const listMap = topFun((list, fun, out) => {
   parallel(
     () => {
       add(unify(list, null))
       add(unify(out, null))
     },
-    () => {
+    (V) => {
       add(unify(list, pair(V.F, V.Rest)))
       add(unify(out, pair(V.O, V.ORest)))
       add(sub => {
@@ -87,20 +87,20 @@ export const [map, stream] = query1((V) => {
   //   list(1, 2, 3, 4, 5, 6),
   //   9
   // )
-  listMap(
-    list(1, 2, 4, 1, 3, 43, 4, 345),
-    (v: any) => v + 8,
-    V.M
-  )
+  // listMap(
+  //   list(1, 2, 4, 1, 3, 43, 4, 345),
+  //   (v: any) => v + 8,
+  //   V.M
+  // )
   // listToSet(
   //   list(
   //     1, 1, 1, 3, 2, 3, 2, 4, 5, 6, 34, 2
   //   ),
   //   V.A
   // )
-  // append(
-  //   V.A,
-  //   V.B,
-  //   list(1, 2, 3, 4, 5, 6)
-  // )
+  append(
+    V.A,
+    V.B,
+    list(1, 2, 3, 4, 5, 6)
+  )
 })

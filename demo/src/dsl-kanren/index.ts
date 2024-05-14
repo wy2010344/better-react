@@ -5,11 +5,11 @@ import {
 
   Stream, toArray, KSubsitution, walk
 } from 'wy-helper/kanren'
-// import { map, goal } from "./d1"
-import { map, stream as bstream } from './tk'
+import { map, goal } from "./d1"
+// import { map, stream as bstream } from './tk'
 
-let stream = bstream
-// let stream: Stream<KSubsitution> | undefined = goal(null)
+// let stream = bstream
+let stream: Stream<KSubsitution> | undefined = goal(null)
 export default function () {
   dom.div().renderFragment(function () {
     dom.button({

@@ -1,7 +1,6 @@
 import { createRoot, dom } from "better-react-dom";
 import insideAnimation from "./insideAnimation/frameLayout";
 // import iScroll from "./iScroll/index";
-import iScroll from "./iScroll/myScrollFrame";
 // import { requestAnimationFrameScheduler } from "better-react-dom";
 import ExpensiveViewSingle from "./ExpensiveViewSingle";
 import { AskNextTimeWork, EmptyFun, NextTimeWork, createRunSyncTasks, emptyArray, emptyObject, getCurrentTimePerformance, getScheduleAskTime, messageChannelCallback } from "wy-helper";
@@ -20,6 +19,7 @@ import centerPicker from "./demo/centerPicker/reducer";
 import todoList from "./todoList/index_new";
 import newTokenize from "./newTokenize";
 import demo from "./demo";
+import useLayoutEffect from "./useLayoutEffect";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(
@@ -27,10 +27,11 @@ export function createBr(app: HTMLElement) {
     // newTokenize,
     // dslKanren,
     // renderPages,
-    // demo,
+    demo,
+    // useLayoutEffect,
     // renderFilter,
     // cssLayout,
-    demo,
+    // demo,
     // reorderList,
     // canvasRender,
     // insideAnimation,

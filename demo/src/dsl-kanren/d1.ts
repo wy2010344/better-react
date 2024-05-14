@@ -7,26 +7,30 @@ import {
   list,
   success,
   extendSubsitution,
-  pair
+  pair,
+  KVar,
+  withVar
 } from 'wy-helper/kanren'
 
-
-const listContain = topRule((V, list, value): Goal<any> => {
+function anyVar() {
+  return KVar.create()
+}
+const listContain = topRule((list, value): Goal<any> => {
   return any(
-    unify(list, pair(value, V._)),
-    all(
+    unify(list, pair(value, anyVar())),
+    withVar(V => all(
       unify(list, pair(V._, V.Rest)),
       listContain(V.Rest, value)
-    )
+    ))
   )
 })
-const listToSet = topRule((V, list, set): Goal<any> => {
+const listToSet = topRule((list, set): Goal<any> => {
   return any(
     all(
       unify(list, null),
       unify(set, null)
     ),
-    all(
+    withVar(V => all(
       unify(list, pair(V.H, V.Rest)),
       any(
         all(
@@ -39,17 +43,17 @@ const listToSet = topRule((V, list, set): Goal<any> => {
           listToSet(V.Rest, V.Set)
         )
       )
-    )
+    ))
   )
 })
 
-const listMap = topRule((V, list, fun, out): Goal<any> => {
+const listMap = topRule((list, fun, out): Goal<any> => {
   return any(
     all(
       unify(list, null),
       unify(out, null)
     ),
-    all(
+    withVar(V => all(
       unify(list, pair(V.F, V.Rest)),
       unify(out, pair(V.O, V.ORest)),
       (sub) => {
@@ -64,21 +68,21 @@ const listMap = topRule((V, list, fun, out): Goal<any> => {
         }
       },
       listMap(V.Rest, fun, V.ORest)
-    )
+    ))
   )
 })
 
-const append = topRule((V, a, b, c): Goal<any> => {
+const append = topRule((a, b, c): Goal<any> => {
   return any(
     all(
       unify(a, null),
       unify(b, c)
     ),
-    all(
+    withVar(V => all(
       unify(a, pair(V.A, V.H)),
       unify(c, pair(V.A, V.Y)),
       append(V.H, b, V.Y)
-    )
+    ))
   )
 })
 
@@ -88,7 +92,7 @@ const append = topRule((V, a, b, c): Goal<any> => {
 export const [map, goal] = query(V => {
   return listContain(
     list(1, 2, 3, 4, 5, 6),
-    9
+    6
   )
   // return append(
   //   V.A,
