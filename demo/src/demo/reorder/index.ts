@@ -8,17 +8,18 @@ export const reorderRoutes: Route[] = [
       renderPage({
         title: "reorder",
       }, () => {
-        renderLkPage("frame", history => history.push("/reorder/frame"))
+        renderLkPage("css", history => history.push("/reorder/css"))
         renderLkPage("reducer", history => history.push("/reorder/reducer"))
-        renderLkPage("gap", history => history.push("/reorder/gap"))
+        renderLkPage("gapCss", history => history.push("/reorder/gapCss"))
         renderLkPage("gapFrame", history => history.push("/reorder/gapFrame"))
+        // renderLkPage("reducerNew", history => history.push("/reorder/reducerNew"))
       })
     }
   },
   {
-    match: locationMatch("/reorder/frame"),
+    match: locationMatch("/reorder/css"),
     getPage() {
-      return import("./frame")
+      return import("./css")
     },
   },
   {
@@ -28,15 +29,21 @@ export const reorderRoutes: Route[] = [
     },
   },
   {
-    match: locationMatch("/reorder/gap"),
+    match: locationMatch("/reorder/gapCss"),
     getPage() {
-      return import("./gap")
+      return import("./gapCss")
     },
   },
   {
     match: locationMatch("/reorder/gapFrame"),
     getPage() {
       return import("./gapFrame")
+    },
+  },
+  {
+    match: locationMatch("/reorder/reducerNew"),
+    getPage() {
+      return import("./reducerNew")
     },
   },
 ]

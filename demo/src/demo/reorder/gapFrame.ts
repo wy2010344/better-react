@@ -3,35 +3,20 @@ import { dom } from "better-react-dom"
 import { createUseReducer, renderArray, useAtom, useChange, useEffect, useMemo, useValueCenter } from "better-react-helper"
 import { Point, arrayMove, easeFns, emptyArray, pointZero, syncMergeCenterArray } from "wy-helper"
 
-import { animatePointFrame, requesetBatchAnimationForceFlow, subscribeMove } from "wy-dom-helper"
+import { animateNumberFrame, requesetBatchAnimationForceFlow, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
 import { useEdgeScroll, useStyle, useReorderFix } from "better-react-dom-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
 import { renderPage } from "../util/page"
+import { DataRow, dataList, renderRow } from "./util/share"
 /**
  * 拖拽的render,依赖拖拽事件,不是react的render与requestAnimateFrame
  * 动画生成异步的,因为dom生效本来是异步的.
  */
 
-const list = Array(100).fill(1).map((_, i) => {
-  return {
-    index: i,
-    name: faker.person.fullName(),
-    avatar: faker.image.urlLoremFlickr({
-      width: 100,
-      height: 100,
-      category: 'orchid'
-    })
-  }
-})
-type Row = {
-  index: number
-  name: string
-  avatar: string
-}
 
 
 
-const useReduceList = createUseReducer(function (list: Row[], action: {
+const useReduceList = createUseReducer(function (list: DataRow[], action: {
   type: "change"
   value: number
   base: number
@@ -54,7 +39,7 @@ export default function () {
 
   renderPage({ title: "frame" }, () => {
     const timetype = renderTimeType()
-    const [orderList, dispatch] = useReduceList(list)
+    const [orderList, dispatch] = useReduceList(dataList)
     const [onMove, setOnMove] = useChange<{ index: number }>()
     const reOrder = useReorderFix(
       orderList,
@@ -85,13 +70,22 @@ export default function () {
       },
     }).renderFragment(function () {
       const point = useAtom<Point | undefined>(undefined)
-      useEdgeScroll(
-        () => point.get(),
-        () => container,
-        {
-          y: true,
-          padding: 10
+      useEffect(() => {
+        return subscribeEdgeScroll(() => {
+          const info = point.get()
+          if (info) {
+            return {
+              point: info.y,
+              direction: "y",
+              container,
+              config: {
+                padding: 10,
+                config: true
+              }
+            }
+          }
         })
+      })
 
       useEffect(() => {
         return subscribeMove(function (e, end) {
@@ -112,26 +106,26 @@ export default function () {
       }, emptyArray)
       renderArray(orderList, v => v.index, function (row, index) {
         const offsetY = useValueCenter(0)
-        const transY = useMemo(() => animatePointFrame(pointZero))
+        const transY = useMemo(() => animateNumberFrame(0))
         const reOrderChild = reOrder.useChild(
           row.index,
           function () {
-            return transY.get()
+            return {
+              y: transY.get(),
+              x: 0
+            }
           },
           function (value) {
-            transY.changeTo({
-              x: transY.get().x,
-              y: value
-            })
+            transY.changeTo(value)
             requesetBatchAnimationForceFlow(div, function () {
-              transY.changeTo(pointZero, {
+              transY.changeTo(0, {
                 duration: 600,
                 fn: easeFns.out(easeFns.circ)
               })
             })
           },
           function (value) {
-            transY.changeTo(value)
+            transY.changeTo(value.y)
           },
           () => offsetY.get(),
           (v) => offsetY.set(v)
@@ -145,45 +139,25 @@ export default function () {
             div.style.transform = `translate(0px,${(value.y + oy)}px)`
           })
         }, emptyArray)
-        const div = dom.div({
-          style: `
-    display:flex;
-    align-items:center;
-    margin-top:10px;
-    border:1px solid black;
-    background:yellow;
-    position:relative;
-    `,
-          onPointerDown(e) {
-            reOrder.scroller.reset(container)
-            // transX.changeTo(e.pageY - cb.get()!.y.min)
-            setOnMove(row)
-            reOrderChild({
-              x: e.pageX,
-              y: e.pageY
-            }, function () {
-              transY.changeTo(pointZero, {
-                duration: 600,
-                fn: easeFns.out(easeFns.circ)
-              }, {
-                onFinish(bool) {
-                  if (bool) {
-                    setOnMove(undefined)
-                  }
-                },
-              })
+        const div = renderRow(row, e => {
+          reOrder.scroller.reset(container)
+          // transX.changeTo(e.pageY - cb.get()!.y.min)
+          setOnMove(row)
+          reOrderChild({
+            x: e.pageX,
+            y: e.pageY
+          }, function () {
+            transY.changeTo(0, {
+              duration: 600,
+              fn: easeFns.out(easeFns.circ)
+            }, {
+              onFinish(bool) {
+                if (bool) {
+                  setOnMove(undefined)
+                }
+              },
             })
-          }
-        }).renderFragment(function () {
-          dom.img({
-            src: row.avatar
-          }).render()
-          dom.span().renderText`${row.name}`
-          dom.hr({
-            style: `
-            flex:1;
-            `
-          }).render()
+          })
         })
         useStyle(div, {
           zIndex: onMove?.index == row.index ? 1 : 0

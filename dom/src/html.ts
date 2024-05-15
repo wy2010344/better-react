@@ -6,26 +6,26 @@ is ES6/ES2015 only. These definitions allow such projects to compile with only `
 Warning: all of these interfaces are empty. If you want type definitions for various properties
 (such as HTMLInputElement.prototype.value), you need to add `--lib DOM` (via command line or tsconfig.json).
 */
-interface Event { }
-interface AnimationEvent extends Event { }
-interface ClipboardEvent extends Event { }
-interface CompositionEvent extends Event { }
-interface DragEvent extends Event { }
-interface FocusEvent extends Event { }
-interface KeyboardEvent extends Event { }
-interface MouseEvent extends Event { }
-interface TouchEvent extends Event { }
-interface PointerEvent extends Event { }
-interface TransitionEvent extends Event { }
-interface UIEvent extends Event { }
-interface WheelEvent extends Event { }
+// interface Event { }
+// interface AnimationEvent extends Event { }
+// interface ClipboardEvent extends Event { }
+// interface CompositionEvent extends Event { }
+// interface DragEvent extends Event { }
+// interface FocusEvent extends Event { }
+// interface KeyboardEvent extends Event { }
+// interface MouseEvent extends Event { }
+// interface TouchEvent extends Event { }
+// interface PointerEvent extends Event { }
+// interface TransitionEvent extends Event { }
+// interface UIEvent extends Event { }
+// interface WheelEvent extends Event { }
 
-interface EventTarget { }
-interface Document { }
-interface DataTransfer { }
-interface StyleMedia { }
+// interface EventTarget { }
+// interface Document { }
+// interface DataTransfer { }
+// interface StyleMedia { }
 
-interface DocumentFragment { }
+// interface DocumentFragment { }
 
 
 
@@ -465,22 +465,22 @@ export namespace React {
     data: string;
   }
 
-  export interface DragEvent<T = Element> extends MouseEvent<T, NativeDragEvent> {
-    dataTransfer: DataTransfer;
-  }
+  // export interface DragEvent<T = Element> extends MouseEvent<T, NativeDragEvent> {
+  //   dataTransfer: DataTransfer;
+  // }
 
-  export interface PointerEvent<T = Element> extends MouseEvent<T, NativePointerEvent> {
-    pointerId: number;
-    pressure: number;
-    tangentialPressure: number;
-    tiltX: number;
-    tiltY: number;
-    twist: number;
-    width: number;
-    height: number;
-    pointerType: 'mouse' | 'pen' | 'touch';
-    isPrimary: boolean;
-  }
+  // export interface PointerEvent<T = Element> extends MouseEvent<T, NativePointerEvent> {
+  //   pointerId: number;
+  //   pressure: number;
+  //   tangentialPressure: number;
+  //   tiltX: number;
+  //   tiltY: number;
+  //   twist: number;
+  //   width: number;
+  //   height: number;
+  //   pointerType: 'mouse' | 'pen' | 'touch';
+  //   isPrimary: boolean;
+  // }
 
   export interface FocusEvent<Target = Element, RelatedTarget = Element> extends SyntheticEvent<Target, NativeFocusEvent> {
     relatedTarget: (EventTarget & RelatedTarget) | null;
@@ -547,19 +547,19 @@ export namespace React {
     shiftKey: boolean;
   }
 
-  export interface TouchEvent<T = Element> extends UIEvent<T, NativeTouchEvent> {
-    altKey: boolean;
-    changedTouches: TouchList;
-    ctrlKey: boolean;
-    /**
-     * See [DOM Level 3 Events spec](https://www.w3.org/TR/uievents-key/#keys-modifier). for a list of valid (case-sensitive) arguments to this method.
-     */
-    getModifierState(key: string): boolean;
-    metaKey: boolean;
-    shiftKey: boolean;
-    targetTouches: TouchList;
-    touches: TouchList;
-  }
+  // export interface TouchEvent<T = Element> extends UIEvent<T, NativeTouchEvent> {
+  //   altKey: boolean;
+  //   changedTouches: TouchList;
+  //   ctrlKey: boolean;
+  //   /**
+  //    * See [DOM Level 3 Events spec](https://www.w3.org/TR/uievents-key/#keys-modifier). for a list of valid (case-sensitive) arguments to this method.
+  //    */
+  //   getModifierState(key: string): boolean;
+  //   metaKey: boolean;
+  //   shiftKey: boolean;
+  //   targetTouches: TouchList;
+  //   touches: TouchList;
+  // }
 
   interface AbstractView {
     styleMedia: StyleMedia;
@@ -589,24 +589,24 @@ export namespace React {
     propertyName: string;
     pseudoElement: string;
   }
-  //
+
   // Event Handler Types
   // ----------------------------------------------------------------------
 
-  type EventHandler<E extends SyntheticEvent<any>> = { bivarianceHack(event: E): void }["bivarianceHack"];
+  type EventHandler<E> = { bivarianceHack(event: E): void }["bivarianceHack"];
 
   type ReactEventHandler<T = Element> = EventHandler<SyntheticEvent<T>>;
 
   type ClipboardEventHandler<T = Element> = EventHandler<ClipboardEvent<T>>;
   type CompositionEventHandler<T = Element> = EventHandler<CompositionEvent<T>>;
-  type DragEventHandler<T = Element> = EventHandler<DragEvent<T>>;
+  type DragEventHandler<T = Element> = EventHandler<DragEvent>;
   type FocusEventHandler<T = Element> = EventHandler<FocusEvent<T>>;
   type FormEventHandler<T = Element> = EventHandler<FormEvent<T>>;
   type ChangeEventHandler<T = Element> = EventHandler<ChangeEvent<T>>;
   type KeyboardEventHandler<T = Element> = EventHandler<KeyboardEvent<T>>;
   type MouseEventHandler<T = Element> = EventHandler<MouseEvent<T>>;
-  type TouchEventHandler<T = Element> = EventHandler<TouchEvent<T>>;
-  type PointerEventHandler<T = Element> = EventHandler<PointerEvent<T>>;
+  type TouchEventHandler<T = Element> = EventHandler<TouchEvent>;
+  type PointerEventHandler<T = Element> = EventHandler<PointerEvent>;
   type UIEventHandler<T = Element> = EventHandler<UIEvent<T>>;
   type WheelEventHandler<T = Element> = EventHandler<WheelEvent<T>>;
   type AnimationEventHandler<T = Element> = EventHandler<AnimationEvent<T>>;

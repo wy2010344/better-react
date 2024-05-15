@@ -11,7 +11,7 @@ import { renderPages } from "./开发AnimatePereference/renderPages";
 import { renderFilter } from "./开发AnimatePereference/renderFilter";
 import { useVersion } from "better-react-helper";
 import bezierPreview from "./bezier-preview";
-import reorderList from "./demo/reorder/frame";
+import reorderList from "./demo/reorder/css";
 import dslKanren from "./dsl-kanren";
 import newMode from "./newMode";
 import canvasRender from "./newMode/canvasRender";
