@@ -12,7 +12,7 @@ export const reorderRoutes: Route[] = [
         renderLkPage("reducer", history => history.push("/reorder/reducer"))
         renderLkPage("gapCss", history => history.push("/reorder/gapCss"))
         renderLkPage("gapFrame", history => history.push("/reorder/gapFrame"))
-        // renderLkPage("reducerNew", history => history.push("/reorder/reducerNew"))
+        renderLkPage("reducerNew", history => history.push("/reorder/reducerNew"))
       })
     }
   },

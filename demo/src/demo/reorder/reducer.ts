@@ -1,37 +1,20 @@
 import { faker } from "@faker-js/faker"
 import { animateNumberFrameReducer, getChangeOnScroll, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
 
-import { useEdgeScroll } from "better-react-dom-helper"
 import { easeFns, ReorderModel, createReorderReducer, } from "wy-helper"
 import { dom } from "better-react-dom"
 import { renderArray, useAtom, useAtomFun, useEffect, useEvent, useInit, useMemo, useSideReducer } from "better-react-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
 import { renderPage } from "../util/page"
 import { useReducerReorder } from "./useReduceReorder"
+import { DataRow, dataList, renderRow } from "./util/share"
+import { useStyle } from "better-react-dom-helper"
 /**
  * 拖拽的render,依赖拖拽事件,不是react的render与requestAnimateFrame
  * 动画生成异步的,因为dom生效本来是异步的.
  */
-
-const list = Array(100).fill(1).map((_, i) => {
-  return {
-    index: i,
-    name: faker.person.fullName(),
-    avatar: faker.image.urlLoremFlickr({
-      width: 100,
-      height: 100,
-      category: 'orchid'
-    })
-  }
-})
-type Row = {
-  index: number
-  name: string
-  avatar: string
-}
-
 const orderReducer = createReorderReducer(
-  (v: Row) => v.index,
+  (v: DataRow) => v.index,
   {
     duration: 500,
     fn: easeFns.out(easeFns.circ)
@@ -40,12 +23,12 @@ const orderReducer = createReorderReducer(
   (v: HTMLElement) => v.clientHeight + 2
 )
 
-function initValue(): ReorderModel<Row, number> {
+function initValue(): ReorderModel<DataRow, number> {
   return {
     gap: 10,
     version: 0,
     scrollTop: 0,
-    list: list.map(value => {
+    list: dataList.map(value => {
       return {
         transY: {
           value: 0,
@@ -65,7 +48,7 @@ export default function () {
   renderPage({
     title: "reducer"
   }, () => {
-    const [orderModel, dispatch_1] = useSideReducer(orderReducer<ReorderModel<Row, number>>, '', initValue, undefined,
+    const [orderModel, dispatch_1] = useSideReducer(orderReducer<ReorderModel<DataRow, number>>, '', initValue, undefined,
       function (update, fun, set) {
         update(1, function () {
           fun(dispatch)
@@ -115,36 +98,15 @@ export default function () {
         orderModel.list,
         v => v.value.index,
         function (row, index) {
-          const height = 100 + row.value.index % 3 * 20
-          const div = dom.div({
-            style: `
-            border:1px solid black;
-            height:${height}px;
-    display:flex;
-    align-items:center;
-    margin-top:10px;
-    background:yellow;
-    position:relative;
-    transform:translate(0px,${row.transY.value}px);
-    z-index: ${orderModel.onMove?.key == row.value.index ? 1 : 0};
-    `,
-            onPointerDown(e) {
-              reOrder.start(e as any, row.value.index, container)
-            }
-          }).renderFragment(function () {
-            dom.img({
-              src: row.value.avatar
-            }).render()
-            dom.span().renderText`${height}`
-            dom.span().renderText`${row.value.name}`
-
-            dom.hr({
-              style: `
-            flex:1;
-            `
-            }).render()
+          const div = renderRow(row.value, e => {
+            reOrder.start(e, row.value.index, container)
           })
-
+          const height = 100 + row.value.index % 3 * 20
+          useStyle(div, {
+            height: height + 'px',
+            transform: `translate(0px,${row.transY.value}px)`,
+            zIndex: orderModel.onMove?.key == row.value.index ? 1 : 0
+          })
           useInit(() => {
             const key = row.value.index
             rowMap.get().set(key, div)

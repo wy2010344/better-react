@@ -4,7 +4,7 @@ import { createUseReducer, renderArray, useAtom, useChange, useEffect, useTimeou
 import { Point, arrayMove, emptyArray, pointEqual, pointZero, syncMergeCenter } from "wy-helper"
 
 import { requesetBatchAnimationForceFlow, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
-import { useEdgeScroll, useReorder } from 'better-react-dom-helper'
+import { useReorder } from 'better-react-dom-helper'
 import { useStyle } from "better-react-dom-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
 import { renderPage } from "../util/page"

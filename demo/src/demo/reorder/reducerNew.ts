@@ -1,16 +1,15 @@
-import { el, faker } from "@faker-js/faker"
-import { AnimateFrameValue, animateNumberFrame, animateNumberFrameReducer, getChangeOnScroll, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
+import { AnimateFrameValue, animateNumberFrame } from "wy-dom-helper"
 
-import { useEdgeScroll } from "better-react-dom-helper"
-import { easeFns, ReorderModel, createReorderReducer, arrayMove, syncMergeCenter, emptyArray, arrayNotEqualOrOne, } from "wy-helper"
+import { easeFns, arrayMove, syncMergeCenter, emptyArray, arrayNotEqualOrOne, } from "wy-helper"
 import { dom } from "better-react-dom"
-import { createUseReducer, renderArray, useAtom, useAtomFun, useEffect, useEvent, useInit, useMemo, useReducer, useSideReducer, useTimeoutAnimateValue } from "better-react-helper"
+import { createUseReducer, renderArray, useAtom, useAtomFun, useChange, useEffect, useEvent, useInit, useMemo, useStoreTriggerRender, useValueCenterFun } from "better-react-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
 import { renderPage } from "../util/page"
-import { useReducerReorder } from "./useReduceReorder"
 import { DataRow, dataList, renderRow } from "./util/share"
-import { ease } from "@/better-scroll/src/utils/ease"
-import { ReorderElement } from "./reducerLocalChange"
+import { ReorderElement, ReorderModel } from "./reducerLocalChange"
+import { userReducerLocalChangeReorder } from "./useReduceLocalChangeReorder"
+import { hookLevelEffect } from 'better-react'
+import { useStyle } from "better-react-dom-helper"
 /**
  * 拖拽的render,依赖拖拽事件,不是react的render与requestAnimateFrame
  * 动画生成异步的,因为dom生效本来是异步的.
@@ -72,12 +71,40 @@ function useDelayMemo<T>(get: () => T, dep: any) {
   }
 }
 
+function getOnMoveKey(vc: ReorderModel<number>) {
+  return vc.onMove?.key
+}
+
+let t = 0
 export default function () {
   renderPage({
     title: "reducer"
   }, () => {
+    console.log("render--", ++t)
+    const [version, setVersion] = useChange(0)
+    const vc = useValueCenterFun<ReorderModel<number>>(() => {
+      return {
+        scrollTop: 0,
+        version: 0,
+        gap: 10,
+        updateEffect(fun) {
+          fun?.()
+        },
+        changeIndex(from, to, version, fun) {
+          dispatch({
+            type: "move",
+            from,
+            to
+          })
+          fun?.()
+          setTimeType(timetype, function () {
+            setVersion(version)
+          })
+        }
+      }
+    })
 
-
+    const onMoveKey = useStoreTriggerRender(vc, getOnMoveKey)
     const [model, dispatch_1] = useReducerList({
       list: dataList,
       version: 0
@@ -90,24 +117,19 @@ export default function () {
     })
     const getOrderModel = useDelayMemo(() => {
       const map = rowMap.get()
-      const list: {
-        key: number
-        div: ReorderElement<number>
-      }[] = []
+      const list: ReorderElement<number>[] = []
       model.list.map(row => {
         const key = row.index
         const div = map.get(key)
         if (div) {
-          list.push({
-            key,
-            div
-          })
+          list.push(div)
         }
       })
       return list
     }, [model.list])
 
     const rowMap = useAtomFun<Map<number, ReorderE>>(createMap)
+    const reOrder = userReducerLocalChangeReorder(version, vc)
     const container = dom.div({
       /**
        * 
@@ -118,9 +140,10 @@ export default function () {
       height:600px;
       overflow:auto;
       background:white;
+      user-select:${typeof onMoveKey == 'number' ? 'none' : 'unset'};
       `,
       onScroll(event) {
-        // reOrder.onScroll(container, getOrderModel())
+        reOrder.onScroll(container, getOrderModel())
       },
     }).renderFragment(function () {
       renderArray(
@@ -128,8 +151,14 @@ export default function () {
         v => v.index,
         function (row, index) {
           const div = renderRow(row, e => {
-            // reOrder.start(e, row.index, container)
+            reOrder.start(e, row.index, container)
           })
+          const height = 100 + row.index % 3 * 20
+          useStyle(div, {
+            height: height + 'px',
+            zIndex: onMoveKey == row.index ? 1 : 0
+          })
+
           const transY = useMemo(() => {
             const transY = animateNumberFrame(0)
             return new ReorderE(transY, row.index, div)
@@ -148,6 +177,7 @@ export default function () {
           })
         }
       )
+      reOrder.useBody(container, getOrderModel)
     })
   })
 }
@@ -159,10 +189,13 @@ class ReorderE implements ReorderElement<number> {
     public readonly element: HTMLElement
   ) { }
   getHeight(): number {
-    return this.element.clientHeight
+    return this.element.clientHeight + 2
   }
   changeDiff(diff: number): void {
     this.value.changeTo(this.value.get() + diff)
+  }
+  onAnimate(): boolean {
+    return !!this.value.getAnimateTo()
   }
   layoutFrom(v: number): void {
     this.value.changeTo(0, {
@@ -180,5 +213,8 @@ class ReorderE implements ReorderElement<number> {
       duration: 400,
       fn: easeFns.out(easeFns.circ),
     })
+  }
+  getTransY(): number {
+    return this.value.get()
   }
 }

@@ -1,15 +1,20 @@
-
-import { useAtom, useEffect } from "better-react-helper"
+import { useAtom, useEffect, useStoreTriggerRender } from "better-react-helper"
+import { ValueCenter, easeFns, messageChannelCallback } from "wy-helper"
+import { ReorderAction, ReorderElement, ReorderModel, reorderReducer } from "./reducerLocalChange"
 import { subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
-import { ReorderAction, ReorderModel, ReorderElement, easeFns, messageChannelCallback } from "wy-helper"
 
 
 
-export function useReducerReorder<T, K>(
-  value: ReorderModel<T, K>,
-  dispatch: (v: ReorderAction<K, HTMLElement>) => void,
+
+export function userReducerLocalChangeReorder<K>(
+  version: number,
+  vc: ValueCenter<ReorderModel<K>>
 ) {
   const movePoint = useAtom<PointerEvent | undefined>(undefined)
+  function dispatch(action: ReorderAction<K>) {
+    vc.set(reorderReducer(vc.get(), action))
+  }
+  // vc.get().onMove?.info?.lastPoint
   return {
     start(e: PointerEvent, key: K, container: HTMLElement) {
       movePoint.set(e)
@@ -22,13 +27,13 @@ export function useReducerReorder<T, K>(
     },
     onScroll(
       container: HTMLElement,
-      elements: ReorderElement<K, HTMLElement>[]
+      elements: ReorderElement<K>[]
     ) {
       const mp = movePoint.get()
       if (mp) {
         dispatch({
           type: "didMove",
-          version: value.version,
+          version: version,
           point: mp.pageY,
           elements,
           scrollTop: container.scrollTop
@@ -38,7 +43,7 @@ export function useReducerReorder<T, K>(
     },
     useBody(
       container: HTMLElement,
-      getElements: () => ReorderElement<K, HTMLElement>[]
+      getElements: () => ReorderElement<K>[]
     ) {
       useEffect(() => {
         return subscribeEdgeScroll(() => {
@@ -64,7 +69,7 @@ export function useReducerReorder<T, K>(
               movePoint.set(undefined)
               dispatch({
                 type: "end",
-                version: value.version,
+                version: version,
                 point: e.pageY,
                 elements: getElements(),
                 scrollTop: container.scrollTop,
@@ -74,7 +79,7 @@ export function useReducerReorder<T, K>(
               movePoint.set(e)
               dispatch({
                 type: "didMove",
-                version: value.version,
+                version: version,
                 point: e.pageY,
                 elements: getElements(),
                 scrollTop: container.scrollTop
@@ -85,7 +90,7 @@ export function useReducerReorder<T, K>(
       })
 
 
-      const hasEnd = value.onMove?.endAt
+      const hasEnd = useStoreTriggerRender(vc, getEndAt)
       useEffect(() => {
         if (hasEnd) {
           messageChannelCallback(() => {
@@ -100,6 +105,11 @@ export function useReducerReorder<T, K>(
       }, [hasEnd])
     }
   }
+}
+
+
+function getEndAt<K>(model: ReorderModel<K>) {
+  return model.onMove?.endAt
 }
 
 const endConfig = {
