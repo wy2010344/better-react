@@ -2,7 +2,7 @@ import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
 import { createStoreValueCreater, genTemplateString } from "./util"
 import { MemoEvent, StoreValueCreater, hookAddResult, renderFiber } from "better-react"
 import { DomAttribute, DomElement, DomElementType } from "./html"
-import { arrayNotEqualDepsWithEmpty, emptyObject } from "wy-helper"
+import { arrayNotEqualDepsWithEmpty, emptyObject, quoteOrLazyGet } from "wy-helper"
 import { domTagNames, updateDom } from "./updateDom"
 
 export function createDomElement(e: MemoEvent<string>) {
@@ -49,7 +49,7 @@ export function updateProps(node: any, key: string, value?: any) {
   }
 }
 
-class DomHelper<T extends DomElementType>{
+class DomHelper<T extends DomElementType> {
   public readonly node: DomElement<T>
   constructor(
     type: T
@@ -108,26 +108,33 @@ export function useContentEditable(
 }
 
 type AttrsEffect<T> = () => T
-export class DomCreater<T extends DomElementType>{
-  private constructor(
-    public readonly type: T,
-    public readonly attrsEffect: AttrsEffect<DomAttribute<T>>,
-    public readonly portal?: boolean
+export class DomCreater<T extends DomElementType> {
+  /**
+   * 其实这3个属性可以改变,
+   * 因为只在最终render阶段释放.
+   * 主要是portal可以改变
+   * 其实attr也可以改变.只有type一开始就不再可以改变
+   * @param type 
+   * @param attrsEffect 
+   * @param portal 
+   */
+  constructor(
+    public readonly type: T
   ) { }
 
+  public attrsEffect: AttrsEffect<DomAttribute<T>> | DomAttribute<T> = emptyObject
+  public portal?: boolean
 
-
-  static of<T extends DomElementType>(
-    type: T,
-    attrsEffect: AttrsEffect<DomAttribute<T>> | DomAttribute<T>,
-    portal?: boolean
-  ) {
-    return new DomCreater(
-      type,
-      typeof attrsEffect == 'function' ? attrsEffect : () => attrsEffect,
-      portal
-    )
+  attrs(v: AttrsEffect<DomAttribute<T>> | DomAttribute<T>) {
+    this.attrsEffect = v
+    return this
   }
+
+  setPortal(b: any) {
+    this.portal = b
+    return this
+  }
+
   renderHtml(ts: TemplateStringsArray, ...vs: (string | number)[]) {
     return this.renderInnerHTML(genTemplateString(ts, vs))
   }
@@ -136,8 +143,9 @@ export class DomCreater<T extends DomElementType>{
   }
   renderInnerHTML(innerHTML: string, contentEditable?: boolean | "inherit" | "plaintext-only") {
     const helper = useMemo(DomHelper.create, this.type)
+    const attrsEffect = this.attrsEffect
     hookAttrEffect(() => {
-      const attrs = this.attrsEffect()
+      const attrs = quoteOrLazyGet(attrsEffect)
       helper.updateAttrs(attrs)
       helper.updateContent("html", innerHTML, contentEditable)
     })
@@ -145,8 +153,9 @@ export class DomCreater<T extends DomElementType>{
   }
   renderTextContent(textContent: string, contentEditable?: boolean | "inherit" | "plaintext-only") {
     const helper = useMemo(DomHelper.create, this.type)
+    const attrsEffect = this.attrsEffect
     hookAttrEffect(() => {
-      const attrs = this.attrsEffect()
+      const attrs = quoteOrLazyGet(attrsEffect)
       helper.updateAttrs(attrs)
       helper.updateContent("text", textContent, contentEditable)
     })
@@ -154,8 +163,9 @@ export class DomCreater<T extends DomElementType>{
   }
   render() {
     const helper = useMemo(DomHelper.create, this.type)
+    const attrsEffect = this.attrsEffect
     hookAttrEffect(() => {
-      const attrs = this.attrsEffect()
+      const attrs = quoteOrLazyGet(attrsEffect)
       helper.updateAttrs(attrs)
     })
     return this.after(helper)
@@ -170,8 +180,9 @@ export class DomCreater<T extends DomElementType>{
   renderFragment(fun: (e: MemoEvent<undefined>) => void): DomElement<T>
   renderFragment(fun: any, deps?: any) {
     const helper = useMemo(DomHelper.create, this.type)
+    const attrsEffect = this.attrsEffect
     hookAttrEffect(() => {
-      const attrs = this.attrsEffect()
+      const attrs = quoteOrLazyGet(attrsEffect)
       helper.updateAttrs(attrs)
     })
     renderFiber(helper.getStoreValueCreater(), arrayNotEqualDepsWithEmpty, fun, deps)
@@ -195,8 +206,11 @@ if ('Proxy' in globalThis) {
       if (oldV) {
         return oldV
       }
+      const creater = new DomCreater(p as DomElementType)
       const newV = function (args: any, isPortal: any) {
-        return DomCreater.of(p as DomElementType, args, isPortal)
+        creater.attrsEffect = args
+        creater.portal = isPortal
+        return creater
       }
       cacheDomMap.set(p as any, newV)
       return newV
@@ -206,8 +220,11 @@ if ('Proxy' in globalThis) {
   const cacheDom = {} as any
   dom = cacheDom
   domTagNames.forEach(function (tag) {
+    const creater = new DomCreater(tag)
     cacheDom[tag] = function (args: any, isPortal: any) {
-      return DomCreater.of(tag, args, isPortal)
+      creater.attrsEffect = args
+      creater.portal = isPortal
+      return creater
     }
   })
 }

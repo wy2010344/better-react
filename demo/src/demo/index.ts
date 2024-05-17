@@ -8,6 +8,7 @@ import { createRouter, locationMatch, trueForEmpty } from "./util/createRouter";
 import { reorderRoutes } from "./reorder";
 import { centerPickerRoutes } from "./centerPicker";
 import { scrollerRoutes } from "./scroller";
+import { pageRoutes } from "./page";
 
 
 export default function () {
@@ -36,6 +37,8 @@ function mainPage() {
     renderLkPage("拖动", (history) => history.push('/reorder'))
     renderLkPage("循环滚动", history => history.push("/centerPicker"))
     renderLkPage("scroller", history => history.push("./scroller"))
+    renderLkPage("page", history => history.push("./page"))
+    renderLkPage("pulltoRefresh", history => history.push("./pulltoRefresh"))
   })
 }
 
@@ -50,5 +53,12 @@ const renderRouter = createRouter(
   },
   ...reorderRoutes,
   ...centerPickerRoutes,
-  ...scrollerRoutes
+  ...scrollerRoutes,
+  ...pageRoutes,
+  {
+    match: locationMatch("/pulltoRefresh"),
+    getPage() {
+      return import("./pulltoRefresh")
+    },
+  },
 )

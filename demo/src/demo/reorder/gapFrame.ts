@@ -3,8 +3,8 @@ import { dom } from "better-react-dom"
 import { createUseReducer, renderArray, useAtom, useChange, useEffect, useMemo, useValueCenter } from "better-react-helper"
 import { Point, arrayMove, easeFns, emptyArray, pointZero, syncMergeCenterArray } from "wy-helper"
 
-import { animateNumberFrame, requesetBatchAnimationForceFlow, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
-import { useEdgeScroll, useStyle, useReorderFix } from "better-react-dom-helper"
+import { animateFrame, requesetBatchAnimationForceFlow, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
+import { useStyle, useReorderFix } from "better-react-dom-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
 import { renderPage } from "../util/page"
 import { DataRow, dataList, renderRow } from "./util/share"
@@ -106,7 +106,7 @@ export default function () {
       }, emptyArray)
       renderArray(orderList, v => v.index, function (row, index) {
         const offsetY = useValueCenter(0)
-        const transY = useMemo(() => animateNumberFrame(0))
+        const transY = useMemo(() => animateFrame(0))
         const reOrderChild = reOrder.useChild(
           row.index,
           function () {

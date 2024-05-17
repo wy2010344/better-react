@@ -1,8 +1,8 @@
 import { DomAttribute, dom } from "better-react-dom";
 import { flushSync, hookCommitAll } from 'better-react'
 import { createUseReducer, renderArray, useAtom, useChange, useEffect, useMemo, useOneEffect, useValueCenter } from "better-react-helper";
-import { readArraySliceCircle, arrayCountCreateWith, emptyArray, numberIntFillWithN0, quote, easeFns, momentum, syncMergeCenter } from "wy-helper";
-import { cssMap, recicleScrollViewView, subscribeMove } from "wy-dom-helper";
+import { readArraySliceCircle, arrayCountCreateWith, emptyArray, numberIntFillWithN0, quote, easeFns, momentum, syncMergeCenter, recicleScrollViewView } from "wy-helper";
+import { animateFrame, cssMap, subscribeMove } from "wy-dom-helper";
 import { renderPage } from "../util/page";
 const list = arrayCountCreateWith(60, v => v + 1)
 
@@ -41,7 +41,7 @@ export default function () {
         })
       }, 26, momentum.iScrollIdeal({
         // deceleration: 0.003
-      }), easeScroll)
+      }), easeScroll, animateFrame(0))
     })
 
     useEffect((e) => {

@@ -1,15 +1,14 @@
-import { AnimateFrameValue, animateNumberFrame } from "wy-dom-helper"
 
-import { easeFns, arrayMove, syncMergeCenter, emptyArray, arrayNotEqualOrOne, } from "wy-helper"
+import { easeFns, arrayMove, syncMergeCenter, emptyArray, arrayNotEqualOrOne, ReorderLocalModel, ReorderLocalElement, AnimateFrameValue, } from "wy-helper"
 import { dom } from "better-react-dom"
 import { createUseReducer, renderArray, useAtom, useAtomFun, useChange, useEffect, useEvent, useInit, useMemo, useStoreTriggerRender, useValueCenterFun } from "better-react-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
 import { renderPage } from "../util/page"
 import { DataRow, dataList, renderRow } from "./util/share"
-import { ReorderElement, ReorderModel } from "./reducerLocalChange"
 import { userReducerLocalChangeReorder } from "./useReduceLocalChangeReorder"
 import { hookLevelEffect } from 'better-react'
 import { useStyle } from "better-react-dom-helper"
+import { animateFrame } from "wy-dom-helper"
 /**
  * 拖拽的render,依赖拖拽事件,不是react的render与requestAnimateFrame
  * 动画生成异步的,因为dom生效本来是异步的.
@@ -71,18 +70,17 @@ function useDelayMemo<T>(get: () => T, dep: any) {
   }
 }
 
-function getOnMoveKey(vc: ReorderModel<number>) {
+function getOnMoveKey(vc: ReorderLocalModel<number>) {
   return vc.onMove?.key
 }
 
-let t = 0
+// let t = 0
 export default function () {
   renderPage({
     title: "reducer"
   }, () => {
-    console.log("render--", ++t)
     const [version, setVersion] = useChange(0)
-    const vc = useValueCenterFun<ReorderModel<number>>(() => {
+    const vc = useValueCenterFun<ReorderLocalModel<number>>(() => {
       return {
         scrollTop: 0,
         version: 0,
@@ -117,7 +115,7 @@ export default function () {
     })
     const getOrderModel = useDelayMemo(() => {
       const map = rowMap.get()
-      const list: ReorderElement<number>[] = []
+      const list: ReorderLocalElement<number>[] = []
       model.list.map(row => {
         const key = row.index
         const div = map.get(key)
@@ -160,7 +158,7 @@ export default function () {
           })
 
           const transY = useMemo(() => {
-            const transY = animateNumberFrame(0)
+            const transY = animateFrame(0)
             return new ReorderE(transY, row.index, div)
           })
           useEffect(() => {
@@ -182,7 +180,7 @@ export default function () {
   })
 }
 
-class ReorderE implements ReorderElement<number> {
+class ReorderE implements ReorderLocalElement<number> {
   constructor(
     public readonly value: AnimateFrameValue,
     public readonly key: number,
@@ -194,19 +192,21 @@ class ReorderE implements ReorderElement<number> {
   changeDiff(diff: number): void {
     this.value.changeTo(this.value.get() + diff)
   }
-  onAnimate(): boolean {
-    return !!this.value.getAnimateTo()
+  silentDiff(v: number): void {
+    this.value.slientDiff(v)
   }
   layoutFrom(v: number): void {
+    if (this.value.getAnimateTo()) {
+      //感觉中止了效果并不是很好
+      console.log("stopLayout")
+      // return
+    }
     this.value.changeTo(0, {
       duration: 400,
       fn: easeFns.out(easeFns.circ),
     }, {
       from: v
     })
-  }
-  silentDiff(v: number): void {
-    this.value.slientDiff(v)
   }
   endLayout(): void {
     this.value.changeTo(0, {

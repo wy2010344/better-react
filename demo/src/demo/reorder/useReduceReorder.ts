@@ -93,7 +93,8 @@ export function useReducerReorder<T, K>(
               type: "didEnd",
               scrollTop: container.scrollTop,
               elements: getElements(),
-              config: endConfig
+              config: endConfig,
+              version: value.version
             })
           })
         }

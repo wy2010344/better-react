@@ -1,4 +1,3 @@
-import { hookBeforeAttrEffect, useBeforeAttrEffect } from "better-react-helper"
 import { StoreValue, StoreValueCreater, hookCreateChangeAtom, isFiber } from "better-react"
 import { EmptyFun, StoreRef, alawaysFalse, emptyArray, storeRef } from "wy-helper"
 
@@ -50,7 +49,7 @@ class StoreValueNode implements StoreValue {
   onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any) {
     if (this.childrenDirty.get()) {
       const that = this
-      addLevelEffect(-1, () => {
+      addLevelEffect(-0.5, () => {
         const lastChildren = that.cache.get()
         const pNode = that.pNode
         const newChildren: Node[] = []

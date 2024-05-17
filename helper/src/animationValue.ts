@@ -1,18 +1,11 @@
-import { BGColor, emptyArray, animateColor, animateNumber, AnimateValue, TimeoutAnimate, simpleEqual, } from "wy-helper";
+import { BGColor, emptyArray, AnimateValue, TimeoutAnimate, simpleEqual, } from "wy-helper";
 import { useMemo } from "./useRef";
 import { hookMakeDirtyAndRequestUpdate } from "better-react";
 
-export function useAnimationNumber(n: number): AnimateValue<number> {
+export function useAnimateValue(n: number): AnimateValue {
   const makeDirtyAndRequestUpdate = hookMakeDirtyAndRequestUpdate()
   return useMemo(() => {
-    return animateNumber(makeDirtyAndRequestUpdate, n)
-  }, emptyArray)
-}
-
-export function useAnimationColor(color: BGColor): AnimateValue<BGColor> {
-  const makeDirtyAndRequestUpdate = hookMakeDirtyAndRequestUpdate()
-  return useMemo(() => {
-    return animateColor(makeDirtyAndRequestUpdate, color)
+    return new AnimateValue(makeDirtyAndRequestUpdate, n)
   }, emptyArray)
 }
 

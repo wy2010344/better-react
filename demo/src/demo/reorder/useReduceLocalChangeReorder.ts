@@ -1,6 +1,6 @@
 import { useAtom, useEffect, useStoreTriggerRender } from "better-react-helper"
-import { ValueCenter, easeFns, messageChannelCallback } from "wy-helper"
-import { ReorderAction, ReorderElement, ReorderModel, reorderReducer } from "./reducerLocalChange"
+import { ReorderLocalAction, ReorderLocalElement, ReorderLocalModel, ValueCenter, easeFns, messageChannelCallback, reorderLocalReducer } from "wy-helper"
+import { ReorderAction, ReorderElement, ReorderModel, } from "wy-helper"
 import { subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
 
 
@@ -8,11 +8,11 @@ import { subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
 
 export function userReducerLocalChangeReorder<K>(
   version: number,
-  vc: ValueCenter<ReorderModel<K>>
+  vc: ValueCenter<ReorderLocalModel<K>>
 ) {
   const movePoint = useAtom<PointerEvent | undefined>(undefined)
-  function dispatch(action: ReorderAction<K>) {
-    vc.set(reorderReducer(vc.get(), action))
+  function dispatch(action: ReorderLocalAction<K>) {
+    vc.set(reorderLocalReducer(vc.get(), action))
   }
   // vc.get().onMove?.info?.lastPoint
   return {
@@ -27,7 +27,7 @@ export function userReducerLocalChangeReorder<K>(
     },
     onScroll(
       container: HTMLElement,
-      elements: ReorderElement<K>[]
+      elements: ReorderLocalElement<K>[]
     ) {
       const mp = movePoint.get()
       if (mp) {
@@ -43,7 +43,7 @@ export function userReducerLocalChangeReorder<K>(
     },
     useBody(
       container: HTMLElement,
-      getElements: () => ReorderElement<K>[]
+      getElements: () => ReorderLocalElement<K>[]
     ) {
       useEffect(() => {
         return subscribeEdgeScroll(() => {
@@ -96,6 +96,7 @@ export function userReducerLocalChangeReorder<K>(
           messageChannelCallback(() => {
             dispatch({
               type: "didEnd",
+              version,
               scrollTop: container.scrollTop,
               elements: getElements(),
               config: endConfig
@@ -108,7 +109,7 @@ export function userReducerLocalChangeReorder<K>(
 }
 
 
-function getEndAt<K>(model: ReorderModel<K>) {
+function getEndAt<K>(model: ReorderLocalModel<K>) {
   return model.onMove?.endAt
 }
 

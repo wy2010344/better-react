@@ -2,7 +2,7 @@
   "version": "v1",
   "packages": {
     "better-react-helper": {
-      "signature": "267d50de3753e6c9c54ccd0707ba9f1b",
+      "signature": "7ff9bb0a422df222263b107c5415cd8f",
       "file": true,
       "replaced": "^1.2.7"
     },
@@ -12,22 +12,22 @@
       "replaced": "^1.2.6"
     },
     "better-react-dom": {
-      "signature": "635f851a8ae9fb7ef1fd74f1285ea6a1",
+      "signature": "0a8e0ea8803f417e74d84b78537c5cd0",
       "file": true,
       "replaced": "^1.2.6"
     },
     "wy-helper": {
-      "signature": "73a9d1c64abb3e06ed551854775d10ba",
+      "signature": "b2128d422b65928e184923c91d3d73e2",
       "file": true,
       "replaced": "^0.1.0"
     },
     "wy-dom-helper": {
-      "signature": "2c15078d3d22c544cef9207e90b9ce98",
+      "signature": "8f94641a8a3970467dadbd6f9babb3e8",
       "file": true,
       "replaced": "^0.1.0"
     },
     "better-react-dom-helper": {
-      "signature": "011b881abe6dfdff64406ca7a0aed9b0",
+      "signature": "38939d59827b4fae2b4f31ab5b7bfe94",
       "file": true,
       "replaced": "^1.2.4"
     }

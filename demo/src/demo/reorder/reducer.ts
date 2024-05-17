@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker"
-import { animateNumberFrameReducer, getChangeOnScroll, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
+import { animateFrameReducer, getChangeOnScroll, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
 
 import { easeFns, ReorderModel, createReorderReducer, } from "wy-helper"
 import { dom } from "better-react-dom"
@@ -19,7 +19,7 @@ const orderReducer = createReorderReducer(
     duration: 500,
     fn: easeFns.out(easeFns.circ)
   },
-  animateNumberFrameReducer,
+  animateFrameReducer,
   (v: HTMLElement) => v.clientHeight + 2
 )
 

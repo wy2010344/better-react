@@ -1,13 +1,12 @@
 import { AnimationConfig, emptyArray, scrollEases, syncMergeCenter } from "wy-helper";
 import { renderTemplate } from "./template";
-import { useEffect, useMemo } from "better-react-helper";
-import { useAnimationFrameNumber } from "better-react-dom-helper";
+import { useAnimateValue, useEffect, useMemo } from "better-react-helper";
 import { buildScroll, momentum, } from 'wy-helper'
-import { subscribeMove } from "wy-dom-helper";
+import { animateFrame, subscribeMove } from "wy-dom-helper";
 
 export default function () {
   renderTemplate("frame", function (wrapper, container) {
-    const translateY = useAnimationFrameNumber(0)
+    const translateY = useMemo(() => animateFrame(0))
     const handleDown = useMemo(() => buildScroll({
       wrapperSize() {
         return wrapper.clientHeight
