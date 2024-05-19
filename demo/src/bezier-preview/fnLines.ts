@@ -34,7 +34,7 @@ export default function () {
   makeEase(`easeFns.bounce`, bounce)
 
 
-  changeParam(`easeFns.elastic`, easeFns.elastic, 30, 0.0001)
+  changeParam(`easeFns.elastic`, easeFns.elasticOut, 30, 0.0001)
 
   changeParam(`easeFns.back`, easeFns.back, 3, 0.0001)
 
@@ -62,6 +62,49 @@ export default function () {
       step: 0.1,
       onValueChange(v) {
         setP(Number(v))
+      },
+    })
+  })
+
+  userDefine()
+}
+
+function userDefine() {
+  const [value, setValue] = useChange('')
+  const afn = useMemo(() => {
+    try {
+      const fn = eval(value)
+      if (typeof fn == 'function') {
+        const v = fn(0.5)
+        if (typeof (v == 'number')) {
+          return {
+            type: "success",
+            value: fn
+          } as const
+        }
+      }
+      return {
+        type: "error",
+        value: "invalid-function"
+      } as const
+    } catch (err) {
+      return {
+        type: "error",
+        value: err
+      } as const
+    }
+  }, [value])
+  /**
+   * 比如数学公式凑出来的曲线
+   * t=>Math.pow(1-t,3) * Math.cos(Math.PI * 12 * t * t /2)
+   * 只能使用数值法来逆向求t,没有通用的公式.即使cos里面的t是单次的.
+   * 又如曲线公式与其它公式结合...
+   */
+  makeEase(`userDefine`, afn.type == 'success' ? afn.value : quote, function () {
+    renderInput("textarea", {
+      value,
+      onValueChange(v) {
+        setValue(v)
       },
     })
   })

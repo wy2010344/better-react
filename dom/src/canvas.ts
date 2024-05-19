@@ -92,9 +92,9 @@ class CanvasStoreValue implements StoreValue {
         c.addEventListener(s, fun)
         destroys.push(fun)
       }, emptyArray)
-      return function () {
+      return [undefined, function () {
         destroys.forEach(run)
-      }
+      }]
     }, emptyArray)
   }
 

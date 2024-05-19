@@ -94,6 +94,7 @@ export class EnvModel {
     this.changeAtoms.length = 0
     /******清理删除********************************************************/
     /******清理所有的draft********************************************************/
+    //这里会将efffect更新进去...
     this.deletions.forEach(notifyDel)
     this.deletions.length = 0
     // /******更新属性********************************************************/
@@ -213,14 +214,15 @@ function destroyFiber(fiber: FiberImpl) {
   fiber.destroyed = true
   const effects = fiber.hookEffects
   if (effects) {
-    const keys = iterableToList(effects.keys()).sort()
-    for (const key of keys) {
-      effects.get(key)?.forEach(effect => {
-        const state = effect.get()
+    const envModel = fiber.envModel
+    effects.forEach(effect => {
+      const state = effect.get()
+      envModel.updateEffect(state.level, function () {
         const destroy = state.destroy
         if (destroy) {
           destroy({
             isDestroy: true,
+            value: state.value,
             beforeIsInit: state.isInit,
             beforeTrigger: state.deps,
             setRealTime: fiber.envModel.setRealTime,
@@ -228,7 +230,7 @@ function destroyFiber(fiber: FiberImpl) {
           })
         }
       })
-    }
+    })
   }
   // fiber.dom?.destroy()
 }

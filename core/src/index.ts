@@ -14,7 +14,7 @@ export {
   hookRequestReconcile,
   hookMakeDirtyAndRequestUpdate
 } from './fc'
-export type { EffectResult, EffectEvent } from './fc'
+export type { EffectResult, EffectEvent, EffectDestroy } from './fc'
 export type {
   Fiber,
   RenderWithDep,
@@ -26,7 +26,7 @@ export type {
 export { isFiber } from './Fiber'
 export { CreateChangeAtom } from './commitWork'
 export * from './renderMapF'
-export function render<T>(
+export function render(
   storeValueCreater: StoreValueCreater,
   render: () => void,
   getAsk: AskNextTimeWork

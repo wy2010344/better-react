@@ -185,11 +185,19 @@ export class DomCreater<T extends DomElementType> {
       const attrs = quoteOrLazyGet(attrsEffect)
       helper.updateAttrs(attrs)
     })
+    /**
+     * @todo 应该可以移除fiber依赖,手动确立是否需要
+     * 将storeValueCreater放到context上去,不,是像hook一样放在当前遍历的全局
+     * 因为与fiber无关,故不使用deps.
+     * 可以手动开启使用fragment.
+     * 
+     * 设想,fragment存array.
+     * 任何render更新,都会通知它对应的dom子节点去更新,但在一次render中只通知一次.
+     */
     renderFiber(helper.getStoreValueCreater(), arrayNotEqualDepsWithEmpty, fun, deps)
     return this.after(helper)
   }
 }
-
 
 
 let dom: {

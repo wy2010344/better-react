@@ -29,7 +29,7 @@ export function revertParentFiber() {
   cache.allowWipFiber = true
 }
 const hookIndex = {
-  effects: new Map<number, number>(),
+  effect: 0,
   memo: 0,
   result: undefined as unknown as StoreValue<any>,
   beforeFiber: undefined as (FiberImpl | undefined),
@@ -38,7 +38,7 @@ export function updateFunctionComponent(fiber: FiberImpl) {
   revertParentFiber()
   cache.wipFiber = fiber
 
-  hookIndex.effects.clear()
+  hookIndex.effect = 0
   hookIndex.memo = 0
   hookIndex.result = fiber.storeValueCreater()
   hookIndex.beforeFiber = undefined
@@ -48,16 +48,19 @@ export function updateFunctionComponent(fiber: FiberImpl) {
   cache.wipFiber = undefined
 }
 
-export type EffectResult<T> = (void | ((e: EffectDestroyEvent<T>) => void))
-export type EffectEvent<T> = {
+export type EffectDestroy<V, T> = (void | ((e: EffectDestroyEvent<V, T>) => void))
+export type EffectResult<V, T> = [V, EffectDestroy<V, T>] | void
+export type EffectEvent<V, T> = {
   trigger: T
   isInit: true
+  value?: never
   beforeTrigger?: never
   setRealTime(): void
   layoutEffect: LayoutEffect
 } | {
   trigger: T
   isInit: false
+  value: V,
   beforeTrigger: T
   setRealTime(): void
   layoutEffect: LayoutEffect
@@ -68,47 +71,43 @@ export type EffectEvent<T> = {
  * @param effect 
  * @param deps 
  */
-export function useLevelEffect<T>(
+export function useLevelEffect<V, T>(
   level: number,
   shouldChange: (a: T, b: T) => any,
-  effect: (e: EffectEvent<T>) => EffectResult<T>, deps: T): void {
+  effect: (e: EffectEvent<V, T>) => EffectResult<V, T>, deps: T): void {
   const parentFiber = hookParentFiber()
   const isInit = parentFiber.effectTag.get() == 'PLACEMENT'
   if (isInit) {
     //新增
-    const hookEffects = parentFiber.hookEffects || new Map()
+    const hookEffects = parentFiber.hookEffects || []
     parentFiber.hookEffects = hookEffects
-    const state: HookEffect<T> = {
+    const state: HookEffect<V, T> = {
+      level,
       deps,
       isInit,
       shouldChange
     }
     const hookEffect = parentFiber.envModel.createChangeAtom(state)
-    const old = hookEffects.get(level)
-    const array = old || []
-    if (!old) {
-      hookEffects.set(level, array)
-    }
-    array.push(hookEffect)
+    hookEffects.push(hookEffect)
     parentFiber.envModel.updateEffect(level, () => {
-      state.destroy = effect({
+      const out = effect({
         beforeTrigger: undefined,
-        isInit, trigger: deps,
+        isInit,
+        trigger: deps,
         setRealTime: parentFiber.envModel.setRealTime,
         layoutEffect: parentFiber.envModel.layoutEffect
       })
+      if (out) {
+        [state.value, state.destroy] = out
+      }
     })
   } else {
     const hookEffects = parentFiber.hookEffects
     if (!hookEffects) {
       throw new Error("原组件上不存在hookEffects")
     }
-    const index = hookIndex.effects.get(level) || 0
-    const levelEffect = hookEffects.get(level)
-    if (!levelEffect) {
-      throw new Error(`未找到该level effect ${level}`)
-    }
-    const hookEffect = levelEffect[index]
+    const index = hookIndex.effect
+    const hookEffect = hookEffects[index]
     if (!hookEffect) {
       throw new Error("出现了更多的effect")
     }
@@ -116,9 +115,10 @@ export function useLevelEffect<T>(
     if (state.shouldChange != shouldChange) {
       throw new Error('shouldChange发生改变')
     }
-    hookIndex.effects.set(level, index + 1)
+    hookIndex.effect = index + 1
     if (shouldChange(state.deps, deps)) {
-      const newState: HookEffect<T> = {
+      const newState: HookEffect<V, T> = {
+        level,
         deps,
         isInit: false,
         shouldChange
@@ -129,19 +129,24 @@ export function useLevelEffect<T>(
           state.destroy({
             isDestroy: false,
             trigger: deps,
+            value: state.value,
             beforeIsInit: state.isInit,
             beforeTrigger: state.deps,
             setRealTime: parentFiber.envModel.setRealTime,
             layoutEffect: parentFiber.envModel.layoutEffect
           })
         }
-        newState.destroy = effect({
+        const out = effect({
           beforeTrigger: state.deps,
           isInit,
+          value: state.value,
           trigger: deps,
           setRealTime: parentFiber.envModel.setRealTime,
           layoutEffect: parentFiber.envModel.layoutEffect
         })
+        if (out) {
+          [newState.value, newState.destroy] = out
+        }
       })
     }
   }
@@ -376,12 +381,12 @@ class ContextFactory<T> implements Context<T> {
     const context = this.findProvider(parentFiber)
     const thisValue = getValue(context.get())
     useLevelEffect(0, arrayNotEqual, function () {
-      return context.subscribe(function (value) {
+      return [undefined, context.subscribe(function (value) {
         const m = getValue(value)
         if (shouldUpdate(thisValue, m)) {
           parentFiber.effectTag.set("UPDATE")
         }
-      })
+      })]
     }, [context, getValue, shouldUpdate])
     return thisValue
   }

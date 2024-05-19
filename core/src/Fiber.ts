@@ -5,17 +5,20 @@ export type HookMemo<T, D> = {
   deps: D
   value: T
 }
-export type HookEffect<D> = {
+export type HookEffect<V, D> = {
+  level: number,
   shouldChange(a: D, b: D): any
   deps: D
+  value?: V
   isInit: boolean
-  destroy?: void | ((newDeps: EffectDestroyEvent<D>) => void)
+  destroy?: void | ((newDeps: EffectDestroyEvent<V, D>) => void)
 }
 
 export type LayoutEffect = (fun: EmptyFun) => void
-export type EffectDestroyEvent<T> = {
+export type EffectDestroyEvent<V, T> = {
   isDestroy: false
   trigger: T
+  value: V,
   beforeIsInit: boolean,
   beforeTrigger: T
   setRealTime(): void
@@ -23,6 +26,7 @@ export type EffectDestroyEvent<T> = {
 } | {
   isDestroy: true
   trigger?: never
+  value: V,
   beforeIsInit: boolean,
   beforeTrigger: T
   setRealTime(): void
@@ -78,7 +82,7 @@ export class FiberImpl<D = any, M = any> implements Fiber<M> {
   /**全局key,使帧复用,或keep-alive*/
   // globalKey?: any
   contextProvider?: Map<any, ValueCenter<any>>
-  hookEffects?: Map<number, StoreRef<HookEffect<any>>[]>
+  hookEffects?: StoreRef<HookEffect<any, any>>[]
   hookMemo?: {
     shouldChange(a: any, b: any): any
     value: StoreRef<HookMemo<any, any>>
