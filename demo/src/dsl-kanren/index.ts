@@ -11,7 +11,7 @@ import { map, goal } from "./d1"
 // let stream = bstream
 let stream: Stream<KSubsitution> | undefined = goal(null)
 export default function () {
-  dom.div().renderFragment(function () {
+  dom.div().render(function () {
     dom.button({
       onClick() {
         console.log("stream", stream, map)

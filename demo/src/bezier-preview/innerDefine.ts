@@ -39,7 +39,7 @@ export default function () {
       style: `
       display:flex;
       `
-    }).renderFragment(function () {
+    }).render(function () {
       value.subs.forEach(sub => {
         bezierCanvas(function () {
           dom.span().renderText`${key}-${sub.title}`

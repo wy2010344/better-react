@@ -14,9 +14,9 @@ export function useCss(ts: TemplateStringsArray, ...vs: CSSParamType[]) {
 }
 function useDeleteStyle(style: HTMLStyleElement) {
   useEffect(() => {
-    return function () {
+    return [undefined, function () {
       style.remove()
-    }
+    }]
   }, emptyArray)
 }
 export function useCssMap<T extends CssNest>(map: T, split?: string) {

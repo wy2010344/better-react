@@ -10,7 +10,7 @@ export default function () {
   height:100px;
  background:red; 
   `
-  }).renderFragment(children)
+  }).render(children)
 
 
   dom.div({
@@ -18,7 +18,7 @@ export default function () {
     background:blue;
     padding:30px;
     `
-  }).renderFragment(() => {
+  }).render(() => {
 
   })
 }

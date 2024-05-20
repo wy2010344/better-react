@@ -31,7 +31,7 @@ export function createBr(app: HTMLElement) {
     // useLayoutEffect,
     // renderFilter,
     // cssLayout,
-    // demo,
+    demo,
     // reorderList,
     // canvasRender,
     // insideAnimation,
@@ -40,7 +40,7 @@ export function createBr(app: HTMLElement) {
     // newMode,
     // centerPicker,
     // todoList,
-    bezierPreview,
+    // bezierPreview,
     // ExpensiveViewSingle,
     // reanimated,
     // demo1,
@@ -64,12 +64,12 @@ export function createBr(app: HTMLElement) {
 //     style: `
 //           background:blue;
 //           `
-//   }).renderFragment(function () {
+//   }).render(function () {
 //     dom.div({
 //       style: `
 //           background:green;
 //           `
-//     }).renderFragment(function () {
+//     }).render(function () {
 //       dom.div({
 //         style: `
 //           background:yellow;
@@ -91,7 +91,7 @@ export function createBr(app: HTMLElement) {
 //     style: `
 //           background:blue;
 //           `
-//   }).renderFragment(function () {
+//   }).render(function () {
 //     dom.div({
 //       style: `
 //           background:yellow;

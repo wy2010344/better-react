@@ -1,13 +1,11 @@
-import { render } from "better-react";
+import { hookAddResult, render } from "better-react";
 import { AskNextTimeWork } from "wy-helper";
 import { useAttrEffect, useMemo, useOneAttrEffect } from "better-react-helper";
-import { hookAddResult } from "better-react";
-import { createStoreValueCreater } from "./util";
+import { createNodeTempOps } from "./util";
 export { isSVG } from './updateDom'
 export { getAliasOfAttribute, getAttributeAlias } from './getAttributeAlias'
 export * from './html'
 export * from './dom'
-export * from './canvas'
 export * from './svg'
 export * from './util'
 /***
@@ -19,9 +17,12 @@ export * from './util'
  * updateProps虽然只处理dom,事实上永远不会起作用
  * FiberNode.create(node, updateProps, true),
  */
-export function createRoot(node: Node, reconcile: () => void, getAsk: AskNextTimeWork) {
+export function createRoot(
+  node: Node,
+  reconcile: () => void,
+  getAsk: AskNextTimeWork) {
   return render(
-    createStoreValueCreater(node),
+    createChangeAtom => createNodeTempOps(node, createChangeAtom),
     reconcile,
     getAsk
   )
@@ -52,12 +53,16 @@ export function useTextContent(node: Node, value: string) {
  * @param content 
  * @returns 
  */
-export function renderContent(content: string) {
+export function renderContent(content: string, asPortal?: boolean) {
   const node = useMemo(creatTextContent)
-  hookAddResult(node)
   useOneAttrEffect((e) => {
     node.textContent = e.trigger
   }, content)
+  if (asPortal) {
+    return node
+  }
+  hookAddResult(node)
+  return node
 }
 
 

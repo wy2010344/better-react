@@ -58,8 +58,8 @@ export default function () {
       display: 'flex',
       flexDirection: 'column'
     })
-  }).renderFragment(function () {
-    dom.div().renderFragment(function () {
+  }).render(function () {
+    dom.div().render(function () {
       const checkbox = dom.input({
         type: "checkbox",
         onInput(e) {
@@ -107,7 +107,7 @@ export default function () {
         }
       })
       renderContent(`${value}`)
-      const select = dom.select().renderFragment(function () {
+      const select = dom.select().render(function () {
         dom.option({
           value: 8
         }).renderText`8`
@@ -131,7 +131,7 @@ export default function () {
         flex: "1",
         overflow: "auto"
       }),
-    }).renderFragment(function () {
+    }).render(function () {
 
       renderFragment(() => {
         ExpensiveView(renderValue)
@@ -144,7 +144,7 @@ let oldTim = 0
 function ExpensiveView(count: number) {
   //console.log("render-内部-ExpensiveView")
   const length = count * 20 + 1000;
-  const div = dom.div().renderFragment(function () {
+  const div = dom.div().render(function () {
     dom.button({
       onClick(e) {
         e.stopPropagation()

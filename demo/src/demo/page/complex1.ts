@@ -112,7 +112,7 @@ export default function () {
 
     const moveInfo = useAtom<PointerEvent | undefined>(undefined)
 
-    dom.div().renderFragment(() => {
+    dom.div().render(() => {
       dom.button({
         onClick() {
           updateDirection(-1)
@@ -133,7 +133,7 @@ export default function () {
       `, onPointerDown(e) {
         moveInfo.set(e)
       },
-    }).renderFragment(() => {
+    }).render(() => {
 
       useBeforeAttrEffect(() => {
         contentRef.set(wrapper)
@@ -152,7 +152,7 @@ export default function () {
         flex-direction:column;
         align-items:stretch;
         `
-      }).renderFragment(() => {
+      }).render(() => {
         dom.div({
           style: `
           flex:1;
@@ -228,7 +228,7 @@ export default function () {
           style: `
           flex:1;
         `,
-        }).renderFragment(() => {
+        }).render(() => {
           renderArray([index - 1, index, index + 1], quote, function (row, i) {
             let s = ''
             if (i < 1) {
@@ -246,7 +246,7 @@ export default function () {
           inset:0;
           ${s}
           `
-            }).renderFragment(() => {
+            }).render(() => {
 
               dom.h1().renderText`${row}`
 

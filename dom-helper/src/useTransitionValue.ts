@@ -17,9 +17,9 @@ export function useTriggerStyle<
   useEffect(() => {
     const out = render(deps)
     if (cacheStyle.get()) {
-      return effectCssAnimationOther(ref, out, cacheStyle)
+      return [undefined, effectCssAnimationOther(ref, out, cacheStyle)]
     } else {
-      return effectCssAinmationFirst(ref, out, cacheStyle)
+      return [undefined, effectCssAinmationFirst(ref, out, cacheStyle)]
     }
   }, deps)
   return render(deps).target
@@ -39,7 +39,7 @@ export function useTriggerStyleInit<
   init: TriggerMConfig<T, M>
 ) {
   useEffect(() => {
-    return effectCssAinmationFirst(ref, init)
+    return [undefined, effectCssAinmationFirst(ref, init)]
   }, emptyArray)
   return init.target
 }

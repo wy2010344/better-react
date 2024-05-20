@@ -120,7 +120,6 @@ export class EnvModel {
     return new ChangeAtom(this.changeAtomsManage, value, didCommit || quote)
   }
 }
-
 //优先级,1是及时,2是Layout,3是普通,4是延迟
 export type LoopWorkLevel = 1 | 2 | 3 | 4
 export type LoopWork = {
@@ -248,7 +247,6 @@ export function deepTravelFiber<T extends any[]>(call: (Fiber: FiberImpl, ...vs:
     let nextFiber: FiberImpl | undefined = fiber
     while (nextFiber) {
       const next = nextFiber.next.get()
-      nextFiber.onRenderLeave()
       if (next) {
         return next
       }

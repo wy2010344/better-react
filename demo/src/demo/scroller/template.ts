@@ -50,7 +50,7 @@ export function renderTemplate(
 			onTouchMove(event) {
 				event.preventDefault()
 			},
-		}).renderFragment(function () {
+		}).render(function (wrapper) {
 
 			const container = dom.div(function () {
 				const attrs = getAttrs?.() || emptyObject as DomAttribute<"div">
@@ -67,7 +67,7 @@ export function renderTemplate(
 				${attrs?.style || ''}
       `,
 				}
-			}).renderFragment(function () {
+			}).render(function () {
 				dom.ul({
 					style: `
         	list-style: none;
@@ -77,7 +77,7 @@ export function renderTemplate(
 	text-align: left;
 
         `
-				}).renderFragment(function () {
+				}).render(function () {
 					renderArray(list, v => v.index, function (row) {
 						dom.li({
 							style: `

@@ -35,7 +35,7 @@ const reduceList: Reducer<Row[], {
 }
 
 export default function () {
-  dom.div().renderFragment(function () {
+  dom.div().render(function () {
 
 
     const [list, dispatch] = useReducer(reduceList, emptyArray as Row[])

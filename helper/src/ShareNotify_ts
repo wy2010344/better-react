@@ -1,7 +1,6 @@
 import { getOnlyId } from "./useOnlyId";
 import { valueCenterOf } from "wy-helper";
 import { useStoreTriggerRender } from "./useStoreTriggerRender";
-import { StoreValueCreater, RenderMapStoreValueCreater } from "better-react";
 
 
 
@@ -9,7 +8,6 @@ import { StoreValueCreater, RenderMapStoreValueCreater } from "better-react";
 
 type NotifyProps = {
   id: number
-  config: StoreValueCreater
   render(): void
 }
 

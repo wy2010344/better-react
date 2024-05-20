@@ -1,12 +1,15 @@
 import { Fiber, LayoutEffect, ReconcileFun } from "./Fiber";
-import { EffectDestroyEvent, FiberImpl, StoreValueCreater, HookEffect, MemoEvent, RenderWithDep, StoreValue } from "./Fiber";
+import { EffectDestroyEvent, FiberImpl, HookEffect, RenderWithDep, StoreValue } from "./Fiber";
 import { quote, simpleNotEqual, alawaysTrue, ValueCenter, valueCenterOf, arrayNotEqual, EmptyFun, getTheEmptyArray } from "wy-helper";
+import { AbsTempOps, TempOps, TempSubOps } from "./tempOps";
 
 const w = globalThis as any
 const cache = (w.__better_react_one__ || {
+  tempOps: undefined,
   wipFiber: undefined,
   allowWipFiber: false
 }) as {
+  tempOps: AbsTempOps<any>
   wipFiber?: FiberImpl
   allowWipFiber?: boolean
 }
@@ -31,7 +34,6 @@ export function revertParentFiber() {
 const hookIndex = {
   effect: 0,
   memo: 0,
-  result: undefined as unknown as StoreValue<any>,
   beforeFiber: undefined as (FiberImpl | undefined),
 }
 export function updateFunctionComponent(fiber: FiberImpl) {
@@ -40,12 +42,37 @@ export function updateFunctionComponent(fiber: FiberImpl) {
 
   hookIndex.effect = 0
   hookIndex.memo = 0
-  hookIndex.result = fiber.storeValueCreater()
   hookIndex.beforeFiber = undefined
-  fiber.render(hookIndex.result)
+
+  cache.tempOps = fiber.subOps
+  fiber.render()
+  cache.tempOps = undefined!
+
   draftParentFiber();
-  hookIndex.result = undefined as any
   cache.wipFiber = undefined
+}
+
+export function hookTempOps() {
+  return cache.tempOps
+}
+
+export function hookBeginTempOps(op: TempOps<any>) {
+  const before = cache.tempOps
+  cache.tempOps = op
+  op.data.reset()
+  return before
+}
+export function hookEndTempOps(op: AbsTempOps<any>) {
+  cache.tempOps = op
+}
+
+export function hookAddResult(...vs: any[]) {
+  if (!cache.tempOps) {
+    throw new Error("必须在render中进行")
+  }
+  for (let i = 0; i < vs.length; i++) {
+    cache.tempOps.addNode(vs[i])
+  }
 }
 
 export type EffectDestroy<V, T> = (void | ((e: EffectDestroyEvent<V, T>) => void))
@@ -161,10 +188,6 @@ export function hookLevelEffect(
   parentFiber.envModel.updateEffect(level, effect)
 }
 
-export function hookAddResult(...vs: any[]) {
-  hookIndex.result.hookAddResult(...vs)
-}
-
 export function hookCreateChangeAtom() {
   const parentFiber = hookParentFiber()
   return parentFiber.envModel.createChangeAtom
@@ -249,7 +272,6 @@ export function useBaseMemo<T, V>(
 }
 export function renderBaseFiber<T>(
   dynamicChild: boolean,
-  storeValueCreater: StoreValueCreater,
   ...[shouldChange, render, deps]: RenderWithDep<T>
 ): Fiber {
   const parentFiber = hookParentFiber()
@@ -260,7 +282,6 @@ export function renderBaseFiber<T>(
     currentFiber = FiberImpl.createFix(
       parentFiber.envModel,
       parentFiber,
-      storeValueCreater,
       shouldChange,
       {
         render,
@@ -268,6 +289,8 @@ export function renderBaseFiber<T>(
         isNew: true,
       },
       dynamicChild)
+    currentFiber.subOps = cache.tempOps.createSub()
+
     currentFiber.before.set(hookIndex.beforeFiber)
     //第一次要标记sibling
     if (hookIndex.beforeFiber) {
@@ -291,9 +314,6 @@ export function renderBaseFiber<T>(
     if (!oldFiber) {
       throw new Error("非预期地多出现了fiber")
     }
-    if (oldFiber.storeValueCreater != storeValueCreater) {
-      throw new Error("FiberConfig发生改变")
-    }
     if (oldFiber.shouldChange != shouldChange) {
       throw new Error("shouldChange发生改变")
     }
@@ -302,6 +322,9 @@ export function renderBaseFiber<T>(
     hookIndex.beforeFiber = currentFiber
     currentFiber.changeRender(render, deps)
   }
+
+  cache.tempOps.addNode(currentFiber.subOps)
+
   return currentFiber
 }
 /**
@@ -312,10 +335,9 @@ export function renderBaseFiber<T>(
  * @returns 
  */
 export function renderFiber<T>(
-  storeValueCreater: StoreValueCreater,
   ...[shouldChange, render, deps]: RenderWithDep<T>
 ) {
-  return renderBaseFiber(false, storeValueCreater, shouldChange, render, deps)
+  return renderBaseFiber(false, shouldChange, render, deps)
 }
 export interface Context<T> {
   hookProvider(v: T): void

@@ -68,7 +68,7 @@ export default function () {
       onScroll(event) {
         reOrder.scroller.onScroll(container)
       },
-    }).renderFragment(function () {
+    }).render(function () {
       const point = useAtom<Point | undefined>(undefined)
 
       useEffect(() => {

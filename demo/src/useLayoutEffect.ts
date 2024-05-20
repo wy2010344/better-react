@@ -27,7 +27,7 @@ export default function () {
   // const container = dom.div({
   //   style: `
   //   `
-  // }).renderFragment(() => {
+  // }).render(() => {
 
   //   renderArray(vs, quote, function (i) {
   //     dom.div({
@@ -102,7 +102,7 @@ function d2() {
     flex-direction:column;
     gap:10px;
     `
-  }).renderFragment(function () {
+  }).render(function () {
 
 
     const [p, setP] = useChange<Point | undefined>(undefined)

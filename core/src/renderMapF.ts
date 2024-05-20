@@ -1,12 +1,11 @@
-import { FiberImpl, Fiber, StoreValueCreater } from "./Fiber"
-import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemo, hookParentFiber, hookLevelEffect, hookAddResult } from "./fc"
+import { FiberImpl, Fiber } from "./Fiber"
+import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemo, hookParentFiber, hookLevelEffect, hookAddResult, hookTempOps } from "./fc"
 import { alawaysFalse, storeRef } from "wy-helper"
 
 ////////****useMap****////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
  nextCache, 
  key, 
- afterRender, 
  childShouldChange, 
  rowRender, 
  deps
@@ -14,7 +13,6 @@ import { alawaysFalse, storeRef } from "wy-helper"
 export type MapRowRender<C, T> = readonly [
   C,
   any,
-  StoreValueCreater,
   (a: T, b: T) => any,
   (v: T) => void,
   T,
@@ -23,7 +21,6 @@ function createMapRef() {
   return storeRef(new Map<any, FiberImpl[]>())
 }
 
-export type RenderMapStoreValueCreater<A = any, B = any> = StoreValueCreater<readonly Fiber<A>[], B>
 /**
  * 这里不预设加入portal里,是为了可能的portal
  * @param data 
@@ -35,14 +32,12 @@ export function renderMapF<M, C, D>(
   data: M,
   initCache: C,
   hasValue: (v: M, c: C) => boolean,
-  storeValueCreater: RenderMapStoreValueCreater,
   shouldChange: (a: D, b: D) => any,
   render: (row: M, c: C) => MapRowRender<C, any>,
   deps: D
 ) {
   return renderBaseFiber(
     true,
-    storeValueCreater,
     shouldChange,
     function () {
       const mapRef = useBaseMemo(alawaysFalse, createMapRef, undefined);
@@ -60,7 +55,7 @@ export function renderMapF<M, C, D>(
       let cache = initCache
       while (hasValue(data, cache)) {
         draftParentFiber()
-        const [nextCache, key, childConfig, childShouldChange, rowRender, deps] = render(data, cache)
+        const [nextCache, key, childConfig, rowRender, deps] = render(data, cache)
         cache = nextCache
         revertParentFiber()
 
@@ -76,12 +71,13 @@ export function renderMapF<M, C, D>(
             parentFiber.envModel,
             parentFiber,
             childConfig,
-            childShouldChange,
             {
               render: rowRender,
               deps,
               isNew: true
             })
+          tempFiber.subOps = hookTempOps().createSub()
+
           tempFiber.before.set(beforeFiber!)
           currentFiber = tempFiber
         }
@@ -101,9 +97,8 @@ export function renderMapF<M, C, D>(
         parentFiber.lastChild.set(currentFiber)
         currentFiber.next.set(undefined)
 
+        hookAddResult(currentFiber.subOps)
         beforeFiber = currentFiber
-
-        hookAddResult(currentFiber)
       }
 
       for (const olds of oldMap.values()) {

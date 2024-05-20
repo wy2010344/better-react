@@ -1,5 +1,6 @@
-import { StoreValue, StoreValueCreater, hookCreateChangeAtom, isFiber } from "better-react"
-import { EmptyFun, StoreRef, alawaysFalse, emptyArray, storeRef } from "wy-helper"
+import { CreateChangeAtom, TempOps, TempReal, TempSubOps, hookLevelEffect } from "better-react"
+import { useAttrEffect } from "better-react-helper"
+import { StoreRef, alawaysFalse, emptyArray, storeRef } from "wy-helper"
 
 export function genTemplateString(ts: TemplateStringsArray, vs: (string | number)[]) {
   const xs: any[] = []
@@ -11,84 +12,91 @@ export function genTemplateString(ts: TemplateStringsArray, vs: (string | number
   return xs.join('')
 }
 
-function addChild(row: any, newChildren: any[]) {
-  if (isFiber(row)) {
-    const value = row.lazyGetResultValue()
-    addChild(value, newChildren)
-  } else if (Array.isArray(row)) {
-    addChildren(row, newChildren)
-  } else if (row instanceof Node) {
+export type ContentEditable = boolean | "inherit" | "plaintext-only"
+
+export function useContentEditable(
+  node: ElementContentEditable,
+  contentEditable?: boolean | "inherit" | "plaintext-only",
+) {
+  useAttrEffect(() => {
+    node.contentEditable = contentEditable + "" || "true"
+  }, [node, contentEditable])
+}
+
+export function nodeAppendChild(pNode: Node, list: ListCreater, cache: StoreRef<readonly Node[]>) {
+  const lastChildren = cache.get()
+  const newChildren: Node[] = []
+  addChildren(list, newChildren)
+  let changed = false
+  let beforeNode: Node | null = null
+  for (let i = 0; i < newChildren.length; i++) {
+    const newChild = newChildren[i]
+    if (changed) {
+      if (newChild != beforeNode) {
+        pNode.insertBefore(newChild, beforeNode)
+      } else {
+        beforeNode = beforeNode?.nextSibling
+      }
+    } else {
+      const lastChild = lastChildren[i]
+      if (newChild != lastChild) {
+        changed = true
+        pNode.insertBefore(newChild, lastChild)
+        beforeNode = lastChild
+      }
+    }
+  }
+  for (const lastChild of lastChildren) {
+    if (!newChildren.includes(lastChild)) {
+      lastChild.parentNode?.removeChild(lastChild)
+    }
+  }
+  cache.set(newChildren)
+}
+
+function addChild(row: Node | TempSubOps<ListCreater>, newChildren: Node[]) {
+  if (row instanceof Node) {
     newChildren.push(row)
+  } else if (row instanceof TempSubOps) {
+    addChildren(row.getResult(), newChildren)
   } else {
     console.error("不知道是什么类型,无法加入", row)
   }
 }
-function addChildren(list: readonly any[], newChildren: any[]) {
-  for (let i = 0; i < list.length; i++) {
-    const row = list[i]
+function addChildren(list: ListCreater, newChildren: Node[]) {
+  for (let i = 0; i < list.list.length; i++) {
+    const row = list.list[i]
     addChild(row, newChildren)
   }
 }
 
 
 
-class StoreValueNode implements StoreValue {
-  constructor(
-    private pNode: Node,
-    private cache: StoreRef<readonly Node[]>
-  ) { }
-  private list: any[] = []
-  hookAddResult(...vs: readonly any[]): void {
-    for (const v of vs) {
+export function createNodeTempOps(pel: Node, createChangeAtom: CreateChangeAtom<any>) {
+  const cache = storeRef(emptyArray)
+  const addEffect = createChangeAtom(false, alawaysFalse)
+  const root = new TempOps<ListCreater>(() => new ListCreater(), () => {
+    if (!addEffect.get()) {
+      addEffect.set(true)
+      hookLevelEffect(-0.5, () => {
+        nodeAppendChild(pel, root.getResult(), cache)
+      })
+    }
+  })
+  return root
+}
+
+export class ListCreater implements TempReal {
+  list: (Node | TempSubOps<ListCreater>)[] = []
+  reset(): void {
+    this.list.length = 0
+  }
+  add(...vs: any[]): void {
+    for (let i = 0; i < vs.length; i++) {
+      const v = vs[i]
       this.list.push(v)
     }
   }
 
-  private childrenDirty = hookCreateChangeAtom()(true, alawaysFalse)
-
-  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any) {
-    if (this.childrenDirty.get()) {
-      const that = this
-      addLevelEffect(-0.5, () => {
-        const lastChildren = that.cache.get()
-        const pNode = that.pNode
-        const newChildren: Node[] = []
-        addChildren(that.list, newChildren)
-        let changed = false
-        let beforeNode: Node | null = null
-        for (let i = 0; i < newChildren.length; i++) {
-          const newChild = newChildren[i]
-          if (changed) {
-            if (newChild != beforeNode) {
-              pNode.insertBefore(newChild, beforeNode)
-            } else {
-              beforeNode = beforeNode?.nextSibling
-            }
-          } else {
-            const lastChild = lastChildren[i]
-            if (newChild != lastChild) {
-              changed = true
-              pNode.insertBefore(newChild, lastChild)
-              beforeNode = lastChild
-            }
-          }
-        }
-        for (const lastChild of lastChildren) {
-          if (!newChildren.includes(lastChild)) {
-            lastChild.parentNode?.removeChild(lastChild)
-          }
-        }
-        that.cache.set(newChildren)
-      })
-    }
-    return emptyArray
-  }
 }
-export function createStoreValueCreater(pNode: Node): StoreValueCreater {
-  const cache = storeRef(emptyArray)
-  return function () {
-    return new StoreValueNode(pNode, cache)
-  }
-}
-
 

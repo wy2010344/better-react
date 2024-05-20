@@ -16,7 +16,7 @@ export default function () {
     align-items:flex-start;
     gap:100px;
     `
-  }).renderFragment(function () {
+  }).render(function () {
     const { initRender, updatePreview, updateInitBox, updatePreviewBox, leveContainer, enterContainer, abc } = renderDrag()
     renderArray(bList, v => v, function (i) {
       const [onMove, setOnMove] = useChange<{ index: number }>()
@@ -75,7 +75,7 @@ export default function () {
         onScroll(event) {
           reOrder.onScroll(container)
         },
-      }).renderFragment(function () {
+      }).render(function () {
         const setPoint = useEdgeScroll(() => container, {
           y: true,
           padding: 10
@@ -304,7 +304,7 @@ function renderDiv(row: Row, style: CSSProperties, props?: React.HTMLAttributes<
     margin-bottom:20px;
     position:relative;
     `,
-  }).renderFragment(function () {
+  }).render(function () {
     dom.img({
       src: row.avatar
     }).render()

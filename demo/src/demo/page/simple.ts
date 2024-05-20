@@ -36,7 +36,7 @@ export default function () {
         })
       }
     })
-    dom.div().renderFragment(() => {
+    dom.div().render(() => {
       dom.button({
         onClick() {
           updateDirection(-1)
@@ -55,7 +55,7 @@ export default function () {
       height:300px;
       overflow:hidden;
       `
-    }).renderFragment(() => {
+    }).render(() => {
       useEffect(() => {
         transX.slientChange(0)
       }, [index])
@@ -103,7 +103,7 @@ export default function () {
         onPointerDown(e) {
           moveInfo.set(e)
         },
-      }).renderFragment(() => {
+      }).render(() => {
         renderArray([index - 1, index, index + 1], quote, function (row, i) {
           let s = ''
           if (i < 1) {
@@ -121,7 +121,7 @@ export default function () {
           inset:0;
           ${s}
           `
-          }).renderFragment(() => {
+          }).render(() => {
 
             dom.h1().renderText`${row}`
 

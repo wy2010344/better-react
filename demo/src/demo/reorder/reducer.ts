@@ -1,9 +1,8 @@
-import { faker } from "@faker-js/faker"
-import { animateFrameReducer, getChangeOnScroll, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
+import { animateFrameReducer } from "wy-dom-helper"
 
-import { easeFns, ReorderModel, createReorderReducer, } from "wy-helper"
+import { easeFns, ReorderModel, createReorderReducer, emptyArray, } from "wy-helper"
 import { dom } from "better-react-dom"
-import { renderArray, useAtom, useAtomFun, useEffect, useEvent, useInit, useMemo, useSideReducer } from "better-react-helper"
+import { renderArray, useAtomFun, useEffect, useEvent, useSideReducer } from "better-react-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
 import { renderPage } from "../util/page"
 import { useReducerReorder } from "./useReduceReorder"
@@ -93,7 +92,7 @@ export default function () {
       onScroll(event) {
         reOrder.onScroll(container, getOrderModel())
       },
-    }).renderFragment(function () {
+    }).render(function () {
       renderArray(
         orderModel.list,
         v => v.value.index,
@@ -107,13 +106,13 @@ export default function () {
             transform: `translate(0px,${row.transY.value}px)`,
             zIndex: orderModel.onMove?.key == row.value.index ? 1 : 0
           })
-          useInit(() => {
+          useEffect(() => {
             const key = row.value.index
             rowMap.get().set(key, div)
-            return () => {
+            return [undefined, () => {
               rowMap.get().delete(key)
-            }
-          })
+            }]
+          }, emptyArray)
           return {
             div,
             key: row.value.index

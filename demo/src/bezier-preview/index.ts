@@ -12,19 +12,19 @@ export default function () {
     overflow:auto;
     height:100vh;
     `
-  }).renderFragment(function () {
+  }).render(function () {
     dom.div({
-    }).renderFragment(function () {
+    }).render(function () {
       fnLines()
     })
 
     dom.div({
-    }).renderFragment(function () {
+    }).render(function () {
       innerDefine()
     })
 
     dom.div({
-    }).renderFragment(function () {
+    }).render(function () {
       selfAdd()
     })
   })

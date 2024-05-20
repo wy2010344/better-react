@@ -1,7 +1,7 @@
 
 import { easeFns, arrayMove, syncMergeCenter, emptyArray, arrayNotEqualOrOne, ReorderLocalModel, ReorderLocalElement, AnimateFrameValue, } from "wy-helper"
 import { dom } from "better-react-dom"
-import { createUseReducer, renderArray, useAtom, useAtomFun, useChange, useEffect, useEvent, useInit, useMemo, useStoreTriggerRender, useValueCenterFun } from "better-react-helper"
+import { addEffectDestroy, createUseReducer, renderArray, useAtom, useAtomFun, useChange, useEffect, useEvent, useHookEffect, useMemo, useStoreTriggerRender, useValueCenterFun } from "better-react-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
 import { renderPage } from "../util/page"
 import { DataRow, dataList, renderRow } from "./util/share"
@@ -143,7 +143,7 @@ export default function () {
       onScroll(event) {
         reOrder.onScroll(container, getOrderModel())
       },
-    }).renderFragment(function () {
+    }).render(function () {
       renderArray(
         model.list,
         v => v.index,
@@ -162,21 +162,22 @@ export default function () {
             return new ReorderE(transY, row.index, div)
           })
           useEffect(() => {
-            return syncMergeCenter(transY.value, function (value: number) {
+            return [undefined, syncMergeCenter(transY.value, function (value: number) {
               div.style.transform = `translate(0px,${value}px)`
-            })
+            })]
           }, emptyArray)
-          useInit(() => {
+
+          useHookEffect(() => {
             const key = row.index
             rowMap.get().set(key, transY)
-            return () => {
+            addEffectDestroy(() => {
               rowMap.get().delete(key)
-            }
-          })
+            })
+          }, emptyArray)
         }
       )
-      reOrder.useBody(container, getOrderModel)
     })
+    reOrder.useBody(container, getOrderModel)
   })
 }
 

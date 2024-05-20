@@ -11,7 +11,7 @@ export default function renderTimeType() {
     onInput(e) {
       setTimeType(select.value as TimeType)
     },
-  }).renderFragment(function () {
+  }).render(function () {
     timeTypes.map(row => {
       dom.option({
         value: row,

@@ -64,7 +64,7 @@ export default function () {
       display:flex;
       align-items;center;
       `
-    }).renderFragment(function () {
+    }).render(function () {
       dom.button({
         onClick() {
           wrapperAdd(-5)
@@ -85,7 +85,7 @@ export default function () {
       height:200px;
       position:relative;
       `
-    }).renderFragment(function () {
+    }).render(function () {
       wrapperDiv = dom.div({
         className: cls.scroll,
         style: `
@@ -97,12 +97,12 @@ export default function () {
         onPointerDown(event) {
           scroll.start(event.pageY)
         },
-      }).renderFragment(function () {
+      }).render(function () {
         dom.div({
           style: `
           transform:translateY(${transY.value}px);
           `
-        }).renderFragment(function () {
+        }).render(function () {
           const cacheList = useMemo(() => {
             return readArraySliceCircle(list, index - 5, index + 6)
           }, index)
@@ -128,7 +128,7 @@ export default function () {
         justify-content:center;
         pointer-events:none;
         `
-      }).renderFragment(function () {
+      }).render(function () {
         dom.div({
           style: `
           height:26px;

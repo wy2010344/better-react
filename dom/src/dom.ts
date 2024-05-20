@@ -1,8 +1,8 @@
 import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
-import { createStoreValueCreater, genTemplateString } from "./util"
-import { MemoEvent, StoreValueCreater, hookAddResult, renderFiber } from "better-react"
+import { ContentEditable, ListCreater, createNodeTempOps, genTemplateString, } from "./util"
+import { MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookCreateChangeAtom, hookEndTempOps } from "better-react"
 import { DomAttribute, DomElement, DomElementType } from "./html"
-import { arrayNotEqualDepsWithEmpty, emptyObject, quoteOrLazyGet } from "wy-helper"
+import { emptyFun, emptyObject, quoteOrLazyGet } from "wy-helper"
 import { domTagNames, updateDom } from "./updateDom"
 
 export function createDomElement(e: MemoEvent<string>) {
@@ -80,14 +80,12 @@ class DomHelper<T extends DomElementType> {
     this.content = content
     this.contentEditable = contentEditable
   }
-
-
-  private storeValueCreater: StoreValueCreater | undefined = undefined
-  getStoreValueCreater() {
-    if (!this.storeValueCreater) {
-      this.storeValueCreater = createStoreValueCreater(this.node)
+  private tempOps!: TempOps<ListCreater>
+  getTempOps() {
+    if (!this.tempOps) {
+      this.tempOps = createNodeTempOps(this.node, hookCreateChangeAtom())
     }
-    return this.storeValueCreater
+    return this.tempOps
   }
   static create<T extends DomElementType>(e: MemoEvent<T>) {
     return new DomHelper(e.trigger)
@@ -95,18 +93,6 @@ class DomHelper<T extends DomElementType> {
 }
 
 type DomContentAs = "html" | "text"
-type ContentEditable = boolean | "inherit" | "plaintext-only"
-
-
-export function useContentEditable(
-  node: ElementContentEditable,
-  contentEditable?: boolean | "inherit" | "plaintext-only",
-) {
-  useAttrEffect(() => {
-    node.contentEditable = contentEditable + "" || "true"
-  }, [node, contentEditable])
-}
-
 type AttrsEffect<T> = () => T
 export class DomCreater<T extends DomElementType> {
   /**
@@ -161,24 +147,7 @@ export class DomCreater<T extends DomElementType> {
     })
     return this.after(helper)
   }
-  render() {
-    const helper = useMemo(DomHelper.create, this.type)
-    const attrsEffect = this.attrsEffect
-    hookAttrEffect(() => {
-      const attrs = quoteOrLazyGet(attrsEffect)
-      helper.updateAttrs(attrs)
-    })
-    return this.after(helper)
-  }
-  private after(helper: DomHelper<T>) {
-    if (!this.portal) {
-      hookAddResult(helper.node)
-    }
-    return helper.node
-  }
-  renderFragment<D extends readonly any[]>(fun: (e: MemoEvent<D>) => void, deps: D): DomElement<T>
-  renderFragment(fun: (e: MemoEvent<undefined>) => void): DomElement<T>
-  renderFragment(fun: any, deps?: any) {
+  renderOut<O>(fun: (node: DomElement<T>) => O): O {
     const helper = useMemo(DomHelper.create, this.type)
     const attrsEffect = this.attrsEffect
     hookAttrEffect(() => {
@@ -194,8 +163,23 @@ export class DomCreater<T extends DomElementType> {
      * 设想,fragment存array.
      * 任何render更新,都会通知它对应的dom子节点去更新,但在一次render中只通知一次.
      */
-    renderFiber(helper.getStoreValueCreater(), arrayNotEqualDepsWithEmpty, fun, deps)
-    return this.after(helper)
+    const tempOps = helper.getTempOps()
+    const before = hookBeginTempOps(tempOps)
+    const out = fun(helper.node)
+    hookEndTempOps(before)
+    this.after(helper)
+    return out
+  }
+  private after(helper: DomHelper<T>) {
+    if (!this.portal) {
+      hookAddResult(helper.node)
+    }
+  }
+  render(fun: (node: DomElement<T>) => void = emptyFun): DomElement<T> {
+    return this.renderOut(e => {
+      fun(e);
+      return e
+    })
   }
 }
 

@@ -1,5 +1,6 @@
 import { EnvModel } from "./commitWork"
 import { EmptyFun, storeRef, StoreRef, ValueCenter } from "wy-helper"
+import { AbsTempOps, TempSubOps } from "./tempOps"
 
 export type HookMemo<T, D> = {
   deps: D
@@ -44,11 +45,6 @@ function whenCommitEffectTag(v: EffectTag) {
   return undefined
 }
 
-
-export type StoreValueCreater<M extends readonly any[] = readonly any[], T = any,> = {
-  (): StoreValue<M, T>
-}
-
 export interface StoreValue<M extends readonly any[] = readonly any[], T = any,> {
   onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): T
   hookAddResult(...vs: M): void
@@ -56,7 +52,6 @@ export interface StoreValue<M extends readonly any[] = readonly any[], T = any,>
 }
 
 export interface Fiber<M = any> {
-  lazyGetResultValue(): M
 }
 export function isFiber(v: any): v is Fiber<any> {
   return v instanceof FiberImpl
@@ -106,11 +101,11 @@ export class FiberImpl<D = any, M = any> implements Fiber<M> {
     public readonly parent: FiberImpl | undefined,
     public readonly before: StoreRef<FiberImpl | void>,
     public readonly next: StoreRef<FiberImpl | void>,
-    public readonly storeValueCreater: StoreValueCreater,
     public readonly shouldChange: (a: D, b: D) => any,
     rd: RenderDeps<any>,
     dynamicChild?: boolean
   ) {
+
     this.effectTag = envModel.createChangeAtom<EffectTag>("PLACEMENT", whenCommitEffectTag)
     this.renderDeps = envModel.createChangeAtom(rd)
     if (dynamicChild) {
@@ -134,24 +129,15 @@ export class FiberImpl<D = any, M = any> implements Fiber<M> {
       this.effectTag.set("UPDATE")
     }
   }
-  render(result: StoreValue<any[], M>) {
+  subOps!: AbsTempOps<any>
+  render() {
     const { render, deps, oldDeps, isNew } = this.renderDeps.get()
+    this.subOps.data.reset()
     render({
       trigger: deps,
       beforeTrigger: oldDeps,
       isInit: isNew
     })
-    result.useAfterRender?.()
-    this.result = result
-  }
-  private result: StoreValue<any[], M> = undefined as any
-  onRenderLeave() {
-    const out = this.result.onRenderLeave(this.envModel.updateEffect, this.parent?.result)
-    this.resultValue.set(out)
-  }
-  private resultValue = this.envModel.createChangeAtom<M>(null as any)
-  lazyGetResultValue() {
-    return this.resultValue.get()
   }
   /**
    * 创建一个固定节点,该节点是不是MapFiber不一定
@@ -161,7 +147,6 @@ export class FiberImpl<D = any, M = any> implements Fiber<M> {
   static createFix<D>(
     envModel: EnvModel,
     parentFiber: FiberImpl,
-    config: StoreValueCreater,
     shouldChange: (a: D, b: D) => any,
     rd: RenderDeps<D>,
     dynamicChild?: boolean
@@ -171,7 +156,6 @@ export class FiberImpl<D = any, M = any> implements Fiber<M> {
       parentFiber,
       storeRef(undefined),
       storeRef(undefined),
-      config,
       shouldChange,
       rd,
       dynamicChild)
@@ -187,7 +171,6 @@ export class FiberImpl<D = any, M = any> implements Fiber<M> {
   static createMapChild<D>(
     envModel: EnvModel,
     parentFiber: FiberImpl,
-    config: StoreValueCreater,
     shouldChange: (a: D, b: D) => any,
     rd: RenderDeps<D>,
     dynamicChild?: boolean
@@ -197,7 +180,6 @@ export class FiberImpl<D = any, M = any> implements Fiber<M> {
       parentFiber,
       envModel.createChangeAtom(undefined),
       envModel.createChangeAtom(undefined),
-      config,
       shouldChange,
       rd,
       dynamicChild)

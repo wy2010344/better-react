@@ -41,7 +41,7 @@ export default function () {
     localStorage.setItem(cacheKey, JSON.stringify(list))
   }, [list])
 
-  dom.div().renderFragment(function () {
+  dom.div().render(function () {
     const input = dom.input().render()
     dom.button({
       onClick() {

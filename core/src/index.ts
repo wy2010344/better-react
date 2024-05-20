@@ -1,42 +1,50 @@
-import { FiberImpl, StoreValueCreater } from "./Fiber"
+import { FiberImpl } from "./Fiber"
 import { batchWork, getReconcile } from "./reconcile"
-import { EnvModel } from "./commitWork"
-import { AskNextTimeWork, alawaysTrue } from "wy-helper"
+import { CreateChangeAtom, EnvModel } from "./commitWork"
+import { AskNextTimeWork, EmptyFun, alawaysTrue } from "wy-helper"
+import { AbsTempOps, TempSubOps } from "./tempOps"
 export { startTransition, flushSync } from './reconcile'
 export {
   hookLevelEffect,
   useLevelEffect, useBaseMemo,
   createContext, renderFiber,
   hookCreateChangeAtom,
-  hookAddResult,
   hookCommitAll,
   hookEffectTag,
   hookRequestReconcile,
-  hookMakeDirtyAndRequestUpdate
+  hookMakeDirtyAndRequestUpdate,
+  hookBeginTempOps,
+  hookEndTempOps,
+  hookAddResult
 } from './fc'
+export {
+  TempOps,
+  TempSubOps,
+  TempReal
+} from './tempOps'
 export type { EffectResult, EffectEvent, EffectDestroy } from './fc'
 export type {
   Fiber,
   RenderWithDep,
   MemoEvent,
   EffectDestroyEvent,
-  StoreValueCreater,
   StoreValue
 } from './Fiber'
 export { isFiber } from './Fiber'
 export { CreateChangeAtom } from './commitWork'
 export * from './renderMapF'
 export function render(
-  storeValueCreater: StoreValueCreater,
-  render: () => void,
+  getSubOps: (createChangeAtom: CreateChangeAtom<any>) => AbsTempOps<any>,
+  render: EmptyFun,
   getAsk: AskNextTimeWork
 ) {
   const envModel = new EnvModel()
-  const rootFiber = FiberImpl.createFix(envModel, null!, storeValueCreater, alawaysTrue, {
+  const rootFiber = FiberImpl.createFix(envModel, null!, alawaysTrue, {
     render,
     isNew: true,
     deps: undefined
   })
+  rootFiber.subOps = getSubOps(envModel.createChangeAtom)
   const { destroy, beginRender } = batchWork(
     rootFiber,
     envModel
@@ -47,4 +55,3 @@ export function render(
   reconcile()
   return destroy
 }
-

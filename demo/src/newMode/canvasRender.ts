@@ -11,7 +11,7 @@ export default function () {
     style: `
     background:green;
     `
-  }).renderFragment(function () {
+  }).render(function () {
 
     const canvas = dom.canvas({
       width: 300,

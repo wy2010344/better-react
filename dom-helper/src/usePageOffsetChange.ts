@@ -10,7 +10,7 @@ export function usePageOffsetChange(div: HTMLElement, callback: (newOffset: Poin
   const lastPoint = useAtom<Point | undefined>(undefined)
   const realCB = useEvent(callback)
   useEffect(() => {
-    return subscribeRequestAnimationFrame(function () {
+    return [undefined, subscribeRequestAnimationFrame(function () {
       const offset = getPageOffset(div)
       const lp = lastPoint.get()
       if (lp) {
@@ -22,7 +22,7 @@ export function usePageOffsetChange(div: HTMLElement, callback: (newOffset: Poin
         realCB(offset)
         lastPoint.set(offset)
       }
-    })
+    })]
   }, emptyArray)
 
 }
@@ -37,7 +37,7 @@ export function usePageOffsetChangeMany<T, K>(
   const realCB = useEvent(callback)
   useEffect(() => {
     lastPoint.set(new Map())
-    return subscribeRequestAnimationFrame(function () {
+    return [undefined, subscribeRequestAnimationFrame(function () {
       const oldMap = lastPoint.get()
       let n = data.next()
       const newMap = new Map<K, Point>()
@@ -61,7 +61,7 @@ export function usePageOffsetChangeMany<T, K>(
       if (changeMap.size) {
         realCB(changeMap)
       }
-    })
+    })]
   }, emptyArray)
 
 }

@@ -36,7 +36,7 @@ export function renderRow(
       position:relative;
     `,
     onPointerDown
-  }).renderFragment(function () {
+  }).render(function () {
     dom.img({
       src: row.avatar
     }).render()

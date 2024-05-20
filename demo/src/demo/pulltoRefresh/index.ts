@@ -100,7 +100,7 @@ export default function () {
       height:30px;
       background:green;
       `
-    }).renderFragment(() => {
+    }).render(() => {
 
     })
     const div = dom.div({
@@ -115,7 +115,7 @@ export default function () {
         }
         lastPoint.set(e)
       }
-    }).renderFragment(() => {
+    }).render(() => {
 
     })
   })

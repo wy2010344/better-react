@@ -38,7 +38,7 @@ export function renderPage({
     onTouchMoveCapture(event) {
       event.preventDefault()
     },
-  }).renderFragment(function () {
+  }).render(function () {
     dom.div({
       style: `
       display:flex;
@@ -47,7 +47,7 @@ export function renderPage({
       padding:10px;
       padding-bottom:0;
       `
-    }).renderFragment(function () {
+    }).render(function () {
       dom.button({
         onClick: onBack,
         style: `
@@ -78,6 +78,6 @@ export function renderPage({
       position:relative;
       ${bodyStyle}
       `
-    }).renderFragment(renderBody)
+    }).render(renderBody)
   })
 }

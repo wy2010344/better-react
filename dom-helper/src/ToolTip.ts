@@ -82,7 +82,7 @@ export function ToolTip({
       left: left + 'px',
       backgroundColor
     })
-  }).renderFragment(function () {
+  }).render(function () {
 
     children()
     // svg.svg({

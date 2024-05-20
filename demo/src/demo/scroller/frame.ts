@@ -1,6 +1,6 @@
 import { AnimationConfig, emptyArray, scrollEases, syncMergeCenter } from "wy-helper";
 import { renderTemplate } from "./template";
-import { useAnimateValue, useEffect, useMemo } from "better-react-helper";
+import { addEffectDestroy, useAnimateValue, useEffect, useHookEffect, useMemo } from "better-react-helper";
 import { buildScroll, momentum, } from 'wy-helper'
 import { animateFrame, subscribeMove } from "wy-dom-helper";
 
@@ -44,22 +44,18 @@ export default function () {
       momentum: momentum.iScroll()
     }), emptyArray)
 
-    useEffect(() => {
+    useHookEffect(() => {
       const c = container
-      const de = subscribeMove(function (e, end) {
+      addEffectDestroy(subscribeMove(function (e, end) {
         if (end) {
           handleDown.end(e.pageY)
         } else {
           handleDown.move(e.pageY)
         }
-      })
-      const di = syncMergeCenter(translateY, function (value) {
+      }))
+      addEffectDestroy(syncMergeCenter(translateY, function (value) {
         c.style.transform = `translateY(${value}px)`
-      })
-      return function () {
-        de()
-        di()
-      }
+      }))
     }, emptyArray)
 
     return function () {

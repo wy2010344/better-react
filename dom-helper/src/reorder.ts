@@ -43,7 +43,7 @@ export function useReorder<T, K>(
         return new ReorderChild(rd, key, getTrans, changeTo)
       }, emptyArray)
       useEffect(() => {
-        return reorderChildChangeIndex(child, getDiv(), onLayout, updateBox)
+        return [undefined, reorderChildChangeIndex(child, getDiv(), onLayout, updateBox)]
       }, [index])
       return function (loc: Point, onFinish: EmptyFun) {
         child.start(loc, onFinish)

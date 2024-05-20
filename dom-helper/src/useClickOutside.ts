@@ -13,8 +13,8 @@ export function useClickOutside(
   })
   useEffect(() => {
     document.addEventListener("click", onClick)
-    return function () {
+    return [undefined, function () {
       document.removeEventListener("click", onClick)
-    }
+    }]
   }, emptyArray)
 }

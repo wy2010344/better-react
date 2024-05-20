@@ -1,4 +1,4 @@
-import { Fiber, MemoEvent, RenderWithDep, StoreValue, hookAddResult, hookCreateChangeAtom, renderFiber } from "better-react";
+import { Fiber, MemoEvent, RenderWithDep, StoreValue, TempOps, TempReal, TempSubOps, hookCreateChangeAtom, renderFiber } from "better-react";
 import { EmptyFun, Point, emptyArray, emptyObject, run, arrayPushAll, alawaysFalse } from "wy-helper";
 import { useAttrEffect, useMemo } from "better-react-helper";
 
@@ -20,9 +20,12 @@ function drawCanvas(c: HTMLCanvasElement, drawList: any[]) {
   return ctx!
 }
 
-function drawSubCanvas(ctx: CanvasRenderingContext2D, subFibers: SubFiber[]) {
+function drawSubCanvas(
+  ctx: CanvasRenderingContext2D,
+  subFibers: TempSubOps<CanvasTempReal>[]
+) {
   for (const subFiber of subFibers) {
-    const value = subFiber.fiber.lazyGetResultValue()
+    const value = subFiber.getResult()
     ctx.drawImage(value.canvas, subFiber.x, subFiber.y, value.canvas.width, value.canvas.height)
   }
 }
@@ -101,32 +104,57 @@ class CanvasStoreValue implements StoreValue {
   onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any) {
     if (this.childrenDirty.get()) {
       const that = this
-      addLevelEffect(1, function () {
-        const drawList = that.drawList
-        const ctx = drawCanvas(that.canvas, drawList)
-        drawSubCanvas(ctx, that.subFibers)
-
-
-
-        const eventList = [...that.eventList]
-        function addAllEvent(subFibers: SubFiber[]) {
-          for (const subFiber of subFibers) {
-            const value = subFiber.fiber.lazyGetResultValue()
-            arrayPushAll(eventList, value.eventList)
-            addAllEvent(value.subFibers)
-          }
-        }
-        addAllEvent(that.subFibers)
-        that.finallyEvents = eventList
-      })
     }
     return emptyArray
   }
 }
 
 function createCanvasConfig(e: MemoEvent<HTMLCanvasElement>) {
-  return function () {
-    return new CanvasStoreValue(e.trigger)
+  const addEffect = hookCreateChangeAtom()(false, alawaysFalse)
+  const root = new TempOps(() => new CanvasTempReal(), () => {
+    if (!addEffect.get()) {
+      addEffect.set(true)
+      const that = root.getResult()
+      const drawList = that.drawList
+      const ctx = drawCanvas(e.trigger, drawList)
+      drawSubCanvas(ctx, that.subFibers)
+
+
+
+      const eventList = [...that.eventList]
+      function addAllEvent(subFibers: TempSubOps<CanvasTempReal>[]) {
+        for (const subFiber of subFibers) {
+          const value = subFiber.getResult()
+          arrayPushAll(eventList, value.eventList)
+          addAllEvent(value.subFibers)
+        }
+      }
+      addAllEvent(that.subFibers)
+      that.finallyEvents = eventList
+    }
+  })
+  return root
+}
+
+class CanvasTempReal implements TempReal {
+  public readonly drawList: any[] = []
+  public readonly eventList: any[] = []
+  public readonly subFibers: TempSubOps<CanvasTempReal>[] = []
+  reset(): void {
+    this.drawList.length = 0
+    this.eventList.length = 0
+    this.subFibers.length = 0
+  }
+  add(type: any, ...args: any[]): void {
+    if (type == 'draw') {
+      this.drawList.push(args)
+    } else if (type == "event") {
+      this.eventList.push(args)
+    } else if (type instanceof TempSubOps) {
+      this.subFibers.push(type)
+    } else {
+      console.log("不知道什么类型,无法处理", type, args)
+    }
   }
 }
 
@@ -135,7 +163,7 @@ export function renderCanvas<T>(
   ...args: RenderWithDep<T>
 ) {
   const canvasConfig = useMemo(createCanvasConfig, canvas)
-  renderFiber(canvasConfig, ...args)
+  renderFiber(...args)
 }
 
 const canvasEvents = ["pointerdown", "pointermove", "pointerup"] as const

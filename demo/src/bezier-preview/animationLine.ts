@@ -29,9 +29,9 @@ function drawCanvas(
     style: `
     position:relative;
     `
-  }).renderFragment(function () {
+  }).render(function () {
 
-    dom.div().renderFragment(function () {
+    dom.div().render(function () {
 
       const point = useValueCenter(pointZero)
 
