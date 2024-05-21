@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker"
 import { dom } from "better-react-dom"
-import { createUseReducer, renderArray, useAtom, useChange, useEffect, useTimeoutAnimateValue } from "better-react-helper"
+import { addEffectDestroy, createUseReducer, renderArray, useAtom, useChange, useEffect, useHookEffect, useTimeoutAnimateValue } from "better-react-helper"
 import { Point, arrayMove, emptyArray, pointEqual, pointZero, syncMergeCenter } from "wy-helper"
 
 import { requesetBatchAnimationForceFlow, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
@@ -65,8 +65,8 @@ export default function () {
       },
     }).render(function () {
       const point = useAtom<Point | undefined>(undefined)
-      useEffect(() => {
-        return subscribeEdgeScroll(() => {
+      useHookEffect(() => {
+        addEffectDestroy(subscribeEdgeScroll(() => {
           const info = point.get()
           if (info) {
             return {
@@ -79,12 +79,12 @@ export default function () {
               }
             }
           }
-        })
+        }))
       })
 
 
-      useEffect(() => {
-        return subscribeMove(function (e, end) {
+      useHookEffect(() => {
+        addEffectDestroy(subscribeMove(function (e, end) {
           const p = {
             x: e.pageX,
             y: e.pageY
@@ -98,7 +98,7 @@ export default function () {
               point.set(p)
             }
           }
-        })
+        }))
       }, emptyArray)
       renderArray(orderList, v => v.index, function (row, index) {
         const transY = useTimeoutAnimateValue<Point, string>(pointZero, pointEqual)
@@ -129,7 +129,7 @@ export default function () {
             })
           })
         useEffect(() => {
-          return syncMergeCenter(transY, function (value) {
+          addEffectDestroy(syncMergeCenter(transY, function (value) {
             // if (value.config) {
             //   div.animate([
             //     {
@@ -149,7 +149,7 @@ export default function () {
               div.style.transition = ''
             }
             div.style.transform = `translate(0px,${value.value.y}px)`
-          })
+          }))
         }, emptyArray)
         const div = renderRow(row, e => {
           // transX.changeTo(e.pageY - cb.get()!.y.min)

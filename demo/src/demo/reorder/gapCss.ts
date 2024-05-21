@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker"
 import { dom } from "better-react-dom"
-import { createUseReducer, renderArray, useAtom, useChange, useEffect, useTimeoutAnimateValue, useValueCenter } from "better-react-helper"
+import { addEffectDestroy, createUseReducer, renderArray, useAtom, useChange, useEffect, useHookEffect, useTimeoutAnimateValue, useValueCenter } from "better-react-helper"
 import { Point, arrayMove, emptyArray, pointEqual, pointZero, syncMergeCenter, syncMergeCenterArray } from "wy-helper"
 
 import { requesetBatchAnimationForceFlow, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
@@ -71,8 +71,8 @@ export default function () {
     }).render(function () {
       const point = useAtom<Point | undefined>(undefined)
 
-      useEffect(() => {
-        return subscribeEdgeScroll(() => {
+      useHookEffect(() => {
+        addEffectDestroy(subscribeEdgeScroll(() => {
           const info = point.get()
           if (info) {
             return {
@@ -85,11 +85,11 @@ export default function () {
               }
             }
           }
-        })
+        }))
       })
 
-      useEffect(() => {
-        return subscribeMove(function (e, end) {
+      useHookEffect(() => {
+        addEffectDestroy(subscribeMove(function (e, end) {
           const p = {
             x: e.pageX,
             y: e.pageY
@@ -103,7 +103,7 @@ export default function () {
               point.set(p)
             }
           }
-        })
+        }))
       }, emptyArray)
       renderArray(orderList, v => v.index, function (row, index) {
         const offsetY = useValueCenter(0)
@@ -145,15 +145,15 @@ export default function () {
           //恢复
           offsetY.set(0)
         })
-        useEffect(() => {
-          return syncMergeCenterArray([transY, offsetY] as const, function ([value, oy]) {
+        useHookEffect(() => {
+          addEffectDestroy(syncMergeCenterArray([transY, offsetY] as const, function ([value, oy]) {
             if (value.config) {
               div.style.transition = `transform ${value.config.value} ${value.config.duration}ms`
             } else {
               div.style.transition = ''
             }
             div.style.transform = `translate(0px,${(value.value.y + oy)}px)`
-          })
+          }))
         }, emptyArray)
         const div = renderRow(row, e => {
           reOrder.scroller.reset(container)

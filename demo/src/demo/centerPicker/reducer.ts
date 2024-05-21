@@ -1,6 +1,6 @@
 
 import { dom } from "better-react-dom"
-import { renderArray, useEffect, useMemo, useSideReducer } from "better-react-helper"
+import { addEffectDestroy, renderArray, useEffect, useHookEffect, useMemo, useSideReducer } from "better-react-helper"
 import { recycleScrollListReducer, cssMap, subscribeMove } from "wy-dom-helper"
 import { arrayCountCreateWith, buildNoEdgeScroll, easeFns, emptyArray, initRecycleListModel, momentum, numberIntFillWithN0, quote, readArraySliceCircle } from "wy-helper"
 import { renderPage } from "../util/page"
@@ -29,7 +29,7 @@ export default function () {
         // deceleration: 0.003
       })
     }))
-    useEffect((e) => {
+    useHookEffect((e) => {
       const div = wrapperDiv
       const maxScrollheight = div.scrollHeight - div.clientHeight
       const ish = -(maxScrollheight / 2)
@@ -41,13 +41,13 @@ export default function () {
         cellHeight: rowHeight
       })
 
-      return subscribeMove(function (e, end) {
+      addEffectDestroy(subscribeMove(function (e, end) {
         if (end) {
           scroll.end(e.pageY)
         } else {
           scroll.move(e.pageY)
         }
-      })
+      }))
     }, emptyArray)
     const wrapperAdd = (value: number) => {
       dispatch({

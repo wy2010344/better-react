@@ -1,4 +1,4 @@
-import { FiberImpl, Fiber } from "./Fiber"
+import { FiberImpl, MemoEvent } from "./Fiber"
 import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemo, hookParentFiber, hookLevelEffect, hookAddResult, hookTempOps } from "./fc"
 import { alawaysFalse, storeRef } from "wy-helper"
 
@@ -14,7 +14,7 @@ export type MapRowRender<C, T> = readonly [
   C,
   any,
   (a: T, b: T) => any,
-  (v: T) => void,
+  (v: MemoEvent<T>) => void,
   T,
 ]
 function createMapRef() {
@@ -109,7 +109,6 @@ export function renderMapF<M, C, D>(
           parentFiber.envModel.addDelect(old)
         }
       }
-
     }, deps)
 }
 export function cloneMap<T>(map: Map<any, T[]>) {

@@ -1,6 +1,6 @@
 import { GlobalContext, renderPage } from "./util/page";
 import { EmptyFun, SetValue, emptyArray, emptyFun } from "wy-helper";
-import { renderGuard, renderIf, renderOne, useCallbackPromiseState, useChange, useEffect, useMemo } from "better-react-helper";
+import { renderFragment, renderGuard, renderIf, renderOne, useCallbackPromiseState, useChange, useEffect, useMemo } from "better-react-helper";
 import renderLkPage from "./util/renderLink";
 import { createBrowserHistory, Location } from "history";
 import { dom } from "better-react-dom";
@@ -26,8 +26,10 @@ export default function () {
   })
   console.log(location)
   renderRouter(location)
+  // renderFragment(function () {
+
+  // }, location)
 }
-type Page = (fun: SetValue<Page>) => void
 function mainPage() {
   renderPage({
     title: "一些demo",

@@ -1,6 +1,6 @@
 import { DomAttribute, dom } from "better-react-dom";
 import { flushSync, hookCommitAll } from 'better-react'
-import { createUseReducer, renderArray, useAtom, useChange, useEffect, useMemo, useOneEffect, useValueCenter } from "better-react-helper";
+import { addEffectDestroy, createUseReducer, renderArray, useAtom, useChange, useEffect, useHookEffect, useMemo, useOneEffect, useValueCenter } from "better-react-helper";
 import { readArraySliceCircle, arrayCountCreateWith, emptyArray, numberIntFillWithN0, quote, easeFns, momentum, syncMergeCenter, recicleScrollViewView } from "wy-helper";
 import { animateFrame, cssMap, subscribeMove } from "wy-dom-helper";
 import { renderPage } from "../util/page";
@@ -44,28 +44,22 @@ export default function () {
       }), easeScroll, animateFrame(0))
     })
 
-    useEffect((e) => {
+    useHookEffect((e) => {
       const div = wrapperRef.get()!
       const maxScrollheight = div.scrollHeight - div.clientHeight
       const ish = -(maxScrollheight / 2)
       setInitScrollHeight(ish)
-      const unbind = subscribeMove(function (e, end) {
+      addEffectDestroy(subscribeMove(function (e, end) {
         if (end) {
           scroll.end(e.pageY)
         } else {
           scroll.move(e.pageY)
         }
-      })
-
-
+      }))
       const contaier = containerRef.get()!
-      const di = syncMergeCenter(transY, function (v) {
+      addEffectDestroy(syncMergeCenter(transY, function (v) {
         contaier.style.transform = `translateY(${v}px)`
-      })
-      return function () {
-        unbind()
-        di()
-      }
+      }))
     }, emptyArray)
     const wrapperRef = useAtom<HTMLDivElement | undefined>(undefined)
     const containerRef = useAtom<HTMLDivElement | undefined>(undefined)

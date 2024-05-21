@@ -1,5 +1,5 @@
 
-import { useTimeoutAnimateValue, useEffect, useMemo, useStoreTriggerRender } from "better-react-helper";
+import { useTimeoutAnimateValue, useEffect, useMemo, useStoreTriggerRender, useHookEffect, addEffectDestroy } from "better-react-helper";
 import { TimeoutAnimateConfig, buildScroll, emptyArray, momentum, scrollEases, syncMergeCenter } from "wy-helper";
 import { renderTemplate } from "./template";
 import { getPageOffset, subscribeMove } from "wy-dom-helper";
@@ -47,27 +47,23 @@ export default function () {
       momentum: momentum.iScroll()
     }), emptyArray)
 
-    useEffect(() => {
-      const dm = subscribeMove(function (e, end) {
+    useHookEffect(() => {
+      addEffectDestroy(subscribeMove(function (e, end) {
         if (end) {
           handleDown.end(e.pageY)
         } else {
           handleDown.move(e.pageY)
         }
-      })
+      }))
       const c = container
-      const di = syncMergeCenter(translateY, function (value) {
+      addEffectDestroy(syncMergeCenter(translateY, function (value) {
         c.style.transform = `translateY(${value.value}px)`
         if (value.config) {
           c.style.transition = `transform ${value.config.value} ${value.config.duration}ms`
         } else {
           c.style.transition = ''
         }
-      })
-      return function () {
-        dm()
-        di()
-      }
+      }))
     }, emptyArray)
 
     return function () {

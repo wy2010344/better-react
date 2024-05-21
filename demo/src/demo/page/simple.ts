@@ -1,6 +1,6 @@
 import { dom } from "better-react-dom";
 import { renderPage } from "../util/page";
-import { renderArray, useAnimateValue, useAtom, useBeforeAttrEffect, useChange, useEffect, useEvent, useMemo } from "better-react-helper";
+import { addEffectDestroy, renderArray, useAtom, useBeforeAttrHookEffect, useChange, useEffect, useEvent, useHookEffect, useMemo } from "better-react-helper";
 import { easeFns, emptyArray, quote, scrollJudgeDirection, syncMergeCenter } from "wy-helper";
 import { animateFrame, subscribeMove } from "wy-dom-helper";
 
@@ -60,8 +60,8 @@ export default function () {
         transX.slientChange(0)
       }, [index])
       const moveInfo = useAtom<PointerEvent | undefined>(undefined)
-      useEffect(() => {
-        const di = subscribeMove(function (e, end) {
+      useHookEffect(() => {
+        addEffectDestroy(subscribeMove(function (e, end) {
           const lastE = moveInfo.get()
           if (lastE) {
             const diff = e.pageX - lastE.pageX
@@ -80,21 +80,17 @@ export default function () {
               moveInfo.set(e)
             }
           }
-        })
-        const dm = syncMergeCenter(transX, x => {
+        }))
+        addEffectDestroy(syncMergeCenter(transX, x => {
           wrapper.style.transform = `translateX(${x}px)`;
-        })
-        return function () {
-          di()
-          dm()
-        }
+        }))
       }, emptyArray)
 
-      useBeforeAttrEffect(() => {
+      useBeforeAttrHookEffect(() => {
         wrapperRef.set(wrapper)
-        return () => {
+        addEffectDestroy(() => {
           wrapperRef.set(undefined)
-        }
+        })
       }, emptyArray)
       const wrapper = dom.div({
         style: `

@@ -1,5 +1,5 @@
 
-import { useAtom, useEffect } from "better-react-helper"
+import { addEffectDestroy, useAtom, useEffect, useHookEffect } from "better-react-helper"
 import { subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
 import { ReorderAction, ReorderModel, ReorderElement, easeFns, messageChannelCallback } from "wy-helper"
 
@@ -40,8 +40,8 @@ export function useReducerReorder<T, K>(
       container: HTMLElement,
       getElements: () => ReorderElement<K, HTMLElement>[]
     ) {
-      useEffect(() => {
-        return subscribeEdgeScroll(() => {
+      useHookEffect(() => {
+        addEffectDestroy(subscribeEdgeScroll(() => {
           const info = movePoint.get()
           if (info) {
             return {
@@ -54,11 +54,9 @@ export function useReducerReorder<T, K>(
               }
             }
           }
-        })
-      })
-      useEffect(() => {
+        }))
         //不依赖,每次重新注册
-        return subscribeMove(function (e: PointerEvent, end?: boolean) {
+        addEffectDestroy(subscribeMove(function (e: PointerEvent, end?: boolean) {
           if (movePoint.get()) {
             if (end) {
               movePoint.set(undefined)
@@ -81,7 +79,7 @@ export function useReducerReorder<T, K>(
               })
             }
           }
-        })
+        }))
       })
 
 

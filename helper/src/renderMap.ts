@@ -27,17 +27,13 @@ export function renderArray(
   vs: ReadArray<any>,
   getKey: (v: any, i: number) => any,
   render: (v: any, i: number) => void,
-  portal?: boolean
 ) {
-  const it = renderMapF(vs, 0 as number, arrayHasValue, alawaysTrue, function (data, i) {
+  renderMapF(vs, 0 as number, arrayHasValue, alawaysTrue, function (data, i) {
     const row = data[i]
     return [i + 1, getKey(row, i), alawaysTrue, function () {
       render(row, i)
     }, undefined]
   }, undefined)
-  if (portal) {
-    return it
-  }
 }
 
 export function createRenderArray<T>(

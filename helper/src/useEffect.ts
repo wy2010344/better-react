@@ -51,9 +51,9 @@ function useBaseHookEffect<V, T>(level: number, shouldChange: (a: T, b: T) => an
     globalVS = vs
     const value = effect(e)
     globalVS = undefined
-    return [value, e => {
+    return [value, vs.length > 2 ? e => {
       vs.forEach(v => v(e))
-    }]
+    } : vs.length == 1 ? vs[0] : undefined]
   }, deps)
 }
 export function addEffectDestroy<V, T>(fun: (e: EffectDestroyEvent<V, T>) => void) {
@@ -64,16 +64,16 @@ export function addEffectDestroy<V, T>(fun: (e: EffectDestroyEvent<V, T>) => voi
   }
 }
 
-export function useHookLevelEffect<V = FalseType, T extends readonly any[] = readonly any[]>(
+export function useLevelHookEffect<V = FalseType, T extends readonly any[] = readonly any[]>(
   level: number,
   effect: (e: EffectEvent<V, T>) => V,
   deps: T
 ): void
-export function useHookLevelEffect<V = FalseType>(
+export function useLevelHookEffect<V = FalseType>(
   level: number,
   effect: (e: EffectEvent<V, FalseType>) => V,
 ): void
-export function useHookLevelEffect(
+export function useLevelHookEffect(
   level: number,
   effect: any,
   deps?: any
@@ -94,12 +94,12 @@ export function buildUseHookEffect(level: number) {
   function useEffect<V = FalseType, T extends readonly any[] = readonly any[]>(effect: (e: EffectEvent<V, T>) => V, deps: T): void
   function useEffect<V = FalseType>(effect: (e: EffectEvent<V, readonly any[]>) => V, deps?: readonly any[]): void
   function useEffect(effect: any) {
-    return useHookLevelEffect(level, effect, arguments[1])
+    return useLevelHookEffect(level, effect, arguments[1])
   }
   return useEffect
 }
 
-export const useBeforeHookAttrEffect = buildUseHookEffect(-1)
+export const useBeforeAttrHookEffect = buildUseHookEffect(-1)
 export const useAttrHookEffect = buildUseHookEffect(0)
 export const useHookEffect = buildUseHookEffect(1)
 

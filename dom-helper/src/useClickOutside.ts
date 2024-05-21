@@ -7,7 +7,8 @@ export function useClickOutside(
   click: (e: MouseEvent) => void
 ) {
   const onClick = useEvent((e: MouseEvent) => {
-    if (!contains(e.target as Node)) {
+    const target = e.target as Node
+    if (!contains(target)) {
       click(e)
     }
   })

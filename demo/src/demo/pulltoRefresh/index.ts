@@ -1,4 +1,4 @@
-import { useAtom, useChange, useEffect, useMemo, useValueCenter } from "better-react-helper";
+import { addEffectDestroy, useAtom, useChange, useEffect, useHookEffect, useMemo, useValueCenter } from "better-react-helper";
 import { renderPage } from "../util/page";
 import { animateFrame, subscribeMove, subscribeRequestAnimationFrame } from "wy-dom-helper";
 import { dom } from "better-react-dom";
@@ -48,8 +48,8 @@ export default function () {
     }, [loading])
 
     const lastPoint = useAtom<PointerEvent | undefined>(undefined)
-    useEffect(() => {
-      const mv = subscribeMove(function (e, end) {
+    useHookEffect(() => {
+      addEffectDestroy(subscribeMove(function (e, end) {
         const le = lastPoint.get()
         if (le) {
           const diffY = e.pageY - le.pageY
@@ -76,21 +76,16 @@ export default function () {
             lastPoint.set(undefined)
           }
         }
-      })
-      const di = syncMergeCenter(transY, y => {
+      }))
+      addEffectDestroy(syncMergeCenter(transY, y => {
         div.style.transform = `translateY(${y}px)`
-      })
-      const dv = syncMergeCenterArray([transY, loadingValue], ([a, b]) => {
+      }))
+      addEffectDestroy(syncMergeCenterArray([transY, loadingValue], ([a, b]) => {
         if (transY.getAnimateTo()?.target == 0) {
           a = 80 - a
         }
         indi.style.transform = `rotate(${a + b}deg)`
-      })
-      return () => {
-        mv()
-        di()
-        dv()
-      }
+      }))
     }, emptyArray)
     const indi = dom.div({
       style: `

@@ -1,6 +1,6 @@
 import { dom } from "better-react-dom";
 import { renderPage } from "../util/page";
-import { renderArray, useAnimateValue, useAtom, useBeforeAttrEffect, useChange, useEffect, useEvent, useMemo } from "better-react-helper";
+import { addEffectDestroy, renderArray, useAnimateValue, useAtom, useBeforeAttrEffect, useBeforeAttrHookEffect, useChange, useEffect, useEvent, useHookEffect, useMemo, useOneBeforeAttrHookEffect } from "better-react-helper";
 import { PointKey, easeFns, emptyArray, quote, scrollJudgeDirection, syncMergeCenter } from "wy-helper";
 import { animateFrame, subscribeMove } from "wy-dom-helper";
 
@@ -135,11 +135,11 @@ export default function () {
       },
     }).render(() => {
 
-      useBeforeAttrEffect(() => {
+      useOneBeforeAttrHookEffect(() => {
         contentRef.set(wrapper)
-        return () => {
+        addEffectDestroy(() => {
           contentRef.set(undefined)
-        }
+        })
       }, emptyArray)
 
       const wrapper = dom.div({
@@ -162,10 +162,10 @@ export default function () {
           background:radial-gradient(#23e617, transparent);
           `
         }).renderText`top`
-        useEffect(() => {
+        useHookEffect(() => {
           let directionLock: PointKey | undefined = undefined
 
-          const di = subscribeMove(function (e, end) {
+          addEffectDestroy(subscribeMove(function (e, end) {
             const lastE = moveInfo.get()
             if (lastE) {
               const diffX = e.pageX - lastE.pageX
@@ -204,25 +204,20 @@ export default function () {
                 moveInfo.set(undefined)
               }
             }
-          })
-          const dm = syncMergeCenter(transX, x => {
+          }))
+          addEffectDestroy(syncMergeCenter(transX, x => {
             bottomContent.style.transform = `translateX(${x}px)`;
-          })
-          const dy = syncMergeCenter(transY, y => {
+          }))
+          addEffectDestroy(syncMergeCenter(transY, y => {
             wrapper.style.bottom = -y + 'px'
-          })
-          return function () {
-            di()
-            dm()
-            dy()
-          }
+          }))
         }, emptyArray)
 
-        useBeforeAttrEffect(() => {
+        useBeforeAttrHookEffect(() => {
           bottomContentRef.set(bottomContent)
-          return () => {
+          addEffectDestroy(() => {
             bottomContentRef.set(undefined)
-          }
+          })
         }, emptyArray)
         const bottomContent = dom.div({
           style: `

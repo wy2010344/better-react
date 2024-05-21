@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker"
 import { dom } from "better-react-dom"
-import { createUseReducer, renderArray, useAtom, useChange, useEffect, useMemo, useValueCenter } from "better-react-helper"
+import { addEffectDestroy, createUseReducer, renderArray, useAtom, useChange, useEffect, useHookEffect, useMemo, useValueCenter } from "better-react-helper"
 import { Point, arrayMove, easeFns, emptyArray, pointZero, syncMergeCenterArray } from "wy-helper"
 
 import { animateFrame, requesetBatchAnimationForceFlow, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
@@ -70,8 +70,8 @@ export default function () {
       },
     }).render(function () {
       const point = useAtom<Point | undefined>(undefined)
-      useEffect(() => {
-        return subscribeEdgeScroll(() => {
+      useHookEffect(() => {
+        addEffectDestroy(subscribeEdgeScroll(() => {
           const info = point.get()
           if (info) {
             return {
@@ -84,11 +84,11 @@ export default function () {
               }
             }
           }
-        })
+        }))
       })
 
-      useEffect(() => {
-        return subscribeMove(function (e, end) {
+      useHookEffect(() => {
+        addEffectDestroy(subscribeMove(function (e, end) {
           const p = {
             x: e.pageX,
             y: e.pageY
@@ -102,7 +102,7 @@ export default function () {
               point.set(p)
             }
           }
-        })
+        }))
       }, emptyArray)
       renderArray(orderList, v => v.index, function (row, index) {
         const offsetY = useValueCenter(0)
@@ -134,10 +134,10 @@ export default function () {
           //恢复
           offsetY.set(0)
         })
-        useEffect(() => {
-          return syncMergeCenterArray([transY, offsetY] as const, function ([value, oy]) {
+        useHookEffect(() => {
+          addEffectDestroy(syncMergeCenterArray([transY, offsetY] as const, function ([value, oy]) {
             div.style.transform = `translate(0px,${(value.y + oy)}px)`
-          })
+          }))
         }, emptyArray)
         const div = renderRow(row, e => {
           reOrder.scroller.reset(container)
