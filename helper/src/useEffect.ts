@@ -1,14 +1,17 @@
-import { EffectDestroyEvent, useLevelEffect } from "better-react";
-import { EffectResult } from "better-react";
+import { EffectDestroy, EffectDestroyEvent, useLevelEffect } from "better-react";
 import { EffectEvent } from "better-react";
 import { hookLevelEffect } from "better-react";
-import { EmptyFun, FalseType, arrayNotEqualDepsWithEmpty, simpleNotEqual } from "wy-helper";
-
+import { EmptyFun, FalseType, arrayFunToOneOrEmpty, arrayNotEqualDepsWithEmpty, simpleNotEqual } from "wy-helper";
+function useBaseEffect<T>(level: number, shouldChange: (a: T, b: T) => any, effect: (e: EffectEvent<FalseType, T>) => EffectDestroy<FalseType, T>, deps: T): void {
+  useLevelEffect<FalseType, T>(level, shouldChange, e => {
+    return [undefined, effect(e)]
+  }, deps)
+}
 export function buildUseEffect(level: number) {
-  function useEffect<V = FalseType, T extends readonly any[] = readonly any[]>(effect: (e: EffectEvent<V, T>) => EffectResult<V, T>, deps: T): void
-  function useEffect<V = FalseType>(effect: (e: EffectEvent<V, readonly any[]>) => EffectResult<V, any[]>, deps?: readonly any[]): void
+  function useEffect<V = FalseType, T extends readonly any[] = readonly any[]>(effect: (e: EffectEvent<V, T>) => EffectDestroy<V, T>, deps: T): void
+  function useEffect<V = FalseType>(effect: (e: EffectEvent<V, readonly any[]>) => EffectDestroy<V, any[]>, deps?: readonly any[]): void
   function useEffect(effect: any) {
-    return useLevelEffect(level, arrayNotEqualDepsWithEmpty, effect, arguments[1])
+    return useBaseEffect(level, arrayNotEqualDepsWithEmpty, effect, arguments[1])
   }
   return useEffect
 }
@@ -19,8 +22,8 @@ export const useEffect = buildUseEffect(1)
 
 
 export function buildUseOneEffect(level: number) {
-  function useEffect<V, T>(effect: (e: EffectEvent<V, T>) => EffectResult<V, T>, deps: T) {
-    return useLevelEffect(level, simpleNotEqual, effect, deps)
+  function useEffect<T>(effect: (e: EffectEvent<FalseType, T>) => EffectDestroy<FalseType, T>, deps: T) {
+    return useBaseEffect(level, simpleNotEqual, effect, deps)
   }
   return useEffect
 }
@@ -31,6 +34,8 @@ export const useOneAttrEffect = buildUseOneEffect(0)
 export const useOneEffect = buildUseOneEffect(1)
 
 
+
+/*** */
 export function buildHookEffect(level: number) {
   return function (effect: EmptyFun) {
     return hookLevelEffect(level, effect)
@@ -51,9 +56,7 @@ function useBaseHookEffect<V, T>(level: number, shouldChange: (a: T, b: T) => an
     globalVS = vs
     const value = effect(e)
     globalVS = undefined
-    return [value, vs.length > 2 ? e => {
-      vs.forEach(v => v(e))
-    } : vs.length == 1 ? vs[0] : undefined]
+    return [value, arrayFunToOneOrEmpty(vs)]
   }, deps)
 }
 export function addEffectDestroy<V, T>(fun: (e: EffectDestroyEvent<V, T>) => void) {
@@ -64,37 +67,11 @@ export function addEffectDestroy<V, T>(fun: (e: EffectDestroyEvent<V, T>) => voi
   }
 }
 
-export function useLevelHookEffect<V = FalseType, T extends readonly any[] = readonly any[]>(
-  level: number,
-  effect: (e: EffectEvent<V, T>) => V,
-  deps: T
-): void
-export function useLevelHookEffect<V = FalseType>(
-  level: number,
-  effect: (e: EffectEvent<V, FalseType>) => V,
-): void
-export function useLevelHookEffect(
-  level: number,
-  effect: any,
-  deps?: any
-) {
-  useBaseHookEffect(level, arrayNotEqualDepsWithEmpty, effect, deps)
-}
-
-export function useOneLevelHookEffect<V, T>(
-  level: number,
-  effect: (e: EffectEvent<V, T>) => V,
-  deps: T) {
-  useBaseHookEffect(level, simpleNotEqual, effect, deps)
-}
-
-
-
 export function buildUseHookEffect(level: number) {
   function useEffect<V = FalseType, T extends readonly any[] = readonly any[]>(effect: (e: EffectEvent<V, T>) => V, deps: T): void
   function useEffect<V = FalseType>(effect: (e: EffectEvent<V, readonly any[]>) => V, deps?: readonly any[]): void
   function useEffect(effect: any) {
-    return useLevelHookEffect(level, effect, arguments[1])
+    useBaseHookEffect(level, arrayNotEqualDepsWithEmpty, effect, arguments[1])
   }
   return useEffect
 }
@@ -105,8 +82,8 @@ export const useHookEffect = buildUseHookEffect(1)
 
 
 export function buildUseOneHookEffect(level: number) {
-  function useEffect<V, T>(effect: (e: EffectEvent<V, T>) => V, deps: T) {
-    return useOneLevelHookEffect(level, effect, deps)
+  function useEffect<T, V = FalseType>(effect: (e: EffectEvent<V, T>) => V, deps: T) {
+    useBaseHookEffect(level, simpleNotEqual, effect, deps)
   }
   return useEffect
 }

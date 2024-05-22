@@ -1,5 +1,6 @@
 import { FiberImpl } from "./Fiber"
 import { EmptyFun, ManageValue, StoreRef, emptyFun, iterableToList, quote, removeEqual, run, storeRef } from "wy-helper"
+import { hookAddEffect } from "./cache"
 
 
 export type CreateChangeAtom<T> = (v: T, didCommit?: (v: T) => T) => StoreRef<T>
@@ -219,14 +220,15 @@ function destroyFiber(fiber: FiberImpl) {
       envModel.updateEffect(state.level, function () {
         const destroy = state.destroy
         if (destroy) {
+          hookAddEffect(envModel.layoutEffect)
           destroy({
             isDestroy: true,
             value: state.value,
             beforeIsInit: state.isInit,
             beforeTrigger: state.deps,
-            setRealTime: fiber.envModel.setRealTime,
-            layoutEffect: fiber.envModel.layoutEffect
+            setRealTime: fiber.envModel.setRealTime
           })
+          hookAddEffect(undefined)
         }
       })
     })

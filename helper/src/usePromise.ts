@@ -46,7 +46,7 @@ export function useMemoPromiseCall<T, Deps extends readonly any[]>(
       }).catch(err => {
         onFinally()({ type: "error", value: err, version })
       })
-      return [undefined, signal.cancel]
+      return signal.cancel
     }
   }, [version, request, onFinally])
   return mout

@@ -10,9 +10,9 @@ export function useMatchMedia(pattern: string) {
     const match = window.matchMedia(pattern);
     setMatchMedia(match.matches);
     match.addEventListener("change", heightChange);
-    return [undefined, () => {
+    return () => {
       match.removeEventListener("change", heightChange);
-    }];
+    }
   }, [pattern]);
   return matchMedia;
 }

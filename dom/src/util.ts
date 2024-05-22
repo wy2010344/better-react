@@ -58,7 +58,7 @@ function addChild(row: Node | TempSubOps<ListCreater>, newChildren: Node[]) {
   if (row instanceof Node) {
     newChildren.push(row)
   } else if (row instanceof TempSubOps) {
-    addChildren(row.getResult(), newChildren)
+    addChildren(row.data, newChildren)
   } else {
     console.error("不知道是什么类型,无法加入", row)
   }
@@ -79,7 +79,7 @@ export function createNodeTempOps(pel: Node, createChangeAtom: CreateChangeAtom<
     if (!addEffect.get()) {
       addEffect.set(true)
       hookLevelEffect(-0.5, () => {
-        nodeAppendChild(pel, root.getResult(), cache)
+        nodeAppendChild(pel, root.data, cache)
       })
     }
   })

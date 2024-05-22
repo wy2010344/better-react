@@ -13,10 +13,10 @@ export function useOnLine() {
     }
     window.addEventListener("online", onLineFun)
     window.addEventListener("offline", offLineFun)
-    return [undefined, function () {
+    return function () {
       window.removeEventListener("online", onLineFun)
       window.removeEventListener("offline", offLineFun)
-    }]
+    }
   }, emptyArray)
   return onLine
 }

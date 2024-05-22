@@ -1,4 +1,4 @@
-import { emptyArray } from "wy-helper"
+import { EmptyFun, emptyArray } from "wy-helper"
 import { useEvent } from "./useEvent";
 import { useEffect } from "./useEffect";
 export function useEventDestroy(initCallback: () => void) {
@@ -7,5 +7,9 @@ export function useEventDestroy(initCallback: () => void) {
 }
 
 export function useDestroy(callback: () => void) {
-  useEffect(() => [undefined, callback], emptyArray)
+  useEffect(() => callback, emptyArray)
+}
+
+export function useInit(callback: EmptyFun) {
+  useEffect(callback, emptyArray)
 }

@@ -29,7 +29,7 @@ export default function () {
         // deceleration: 0.003
       })
     }))
-    useHookEffect((e) => {
+    useEffect((e) => {
       const div = wrapperDiv
       const maxScrollheight = div.scrollHeight - div.clientHeight
       const ish = -(maxScrollheight / 2)
@@ -41,13 +41,13 @@ export default function () {
         cellHeight: rowHeight
       })
 
-      addEffectDestroy(subscribeMove(function (e, end) {
+      return subscribeMove(function (e, end) {
         if (end) {
           scroll.end(e.pageY)
         } else {
           scroll.move(e.pageY)
         }
-      }))
+      })
     }, emptyArray)
     const wrapperAdd = (value: number) => {
       dispatch({

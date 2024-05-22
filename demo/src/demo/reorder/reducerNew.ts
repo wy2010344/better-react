@@ -89,6 +89,7 @@ export default function () {
           fun?.()
         },
         changeIndex(from, to, version, fun) {
+          console.log("change", from, to)
           dispatch({
             type: "move",
             from,
@@ -124,7 +125,7 @@ export default function () {
         }
       })
       return list
-    }, [model.list])
+    }, [model.version])
 
     const rowMap = useAtomFun<Map<number, ReorderE>>(createMap)
     const reOrder = userReducerLocalChangeReorder(version, vc)
@@ -162,17 +163,17 @@ export default function () {
             return new ReorderE(transY, row.index, div)
           })
           useEffect(() => {
-            return [undefined, syncMergeCenter(transY.value, function (value: number) {
+            return syncMergeCenter(transY.value, function (value: number) {
               div.style.transform = `translate(0px,${value}px)`
-            })]
+            })
           }, emptyArray)
 
-          useHookEffect(() => {
+          useEffect(() => {
             const key = row.index
             rowMap.get().set(key, transY)
-            addEffectDestroy(() => {
+            return () => {
               rowMap.get().delete(key)
-            })
+            }
           }, emptyArray)
         }
       )

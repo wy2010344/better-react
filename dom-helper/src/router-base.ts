@@ -42,7 +42,7 @@ function getRouter(
       function reload() {
         setUrl(init())
       }
-      return [undefined, addReload(reload)]
+      return addReload(reload)
     }, [])
     const navigate: Navigate = function () {
       const [path, arg] = arguments as any

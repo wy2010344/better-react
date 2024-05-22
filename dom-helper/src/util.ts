@@ -7,9 +7,9 @@ export function useGetUrl(file: File | Blob) {
     return URL.createObjectURL(file);
   }, [file]);
   useEffect(() => {
-    return [undefined, () => {
+    return () => {
       URL.revokeObjectURL(url);
-    }];
+    }
   }, emptyArray);
   return url;
 }

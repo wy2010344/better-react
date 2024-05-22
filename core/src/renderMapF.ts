@@ -1,5 +1,6 @@
 import { FiberImpl, MemoEvent } from "./Fiber"
-import { draftParentFiber, revertParentFiber, renderBaseFiber, useBaseMemo, hookParentFiber, hookLevelEffect, hookAddResult, hookTempOps } from "./fc"
+import { draftParentFiber, hookAddResult, hookParentFiber, hookTempOps, revertParentFiber } from "./cache"
+import { renderBaseFiber, useBaseMemo, hookLevelEffect } from "./fc"
 import { alawaysFalse, storeRef } from "wy-helper"
 
 ////////****useMap****////////////////////////////////////////////////////////////////////////////////////////////////////////////

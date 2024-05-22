@@ -166,7 +166,7 @@ export class DomCreater<T extends DomElementType> {
     const tempOps = helper.getTempOps()
     const before = hookBeginTempOps(tempOps)
     const out = fun(helper.node)
-    hookEndTempOps(before)
+    hookEndTempOps(before!)
     this.after(helper)
     return out
   }

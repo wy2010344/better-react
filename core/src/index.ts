@@ -2,7 +2,7 @@ import { FiberImpl } from "./Fiber"
 import { batchWork, getReconcile } from "./reconcile"
 import { CreateChangeAtom, EnvModel } from "./commitWork"
 import { AskNextTimeWork, EmptyFun, alawaysTrue } from "wy-helper"
-import { AbsTempOps, TempSubOps } from "./tempOps"
+import { AbsTempOps } from "./tempOps"
 export { startTransition, flushSync } from './reconcile'
 export {
   hookLevelEffect,
@@ -12,11 +12,13 @@ export {
   hookCommitAll,
   hookEffectTag,
   hookRequestReconcile,
-  hookMakeDirtyAndRequestUpdate,
+  hookMakeDirtyAndRequestUpdate
+} from './fc'
+export {
   hookBeginTempOps,
   hookEndTempOps,
   hookAddResult
-} from './fc'
+} from './cache'
 export {
   TempOps,
   TempSubOps,

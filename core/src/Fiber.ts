@@ -23,7 +23,6 @@ export type EffectDestroyEvent<V, T> = {
   beforeIsInit: boolean,
   beforeTrigger: T
   setRealTime(): void
-  layoutEffect: LayoutEffect
 } | {
   isDestroy: true
   trigger?: never
@@ -31,7 +30,6 @@ export type EffectDestroyEvent<V, T> = {
   beforeIsInit: boolean,
   beforeTrigger: T
   setRealTime(): void
-  layoutEffect: LayoutEffect
 }
 type RenderDeps<D> = {
   isNew: boolean

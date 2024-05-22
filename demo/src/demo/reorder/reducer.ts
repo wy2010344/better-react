@@ -109,9 +109,9 @@ export default function () {
           useEffect(() => {
             const key = row.value.index
             rowMap.get().set(key, div)
-            return [undefined, () => {
+            return () => {
               rowMap.get().delete(key)
-            }]
+            }
           }, emptyArray)
           return {
             div,

@@ -30,9 +30,9 @@ export function useStoreTriggerRender<T>(store: ReadValueCenter<T>) {
     if (state != v) {
       setState(v)
     }
-    return [undefined, store.subscribe(function (d) {
+    return store.subscribe(function (d) {
       setState(filter(d))
-    })]
+    })
   }, [store, store.subscribe, filter])
   return state
 }
