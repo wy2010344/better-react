@@ -23,10 +23,10 @@ export function createRenderMapF<M, C>(
   }
 }
 
-export function renderArray(
-  vs: ReadArray<any>,
-  getKey: (v: any, i: number) => any,
-  render: (v: any, i: number) => void,
+export function renderArray<T>(
+  vs: ReadArray<T>,
+  getKey: (v: T, i: number) => any,
+  render: (v: T, i: number) => void,
 ) {
   renderMapF(vs, 0 as number, arrayHasValue, alawaysTrue, function (data, i) {
     const row = data[i]

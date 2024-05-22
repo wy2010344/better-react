@@ -40,6 +40,9 @@ function mainPage() {
     renderLkPage("循环滚动", history => history.push("/centerPicker"))
     renderLkPage("scroller", history => history.push("./scroller"))
     renderLkPage("page", history => history.push("./page"))
+    renderLkPage("layoutAnimation", history => history.push("./layoutAnimation"))
+    renderLkPage("bookview", history => history.push("./bookview"))
+    renderLkPage("circleChoose", history => history.push("./circleChoose"))
     renderLkPage("pulltoRefresh", history => history.push("./pulltoRefresh"))
   })
 }
@@ -61,6 +64,24 @@ const renderRouter = createRouter(
     match: locationMatch("/pulltoRefresh"),
     getPage() {
       return import("./pulltoRefresh")
+    },
+  },
+  {
+    match: locationMatch("/layoutAnimation"),
+    getPage() {
+      return import("./layoutAnimation")
+    },
+  },
+  {
+    match: locationMatch("/bookview"),
+    getPage() {
+      return import("./bookView")
+    },
+  },
+  {
+    match: locationMatch("/circleChoose"),
+    getPage() {
+      return import("./circleChoose")
     },
   },
 )

@@ -1,5 +1,5 @@
 import { createContext } from "better-react";
-import { dom } from "better-react-dom";
+import { DomAttribute, dom } from "better-react-dom";
 import { renderIf, renderObject } from "better-react-helper";
 import { BrowserHistory } from "history";
 import { EmptyFun, SetValue } from "wy-helper";
@@ -16,11 +16,13 @@ export const GlobalContext = createContext<{
 export function renderPage({
   title,
   onBack,
-  bodyStyle
+  bodyStyle,
+  bodyAttr
 }: {
   title: string
   onBack?: EmptyFun
   bodyStyle?: string
+  bodyAttr?: DomAttribute<"div">,
 }, renderBody: EmptyFun) {
   const { history } = GlobalContext.useConsumer()
   onBack = onBack || (() => {
@@ -35,9 +37,6 @@ export function renderPage({
     flex-direction:column;
     align-items:stretch;
     `,
-    onTouchMoveCapture(event) {
-      event.preventDefault()
-    },
   }).render(function () {
     dom.div({
       style: `
@@ -66,6 +65,7 @@ export function renderPage({
       }).render()
     })
     dom.div({
+      ...bodyAttr,
       style: `
       flex:1;
       padding:10px;

@@ -26,7 +26,12 @@ const useIndex = createUseReducer(function (value: number, action: {
 const easeScroll = easeFns.out(easeFns.circ)
 export default function () {
   renderPage({
-    title: "flushSync"
+    title: "flushSync",
+    bodyAttr: {
+      onMouseMove(e) {
+        e.preventDefault()
+      }
+    }
   }, () => {
     const [index, dispatchIndex] = useIndex(0)
 
