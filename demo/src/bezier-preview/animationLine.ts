@@ -1,5 +1,5 @@
 import dragMove from "@/insideAnimation/dragMove";
-import { dom, renderCanvas } from "better-react-dom";
+import { dom } from "better-react-dom";
 import { useEffect, useMemo, useValueCenter } from "better-react-helper";
 import { initDrag } from "wy-dom-helper";
 import { mb } from "wy-dom-helper/contentEditable";
@@ -129,7 +129,7 @@ export function funCanvas(
     function (ctx) {
       for (const fn of fns) {
         ctx.moveTo(bScale, bScale)
-        for (let i = 0; i < scale; i++) {
+        for (let i = 0; i <= scale * 2; i++) {
           ctx.lineTo(bScale + i, bScale + fn(i / 100) * 100)
         }
         ctx.stroke()

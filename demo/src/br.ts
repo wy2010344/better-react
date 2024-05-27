@@ -20,6 +20,9 @@ import todoList from "./todoList/index_new";
 import newTokenize from "./newTokenize";
 import demo from "./demo";
 import useLayoutEffect from "./useLayoutEffect";
+import mySpringAnimation from "./bezier-preview/mySpringAnimation";
+import mySpring1 from "./bezier-preview/mySpring1";
+import pipline from "./pipline";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(
@@ -31,7 +34,7 @@ export function createBr(app: HTMLElement) {
     // useLayoutEffect,
     // renderFilter,
     // cssLayout,
-    demo,
+    // demo,
     // reorderList,
     // canvasRender,
     // insideAnimation,
@@ -41,6 +44,9 @@ export function createBr(app: HTMLElement) {
     // centerPicker,
     // todoList,
     // bezierPreview,
+    // mySpringAnimation,
+    pipline,
+    // mySpring1,
     // ExpensiveViewSingle,
     // reanimated,
     // demo1,

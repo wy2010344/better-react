@@ -4,7 +4,7 @@ import { renderArray, useChange, useEffect, useMemo } from "better-react-helper"
 import { arrayCountCreateWith, easeFns, emptyArray } from "wy-helper";
 import { faker } from "@faker-js/faker";
 import { dom } from "better-react-dom";
-import { layoutFrameAnimation } from "wy-dom-helper";
+import { layoutFrameAnimation, subscribeRequestAnimationFrame } from "wy-dom-helper";
 
 
 
@@ -56,10 +56,14 @@ export default function () {
       }).render(function () {
         renderArray(filterList, v => v.index, function (row) {
           useEffect(() => {
-            return layoutFrameAnimation(() => div, {
+            return layoutFrameAnimation({
+              didInit(v) {
+                return subscribeRequestAnimationFrame(v)
+              },
+            })(div, {
               duration: 300,
               fn: easeFns.out(easeFns.circ)
-            })()
+            })
           }, emptyArray)
           const div = dom.div({
             style: `
@@ -70,7 +74,7 @@ export default function () {
               src: row.image,
               style: `
             display:block
-            `
+            `,
             }).render()
             dom.div({
               style: `
