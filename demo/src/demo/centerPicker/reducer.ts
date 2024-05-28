@@ -2,11 +2,12 @@
 import { dom } from "better-react-dom"
 import { addEffectDestroy, renderArray, useEffect, useHookEffect, useMemo, useSideReducer } from "better-react-helper"
 import { recycleScrollListReducer, cssMap, subscribeMove } from "wy-dom-helper"
-import { arrayCountCreateWith, buildNoEdgeScroll, easeFns, emptyArray, initRecycleListModel, momentum, numberIntFillWithN0, quote, readArraySliceCircle } from "wy-helper"
+import { TweenAnimationConfig, arrayCountCreateWith, buildNoEdgeScroll, easeFns, emptyArray, initRecycleListModel, momentum, numberIntFillWithN0, quote, readArraySliceCircle } from "wy-helper"
 import { renderPage } from "../util/page"
 
 const list = arrayCountCreateWith(60, v => v + 1)
 const rowHeight = 26
+const easeFn = easeFns.out(easeFns.circ)
 export default function () {
   renderPage({
     title: "reducer"
@@ -19,10 +20,7 @@ export default function () {
         dispatch({
           type: "changeDiff",
           diff,
-          config: typeof duration == 'number' ? {
-            duration,
-            fn: easeFns.out(easeFns.circ)
-          } : undefined
+          config: typeof duration == 'number' ? new TweenAnimationConfig(duration, easeFn) : undefined
         })
       },
       momentum: momentum.iScrollIdeal({
@@ -53,10 +51,7 @@ export default function () {
       dispatch({
         type: "addIndex",
         value,
-        config: {
-          duration: 600,
-          fn: easeFns.out(easeFns.circ)
-        }
+        config: new TweenAnimationConfig(600, easeFn)
       })
     }
     dom.div({

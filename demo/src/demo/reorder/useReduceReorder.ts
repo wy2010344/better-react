@@ -1,7 +1,7 @@
 
 import { addEffectDestroy, useAtom, useEffect, useHookEffect } from "better-react-helper"
 import { subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
-import { ReorderAction, ReorderModel, ReorderElement, easeFns, messageChannelCallback } from "wy-helper"
+import { ReorderAction, ReorderModel, ReorderElement, easeFns, messageChannelCallback, TweenAnimationConfig } from "wy-helper"
 
 
 
@@ -101,7 +101,4 @@ export function useReducerReorder<T, K>(
   }
 }
 
-const endConfig = {
-  duration: 400,
-  fn: easeFns.out(easeFns.circ)
-}
+const endConfig = new TweenAnimationConfig(400, easeFns.out(easeFns.circ))

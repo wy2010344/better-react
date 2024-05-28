@@ -1,12 +1,8 @@
 import { dom } from "better-react-dom";
 import { renderPage } from "../util/page";
 import { addEffectDestroy, renderArray, useAtom, useBeforeAttrHookEffect, useChange, useEffect, useEvent, useHookEffect, useMemo } from "better-react-helper";
-import { easeFns, emptyArray, quote, scrollJudgeDirection, syncMergeCenter } from "wy-helper";
-import { animateFrame, subscribeMove } from "wy-dom-helper";
-
-
-const easeEase = easeFns.out(easeFns.circ)
-
+import { SpringBaseAnimationConfig, easeFns, emptyArray, quote, scrollJudgeDirection, syncMergeCenter } from "wy-helper";
+import { animateFrame, cacheVelocity, subscribeMove } from "wy-dom-helper";
 export default function () {
   renderPage({ title: "simple-page" }, () => {
 
@@ -15,25 +11,16 @@ export default function () {
 
     const wrapperRef = useAtom<HTMLDivElement | undefined>(undefined)
     const transX = useMemo(() => animateFrame(0))
-    const updateDirection = useEvent((direction: number) => {
+    const updateDirection = useEvent((direction: number, velocity = 0) => {
       const width = wrapperRef.get()!.clientWidth
       if (direction < 0) {
         updateIndex(index - 1)
-        transX.changeTo(width, {
-          duration: 500,
-          fn: easeEase
-        })
+        transX.changeTo(width, new SpringBaseAnimationConfig({ initialVelocity: velocity }))
       } else if (direction > 0) {
         updateIndex(index + 1)
-        transX.changeTo(-width, {
-          duration: 500,
-          fn: easeEase
-        })
+        transX.changeTo(-width, new SpringBaseAnimationConfig({ initialVelocity: velocity }))
       } else {
-        transX.changeTo(0, {
-          duration: 500,
-          fn: easeEase
-        })
+        transX.changeTo(0, new SpringBaseAnimationConfig({ initialVelocity: velocity }))
       }
     })
     dom.div().render(() => {
@@ -59,22 +46,26 @@ export default function () {
       useEffect(() => {
         transX.slientChange(0)
       }, [index])
+      const { velocityX } = useMemo(() => {
+        return {
+          velocityX: cacheVelocity()
+        }
+      })
       const moveInfo = useAtom<PointerEvent | undefined>(undefined)
       useHookEffect(() => {
         addEffectDestroy(subscribeMove(function (e, end) {
           const lastE = moveInfo.get()
           if (lastE) {
+            const vx = velocityX(e.timeStamp, e.pageX)
             const diff = e.pageX - lastE.pageX
-            const diffTime = e.timeStamp - lastE.timeStamp
             transX.changeTo(transX.get() + diff)
             if (end) {
               const width = wrapper.clientWidth
-              console.log("diff", diff, diffTime, e, width)
               const direction = scrollJudgeDirection(
                 diff,
                 transX.get(),
                 width)
-              updateDirection(direction)
+              updateDirection(direction, vx)
               moveInfo.set(undefined)
             } else {
               moveInfo.set(e)
@@ -98,6 +89,7 @@ export default function () {
         `,
         onPointerDown(e) {
           moveInfo.set(e)
+          velocityX(e.timeStamp, e.pageX)
         },
       }).render(() => {
         renderArray([index - 1, index, index + 1], quote, function (row, i) {

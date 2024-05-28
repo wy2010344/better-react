@@ -1,7 +1,7 @@
 import { DomAttribute, dom } from "better-react-dom";
 import { flushSync, hookCommitAll } from 'better-react'
 import { addEffectDestroy, createUseReducer, renderArray, useAtom, useChange, useEffect, useHookEffect, useMemo, useOneEffect, useValueCenter } from "better-react-helper";
-import { readArraySliceCircle, arrayCountCreateWith, emptyArray, numberIntFillWithN0, quote, easeFns, momentum, syncMergeCenter, recicleScrollViewView } from "wy-helper";
+import { readArraySliceCircle, arrayCountCreateWith, emptyArray, numberIntFillWithN0, quote, easeFns, momentum, syncMergeCenter, recicleScrollViewView, TweenAnimationConfig } from "wy-helper";
 import { animateFrame, cssMap, subscribeMove } from "wy-dom-helper";
 import { renderPage } from "../util/page";
 const list = arrayCountCreateWith(60, v => v + 1)
@@ -23,7 +23,7 @@ const useIndex = createUseReducer(function (value: number, action: {
   return value
 })
 
-const easeScroll = easeFns.out(easeFns.circ)
+const ease = new TweenAnimationConfig(300, easeFns.out(easeFns.circ))
 export default function () {
   renderPage({
     title: "flushSync",
@@ -46,7 +46,7 @@ export default function () {
         })
       }, 26, momentum.iScrollIdeal({
         // deceleration: 0.003
-      }), easeScroll, animateFrame(0))
+      }), ease.fn, animateFrame(0))
     })
 
     useHookEffect((e) => {
@@ -76,19 +76,13 @@ export default function () {
     }).render(function () {
       dom.button({
         onClick() {
-          wrapperAdd(-5, {
-            duration: 300,
-            fn: easeScroll
-          })
+          wrapperAdd(-5, ease)
         }
       }).renderText`-`
       dom.div().renderText`index${index}value${list[index]}`
       dom.button({
         onClick() {
-          wrapperAdd(5, {
-            duration: 300,
-            fn: easeScroll
-          })
+          wrapperAdd(5, ease)
         }
 
       }).renderText`+`

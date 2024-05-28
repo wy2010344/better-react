@@ -129,7 +129,7 @@ export default function () {
             })
           })
         useEffect(() => {
-          addEffectDestroy(syncMergeCenter(transY, function (value) {
+          return syncMergeCenter(transY, function (value) {
             // if (value.config) {
             //   div.animate([
             //     {
@@ -149,7 +149,7 @@ export default function () {
               div.style.transition = ''
             }
             div.style.transform = `translate(0px,${value.value.y}px)`
-          }))
+          })
         }, emptyArray)
         const div = renderRow(row, e => {
           // transX.changeTo(e.pageY - cb.get()!.y.min)

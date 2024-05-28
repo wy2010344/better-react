@@ -44,6 +44,7 @@ function mainPage() {
     renderLkPage("bookview", history => history.push("./bookview"))
     renderLkPage("circleChoose", history => history.push("./circleChoose"))
     renderLkPage("pulltoRefresh", history => history.push("./pulltoRefresh"))
+    renderLkPage("taro", history => history.push("./taro"))
   })
 }
 
@@ -82,6 +83,12 @@ const renderRouter = createRouter(
     match: locationMatch("/circleChoose"),
     getPage() {
       return import("./circleChoose")
+    },
+  },
+  {
+    match: locationMatch("/taro"),
+    getPage() {
+      return import("./taro")
     },
   },
 )

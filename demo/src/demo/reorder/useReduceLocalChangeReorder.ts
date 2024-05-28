@@ -1,5 +1,5 @@
 import { addEffectDestroy, useAtom, useEffect, useHookEffect, useStoreTriggerRender } from "better-react-helper"
-import { ReorderLocalAction, ReorderLocalElement, ReorderLocalModel, ValueCenter, easeFns, messageChannelCallback, reorderLocalReducer } from "wy-helper"
+import { ReorderLocalAction, ReorderLocalElement, ReorderLocalModel, TweenAnimationConfig, ValueCenter, easeFns, messageChannelCallback, reorderLocalReducer } from "wy-helper"
 import { ReorderAction, ReorderElement, ReorderModel, } from "wy-helper"
 import { subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
 
@@ -110,7 +110,5 @@ function getEndAt<K>(model: ReorderLocalModel<K>) {
   return model.onMove?.endAt
 }
 
-const endConfig = {
-  duration: 400,
-  fn: easeFns.out(easeFns.circ)
-}
+
+const endConfig = new TweenAnimationConfig(400, easeFns.out(easeFns.circ))

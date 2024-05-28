@@ -1,13 +1,13 @@
 import { renderInput } from "better-react-dom-helper";
 import { renderPage } from "../util/page";
 import { renderArray, useChange, useEffect, useMemo } from "better-react-helper";
-import { arrayCountCreateWith, easeFns, emptyArray } from "wy-helper";
+import { TweenAnimationConfig, arrayCountCreateWith, easeFns, emptyArray } from "wy-helper";
 import { faker } from "@faker-js/faker";
 import { dom } from "better-react-dom";
 import { layoutFrameAnimation, subscribeRequestAnimationFrame } from "wy-dom-helper";
 
 
-
+const ease = new TweenAnimationConfig(300, easeFns.out(easeFns.circ))
 export default function () {
   renderPage({
     title: "layout"
@@ -60,10 +60,7 @@ export default function () {
               didInit(v) {
                 return subscribeRequestAnimationFrame(v)
               },
-            })(div, {
-              duration: 300,
-              fn: easeFns.out(easeFns.circ)
-            })
+            })(div, ease)
           }, emptyArray)
           const div = dom.div({
             style: `

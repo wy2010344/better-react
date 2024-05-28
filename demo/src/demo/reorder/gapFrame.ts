@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker"
 import { dom } from "better-react-dom"
 import { addEffectDestroy, createUseReducer, renderArray, useAtom, useChange, useEffect, useHookEffect, useMemo, useValueCenter } from "better-react-helper"
-import { Point, arrayMove, easeFns, emptyArray, pointZero, syncMergeCenterArray } from "wy-helper"
+import { Point, TweenAnimationConfig, arrayMove, easeFns, emptyArray, pointZero, syncMergeCenterArray } from "wy-helper"
 
 import { animateFrame, requesetBatchAnimationForceFlow, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
 import { useStyle, useReorderFix } from "better-react-dom-helper"
@@ -118,10 +118,7 @@ export default function () {
           function (value) {
             transY.changeTo(value)
             requesetBatchAnimationForceFlow(div, function () {
-              transY.changeTo(0, {
-                duration: 600,
-                fn: easeFns.out(easeFns.circ)
-              })
+              transY.changeTo(0, new TweenAnimationConfig(600, easeFns.out(easeFns.circ)))
             })
           },
           function (value) {
@@ -136,7 +133,7 @@ export default function () {
         })
         useHookEffect(() => {
           addEffectDestroy(syncMergeCenterArray([transY, offsetY] as const, function ([value, oy]) {
-            div.style.transform = `translate(0px,${(value.y + oy)}px)`
+            div.style.transform = `translate(0px,${(value + oy)}px)`
           }))
         }, emptyArray)
         const div = renderRow(row, e => {
@@ -147,10 +144,7 @@ export default function () {
             x: e.pageX,
             y: e.pageY
           }, function () {
-            transY.changeTo(0, {
-              duration: 600,
-              fn: easeFns.out(easeFns.circ)
-            }, {
+            transY.changeTo(0, new TweenAnimationConfig(600, easeFns.out(easeFns.circ)), {
               onFinish(bool) {
                 if (bool) {
                   setOnMove(undefined)

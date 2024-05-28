@@ -1,13 +1,5 @@
-import { BGColor, emptyArray, AnimateValue, TimeoutAnimate, simpleEqual, } from "wy-helper";
+import { emptyArray, TimeoutAnimate, simpleEqual, } from "wy-helper";
 import { useMemo } from "./useRef";
-import { hookMakeDirtyAndRequestUpdate } from "better-react";
-
-export function useAnimateValue(n: number): AnimateValue {
-  const makeDirtyAndRequestUpdate = hookMakeDirtyAndRequestUpdate()
-  return useMemo(() => {
-    return new AnimateValue(makeDirtyAndRequestUpdate, n)
-  }, emptyArray)
-}
 
 /**
  * css 动画实时去修改元素的style,即时间也从此开始

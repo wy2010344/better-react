@@ -525,27 +525,27 @@ export namespace React {
     isComposing: boolean
   }
 
-  export interface MouseEvent<T = Element, E = NativeMouseEvent> extends UIEvent<T, E> {
-    altKey: boolean;
-    button: number;
-    buttons: number;
-    clientX: number;
-    clientY: number;
-    ctrlKey: boolean;
-    /**
-     * See [DOM Level 3 Events spec](https://www.w3.org/TR/uievents-key/#keys-modifier). for a list of valid (case-sensitive) arguments to this method.
-     */
-    getModifierState(key: string): boolean;
-    metaKey: boolean;
-    movementX: number;
-    movementY: number;
-    pageX: number;
-    pageY: number;
-    relatedTarget: EventTarget | null;
-    screenX: number;
-    screenY: number;
-    shiftKey: boolean;
-  }
+  // export interface MouseEvent<T = Element, E = NativeMouseEvent> extends UIEvent<T, E> {
+  //   altKey: boolean;
+  //   button: number;
+  //   buttons: number;
+  //   clientX: number;
+  //   clientY: number;
+  //   ctrlKey: boolean;
+  //   /**
+  //    * See [DOM Level 3 Events spec](https://www.w3.org/TR/uievents-key/#keys-modifier). for a list of valid (case-sensitive) arguments to this method.
+  //    */
+  //   getModifierState(key: string): boolean;
+  //   metaKey: boolean;
+  //   movementX: number;
+  //   movementY: number;
+  //   pageX: number;
+  //   pageY: number;
+  //   relatedTarget: EventTarget | null;
+  //   screenX: number;
+  //   screenY: number;
+  //   shiftKey: boolean;
+  // }
 
   // export interface TouchEvent<T = Element> extends UIEvent<T, NativeTouchEvent> {
   //   altKey: boolean;
@@ -571,12 +571,12 @@ export namespace React {
     view: AbstractView;
   }
 
-  export interface WheelEvent<T = Element> extends MouseEvent<T, NativeWheelEvent> {
-    deltaMode: number;
-    deltaX: number;
-    deltaY: number;
-    deltaZ: number;
-  }
+  // export interface WheelEvent<T = Element> extends MouseEvent<T, NativeWheelEvent> {
+  //   deltaMode: number;
+  //   deltaX: number;
+  //   deltaY: number;
+  //   deltaZ: number;
+  // }
 
   export interface AnimationEvent<T = Element> extends SyntheticEvent<T, NativeAnimationEvent> {
     animationName: string;
@@ -604,11 +604,19 @@ export namespace React {
   type FormEventHandler<T = Element> = EventHandler<FormEvent<T>>;
   type ChangeEventHandler<T = Element> = EventHandler<ChangeEvent<T>>;
   type KeyboardEventHandler<T = Element> = EventHandler<KeyboardEvent<T>>;
-  type MouseEventHandler<T = Element> = EventHandler<MouseEvent<T>>;
-  type TouchEventHandler<T = Element> = EventHandler<TouchEvent>;
-  type PointerEventHandler<T = Element> = EventHandler<PointerEvent>;
+  type MouseEventHandler<T = Element> = EventHandler<MouseEvent & {
+    currentTarget: T
+  }>;
+  type TouchEventHandler<T = Element> = EventHandler<TouchEvent & {
+    currentTarget: T
+  }>;
+  type PointerEventHandler<T = Element> = EventHandler<PointerEvent & {
+    currentTarget: T
+  }>;
   type UIEventHandler<T = Element> = EventHandler<UIEvent<T>>;
-  type WheelEventHandler<T = Element> = EventHandler<WheelEvent<T>>;
+  type WheelEventHandler<T = Element> = EventHandler<WheelEvent & {
+    currentTarget: T
+  }>;
   type AnimationEventHandler<T = Element> = EventHandler<AnimationEvent<T>>;
   type TransitionEventHandler<T = Element> = EventHandler<TransitionEvent<T>>;
 

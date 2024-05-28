@@ -1,6 +1,6 @@
-import { AnimationConfig, emptyArray, scrollEases, syncMergeCenter } from "wy-helper";
+import { AnimationConfig, TweenAnimationConfig, emptyArray, scrollEases, syncMergeCenter } from "wy-helper";
 import { renderTemplate } from "./template";
-import { addEffectDestroy, useAnimateValue, useEffect, useHookEffect, useMemo } from "better-react-helper";
+import { addEffectDestroy, useHookEffect, useMemo } from "better-react-helper";
 import { buildScroll, momentum, } from 'wy-helper'
 import { animateFrame, subscribeMove } from "wy-dom-helper";
 
@@ -18,20 +18,11 @@ export default function () {
         let c: AnimationConfig | undefined = undefined
         if (config) {
           if (config.type == 'reset') {
-            c = {
-              duration: 600,
-              fn: scrollEases.circular.fn
-            }
+            c = new TweenAnimationConfig(600, scrollEases.circular.fn)
           } else if (config.type == 'smooth') {
-            c = {
-              duration: config.duration,
-              fn: scrollEases.circular.fn
-            }
+            c = new TweenAnimationConfig(config.duration, scrollEases.circular.fn)
           } else if (config.type == 'smooth-edge') {
-            c = {
-              duration: config.duration,
-              fn: scrollEases.quadratic.fn
-            }
+            c = new TweenAnimationConfig(config.duration, scrollEases.quadratic.fn)
           }
         }
         translateY.changeTo(value, c, {

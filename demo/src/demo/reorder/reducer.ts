@@ -1,6 +1,6 @@
 import { animateFrameReducer } from "wy-dom-helper"
 
-import { easeFns, ReorderModel, createReorderReducer, emptyArray, } from "wy-helper"
+import { easeFns, ReorderModel, createReorderReducer, emptyArray, TweenAnimationConfig, } from "wy-helper"
 import { dom } from "better-react-dom"
 import { renderArray, useAtomFun, useEffect, useEvent, useSideReducer } from "better-react-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
@@ -14,10 +14,7 @@ import { useStyle } from "better-react-dom-helper"
  */
 const orderReducer = createReorderReducer(
   (v: DataRow) => v.index,
-  {
-    duration: 500,
-    fn: easeFns.out(easeFns.circ)
-  },
+  new TweenAnimationConfig(500, easeFns.out(easeFns.circ)),
   animateFrameReducer,
   (v: HTMLElement) => v.clientHeight + 2
 )

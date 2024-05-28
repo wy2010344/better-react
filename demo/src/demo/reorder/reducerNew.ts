@@ -1,5 +1,5 @@
 
-import { easeFns, arrayMove, syncMergeCenter, emptyArray, arrayNotEqualOrOne, ReorderLocalModel, ReorderLocalElement, AnimateFrameValue, } from "wy-helper"
+import { easeFns, arrayMove, syncMergeCenter, emptyArray, arrayNotEqualOrOne, ReorderLocalModel, ReorderLocalElement, AnimateFrameValue, TweenAnimationConfig, } from "wy-helper"
 import { dom } from "better-react-dom"
 import { addEffectDestroy, createUseReducer, renderArray, useAtom, useAtomFun, useChange, useEffect, useEvent, useHookEffect, useMemo, useStoreTriggerRender, useValueCenterFun } from "better-react-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
@@ -203,18 +203,12 @@ class ReorderE implements ReorderLocalElement<number> {
       console.log("stopLayout")
       // return
     }
-    this.value.changeTo(0, {
-      duration: 400,
-      fn: easeFns.out(easeFns.circ),
-    }, {
+    this.value.changeTo(0, new TweenAnimationConfig(400, easeFns.out(easeFns.circ)), {
       from: v
     })
   }
   endLayout(): void {
-    this.value.changeTo(0, {
-      duration: 400,
-      fn: easeFns.out(easeFns.circ),
-    })
+    this.value.changeTo(0, new TweenAnimationConfig(400, easeFns.out(easeFns.circ)))
   }
   getTransY(): number {
     return this.value.get()

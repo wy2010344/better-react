@@ -1,8 +1,8 @@
 import { dom } from "better-react-dom";
 import { useChange, useEffect, useOneEffect } from "better-react-helper";
-import { SetValue, emptyArray } from "wy-helper";
-import { SpringOptions, springBase, springIsStop, springMotion } from "./spring";
+import { SetValue, emptyArray, springBase, springIsStop } from "wy-helper";
 import { renderInput } from "better-react-dom-helper";
+import { SpringOptions } from "./spring";
 
 
 
@@ -41,8 +41,8 @@ export default function () {
     height:100%;
     `
   }).render(function () {
-    const [zta, setZta] = useChange(0)
-    const [omega0, setOmega0] = useChange(0)
+    const [zta, setZta] = useChange(1)
+    const [omega0, setOmega0] = useChange(6)
     renderRange("omega0", omega0, setOmega0)
     renderRange("zta", zta, setZta, {
       max: 2,
@@ -83,18 +83,17 @@ export default function () {
       }
 
       ctx.clearRect(0, 0, width, height);
-      const spring = springBase({
-        zta,
-        omega0,
-        deltaX: 1,
-        initialVelocity: 0
-      })
-
       let stopObj: {
         t: number
       } | undefined = undefined
       drawSpringAnimation(t => {
-        const v = spring(t)
+        const v = springBase({
+          zta,
+          omega0,
+          deltaX: 1,
+          initialVelocity: 0,
+          elapsedTime: t
+        })
         if (!stopObj) {
           if (springIsStop(v)) {
             stopObj = {
