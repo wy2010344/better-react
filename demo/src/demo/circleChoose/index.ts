@@ -2,7 +2,7 @@ import { dom, svg } from "better-react-dom";
 import { renderPage } from "../util/page";
 import { createUseReducer, renderMax, useAtom, useChange, useEffect, useState } from "better-react-helper";
 import { emptyArray, quote } from "wy-helper";
-import { subscribeMove } from "wy-dom-helper";
+import { dragInit, subscribeDragMove, subscribeMove } from "wy-dom-helper";
 
 
 const useAngle = createUseReducer(function (old: number, act: {
@@ -69,13 +69,11 @@ export default function () {
       } | undefined>(undefined)
 
       useEffect(() => {
-        return subscribeMove((e, end) => {
+        return subscribeDragMove((p, e) => {
           const le = lastPoint.get()
           if (le) {
-            if (end) {
-              lastPoint.set(undefined)
-            } else {
-              const angle = getPointerAngle(e.touches[0])
+            if (p) {
+              const angle = getPointerAngle(p)
               const diffAngle = angle - le.lastAngle
               if (le.type == 'center') {
                 setStart({
@@ -101,9 +99,11 @@ export default function () {
                 type: le.type,
                 lastAngle: angle
               })
+            } else {
+              lastPoint.set(undefined)
             }
           }
-        }, "touch")
+        })
       }, emptyArray)
 
       // const s = dom.div({
@@ -136,13 +136,13 @@ export default function () {
           transform: `rotate(${start - 90}, ${cx}, ${cy})`,
           strokeLinecap: 'round',
           strokeDasharray: partWidth + " " + (allWidth - partWidth),
-          onTouchStart(e) {
-            console.log("center", e)
+
+          ...dragInit(e => {
             lastPoint.set({
               type: "center",
-              lastAngle: getPointerAngle(e.touches[0])
+              lastAngle: getPointerAngle(e)
             })
-          }
+          })
         }).render()
       })
 
@@ -160,12 +160,12 @@ export default function () {
             transform-origin:-${r}px;
             transform:translate(${r}px) rotate(${start - 90}deg);
             `,
-          onTouchStart(e) {
+          ...dragInit(e => {
             lastPoint.set({
               type: "start",
-              lastAngle: getPointerAngle(e.touches[0])
+              lastAngle: getPointerAngle(e)
             })
-          }
+          })
         }).render()
         dom.div({
           className: "end",
@@ -179,12 +179,12 @@ export default function () {
             transform-origin:-${r}px;
             transform:translate(${r}px) rotate(${end - 90}deg);
             `,
-          onTouchStart(e) {
+          ...dragInit(e => {
             lastPoint.set({
               type: "end",
-              lastAngle: getPointerAngle(e.touches[0])
+              lastAngle: getPointerAngle(e)
             })
-          }
+          })
         }).render()
       })
 

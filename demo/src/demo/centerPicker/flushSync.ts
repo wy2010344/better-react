@@ -1,7 +1,7 @@
-import { DomAttribute, dom } from "better-react-dom";
-import { flushSync, hookCommitAll } from 'better-react'
-import { addEffectDestroy, createUseReducer, renderArray, useAtom, useChange, useEffect, useHookEffect, useMemo, useOneEffect, useValueCenter } from "better-react-helper";
-import { readArraySliceCircle, arrayCountCreateWith, emptyArray, numberIntFillWithN0, quote, easeFns, momentum, syncMergeCenter, recicleScrollViewView, TweenAnimationConfig } from "wy-helper";
+import { dom } from "better-react-dom";
+import { flushSync } from 'better-react'
+import { addEffectDestroy, createUseReducer, renderArray, useAtom, useHookEffect, useMemo } from "better-react-helper";
+import { readArraySliceCircle, arrayCountCreateWith, emptyArray, numberIntFillWithN0, quote, syncMergeCenter, recicleScrollViewView, cacheVelocity, FrictionalFactory, getSpringBaseAnimationConfig } from "wy-helper";
 import { animateFrame, cssMap, subscribeMove } from "wy-dom-helper";
 import { renderPage } from "../util/page";
 const list = arrayCountCreateWith(60, v => v + 1)
@@ -23,7 +23,7 @@ const useIndex = createUseReducer(function (value: number, action: {
   return value
 })
 
-const ease = new TweenAnimationConfig(300, easeFns.out(easeFns.circ))
+const ease = getSpringBaseAnimationConfig()
 export default function () {
   renderPage({
     title: "flushSync",
@@ -38,27 +38,44 @@ export default function () {
     /**
      * 有时会阻塞,猜测是动画不能顺利结束导导导导致的
      */
-    const { scroll, setInitScrollHeight, wrapperAdd, trans: transY } = useMemo(() => {
+    const { setInitScrollHeight,
+      wrapperAdd, trans: transY,
+      moveUpdate,
+      endMove
+    } = useMemo(() => {
       return recicleScrollViewView(flushSync, n => {
         dispatchIndex({
           type: "add",
           value: n
         })
-      }, 26, momentum.iScrollIdeal({
-        // deceleration: 0.003
-      }), ease.fn, animateFrame(0))
+      }, 26, animateFrame(0))
     })
 
+    const { velocity } = useMemo(() => {
+      return {
+        velocity: cacheVelocity()
+      }
+    })
+    const lastPoint = useAtom<PointerEvent | undefined>(undefined)
     useHookEffect((e) => {
       const div = wrapperRef.get()!
       const maxScrollheight = div.scrollHeight - div.clientHeight
       const ish = -(maxScrollheight / 2)
       setInitScrollHeight(ish)
       addEffectDestroy(subscribeMove(function (e, end) {
-        if (end) {
-          scroll.end(e.pageY)
-        } else {
-          scroll.move(e.pageY)
+        const lp = lastPoint.get()
+        if (lp) {
+          if (end) {
+            const v = velocity.append(e.timeStamp, e.pageY)
+            lastPoint.set(undefined)
+            const fc = new FrictionalFactory()
+            endMove(fc.getFromVelocity(v).maxDistance, distance => {
+              return fc.getFromDistance(distance).animationConfig()
+            })
+          } else {
+            const diffY = e.pageY - lp.pageY
+            moveUpdate(diffY)
+          }
         }
       }))
       const contaier = containerRef.get()!
@@ -104,7 +121,8 @@ export default function () {
         overflow:hidden;
       `,
         onPointerDown(event) {
-          scroll.start(event.pageY)
+          velocity.reset(event.timeStamp, event.pageY)
+          lastPoint.set(event)
         },
       }).render(function () {
         const container = dom.div().render(function () {

@@ -4,7 +4,7 @@ import { renderArray } from "better-react-helper";
 import { emptyObject } from "wy-helper";
 import { renderPage } from "../util/page";
 
-const list = Array(2000).fill(1).map((_, i) => {
+const list = Array(500).fill(1).map((_, i) => {
 	return {
 		index: i,
 		name: faker.animal.bear()

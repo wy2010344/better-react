@@ -1,8 +1,8 @@
 import { dom } from "better-react-dom";
 import { renderPage } from "../util/page";
 import { addEffectDestroy, renderArray, useAtom, useBeforeAttrHookEffect, useChange, useEffect, useEvent, useHookEffect, useMemo, useOneBeforeAttrHookEffect } from "better-react-helper";
-import { PointKey, SpringBaseAnimationConfig, easeFns, emptyArray, quote, scrollJudgeDirection, syncMergeCenter } from "wy-helper";
-import { animateFrame, cacheVelocity, subscribeMove } from "wy-dom-helper";
+import { PointKey, cacheVelocity, easeFns, emptyArray, getSpringBaseAnimationConfig, quote, scrollJudgeDirection, syncMergeCenter } from "wy-helper";
+import { animateFrame, subscribeMove } from "wy-dom-helper";
 
 
 const easeEase = easeFns.out(easeFns.circ)
@@ -36,12 +36,12 @@ export default function () {
       const width = bottomContentRef.get()!.clientWidth
       if (direction < 0) {
         updateIndex(index - 1)
-        transX.changeTo(width, new SpringBaseAnimationConfig({ initialVelocity: velocity }))
+        transX.changeTo(width, getSpringBaseAnimationConfig({ initialVelocity: velocity }))
       } else if (direction > 0) {
         updateIndex(index + 1)
-        transX.changeTo(-width, new SpringBaseAnimationConfig({ initialVelocity: velocity }))
+        transX.changeTo(-width, getSpringBaseAnimationConfig({ initialVelocity: velocity }))
       } else {
-        transX.changeTo(0, new SpringBaseAnimationConfig({ initialVelocity: velocity }))
+        transX.changeTo(0, getSpringBaseAnimationConfig({ initialVelocity: velocity }))
       }
     })
 
@@ -85,7 +85,7 @@ export default function () {
         if (direction > 0) {
           setShowDrop(false)
         } else {
-          transY.changeTo(height, new SpringBaseAnimationConfig({ initialVelocity: velocity }))
+          transY.changeTo(height, getSpringBaseAnimationConfig({ initialVelocity: velocity }))
         }
       } else {
         const direction = scrollJudgeDirection(
@@ -96,14 +96,14 @@ export default function () {
         if (direction < 0) {
           setShowDrop(true)
         } else {
-          transY.changeTo(0, new SpringBaseAnimationConfig({ initialVelocity: velocity }))
+          transY.changeTo(0, getSpringBaseAnimationConfig({ initialVelocity: velocity }))
         }
       }
     })
     useEffect(() => {
       const allHeight = contentRef.get()?.clientHeight! / 2
       const height = showDrop ? allHeight : 0
-      transY.changeTo(height, new SpringBaseAnimationConfig())
+      transY.changeTo(height, getSpringBaseAnimationConfig())
     }, [showDrop])
 
     const moveInfo = useAtom<PointerEvent | undefined>(undefined)
@@ -128,8 +128,8 @@ export default function () {
       overflow:hidden;
       `, onPointerDown(e) {
         moveInfo.set(e)
-        velocityX(e.timeStamp, e.pageX)
-        velocityY(e.timeStamp, e.pageY)
+        velocityX.reset(e.timeStamp, e.pageX)
+        velocityY.reset(e.timeStamp, e.pageY)
       },
     }).render(() => {
 
@@ -166,8 +166,8 @@ export default function () {
           addEffectDestroy(subscribeMove(function (e, end) {
             const lastE = moveInfo.get()
             if (lastE) {
-              const vx = velocityX(e.timeStamp, e.pageX)
-              const vy = velocityY(e.timeStamp, e.pageY)
+              const vx = velocityX.append(e.timeStamp, e.pageX)
+              const vy = velocityY.append(e.timeStamp, e.pageY)
               const diffX = e.pageX - lastE.pageX
               const diffY = e.pageY - lastE.pageY
 

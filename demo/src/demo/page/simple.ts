@@ -1,8 +1,8 @@
 import { dom } from "better-react-dom";
 import { renderPage } from "../util/page";
 import { addEffectDestroy, renderArray, useAtom, useBeforeAttrHookEffect, useChange, useEffect, useEvent, useHookEffect, useMemo } from "better-react-helper";
-import { SpringBaseAnimationConfig, easeFns, emptyArray, quote, scrollJudgeDirection, syncMergeCenter } from "wy-helper";
-import { animateFrame, cacheVelocity, subscribeMove } from "wy-dom-helper";
+import { cacheVelocity, easeFns, emptyArray, getSpringBaseAnimationConfig, quote, scrollJudgeDirection, syncMergeCenter } from "wy-helper";
+import { animateFrame, subscribeMove } from "wy-dom-helper";
 export default function () {
   renderPage({ title: "simple-page" }, () => {
 
@@ -15,12 +15,12 @@ export default function () {
       const width = wrapperRef.get()!.clientWidth
       if (direction < 0) {
         updateIndex(index - 1)
-        transX.changeTo(width, new SpringBaseAnimationConfig({ initialVelocity: velocity }))
+        transX.changeTo(width, getSpringBaseAnimationConfig({ initialVelocity: velocity }))
       } else if (direction > 0) {
         updateIndex(index + 1)
-        transX.changeTo(-width, new SpringBaseAnimationConfig({ initialVelocity: velocity }))
+        transX.changeTo(-width, getSpringBaseAnimationConfig({ initialVelocity: velocity }))
       } else {
-        transX.changeTo(0, new SpringBaseAnimationConfig({ initialVelocity: velocity }))
+        transX.changeTo(0, getSpringBaseAnimationConfig({ initialVelocity: velocity }))
       }
     })
     dom.div().render(() => {
@@ -56,7 +56,7 @@ export default function () {
         addEffectDestroy(subscribeMove(function (e, end) {
           const lastE = moveInfo.get()
           if (lastE) {
-            const vx = velocityX(e.timeStamp, e.pageX)
+            const vx = velocityX.append(e.timeStamp, e.pageX)
             const diff = e.pageX - lastE.pageX
             transX.changeTo(transX.get() + diff)
             if (end) {
@@ -89,7 +89,7 @@ export default function () {
         `,
         onPointerDown(e) {
           moveInfo.set(e)
-          velocityX(e.timeStamp, e.pageX)
+          velocityX.reset(e.timeStamp, e.pageX)
         },
       }).render(() => {
         renderArray([index - 1, index, index + 1], quote, function (row, i) {

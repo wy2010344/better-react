@@ -1,9 +1,10 @@
-import { addEffectDestroy, createUseReducer, renderArray, useAtom, useChange, useEffect, useHookEffect, useMemo } from "better-react-helper";
+import { addEffectDestroy, createUseReducer, renderArray, useAtom, useEffect, useHookEffect, useMemo } from "better-react-helper";
 import { renderPage } from "../util/page";
-import { AnimationConfig, SpringBaseAnimationConfig, SpringOutValue, TweenAnimationConfig, easeFns, emptyArray, quote, springBase, springIsStop, subscribeCenterArray, syncMergeCenterArray } from "wy-helper";
+import { emptyArray, emptyObject, getSpringBaseAnimationConfig, quote, syncMergeCenterArray } from "wy-helper";
 import { dom } from "better-react-dom";
-import { PagePoint, animateFrame, cacheVelocity, dragInit, subscribeDragMove } from "wy-dom-helper";
-import { lstat } from "fs";
+import { PagePoint, animateFrame, dragInit, subscribeDragMove } from "wy-dom-helper";
+import renderViewVelocity, { useLineList } from "./viewVelocity";
+import { DragGesture } from "@use-gesture/vanilla";
 
 /**
  * https://www.youtube.com/watch?v=xPbRsca_l7c&t=1196s
@@ -18,7 +19,57 @@ const cards = [
   'https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg'
 ]
 
-
+class CacheVelocity {
+  constructor(
+    public readonly BEFORE_LAST_KINEMATICS_DELAY = 32
+  ) { }
+  private list: {
+    time: number,
+    value: number
+  }[] = []
+  private velocity = 0
+  getIdx(time: number) {
+    for (let i = 0; i < this.list.length; i++) {
+      const row = this.list[i]
+      let diffTime = time - row.time
+      if (diffTime > this.BEFORE_LAST_KINEMATICS_DELAY) {
+        return i
+      }
+    }
+    return this.list.length - 1
+  }
+  clear() {
+    this.list.length = 0
+    this.velocity = 0
+  }
+  reset(time: number, value: number) {
+    this.clear()
+    return this.append(time, value)
+  }
+  append(time: number, value: number) {
+    if (this.list.length) {
+      let idx = this.getIdx(time)
+      const cell = this.list[idx]
+      if (time != cell.time) {
+        this.velocity = (value - cell.value) / (time - cell.time)
+        this.list.length = idx + 1
+      }
+    } else {
+      this.velocity = 0
+    }
+    this.list.unshift({
+      time,
+      value
+    })
+    return this.velocity
+  }
+  get() {
+    return this.velocity
+  }
+}
+export function cacheVelocity(BEFORE_LAST_KINEMATICS_DELAY = 32) {
+  return new CacheVelocity(BEFORE_LAST_KINEMATICS_DELAY)
+}
 const useCard = createUseReducer(function (old: string[], act: {
   type: "remove"
   value: string
@@ -34,16 +85,24 @@ const useCard = createUseReducer(function (old: string[], act: {
   return old
 })
 
-const ease = new SpringBaseAnimationConfig()//new TweenAnimationConfig(600, easeFns.out(easeFns.circ))
+const ease = getSpringBaseAnimationConfig()//getTweenAnimationConfig(600, easeFns.out(easeFns.circ))
 export default function () {
+
+
+  const [data, setVelocity] = useLineList(emptyObject)
   renderPage({
     title: "taro",
     bodyStyle: `
     overflow:hidden;
   background: lightblue;
   cursor: url('https://uploads.codesandbox.io/uploads/user/b3e56831-8b98-4fee-b941-0e27f39883ab/Ad1_-cursor.png') 39 39, auto;
-  ` }, () => {
+  `, renderRight() {
+      renderViewVelocity(data, "展示速度")
+    }
+  }, () => {
     const [list, dispatch] = useCard(cards)
+
+
 
     useEffect(() => {
       if (list.length == 0) {
@@ -67,9 +126,6 @@ export default function () {
           scale: animateFrame(1.5)
         }
       })
-
-
-
       useHookEffect(() => {
         setTimeout(() => {
           y.changeTo(i * 4, ease)
@@ -80,19 +136,39 @@ export default function () {
           wrapper.style.transform = `translate3d(${x}px,${y}px,0)`
           inner.style.transform = `perspective(1500px) rotateX(30deg) rotateY(${r / 10}deg) rotateZ(${r}deg) scale(${s})`
         }))
-        addEffectDestroy(subscribeDragMove(function (p, end, e) {
+        addEffectDestroy(subscribeDragMove(function (p, e) {
           const lastP = lastPoint.get()
           if (lastP) {
-            p = p || lastP
-            const vx = velocityX(e.timeStamp, p.pageX)
-            const vy = velocityY(e.timeStamp, p.pageY)
+            if (p) {
+              velocityX.append(e.timeStamp, p.pageX)
+              velocityY.append(e.timeStamp, p.pageY)
+            }
+            const vx = velocityX.get()
+            const vy = velocityY.get()
             const v = Math.sqrt(vx * vx + vy * vy)
+
+            setVelocity({
+              type: "append",
+              key: "green",
+              value: {
+                x: e.timeStamp,
+                y: v
+              }
+            })
+            // setVelocity({
+            //   type: "append",
+            //   key: "green",
+            //   value: {
+            //     x: e.timeStamp,
+            //     y: Math.sqrt(p.pageX * p.pageX + p.pageY * p.pageY)
+            //   }
+            // })
             const dir = vx < 0 ? -1 : 1
             if (v > 1) {
               removed.set(true)
             }
+            const deltaX = p ? p.pageX - lastP.pageX : 0
             const gone = removed.get()
-            const deltaX = p.pageX - lastP.pageX
             if (gone) {
               //已经移除
               x.changeTo((200 + wrapper.clientWidth) * dir, ease, {
@@ -105,24 +181,48 @@ export default function () {
               })
               rot.changeTo(deltaX / 100 + dir * 10 * v, ease)
             } else {
-              if (end) {
-                x.changeTo(0, ease)
-              } else {
+              if (p) {
                 //跟随鼠标
-                x.changeTo(x.get() + p.pageX - lastP.pageX, ease)
+                console.log("xc", x.get(), deltaX)
+                x.changeTo(x.get() + deltaX, ease)
+              } else {
+                x.changeTo(0, ease)
               }
               rot.changeTo(deltaX / 100, ease)
             }
 
-            scale.changeTo(end ? 1 : 1.1, ease)
+            scale.changeTo(p ? 1.1 : 1, ease)
 
-            if (end) {
-              lastPoint.set(undefined)
-            } else {
+
+            if (p) {
               lastPoint.set(p)
+            } else {
+              lastPoint.set(undefined)
             }
           }
         }))
+      }, emptyArray)
+      useEffect(() => {
+        const gesture = new DragGesture(wrapper, ({ velocity, timeStamp }) => {
+          if (!lastPoint.get()) {
+            return
+          }
+          const vx = velocity[0]
+          const vy = velocity[1]
+          const v = Math.sqrt(vx * vx + vy * vy)
+          setVelocity({
+            type: "append",
+            key: "red",
+            value: {
+              x: timeStamp,
+              y: v
+            }
+          })
+
+        })
+        return () => {
+          gesture.destroy()
+        }
       }, emptyArray)
       const { wrapper, inner } = dom.div({
         style: `
@@ -133,9 +233,10 @@ export default function () {
         justify-content:center;
         `,
         ...dragInit((p, e) => {
+          setVelocity({ type: "clear" })
           lastPoint.set(p)
-          velocityX(e.timeStamp, p.pageX)
-          velocityY(e.timeStamp, p.pageY)
+          velocityX.reset(e.timeStamp, p.pageX)
+          velocityY.reset(e.timeStamp, p.pageY)
         })
       }).renderOut((wrapper) => {
         const inner = dom.div({

@@ -131,26 +131,29 @@ export class SvgCreater<T extends SvgElementType> {
   renderInnerHTML(innerHTML: string) {
     const helper = useMemo(SvgHelper.create, this.type)
     const attrsEffect = this.attrsEffect
+    this.after(helper)
     hookAttrEffect(() => {
       const attrs = quoteOrLazyGet(attrsEffect)
       helper.updateAttrs(attrs)
       helper.updateContent("html", innerHTML)
     })
-    return this.after(helper)
+    return helper.node
   }
   renderTextContent(textContent: string) {
     const helper = useMemo(SvgHelper.create, this.type)
     const attrsEffect = this.attrsEffect
+    this.after(helper)
     hookAttrEffect(() => {
       const attrs = quoteOrLazyGet(attrsEffect)
       helper.updateAttrs(attrs)
       helper.updateContent("text", textContent)
     })
-    return this.after(helper)
+    return helper.node
   }
   renderOut<O>(fun: (node: SvgElement<T>) => O): O {
     const helper = useMemo(SvgHelper.create, this.type)
     const attrsEffect = this.attrsEffect
+    this.after(helper)
     hookAttrEffect(() => {
       const attrs = quoteOrLazyGet(attrsEffect)
       helper.updateAttrs(attrs)
@@ -168,7 +171,6 @@ export class SvgCreater<T extends SvgElementType> {
     const before = hookBeginTempOps(tempOps)
     const out = fun(helper.node)
     hookEndTempOps(before!)
-    this.after(helper)
     return out
   }
   private after(helper: SvgHelper<T>) {

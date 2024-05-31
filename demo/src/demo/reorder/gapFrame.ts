@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker"
 import { dom } from "better-react-dom"
 import { addEffectDestroy, createUseReducer, renderArray, useAtom, useChange, useEffect, useHookEffect, useMemo, useValueCenter } from "better-react-helper"
-import { Point, TweenAnimationConfig, arrayMove, easeFns, emptyArray, pointZero, syncMergeCenterArray } from "wy-helper"
+import { Point, arrayMove, easeFns, emptyArray, getTweenAnimationConfig, pointZero, syncMergeCenterArray } from "wy-helper"
 
 import { animateFrame, requesetBatchAnimationForceFlow, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
 import { useStyle, useReorderFix } from "better-react-dom-helper"
@@ -118,7 +118,7 @@ export default function () {
           function (value) {
             transY.changeTo(value)
             requesetBatchAnimationForceFlow(div, function () {
-              transY.changeTo(0, new TweenAnimationConfig(600, easeFns.out(easeFns.circ)))
+              transY.changeTo(0, getTweenAnimationConfig(600, easeFns.out(easeFns.circ)))
             })
           },
           function (value) {
@@ -144,7 +144,7 @@ export default function () {
             x: e.pageX,
             y: e.pageY
           }, function () {
-            transY.changeTo(0, new TweenAnimationConfig(600, easeFns.out(easeFns.circ)), {
+            transY.changeTo(0, getTweenAnimationConfig(600, easeFns.out(easeFns.circ)), {
               onFinish(bool) {
                 if (bool) {
                   setOnMove(undefined)

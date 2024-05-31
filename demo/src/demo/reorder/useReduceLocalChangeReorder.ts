@@ -1,5 +1,5 @@
 import { addEffectDestroy, useAtom, useEffect, useHookEffect, useStoreTriggerRender } from "better-react-helper"
-import { ReorderLocalAction, ReorderLocalElement, ReorderLocalModel, TweenAnimationConfig, ValueCenter, easeFns, messageChannelCallback, reorderLocalReducer } from "wy-helper"
+import { ReorderLocalAction, ReorderLocalElement, ReorderLocalModel, ValueCenter, easeFns, getTweenAnimationConfig, messageChannelCallback, reorderLocalReducer } from "wy-helper"
 import { ReorderAction, ReorderElement, ReorderModel, } from "wy-helper"
 import { subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
 
@@ -70,8 +70,7 @@ export function userReducerLocalChangeReorder<K>(
                 version: version,
                 point: e.pageY,
                 elements: getElements(),
-                scrollTop: container.scrollTop,
-                config: endConfig
+                scrollTop: container.scrollTop
               })
             } else {
               movePoint.set(e)
@@ -95,8 +94,7 @@ export function userReducerLocalChangeReorder<K>(
               type: "didEnd",
               version,
               scrollTop: container.scrollTop,
-              elements: getElements(),
-              config: endConfig
+              elements: getElements()
             })
           })
         }
@@ -111,4 +109,4 @@ function getEndAt<K>(model: ReorderLocalModel<K>) {
 }
 
 
-const endConfig = new TweenAnimationConfig(400, easeFns.out(easeFns.circ))
+const endConfig = getTweenAnimationConfig(400, easeFns.out(easeFns.circ))

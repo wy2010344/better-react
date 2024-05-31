@@ -1,8 +1,8 @@
 
 import { dom } from "better-react-dom"
-import { addEffectDestroy, renderArray, useEffect, useHookEffect, useMemo, useSideReducer } from "better-react-helper"
+import { renderArray, useAtom, useEffect, useMemo, useSideReducer } from "better-react-helper"
 import { recycleScrollListReducer, cssMap, subscribeMove } from "wy-dom-helper"
-import { TweenAnimationConfig, arrayCountCreateWith, buildNoEdgeScroll, easeFns, emptyArray, initRecycleListModel, momentum, numberIntFillWithN0, quote, readArraySliceCircle } from "wy-helper"
+import { FrictionalFactory, arrayCountCreateWith, cacheVelocity, easeFns, emptyArray, getSpringBaseAnimationConfig, initRecycleListModel, numberIntFillWithN0, quote, readArraySliceCircle } from "wy-helper"
 import { renderPage } from "../util/page"
 
 const list = arrayCountCreateWith(60, v => v + 1)
@@ -15,18 +15,25 @@ export default function () {
 
     const [{ transY, index }, dispatch] = useSideReducer(recycleScrollListReducer, initRecycleListModel)
     let wrapperDiv: HTMLDivElement
-    const scroll = useMemo(() => buildNoEdgeScroll({
-      changeDiff(diff, duration) {
-        dispatch({
-          type: "changeDiff",
-          diff,
-          config: typeof duration == 'number' ? new TweenAnimationConfig(duration, easeFn) : undefined
-        })
-      },
-      momentum: momentum.iScrollIdeal({
-        // deceleration: 0.003
-      })
-    }))
+    // const scroll = useMemo(() => buildNoEdgeScroll({
+    //   changeDiff(diff, duration) {
+    //     dispatch({
+    //       type: "changeDiff",
+    //       diff,
+    //       config: typeof duration == 'number' ? getTweenAnimationConfig(duration, easeFn) : undefined
+    //     })
+    //   },
+    //   momentum: momentum.iScrollIdeal({
+    //     // deceleration: 0.003
+    //   })
+    // }))
+
+    const { velocity } = useMemo(() => {
+      return {
+        velocity: cacheVelocity()
+      }
+    })
+    const lastPoint = useAtom<PointerEvent | undefined>(undefined)
     useEffect((e) => {
       const div = wrapperDiv
       const maxScrollheight = div.scrollHeight - div.clientHeight
@@ -40,10 +47,27 @@ export default function () {
       })
 
       return subscribeMove(function (e, end) {
-        if (end) {
-          scroll.end(e.pageY)
-        } else {
-          scroll.move(e.pageY)
+        const lp = lastPoint.get()
+        if (lp) {
+          if (end) {
+            const v = velocity.append(e.timeStamp, e.pageY)
+            lastPoint.set(undefined)
+            const fc = new FrictionalFactory()
+            dispatch({
+              type: "endMove",
+              idealDistance: fc.getFromVelocity(v).maxDistance,
+              getConfig(distance) {
+                // return getSpringBaseAnimationConfig()(distance)
+                return fc.getFromDistance(distance).animationConfig()
+              },
+            })
+          } else {
+            const diffY = e.pageY - lp.pageY
+            dispatch({
+              type: "changeDiff",
+              diff: diffY
+            })
+          }
         }
       })
     }, emptyArray)
@@ -51,7 +75,7 @@ export default function () {
       dispatch({
         type: "addIndex",
         value,
-        config: new TweenAnimationConfig(600, easeFn)
+        getConfig: getSpringBaseAnimationConfig()
       })
     }
     dom.div({
@@ -90,7 +114,8 @@ export default function () {
         overflow:hidden;
       `,
         onPointerDown(event) {
-          scroll.start(event.pageY)
+          velocity.reset(event.timeStamp, event.pageY)
+          lastPoint.set(event)
         },
       }).render(function () {
         dom.div({

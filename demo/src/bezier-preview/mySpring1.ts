@@ -90,8 +90,8 @@ export default function () {
         const v = springBase({
           zta,
           omega0,
-          deltaX: 1,
-          initialVelocity: 0,
+          deltaX: 0,
+          initialVelocity: 30,
           elapsedTime: t
         })
         if (!stopObj) {

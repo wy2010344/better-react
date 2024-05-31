@@ -1,7 +1,7 @@
 
 import { addEffectDestroy, useAtom, useEffect, useHookEffect } from "better-react-helper"
 import { subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
-import { ReorderAction, ReorderModel, ReorderElement, easeFns, messageChannelCallback, TweenAnimationConfig } from "wy-helper"
+import { ReorderAction, ReorderModel, ReorderElement, easeFns, messageChannelCallback, getTweenAnimationConfig } from "wy-helper"
 
 
 
@@ -66,7 +66,7 @@ export function useReducerReorder<T, K>(
                 point: e.pageY,
                 elements: getElements(),
                 scrollTop: container.scrollTop,
-                config: endConfig
+                getConfig: endConfig
               })
             } else {
               movePoint.set(e)
@@ -91,7 +91,7 @@ export function useReducerReorder<T, K>(
               type: "didEnd",
               scrollTop: container.scrollTop,
               elements: getElements(),
-              config: endConfig,
+              getConfig: endConfig,
               version: value.version
             })
           })
@@ -101,4 +101,4 @@ export function useReducerReorder<T, K>(
   }
 }
 
-const endConfig = new TweenAnimationConfig(400, easeFns.out(easeFns.circ))
+const endConfig = getTweenAnimationConfig(400, easeFns.out(easeFns.circ))

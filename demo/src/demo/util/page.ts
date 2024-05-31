@@ -17,12 +17,14 @@ export function renderPage({
   title,
   onBack,
   bodyStyle,
-  bodyAttr
+  bodyAttr,
+  renderRight
 }: {
   title: string
   onBack?: EmptyFun
   bodyStyle?: string
   bodyAttr?: DomAttribute<"div">,
+  renderRight?: EmptyFun
 }, renderBody: EmptyFun) {
   const { history } = GlobalContext.useConsumer()
   onBack = onBack || (() => {
@@ -62,7 +64,7 @@ export function renderPage({
         style: `
         min-width:50px;
         `
-      }).render()
+      }).render(renderRight)
     })
     dom.div({
       ...bodyAttr,

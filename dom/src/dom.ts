@@ -130,26 +130,29 @@ export class DomCreater<T extends DomElementType> {
   renderInnerHTML(innerHTML: string, contentEditable?: boolean | "inherit" | "plaintext-only") {
     const helper = useMemo(DomHelper.create, this.type)
     const attrsEffect = this.attrsEffect
+    this.after(helper)
     hookAttrEffect(() => {
       const attrs = quoteOrLazyGet(attrsEffect)
       helper.updateAttrs(attrs)
       helper.updateContent("html", innerHTML, contentEditable)
     })
-    return this.after(helper)
+    return helper.node
   }
   renderTextContent(textContent: string, contentEditable?: boolean | "inherit" | "plaintext-only") {
     const helper = useMemo(DomHelper.create, this.type)
     const attrsEffect = this.attrsEffect
+    this.after(helper)
     hookAttrEffect(() => {
       const attrs = quoteOrLazyGet(attrsEffect)
       helper.updateAttrs(attrs)
       helper.updateContent("text", textContent, contentEditable)
     })
-    return this.after(helper)
+    return helper.node
   }
   renderOut<O>(fun: (node: DomElement<T>) => O): O {
     const helper = useMemo(DomHelper.create, this.type)
     const attrsEffect = this.attrsEffect
+    this.after(helper)
     hookAttrEffect(() => {
       const attrs = quoteOrLazyGet(attrsEffect)
       helper.updateAttrs(attrs)
@@ -167,7 +170,6 @@ export class DomCreater<T extends DomElementType> {
     const before = hookBeginTempOps(tempOps)
     const out = fun(helper.node)
     hookEndTempOps(before!)
-    this.after(helper)
     return out
   }
   private after(helper: DomHelper<T>) {
