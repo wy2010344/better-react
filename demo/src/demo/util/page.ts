@@ -25,7 +25,7 @@ export function renderPage({
   bodyStyle?: string
   bodyAttr?: DomAttribute<"div">,
   renderRight?: EmptyFun
-}, renderBody: EmptyFun) {
+}, renderBody: (div: HTMLElement) => void) {
   const { history } = GlobalContext.useConsumer()
   onBack = onBack || (() => {
     history.back()

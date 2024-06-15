@@ -44,3 +44,9 @@ export function renderGuard<T, V>(
   }
   renderOne(outKey, renderFun)
 }
+
+
+export function renderGuardString<T extends string>(type: T, record: Partial<Record<T, EmptyFun>>, other = emptyFun) {
+  const v = record[type]
+  renderOne(type, (v || other)!)
+}

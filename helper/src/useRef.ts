@@ -1,6 +1,7 @@
 import { MemoEvent, hookCreateChangeAtom, useBaseMemo } from 'better-react';
-import { storeRef, quote, emptyArray, arrayNotEqualOrOne, GetValue } from 'wy-helper'
+import { storeRef, quote, emptyArray, arrayNotEqualOrOne, GetValue, alawaysTrue } from 'wy-helper'
 import { useAttrEffect } from './useEffect';
+import { MemoCacheEvent } from 'better-react/dist/fc';
 
 type StoreRef<T> = {
   get(): T
@@ -8,11 +9,11 @@ type StoreRef<T> = {
 }
 
 export function useMemo<T, V>(
-  effect: (e: MemoEvent<V>) => T,
+  effect: (e: MemoCacheEvent<V, T>) => T,
   deps: V
 ): T
 export function useMemo<T>(
-  effect: (e: MemoEvent<undefined>) => T
+  effect: (e: MemoCacheEvent<undefined, T>) => T
 ): T
 export function useMemo(
   effect: any,
@@ -116,4 +117,32 @@ export function useRefConst<T>(fun: () => T) {
 
 export function useRefConstWith<T>(v: T) {
   return useAtom(v).get()
+}
+
+
+type MemoReducer<T> = {
+  (old: T, isInit: false): T
+  (old: undefined, isInit: true): T
+}
+
+export function useMemoReducer<T>(fun: MemoReducer<T>, deps: any = fun) {
+  if (deps == fun) {
+    return useBaseMemo(arrayNotEqualOrOne, memoReducer as any, fun)
+  } else {
+    return useBaseMemo(arrayNotEqualOrOne, (e) => {
+      return (fun as any)(e.beforeValue, e.isInit)
+    }, deps)
+  }
+}
+function memoReducer<T>(e: MemoCacheEvent<MemoReducer<T>, T>): T {
+  return (e.trigger as any)(e.beforeValue, e.isInit)
+}
+
+
+export function useMemoVersion(...deps: any[]) {
+  return useMemo(triggerAdd, deps)
+}
+
+function triggerAdd(e: MemoCacheEvent<any, number>) {
+  return (e.beforeValue || 0) + 1
 }

@@ -1,68 +1,7 @@
-import { AutoLoadMoreCore, PromiseAutoLoadMore, ReducerWithDispatchResult, VersionPromiseResult, emptyArray, mapReducerDispatch, mapReducerDispatchList } from "wy-helper";
+import { PromiseAutoLoadMore, AutoLoadMoreAction, reducerAutoLoadMore } from "wy-helper";
 import { useSideReducer } from "./useReducer";
 
 
-type AutoLoadMoreAction<T, K> =
-  {
-    type: "reload";
-    getAfter(k: K, abort?: AbortSignal): Promise<AutoLoadMoreCore<T, K>>
-    first: K
-  } | {
-    type: "loadMore";
-    version: number
-  } | {
-    type: "reloadBack"
-    value: VersionPromiseResult<AutoLoadMoreCore<T, K>>
-  } | {
-    type: "loadMoreBack"
-    value: VersionPromiseResult<AutoLoadMoreCore<T, K>>
-  }
-  | Update<T>;
-
-type Update<T> = {
-  type: "update";
-  callback(old: T[]): T[]
-}
-
-type AutoModel<T, K> = ReducerWithDispatchResult<PromiseAutoLoadMore<T, K>, AutoLoadMoreAction<T, K>>
-export function reducerAutoLoadMore<T, K>(
-  old: PromiseAutoLoadMore<T, K>,
-  action: AutoLoadMoreAction<T, K>
-): AutoModel<T, K> {
-  if (action.type == "reload") {
-    const [value, act] = old.reload(
-      action.getAfter,
-      action.first
-    )
-    /**
-       return {
-        type: "reloadBack",
-        value
-      } as const
-     */
-    return [value, mapReducerDispatch(act, value => {
-      return {
-        type: "reloadBack",
-        value
-      }
-    })]
-  } else if (action.type == "loadMore") {
-    const [value, act] = old.loadMore(action.version)
-    return [value, mapReducerDispatch(act, value => {
-      return {
-        type: "loadMoreBack",
-        value
-      }
-    })]
-  } else if (action.type == 'reloadBack') {
-    return [old.reloadBack(action.value), undefined]
-  } else if (action.type == 'loadMoreBack') {
-    return [old.loadMoreBack(action.value), undefined]
-  } else if (action.type == 'update') {
-    return [old.update(action.callback), undefined]
-  }
-  return [old, undefined];
-}
 /**
  * 
  * 与useAsyncPaginage的同异性
@@ -79,11 +18,9 @@ export function reducerAutoLoadMore<T, K>(
  * @returns
  */
 export function useAutoLoadMore<T, K>() {
-  const [data, dispatch] = useSideReducer<
-    AutoLoadMoreAction<T, K>,
-    PromiseAutoLoadMore<T, K>
-  >(
+  const [data, dispatch] = useSideReducer<AutoLoadMoreAction<T, K>, PromiseAutoLoadMore<T, K>>(
     reducerAutoLoadMore,
+    PromiseAutoLoadMore.empty as any
   );
-  return [data, dispatch]
+  return [data, dispatch] as const
 }

@@ -4,28 +4,21 @@ import { renderFragment, renderGuard, renderIf, renderOne, useCallbackPromiseSta
 import renderLkPage from "./util/renderLink";
 import { createBrowserHistory, Location } from "history";
 import { dom } from "better-react-dom";
-import { createRouter, locationMatch, trueForEmpty } from "./util/createRouter";
+import { createRouter, locationMatch } from "./util/createRouter";
 import { reorderRoutes } from "./reorder";
 import { centerPickerRoutes } from "./centerPicker";
 import { scrollerRoutes } from "./scroller";
 import { pageRoutes } from "./page";
-
+import onboard from "./onboard";
 
 export default function () {
   const history = useMemo(() => {
     return createBrowserHistory()
   }, emptyArray)
-  const [location, setRouter] = useChange(history.location)
-  useEffect(() => {
-    history.listen((update) => {
-      setRouter(update.location)
-    })
-  }, emptyArray)
   GlobalContext.hookProvider({
     history
   })
-  console.log(location)
-  renderRouter(location)
+  renderRouter(history)
   // renderFragment(function () {
 
   // }, location)
@@ -34,8 +27,6 @@ function mainPage() {
   renderPage({
     title: "一些demo",
   }, function () {
-
-
     renderLkPage("拖动", (history) => history.push('/reorder'))
     renderLkPage("循环滚动", history => history.push("/centerPicker"))
     renderLkPage("scroller", history => history.push("./scroller"))
@@ -45,22 +36,22 @@ function mainPage() {
     renderLkPage("circleChoose", history => history.push("./circleChoose"))
     renderLkPage("pulltoRefresh", history => history.push("./pulltoRefresh"))
     renderLkPage("taro", history => history.push("./taro"))
+    renderLkPage("onboard", history => history.push("./onboard"))
   })
 }
 
 
 
-const renderRouter = createRouter(
+const renderRouter = createRouter([
   {
-    match(location) {
-      return trueForEmpty(location.pathname == '/')
-    },
+    match: locationMatch("/"),
     page: mainPage
   },
   ...reorderRoutes,
   ...centerPickerRoutes,
   ...scrollerRoutes,
   ...pageRoutes,
+  ...onboard,
   {
     match: locationMatch("/pulltoRefresh"),
     getPage() {
@@ -91,4 +82,4 @@ const renderRouter = createRouter(
       return import("./taro")
     },
   },
-)
+])

@@ -1,13 +1,18 @@
 
 import { dom } from "better-react-dom"
 import { renderArray, useAtom, useEffect, useMemo, useSideReducer } from "better-react-helper"
-import { recycleScrollListReducer, cssMap, subscribeMove } from "wy-dom-helper"
-import { FrictionalFactory, arrayCountCreateWith, cacheVelocity, easeFns, emptyArray, getSpringBaseAnimationConfig, initRecycleListModel, numberIntFillWithN0, quote, readArraySliceCircle } from "wy-helper"
+import { recycleScrollListReducer, cssMap, subscribeMove, initDrag, dragInit, PagePoint, subscribeDragMove } from "wy-dom-helper"
+import { FrictionalFactory, arrayCountCreateWith, cacheVelocity, easeFns, emptyArray, getSpringBaseAnimationConfig, getTweenAnimationConfig, initRecycleListModel, numberIntFillWithN0, quote, readArraySliceCircle } from "wy-helper"
 import { renderPage } from "../util/page"
 
 const list = arrayCountCreateWith(60, v => v + 1)
 const rowHeight = 26
-const easeFn = easeFns.out(easeFns.circ)
+
+// const ease = getTweenAnimationConfig(400, easeFns.out(easeFns.quad))
+const fc = new FrictionalFactory(0.004)
+function fcGet(n: number) {
+  return fc.getFromDistance(n).animationConfig()
+}
 export default function () {
   renderPage({
     title: "reducer"
@@ -33,7 +38,7 @@ export default function () {
         velocity: cacheVelocity()
       }
     })
-    const lastPoint = useAtom<PointerEvent | undefined>(undefined)
+    const lastPoint = useAtom<PagePoint | undefined>(undefined)
     useEffect((e) => {
       const div = wrapperDiv
       const maxScrollheight = div.scrollHeight - div.clientHeight
@@ -46,28 +51,27 @@ export default function () {
         cellHeight: rowHeight
       })
 
-      return subscribeMove(function (e, end) {
+      return subscribeDragMove(function (m, e) {
         const lp = lastPoint.get()
         if (lp) {
-          if (end) {
-            const v = velocity.append(e.timeStamp, e.pageY)
-            lastPoint.set(undefined)
-            const fc = new FrictionalFactory()
+          if (m) {
+            velocity.append(e.timeStamp, m.pageY)
+            const diffY = m.pageY - lp.pageY
+            dispatch({
+              type: "changeDiff",
+              diff: diffY
+            })
+          } else {
             dispatch({
               type: "endMove",
-              idealDistance: fc.getFromVelocity(v).maxDistance,
+              idealDistance: fc.getFromVelocity(velocity.get()).maxDistance,
               getConfig(distance) {
                 // return getSpringBaseAnimationConfig()(distance)
                 return fc.getFromDistance(distance).animationConfig()
               },
             })
-          } else {
-            const diffY = e.pageY - lp.pageY
-            dispatch({
-              type: "changeDiff",
-              diff: diffY
-            })
           }
+          lastPoint.set(m)
         }
       })
     }, emptyArray)
@@ -75,7 +79,7 @@ export default function () {
       dispatch({
         type: "addIndex",
         value,
-        getConfig: getSpringBaseAnimationConfig()
+        getConfig: fcGet
       })
     }
     dom.div({
@@ -113,10 +117,10 @@ export default function () {
         user-select: none;
         overflow:hidden;
       `,
-        onPointerDown(event) {
-          velocity.reset(event.timeStamp, event.pageY)
-          lastPoint.set(event)
-        },
+        ...(dragInit((m, e) => {
+          velocity.reset(e.timeStamp, m.pageY)
+          lastPoint.set(m)
+        })),
       }).render(function () {
         dom.div({
           style: `

@@ -58,7 +58,8 @@ function useBaseReducer(reducer: any, init: any, initFun: any, eq: any, sideCall
         }
         //这里,合并多次,如果动作被执行了
         if (!realEq(oldValue, newValue)) {
-          value.set(objectDeepFreeze(newValue))
+          value.set(newValue)
+          // value.set(objectDeepFreeze(newValue))
           return true
         }
       })
@@ -103,6 +104,25 @@ export function createUseReducerFun<A, M>(
 ) {
   return function (initFun: () => M) {
     return useReducer(reducer, undefined, initFun, eq)
+  }
+}
+
+export function createUseSideReducer<A, M, I = M>(
+  reducer: ReducerWithDispatch<M, A>,
+  initFun?: (i: I) => M,
+  eq?: (a: M, b: M) => any
+) {
+  return function (init: I) {
+    return useSideReducer(reducer, init, initFun || quote as any, eq)
+  }
+}
+
+export function createUseSideReducerFun<A, M>(
+  reducer: ReducerWithDispatch<M, A>,
+  eq?: (a: M, b: M) => any
+) {
+  return function (initFun: () => M) {
+    return useSideReducer(reducer, undefined, initFun, eq)
   }
 }
 export function useReducer<F, M, T>(

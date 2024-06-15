@@ -1,9 +1,8 @@
 
-import { EmptyFun, emptyArray, emptyFun, emptyObject } from "wy-helper";
-import { renderIf, renderOne, useCallbackPromiseState } from "better-react-helper";
-import { Location } from "history";
+import { emptyArray, emptyFun, emptyObject } from "wy-helper";
+import { renderIf, renderOne, useCallbackPromiseState, useChange, useEffect } from "better-react-helper";
+import { BrowserHistory, Location } from "history";
 import { dom } from "better-react-dom";
-
 
 
 type Page = (v: Record<string, string>) => void
@@ -19,10 +18,13 @@ export type Route = {
   getPage?: never
   page: Page
 })
-export function createRouter(...routes: Route[]) {
-  return function (location: Location) {
+export function createRouter(
+  routes: Route[],
+  notFoun = emptyFun
+) {
+  function getPage(location: Location) {
     let outKey = -1
-    let renderFun = emptyFun
+    let renderFun = notFoun
     let outMap = emptyObject
     for (let i = 0; i < routes.length; i++) {
       const route = routes[i]
@@ -32,32 +34,71 @@ export function createRouter(...routes: Route[]) {
         outKey = i
         if (route.getPage) {
           renderFun = () => {
-            const { data, loading } = useCallbackPromiseState(route.getPage, emptyArray)
-            renderIf(loading, () => {
-              dom.div().renderText`Loading...`
-            })
-            renderIf(data?.type == 'success', function () {
-              data!.value.default()
-            }, () => {
-              dom.div().renderText`${data?.value}`
+            const { data } = useCallbackPromiseState(route.getPage, emptyArray)
+            renderOne(data?.type, () => {
+              const type = data?.type
+              if (type == 'success') {
+                data!.value.default(out)
+              } else if (type == 'error') {
+                renderError(data?.value)
+              } else {
+                renderLoading()
+              }
             })
           }
         } else {
-          renderFun = route.page
+          renderFun = () => {
+            route.page(out)
+          }
         }
         break
       }
     }
-    renderOne(outKey, function () {
-      renderFun(outMap)
-    })
+    return [renderFun, outKey] as const
+  }
+  return function (history: BrowserHistory) {
+    const [[renderPage, key], setRenderPage] = useChange(history.location, getPage)
+    useEffect(() => {
+      return history.listen(e => {
+        setRenderPage(getPage(e.location))
+      })
+    }, emptyArray)
+    renderOne(key, renderPage)
   }
 }
+
+export function renderError(value: string) {
+  dom.div({
+    style: `
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        `
+  }).renderText`${value}`
+}
+
+export function renderLoading() {
+  dom.div({
+
+    style: `
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        `
+  }).renderText`Loading...`
+
+}
+
 
 export function locationMatch(queryPath: string, startWith?: boolean): Match {
   return function (location) {
     if (startWith) {
-
       if (location.pathname.startsWith(queryPath)) {
         return emptyObject
       }
@@ -66,11 +107,5 @@ export function locationMatch(queryPath: string, startWith?: boolean): Match {
         return emptyObject
       }
     }
-  }
-}
-
-export function trueForEmpty(a: any) {
-  if (a) {
-    return emptyObject
   }
 }

@@ -66,10 +66,8 @@ export default function () {
                 transX.get(),
                 width)
               updateDirection(direction, vx)
-              moveInfo.set(undefined)
-            } else {
-              moveInfo.set(e)
             }
+            moveInfo.set(e)
           }
         }))
         addEffectDestroy(syncMergeCenter(transX, x => {

@@ -23,6 +23,8 @@ import useLayoutEffect from "./useLayoutEffect";
 import mySpringAnimation from "./bezier-preview/mySpringAnimation";
 import mySpring1 from "./bezier-preview/mySpring1";
 import pipline from "./pipline";
+import force3d from "./d3-learn/force/collide";
+import figmaClone from "./figmaClone";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(
@@ -34,7 +36,9 @@ export function createBr(app: HTMLElement) {
     // useLayoutEffect,
     // renderFilter,
     // cssLayout,
-    demo,
+    figmaClone,
+    // demo,
+    // force3d,
     // reorderList,
     // canvasRender,
     // insideAnimation,

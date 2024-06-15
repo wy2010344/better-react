@@ -1117,7 +1117,7 @@ export namespace React {
     // Standard HTML Attributes
     accessKey?: string | undefined;
     className?: string | undefined;
-    contentEditable?: Booleanish | "inherit" | "plaintext-only" | undefined;
+    // contentEditable?: Booleanish | "inherit" | "plaintext-only" | undefined;
     contextMenu?: string | undefined;
     dir?: string | undefined;
     draggable?: Booleanish | undefined;
@@ -1389,7 +1389,9 @@ export namespace React {
     src?: string | undefined;
     step?: number | string | undefined;
     type?: HTMLInputTypeAttribute | undefined;
-    //value?: string | ReadonlyArray<string> | number | undefined;
+
+    // value?: string | ReadonlyArray<string> | number | undefined;
+
     width?: number | string | undefined;
 
     onChange?: ChangeEventHandler<T> | undefined;

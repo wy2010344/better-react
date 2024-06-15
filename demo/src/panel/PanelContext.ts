@@ -1,6 +1,5 @@
 import { createContext } from "better-react"
 import usePanel, { PanelParams, Size } from "./renderPanel"
-import { useState } from "better-react-helper"
 
 export type PanelCollection = {
   id: number

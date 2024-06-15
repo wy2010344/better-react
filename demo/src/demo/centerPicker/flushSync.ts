@@ -1,8 +1,8 @@
 import { dom } from "better-react-dom";
 import { flushSync } from 'better-react'
 import { addEffectDestroy, createUseReducer, renderArray, useAtom, useHookEffect, useMemo } from "better-react-helper";
-import { readArraySliceCircle, arrayCountCreateWith, emptyArray, numberIntFillWithN0, quote, syncMergeCenter, recicleScrollViewView, cacheVelocity, FrictionalFactory, getSpringBaseAnimationConfig } from "wy-helper";
-import { animateFrame, cssMap, subscribeMove } from "wy-dom-helper";
+import { readArraySliceCircle, arrayCountCreateWith, emptyArray, numberIntFillWithN0, quote, syncMergeCenter, recicleScrollViewView, cacheVelocity, FrictionalFactory, getSpringBaseAnimationConfig, easeFns, getTweenAnimationConfig } from "wy-helper";
+import { PagePoint, animateFrame, cssMap, dragInit, subscribeDragMove, subscribeMove } from "wy-dom-helper";
 import { renderPage } from "../util/page";
 const list = arrayCountCreateWith(60, v => v + 1)
 
@@ -23,7 +23,15 @@ const useIndex = createUseReducer(function (value: number, action: {
   return value
 })
 
-const ease = getSpringBaseAnimationConfig()
+// const ease = getSpringBaseAnimationConfig({
+//   // velocityThreshold: 10,
+//   // displacementThreshold: 0.5
+// })
+// const ease = getTweenAnimationConfig(400, easeFns.out(easeFns.quad))
+const fc = new FrictionalFactory(0.004)
+function fcGet(n: number) {
+  return fc.getFromDistance(n).animationConfig()
+}
 export default function () {
   renderPage({
     title: "flushSync",
@@ -56,26 +64,26 @@ export default function () {
         velocity: cacheVelocity()
       }
     })
-    const lastPoint = useAtom<PointerEvent | undefined>(undefined)
+    const lastPoint = useAtom<PagePoint | undefined>(undefined)
     useHookEffect((e) => {
       const div = wrapperRef.get()!
       const maxScrollheight = div.scrollHeight - div.clientHeight
       const ish = -(maxScrollheight / 2)
       setInitScrollHeight(ish)
-      addEffectDestroy(subscribeMove(function (e, end) {
+      addEffectDestroy(subscribeDragMove(function (m, e) {
         const lp = lastPoint.get()
         if (lp) {
-          if (end) {
-            const v = velocity.append(e.timeStamp, e.pageY)
-            lastPoint.set(undefined)
-            const fc = new FrictionalFactory()
-            endMove(fc.getFromVelocity(v).maxDistance, distance => {
+          if (m) {
+            velocity.append(e.timeStamp, m.pageY)
+            const diffY = m.pageY - lp.pageY
+            moveUpdate(diffY)
+          } else {
+            endMove(fc.getFromVelocity(velocity.get()).maxDistance, distance => {
+              console.log("sss", distance)
               return fc.getFromDistance(distance).animationConfig()
             })
-          } else {
-            const diffY = e.pageY - lp.pageY
-            moveUpdate(diffY)
           }
+          lastPoint.set(m)
         }
       }))
       const contaier = containerRef.get()!
@@ -93,13 +101,19 @@ export default function () {
     }).render(function () {
       dom.button({
         onClick() {
-          wrapperAdd(-5, ease)
+          wrapperAdd(-5, fcGet)
         }
       }).renderText`-`
       dom.div().renderText`index${index}value${list[index]}`
       dom.button({
         onClick() {
-          wrapperAdd(5, ease)
+          /**
+           * 最后一次滚动有点慢,但其实很早就生效了,是要等到最后一次render结束才执行?不明白
+           * 当然和动画曲线本身也有一点关系
+           * 也许不应该用spring动画,应该用比较平滑一点的动画
+           * 应该使用摩擦运动的匀减速动画,和拖拽一致
+           */
+          wrapperAdd(5, fcGet)
         }
 
       }).renderText`+`
@@ -120,10 +134,10 @@ export default function () {
         user-select: none;
         overflow:hidden;
       `,
-        onPointerDown(event) {
-          velocity.reset(event.timeStamp, event.pageY)
-          lastPoint.set(event)
-        },
+        ...(dragInit((m, e) => {
+          velocity.reset(e.timeStamp, m.pageY)
+          lastPoint.set(m)
+        })),
       }).render(function () {
         const container = dom.div().render(function () {
           const cacheList = useMemo(() => {

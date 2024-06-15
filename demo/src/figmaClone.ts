@@ -1,11 +1,9 @@
 import { useState } from "better-react-helper";
-import { useDom } from "better-react-dom";
-import { normalPanel } from "./panel/PanelContext";
+import { dom } from "better-react-dom";
 
-export default normalPanel(function (operate) {
+export default function () {
   const [preText, setPreText] = useState('')
   dom.button({
-    textContent: "点击",
     async onClick() {
       const text = await navigator.clipboard.readText()
       console.log(text)
@@ -32,7 +30,6 @@ export default normalPanel(function (operate) {
               newList.push(replace.replace(COLORREG, function (vs) {
                 return getColorStr(lastRow)
               }).replace(RGBACOLORREG, function (vs) {
-                console.log("vss", vs)
                 return getColorStr(lastRow)
               }))
             } else {
@@ -55,18 +52,16 @@ export default normalPanel(function (operate) {
       navigator.clipboard.writeText(replaceText)
       setPreText(replaceText)
     }
-  })
+  }).renderTextContent("点击")
   dom.button({
-    textContent: "替换颜色",
     async onClick(e) {
       const text = await navigator.clipboard.readText()
       const replaceText = getColorStrBase(text)
       navigator.clipboard.writeText(replaceText)
       setPreText(replaceText)
     }
-  })
+  }).renderTextContent("替换颜色")
   dom.button({
-    textContent: "获得字体样式",
     async onClick(e) {
       const text = await navigator.clipboard.readText()
       const first = text.split('\n')[0]
@@ -77,11 +72,9 @@ export default normalPanel(function (operate) {
       navigator.clipboard.writeText(replaceText)
       setPreText(replaceText)
     }
-  })
-  useDom("pre", {
-    textContent: preText
-  })
-})
+  }).renderTextContent("获得字体样式")
+  dom.pre().renderTextContent(preText)
+}
 const StyleName = '//styleName: '
 
 const RGBACOLORREG = /[rR][gG][Bb][Aa]?[\(]([\s]*(2[0-4][0-9]|25[0-5]|[01]?[0-9][0-9]?),){2}[\s]*(2[0-4][0-9]|25[0-5]|[01]?[0-9][0-9]?),?[\s]*(0\.\d{1,2}|1|0)?[\)]{1}/
