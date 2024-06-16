@@ -1,4 +1,4 @@
-import { hookCommitAll } from "better-react"
+import { flushSync } from "better-react"
 import { useEffect, useMemo, useReducer, renderOne } from "better-react-helper"
 import { ContentEditableModel, EditRecord, appendRecord, contentEditableText, fixScroll } from "wy-dom-helper/contentEditable"
 import { emptyArray } from "wy-helper"
@@ -47,10 +47,10 @@ function reducer(model: ContentEditableModel, action: EditAction): ContentEditab
 
 export function useContentEditable<T>(t: T, initFun: (t: T) => ContentEditableModel) {
   const [value, _dispatch] = useReducer(reducer, t, initFun)
-  const commitAll = hookCommitAll()
   const dispatch: typeof _dispatch = function (v) {
-    _dispatch(v)
-    commitAll()
+    flushSync(() => {
+      _dispatch(v)
+    })
   }
   const current = useMemo(() => {
     return value.history[value.currentIndex]
@@ -81,4 +81,4 @@ export function useContentEditable<T>(t: T, initFun: (t: T) => ContentEditableMo
       })
     }
   }
-}
+} 

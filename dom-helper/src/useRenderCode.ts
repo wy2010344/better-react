@@ -8,7 +8,7 @@ export function useRenderCode<T>(
   init: T,
   initFun: (v: T) => ContentEditableModel,
 ) {
-  const { value, dispatch, current, renderContentEditable } = useContentEditable(init, initFun)
+  const { value, current, renderContentEditable, dispatch } = useContentEditable(init, initFun)
   const editorRef = useAtom<HTMLDivElement | undefined>(undefined)
   return {
     value,

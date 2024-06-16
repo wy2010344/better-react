@@ -499,7 +499,6 @@ export function useCodeJar<T extends DomElementType>(tag: T, {
       //粘贴的时候,内容与选中都会改变,然后记录历史
       rememberHistory()
     },
-    contentEditable: readonly ? false : contentEditableText,
     spellcheck,
     style: stringifyStyle({
       resize: height ? "none" : "vertical",
@@ -511,6 +510,6 @@ export function useCodeJar<T extends DomElementType>(tag: T, {
       whiteSpace: "pre-wrap",
       textAlign: "left"
     })
-  }).render()
+  }).renderTextContent('', readonly ? false : contentEditableText,)
   return editor as DomElement<T>
 }

@@ -57,8 +57,5 @@
     "better-react": "^1.2.6",
     "wy-helper": "^0.1.0"
   },
-  "dependencies": {
-    "better-react": "file:.yalc/better-react",
-    "wy-helper": "file:.yalc/wy-helper"
-  }
+  "dependencies": {}
 }

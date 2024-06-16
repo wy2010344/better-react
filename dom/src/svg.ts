@@ -129,7 +129,7 @@ export class SvgCreater<T extends SvgElementType> {
     return this.renderTextContent(genTemplateString(ts, vs))
   }
   renderInnerHTML(innerHTML: string) {
-    const helper = useMemo(SvgHelper.create, this.type)
+    const helper: SvgHelper<T> = useMemo(SvgHelper.create, this.type)
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {
@@ -140,7 +140,7 @@ export class SvgCreater<T extends SvgElementType> {
     return helper.node
   }
   renderTextContent(textContent: string) {
-    const helper = useMemo(SvgHelper.create, this.type)
+    const helper: SvgHelper<T> = useMemo(SvgHelper.create, this.type)
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {
@@ -151,7 +151,7 @@ export class SvgCreater<T extends SvgElementType> {
     return helper.node
   }
   renderOut<O>(fun: (node: SvgElement<T>) => O): O {
-    const helper = useMemo(SvgHelper.create, this.type)
+    const helper: SvgHelper<T> = useMemo(SvgHelper.create, this.type)
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {

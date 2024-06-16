@@ -128,7 +128,7 @@ export class DomCreater<T extends DomElementType> {
     return this.renderTextContent(genTemplateString(ts, vs))
   }
   renderInnerHTML(innerHTML: string, contentEditable?: boolean | "inherit" | "plaintext-only") {
-    const helper = useMemo(DomHelper.create, this.type)
+    const helper: DomHelper<T> = useMemo(DomHelper.create, this.type)
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {
@@ -139,7 +139,7 @@ export class DomCreater<T extends DomElementType> {
     return helper.node
   }
   renderTextContent(textContent: string, contentEditable?: boolean | "inherit" | "plaintext-only") {
-    const helper = useMemo(DomHelper.create, this.type)
+    const helper: DomHelper<T> = useMemo(DomHelper.create, this.type)
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {
@@ -150,7 +150,7 @@ export class DomCreater<T extends DomElementType> {
     return helper.node
   }
   renderOut<O>(fun: (node: DomElement<T>) => O): O {
-    const helper = useMemo(DomHelper.create, this.type)
+    const helper: DomHelper<T> = useMemo(DomHelper.create, this.type)
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {
