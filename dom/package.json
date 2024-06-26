@@ -15,5 +15,9 @@
     "vite": "^5.2.0",
     "vite-plugin-dts": "^3.7.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "better-react": "file:.yalc/better-react",
+    "better-react-helper": "file:.yalc/better-react-helper",
+    "wy-helper": "file:.yalc/wy-helper"
+  }
 }

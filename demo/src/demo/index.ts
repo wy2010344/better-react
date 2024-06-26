@@ -10,6 +10,7 @@ import { centerPickerRoutes } from "./centerPicker";
 import { scrollerRoutes } from "./scroller";
 import { pageRoutes } from "./page";
 import onboard from "./onboard";
+import note from './note'
 
 export default function () {
   const history = useMemo(() => {
@@ -37,6 +38,7 @@ function mainPage() {
     renderLkPage("pulltoRefresh", history => history.push("./pulltoRefresh"))
     renderLkPage("taro", history => history.push("./taro"))
     renderLkPage("onboard", history => history.push("./onboard"))
+    renderLkPage("note", history => history.push("./note"))
   })
 }
 
@@ -52,6 +54,7 @@ const renderRouter = createRouter([
   ...scrollerRoutes,
   ...pageRoutes,
   ...onboard,
+  ...note,
   {
     match: locationMatch("/pulltoRefresh"),
     getPage() {

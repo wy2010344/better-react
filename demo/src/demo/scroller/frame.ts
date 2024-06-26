@@ -1,4 +1,4 @@
-import { DammpingFactory, FrictionalFactory, cacheVelocity, easeFns, emptyArray, frictionalAnimationConfig, getSpringBaseAnimationConfig, getTweenAnimationConfig, scrollEases, syncMergeCenter, tweenAnimationConfig } from "wy-helper";
+import { DammpingFactory, FrictionalFactory, cacheVelocity, easeFns, emptyArray, getTweenAnimationConfig, syncMergeCenter } from "wy-helper";
 import { renderTemplate } from "./template";
 import { addEffectDestroy, useAtom, useHookEffect, useMemo } from "better-react-helper";
 import { buildScroll, MomentumIScroll, } from 'wy-helper'
@@ -26,7 +26,6 @@ export default function () {
       },
       finish(v) {
         const out = bs.destinationWithMargin(v)
-        console.log("vs", out)
         if (out.type == "scroll") {
           translateY.changeTo(out.target, getTweenAnimationConfig(out.duration, easeFns.out(easeFns.circ)))
         } else if (out.type == "scroll-edge") {

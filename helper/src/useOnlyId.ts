@@ -9,8 +9,8 @@ let id = 0
  * @param deps 
  * @returns 
  */
-export function useOnlyId(deps?: readonly any[]) {
-  return useMemo(getOnlyId, deps || emptyArray)
+export function useOnlyId(deps: any = emptyArray) {
+  return useMemo(getOnlyId, deps)
 }
 export function getOnlyId() {
   return id++

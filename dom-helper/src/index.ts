@@ -15,3 +15,4 @@ export * from './reorder'
 export * from './usePageOffsetChange'
 export * from './usePipline'
 export * from "./useRenderCode"
+export * from "./useUrlSearchParam"

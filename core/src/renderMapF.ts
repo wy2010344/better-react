@@ -1,4 +1,4 @@
-import { FiberImpl, MemoEvent } from "./Fiber"
+import { Fiber, FiberEvent } from "./Fiber"
 import { draftParentFiber, hookAddResult, hookParentFiber, hookTempOps, revertParentFiber } from "./cache"
 import { renderBaseFiber, useBaseMemo, hookLevelEffect } from "./fc"
 import { alawaysFalse, storeRef } from "wy-helper"
@@ -15,11 +15,11 @@ export type MapRowRender<C, T> = readonly [
   C,
   any,
   (a: T, b: T) => any,
-  (v: MemoEvent<T>) => void,
+  (v: FiberEvent<T>) => void,
   T,
 ]
 function createMapRef() {
-  return storeRef(new Map<any, FiberImpl[]>())
+  return storeRef(new Map<any, Fiber[]>())
 }
 
 /**
@@ -43,13 +43,13 @@ export function renderMapF<M, C, D>(
     function () {
       const mapRef = useBaseMemo(alawaysFalse, createMapRef, undefined);
       const oldMap = cloneMap(mapRef.get())
-      const newMap = new Map<any, FiberImpl[]>()
+      const newMap = new Map<any, Fiber[]>()
       hookLevelEffect(0, function () {
         mapRef.set(newMap)
       })
       const parentFiber = hookParentFiber()
 
-      let beforeFiber: FiberImpl | undefined = undefined
+      let beforeFiber: Fiber | undefined = undefined
       //提前置空
       parentFiber.firstChild.set(undefined!)
       parentFiber.lastChild.set(undefined!)
@@ -64,18 +64,20 @@ export function renderMapF<M, C, D>(
         let currentFiber = oldFibers?.[0]
         if (currentFiber) {
           //因为新排序了,必须产生draft用于排序,
-          currentFiber.changeRender(rowRender, deps)
+          currentFiber.changeRender(childConfig, rowRender, deps)
           currentFiber.before.set(beforeFiber)
           oldFibers?.shift()
         } else {
-          const tempFiber = FiberImpl.createMapChild(
+          const tempFiber = Fiber.createMapChild(
             parentFiber.envModel,
             parentFiber,
-            childConfig,
             {
+              shouldChange: childConfig,
               render: rowRender,
-              deps,
-              isNew: true
+              event: {
+                trigger: deps,
+                isInit: true
+              }
             })
           tempFiber.subOps = hookTempOps().createSub()
 

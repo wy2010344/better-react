@@ -1,6 +1,5 @@
-import { EmptyFun, ReduceRowState, ReduceState, alawaysFalse, buildSubSetArray, buildSubSetObject } from "wy-helper"
+import { ParentSet, ReduceRowState, buildSubSetArray, buildSubSetArrayKey, buildSubSetObject, emptyArray } from "wy-helper"
 import { useMemo } from "./useRef"
-import { StoreValue, hookCreateChangeAtom } from "better-react"
 
 /**
  * 对react-setState的局部嵌套
@@ -10,16 +9,23 @@ import { StoreValue, hookCreateChangeAtom } from "better-react"
  * @param buildParent 
  */
 export function useBuildSubSetObject<PARENT extends object, K extends keyof PARENT>(
-  parentSet: ReduceState<PARENT>,
+  parentSet: ParentSet<PARENT>,
   key: K,
   callback?: (v: PARENT[K], parent: PARENT) => PARENT[K]
 ) {
-  return useMemo(() => buildSubSetObject(parentSet, key, callback), [])
+  return useMemo(() => buildSubSetObject(parentSet, key, callback), emptyArray)
 }
 
 export function useBuildSubSetArray<T>(
-  parentSet: ReduceState<T[]>,
+  parentSet: ParentSet<T[]>,
   equal: ((v: T) => boolean)
 ): ReduceRowState<T> {
-  return useMemo(() => buildSubSetArray(parentSet, equal), [])
+  return useMemo(() => buildSubSetArray(parentSet, equal), emptyArray)
+}
+
+
+export function useBuildSubSetArrayKey<T, K>(
+  parentSet: ParentSet<T[]>, getKey: (v: T) => K, row: T
+) {
+  return useMemo(() => buildSubSetArrayKey(parentSet, getKey, row), emptyArray)
 }

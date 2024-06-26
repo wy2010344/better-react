@@ -1,5 +1,5 @@
-import { Fiber, ReconcileFun } from "./Fiber";
-import { EffectDestroyEvent, FiberImpl, HookEffect, RenderWithDep } from "./Fiber";
+import { Fiber, HookMemo, ReconcileFun } from "./Fiber";
+import { EffectDestroyEvent, HookEffect, RenderWithDep } from "./Fiber";
 import { quote, simpleNotEqual, alawaysTrue, ValueCenter, valueCenterOf, arrayNotEqual, EmptyFun } from "wy-helper";
 import { draftParentFiber, hookAddEffect, hookAddFiber, hookParentFiber, hookTempOps, revertParentFiber } from "./cache";
 
@@ -7,9 +7,9 @@ import { draftParentFiber, hookAddEffect, hookAddFiber, hookParentFiber, hookTem
 const hookIndex = {
   effect: 0,
   memo: 0,
-  beforeFiber: undefined as (FiberImpl | undefined),
+  beforeFiber: undefined as (Fiber | undefined),
 }
-export function updateFunctionComponent(fiber: FiberImpl) {
+export function updateFunctionComponent(fiber: Fiber) {
   revertParentFiber()
   hookAddFiber(fiber)
   hookIndex.effect = 0
@@ -45,6 +45,7 @@ export type EffectEvent<V, T> = {
  */
 export function useLevelEffect<V, T>(
   level: number,
+  /**可以像memo一样放在外面..*/
   shouldChange: (a: T, b: T) => any,
   effect: (e: EffectEvent<V, T>) => EffectResult<V, T>, deps: T): void {
   const parentFiber = hookParentFiber()
@@ -85,11 +86,8 @@ export function useLevelEffect<V, T>(
       throw new Error("出现了更多的effect")
     }
     const state = hookEffect.get()
-    if (state.shouldChange != shouldChange) {
-      throw new Error('shouldChange发生改变')
-    }
     hookIndex.effect = index + 1
-    if (shouldChange(state.deps, deps)) {
+    if (state.shouldChange(state.deps, deps)) {
       const newState: HookEffect<V, T> = {
         level,
         deps,
@@ -167,21 +165,18 @@ export function useBaseMemo<T, V>(
   if (isInit) {
     const hookMemos = parentFiber.hookMemo || []
     parentFiber.hookMemo = hookMemos
-
     draftParentFiber()
-    const state = {
+    const state: HookMemo<T, V> = {
       value: effect({
         isInit,
         trigger: deps
       }),
-      deps
+      deps,
+      shouldChange
     }
     revertParentFiber()
     const hook = parentFiber.envModel.createChangeAtom(state)
-    hookMemos.push({
-      value: hook,
-      shouldChange
-    })
+    hookMemos.push(hook)
     return state.value
   } else {
     const hookMemos = parentFiber.hookMemo
@@ -193,26 +188,24 @@ export function useBaseMemo<T, V>(
     if (!hook) {
       throw new Error("出现了更多的memo")
     }
-    if (hook.shouldChange != shouldChange) {
-      throw new Error("shouldChange发生改变")
-    }
+    const state = hook.get()
     hookIndex.memo = index + 1
-    const state = hook.value.get()
-    if (hook.shouldChange(state.deps, deps)) {
+    if (state.shouldChange(state.deps, deps)) {
       //不处理
       draftParentFiber()
-      const newState = {
+      const newState: HookMemo<T, V> = {
         value: effect({
           beforeTrigger: state.deps,
           isInit: false,
           trigger: deps,
           beforeValue: state.value
         }),
-        deps
+        deps,
+        shouldChange
       }
       revertParentFiber()
 
-      hook.value.set(newState)
+      hook.set(newState)
       return newState.value
     }
     return state.value
@@ -223,18 +216,20 @@ export function renderBaseFiber<T>(
   ...[shouldChange, render, deps]: RenderWithDep<T>
 ): Fiber {
   const parentFiber = hookParentFiber()
-  let currentFiber: FiberImpl
+  let currentFiber: Fiber
   const isInit = parentFiber.effectTag.get() == 'PLACEMENT'
   if (isInit) {
     //新增
-    currentFiber = FiberImpl.createFix(
+    currentFiber = Fiber.createFix(
       parentFiber.envModel,
       parentFiber,
-      shouldChange,
       {
+        shouldChange,
         render,
-        deps,
-        isNew: true,
+        event: {
+          trigger: deps,
+          isInit
+        }
       },
       dynamicChild)
     currentFiber.subOps = hookTempOps().createSub()
@@ -252,7 +247,7 @@ export function renderBaseFiber<T>(
 
   } else {
     //修改
-    let oldFiber: FiberImpl | void = undefined
+    let oldFiber: Fiber | void = undefined
     if (hookIndex.beforeFiber) {
       oldFiber = hookIndex.beforeFiber.next.get()
     }
@@ -262,13 +257,9 @@ export function renderBaseFiber<T>(
     if (!oldFiber) {
       throw new Error("非预期地多出现了fiber")
     }
-    if (oldFiber.shouldChange != shouldChange) {
-      throw new Error("shouldChange发生改变")
-    }
     currentFiber = oldFiber
-
     hookIndex.beforeFiber = currentFiber
-    currentFiber.changeRender(render, deps)
+    currentFiber.changeRender(shouldChange, render, deps)
   }
   hookTempOps().addNode(currentFiber.subOps)
   return currentFiber
@@ -320,8 +311,8 @@ class ContextFactory<T> implements Context<T> {
     }
     hook.set(v)
   }
-  private findProviderFiber(_fiber: FiberImpl) {
-    let fiber = _fiber as FiberImpl | undefined
+  private findProviderFiber(_fiber: Fiber) {
+    let fiber = _fiber as Fiber | undefined
     while (fiber) {
       if (fiber.contextProvider) {
         const providers = fiber.contextProvider

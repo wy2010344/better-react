@@ -1,6 +1,6 @@
 import { deepTravelFiber, EnvModel, LoopWork, LoopWorkLevel } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
-import { FiberImpl } from "./Fiber"
+import { Fiber } from "./Fiber"
 import { AskNextTimeWork, EmptyFun, NextTimeWork, run } from "wy-helper"
 
 
@@ -103,13 +103,13 @@ export function getReconcile(
 }
 
 export function batchWork(
-  rootFiber: FiberImpl,
+  rootFiber: Fiber,
   envModel: EnvModel,
 ) {
   function workLoop(
     renderWork: RenderWorks,
-    unitOfWork: FiberImpl,
-    commitWork: NextTimeWork
+    unitOfWork: Fiber,
+    commitWork: EmptyFun
   ) {
     const nextUnitOfWork = performUnitOfWork(unitOfWork)
     if (nextUnitOfWork) {
@@ -132,7 +132,7 @@ export function batchWork(
     envModel.updateEffect(0, clearFiber)
   }
   return {
-    beginRender(renderWorks: RenderWorks, commitWork: NextTimeWork) {
+    beginRender(renderWorks: RenderWorks, commitWork: EmptyFun) {
       if (envModel.shouldRender() && rootFiber) {
         //开始render,不能中止
         workLoop(renderWorks, rootFiber, commitWork)
@@ -202,30 +202,26 @@ function buildWorkUnits(
       }
     }
   }
-  const getRenderWorkLow = getTheRenderWork(4)
-  const getRenderWork = getTheRenderWork(3)
-  const getLayoutRenderWork = getTheRenderWork(2)
-  const getFlushRenderWork = getTheRenderWork(1)
+  const getRenderWorkLow = getTheRenderWork(WorkLevel.Low)
+  const getRenderWork = getTheRenderWork(WorkLevel.Normal)
+  const getLayoutRenderWork = getTheRenderWork(WorkLevel.Layout)
+  const getFlushRenderWork = getTheRenderWork(WorkLevel.Flush)
   function getRollbackWork(level: number, getWork: () => void | EmptyFun) {
     return function () {
       renderWorks.rollback()
       currentTick.rollback()
       envModel.rollback()
-      if (level > 1) {
-        console.log("有新的低优先级任务出现,中断之前的低优先级")
-      } else {
-        console.log("强行中断低优先级任务,执行高优先级")
-      }
+      console.log(`执行${level}级任务,中断低优先级`)
       const work = getWork()
       if (work) {
         work()
       }
     }
   }
-  const rollBackWorkLow = getRollbackWork(4, getRenderWorkLow)
-  const rollBackWork = getRollbackWork(3, getRenderWork)
-  const rollBackLayoutWork = getRollbackWork(2, getLayoutRenderWork)
-  const rollBackWorkFlush = getRollbackWork(1, getFlushRenderWork)
+  const rollBackWorkLow = getRollbackWork(WorkLevel.Low, getRenderWorkLow)
+  const rollBackWork = getRollbackWork(WorkLevel.Normal, getRenderWork)
+  const rollBackLayoutWork = getRollbackWork(WorkLevel.Layout, getLayoutRenderWork)
+  const rollBackWorkFlush = getRollbackWork(WorkLevel.Flush, getFlushRenderWork)
   return {
     appendWork(work: LoopWork) {
       workList.push(work)
@@ -234,7 +230,7 @@ function buildWorkUnits(
       return getFlushRenderWork()
     },
     getFlushWork() {
-      if (currentTick.level() > 1) {
+      if (currentTick.level() > WorkLevel.Flush) {
         if (getFlushRenderWork()) {
           return rollBackWorkFlush
         }
@@ -252,7 +248,7 @@ function buildWorkUnits(
       return getLayoutRenderWork()
     },
     getLayoutWork() {
-      if (currentTick.level() > 2) {
+      if (currentTick.level() > WorkLevel.Layout) {
         if (getLayoutRenderWork()) {
           return rollBackLayoutWork
         }
@@ -267,7 +263,7 @@ function buildWorkUnits(
       }
     },
     getNextWork(): NextTimeWork | void {
-      if (currentTick.level() > 3) {
+      if (currentTick.level() > WorkLevel.Normal) {
         /**
          * 如果当前是延迟任务
          * 寻找是否有渲染任务,如果有,则中断
@@ -358,7 +354,15 @@ class CurrentTick {
   }
 }
 
-let currentTaskLevel: LoopWorkLevel = 3
+
+const WorkLevel = {
+  Flush: 1,
+  Layout: 2,
+  Normal: 3,
+  Low: 4
+} as const
+
+let currentTaskLevel: LoopWorkLevel = WorkLevel.Normal
 /**
  * 按理说,与flushSync相反,这个是尽量慢
  * 但fun里面仍然是setState,不会减少触发呢
@@ -366,21 +370,21 @@ let currentTaskLevel: LoopWorkLevel = 3
  */
 export function startTransition(fun: () => void) {
   const old = currentTaskLevel
-  currentTaskLevel = 4
+  currentTaskLevel = WorkLevel.Low
   fun()
   currentTaskLevel = old
 }
 
 function layoutEffect(fun: EmptyFun) {
   const old = currentTaskLevel
-  currentTaskLevel = 2
+  currentTaskLevel = WorkLevel.Layout
   fun()
   currentTaskLevel = old
 }
 
 export function flushSync(fun: () => void) {
   const old = currentTaskLevel
-  currentTaskLevel = 1
+  currentTaskLevel = WorkLevel.Flush
   fun()
   currentTaskLevel = old
   flushWorkMap.forEach(run)

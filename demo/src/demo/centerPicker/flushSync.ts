@@ -28,7 +28,7 @@ const useIndex = createUseReducer(function (value: number, action: {
 //   // displacementThreshold: 0.5
 // })
 // const ease = getTweenAnimationConfig(400, easeFns.out(easeFns.quad))
-const fc = new FrictionalFactory(0.004)
+const fc = new FrictionalFactory()
 function fcGet(n: number) {
   return fc.getFromDistance(n).animationConfig()
 }

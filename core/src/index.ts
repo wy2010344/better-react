@@ -1,4 +1,4 @@
-import { FiberImpl } from "./Fiber"
+import { Fiber } from "./Fiber"
 import { batchWork, getReconcile } from "./reconcile"
 import { CreateChangeAtom, EnvModel } from "./commitWork"
 import { AskNextTimeWork, EmptyFun, alawaysTrue } from "wy-helper"
@@ -19,6 +19,7 @@ export {
   hookEndTempOps,
   hookAddResult
 } from './cache'
+export type { MemoCacheEvent } from './fc'
 export {
   TempOps,
   TempSubOps,
@@ -28,11 +29,10 @@ export type { EffectResult, EffectEvent, EffectDestroy } from './fc'
 export type {
   Fiber,
   RenderWithDep,
-  MemoEvent,
+  FiberEvent,
   EffectDestroyEvent,
   StoreValue
 } from './Fiber'
-export { isFiber } from './Fiber'
 export { CreateChangeAtom } from './commitWork'
 export * from './renderMapF'
 export function render(
@@ -41,10 +41,13 @@ export function render(
   getAsk: AskNextTimeWork
 ) {
   const envModel = new EnvModel()
-  const rootFiber = FiberImpl.createFix(envModel, null!, alawaysTrue, {
+  const rootFiber = Fiber.createFix(envModel, null!, {
+    shouldChange: alawaysTrue,
     render,
-    isNew: true,
-    deps: undefined
+    event: {
+      trigger: undefined,
+      isInit: true
+    }
   })
   rootFiber.subOps = getSubOps(envModel.createChangeAtom)
   const { destroy, beginRender } = batchWork(

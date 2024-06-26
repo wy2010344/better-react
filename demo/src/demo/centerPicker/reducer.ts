@@ -9,7 +9,7 @@ const list = arrayCountCreateWith(60, v => v + 1)
 const rowHeight = 26
 
 // const ease = getTweenAnimationConfig(400, easeFns.out(easeFns.quad))
-const fc = new FrictionalFactory(0.004)
+const fc = new FrictionalFactory()
 function fcGet(n: number) {
   return fc.getFromDistance(n).animationConfig()
 }
@@ -56,6 +56,7 @@ export default function () {
         if (lp) {
           if (m) {
             velocity.append(e.timeStamp, m.pageY)
+            console.log("v", e.timeStamp, m.pageY, velocity.get())
             const diffY = m.pageY - lp.pageY
             dispatch({
               type: "changeDiff",

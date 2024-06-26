@@ -1,4 +1,4 @@
-import { FiberImpl } from "./Fiber"
+import { Fiber } from "./Fiber"
 import { EmptyFun, ManageValue, StoreRef, emptyFun, iterableToList, quote, removeEqual, run, storeRef } from "wy-helper"
 import { hookAddEffect } from "./cache"
 
@@ -20,14 +20,7 @@ export class EnvModel {
     if (this.onWork != 'commit') {
       throw new Error('只能在commit work中提交')
     }
-    //对应useLayoutEffect
-    const that = this
-    that.realTime.set(true)
-    that.reconcile(function () {
-      that.updateEffect(0, function () {
-        that.realTime.set(false)
-      })
-    })
+    this.realTime.set(true)
   }
 
 
@@ -44,8 +37,8 @@ export class EnvModel {
   commitAll: () => void = emptyFun
   reconcile: Reconcile = null as any
   /**本次等待删除的fiber*/
-  private readonly deletions: FiberImpl[] = []
-  addDelect(fiber: FiberImpl) {
+  private readonly deletions: Fiber[] = []
+  addDelect(fiber: Fiber) {
     this.deletions.push(fiber)
   }
   private updateEffects = new Map<number, EmptyFun[]>()
@@ -86,10 +79,12 @@ export class EnvModel {
     this.deletions.length = 0
     this.updateEffects.clear()
   }
+  //最后执行是否有layoutWork
   layoutWork: EmptyFun = emptyFun
-
+  //在useEffect里执行的LayoutEffect
   layoutEffect: EmptyFun = emptyFun
   commit() {
+    this.realTime.set(false)
     /**最新更新所有注册的*/
     this.changeAtoms.forEach(atom => atom.commit())
     this.changeAtoms.length = 0
@@ -199,18 +194,18 @@ class ChangeAtom<T> implements StoreRef<T> {
  * @returns 
  */
 
-function notifyDel(fiber: FiberImpl) {
+function notifyDel(fiber: Fiber) {
   destroyFiber(fiber)
   const child = fiber.firstChild.get()
   if (child) {
-    let next: FiberImpl | void = child
+    let next: Fiber | void = child
     while (next) {
       notifyDel(next)
       next = next.next.get()
     }
   }
 }
-function destroyFiber(fiber: FiberImpl) {
+function destroyFiber(fiber: Fiber) {
   fiber.destroyed = true
   const effects = fiber.hookEffects
   if (effects) {
@@ -233,20 +228,19 @@ function destroyFiber(fiber: FiberImpl) {
       })
     })
   }
-  // fiber.dom?.destroy()
 }
 
 
 
-export function deepTravelFiber<T extends any[]>(call: (Fiber: FiberImpl, ...vs: T) => void) {
-  return function (fiber: FiberImpl, ...vs: T) {
+export function deepTravelFiber<T extends any[]>(call: (Fiber: Fiber, ...vs: T) => void) {
+  return function (fiber: Fiber, ...vs: T) {
     call(fiber, ...vs)
     const child = fiber.firstChild.get()
     if (child) {
       return child
     }
     /**寻找叔叔节点 */
-    let nextFiber: FiberImpl | undefined = fiber
+    let nextFiber: Fiber | undefined = fiber
     while (nextFiber) {
       const next = nextFiber.next.get()
       if (next) {

@@ -2,12 +2,12 @@
   "version": "v1",
   "packages": {
     "better-react": {
-      "signature": "154cad02d83ec143db68fe49972d60ec",
+      "signature": "347349c2d15ad6552f77e8d3e05bee91",
       "file": true,
       "replaced": "^1.2.4"
     },
     "wy-helper": {
-      "signature": "b7b2b5dabeb73584fd9c3b8cacab142b",
+      "signature": "bc932bd31b970424a0649cbd036eb61b",
       "file": true
     }
   }
