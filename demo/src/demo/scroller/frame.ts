@@ -164,7 +164,7 @@ export default function () {
       // })
     }), emptyArray)
 
-    const velocity = useMemo(() => cacheVelocity(32))
+    const velocity = useMemo(() => cacheVelocity(32), emptyArray)
     const isDrag = useAtom(false)
     useHookEffect(() => {
       const c = container

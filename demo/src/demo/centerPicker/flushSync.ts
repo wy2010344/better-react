@@ -57,13 +57,13 @@ export default function () {
           value: n
         })
       }, 26, animateFrame(0))
-    })
+    }, emptyArray)
 
     const { velocity } = useMemo(() => {
       return {
         velocity: cacheVelocity()
       }
-    })
+    }, emptyArray)
     const lastPoint = useAtom<PagePoint | undefined>(undefined)
     useHookEffect((e) => {
       const div = wrapperRef.get()!

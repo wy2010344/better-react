@@ -1,6 +1,6 @@
 import { hookAddResult, render } from "better-react";
 import { AskNextTimeWork } from "wy-helper";
-import { useAttrEffect, useMemo, useOneAttrEffect } from "better-react-helper";
+import { useAttrEffect, useMemo } from "better-react-helper";
 import { createNodeTempOps } from "./util";
 export { isSVG } from './updateDom'
 export { getAliasOfAttribute, getAttributeAlias } from './getAttributeAlias'
@@ -55,7 +55,7 @@ export function useTextContent(node: Node, value: string) {
  */
 export function renderContent(content: string, asPortal?: boolean) {
   const node = useMemo(creatTextContent)
-  useOneAttrEffect((e) => {
+  useAttrEffect((e) => {
     node.textContent = e.trigger
   }, content)
   if (asPortal) {

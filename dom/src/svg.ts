@@ -2,16 +2,16 @@ import { MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookCreateChangeAt
 import { SvgAttribute, SvgElement, SvgElementType } from "./html"
 import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
 import { updateDom } from "./updateDom"
-import { emptyFun, emptyObject, quoteOrLazyGet } from "wy-helper"
+import { SetValue, emptyFun, emptyObject, quoteOrLazyGet } from "wy-helper"
 import { updateProps } from "./dom"
 import { getAttributeAlias } from "./getAttributeAlias"
 import { ListCreater, createNodeTempOps, genTemplateString } from "./util"
 import { svgTagNames } from "./updateDom"
 
 
-function createUpdateSvg<T extends SvgElementType>(e: MemoEvent<SvgElement<T>>) {
+function createUpdateSvg<T extends SvgElementType>(e: MemoEvent<SetValue<SvgAttribute<T>>, SvgElement<T>>): SetValue<SvgAttribute<T>> {
   let oldAttrs: SvgAttribute<T> = emptyObject
-  return function (attrs: SvgAttribute<T>) {
+  return function (attrs) {
     updateDom(e.trigger, updateSVGProps, attrs, oldAttrs)
     oldAttrs = attrs
   }
@@ -37,11 +37,11 @@ function updateSVGProps(node: any, key: string, value?: any) {
 
 export function useUpdateSvgNodeAttr<T extends SvgElementType>(
   node: SvgElement<T>
-) {
+): SetValue<SvgAttribute<T>> {
   return useMemo(createUpdateSvg, node)
 }
 
-export function createSvgElement(e: MemoEvent<string>) {
+export function createSvgElement(e: MemoEvent<Node, string>) {
   return document.createElementNS("http://www.w3.org/2000/svg", e.trigger)
 }
 export function useSvgNode<T extends SvgElementType>(
@@ -87,7 +87,7 @@ class SvgHelper<T extends SvgElementType> {
     }
     return this.tempOps
   }
-  static create<T extends SvgElementType>(e: MemoEvent<T>) {
+  static create<T extends SvgElementType>(e: MemoEvent<SvgHelper<T>, T>) {
     return new SvgHelper(e.trigger)
   }
 }

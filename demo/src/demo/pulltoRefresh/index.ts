@@ -26,7 +26,7 @@ export default function () {
 
 
     const [loading, setLoading] = useChange(false)
-    const transY = useMemo(() => animateFrame(0))
+    const transY = useMemo(() => animateFrame(0), emptyArray)
     const loadingValue = useValueCenter(0)
 
     useEffect(() => {

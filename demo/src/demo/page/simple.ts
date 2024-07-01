@@ -10,7 +10,7 @@ export default function () {
     const [index, updateIndex] = useChange(0)
 
     const wrapperRef = useAtom<HTMLDivElement | undefined>(undefined)
-    const transX = useMemo(() => animateFrame(0))
+    const transX = useMemo(() => animateFrame(0), emptyArray)
     const updateDirection = useEvent((direction: number, velocity = 0) => {
       const width = wrapperRef.get()!.clientWidth
       if (direction < 0) {
@@ -50,7 +50,7 @@ export default function () {
         return {
           velocityX: cacheVelocity()
         }
-      })
+      }, emptyArray)
       const moveInfo = useAtom<PointerEvent | undefined>(undefined)
       useHookEffect(() => {
         addEffectDestroy(subscribeMove(function (e, end) {

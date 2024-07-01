@@ -125,7 +125,7 @@ export default function () {
           rot: animateFrame(0),
           scale: animateFrame(1.5)
         }
-      })
+      }, emptyArray)
       useHookEffect(() => {
         setTimeout(() => {
           y.changeTo(i * 4, ease)

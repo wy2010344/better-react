@@ -19,7 +19,7 @@ export {
   hookEndTempOps,
   hookAddResult
 } from './cache'
-export type { MemoCacheEvent } from './fc'
+export type { MemoEvent } from './fc'
 export {
   TempOps,
   TempSubOps,

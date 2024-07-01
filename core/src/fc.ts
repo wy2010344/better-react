@@ -138,16 +138,16 @@ export function hookCreateChangeAtom() {
   const parentFiber = hookParentFiber()
   return parentFiber.envModel.createChangeAtom
 }
-export type MemoCacheEvent<T, M> = {
-  trigger: T
+export type MemoEvent<V, D = any> = {
+  trigger: D
   isInit: boolean
   beforeTrigger?: never
   beforeValue?: never
 } | {
-  trigger: T
+  trigger: D
   isInit: boolean
-  beforeTrigger: T
-  beforeValue: M
+  beforeTrigger: D
+  beforeValue: V
 }
 /**
  * 通过返回函数,能始终通过函数访问fiber上的最新值
@@ -155,18 +155,18 @@ export type MemoCacheEvent<T, M> = {
  * @param deps 
  * @returns 
  */
-export function useBaseMemo<T, V>(
-  shouldChange: (a: V, b: V) => any,
-  effect: (e: MemoCacheEvent<V, T>) => T,
-  deps: V,
-): T {
+export function useBaseMemo<V, D>(
+  shouldChange: (a: D, b: D) => any,
+  effect: (e: MemoEvent<V, D>) => V,
+  deps: D,
+): V {
   const parentFiber = hookParentFiber()
   const isInit = parentFiber.effectTag.get() == "PLACEMENT"
   if (isInit) {
     const hookMemos = parentFiber.hookMemo || []
     parentFiber.hookMemo = hookMemos
     draftParentFiber()
-    const state: HookMemo<T, V> = {
+    const state: HookMemo<V, D> = {
       value: effect({
         isInit,
         trigger: deps
@@ -193,7 +193,7 @@ export function useBaseMemo<T, V>(
     if (state.shouldChange(state.deps, deps)) {
       //不处理
       draftParentFiber()
-      const newState: HookMemo<T, V> = {
+      const newState: HookMemo<V, D> = {
         value: effect({
           beforeTrigger: state.deps,
           isInit: false,

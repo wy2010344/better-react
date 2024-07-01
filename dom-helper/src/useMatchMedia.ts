@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from "better-react-helper";
 import { useChange } from "better-react-helper";
-import { MemoCacheEvent } from "better-react";
+import { MemoEvent } from "better-react";
 
-function createMatch(e: MemoCacheEvent<string, MediaQueryList>) {
+function createMatch(e: MemoEvent<MediaQueryList, string>) {
   return window.matchMedia(e.trigger)
 }
 export function useMatchMedia(pattern: string) {

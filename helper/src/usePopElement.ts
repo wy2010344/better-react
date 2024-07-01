@@ -17,5 +17,5 @@ export function usePopElement(render: () => void) {
       const render = useStoreTriggerRender(store)
       render()
     }
-  }, [store])
+  }, store)
 }

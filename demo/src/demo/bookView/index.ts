@@ -3,6 +3,7 @@ import { renderPage } from "../util/page";
 import { useChange, useMemo } from "better-react-helper";
 import { renderInput } from "better-react-dom-helper";
 import { faker } from "@faker-js/faker";
+import { emptyArray } from "wy-helper";
 
 /**
  * https://www.youtube.com/watch?v=8rtmvwUVZnc
@@ -28,7 +29,7 @@ export default function () {
           height: 200
         }) + "?v=3"
       }
-    })
+    }, emptyArray)
     const [step, setStep] = useChange(0)
     dom.div({
       style: `

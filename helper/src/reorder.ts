@@ -31,7 +31,7 @@ export function useReorderFix<T, K>(
   axis?: PointKey,
   gap?: number
 ) {
-  const rd = useMemo(() => new ReorderFixHeight(moveItem, axis, height, gap))
+  const rd = useMemo(() => new ReorderFixHeight(moveItem, axis, height, gap), emptyArray)
   useEffect(() => {
     rd.updateLayoutList(moveItem, axis || 'y', list, getKey, height, endToMove, gap)
   })

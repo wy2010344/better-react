@@ -10,12 +10,12 @@ import { PagePoint, animateFrame, dragInit, subscribeDragMove, subscribeMove } f
  */
 export default function () {
   const [index, setIndex] = useChange(0)
-  const moveX = useMemo(() => animateFrame(0))
+  const moveX = useMemo(() => animateFrame(0), emptyArray)
   const cacheList = useMemo(() => {
     return readArraySliceCircle(data, index - 1, index + 2)
   }, index)
   const lastPoint = useAtom<PagePoint | undefined>(undefined)
-  const velocityX = useMemo(() => cacheVelocity(0))
+  const velocityX = useMemo(() => cacheVelocity(0), emptyArray)
   renderPage({
     title: "demo1",
     bodyStyle: `

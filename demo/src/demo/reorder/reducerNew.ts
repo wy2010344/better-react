@@ -161,7 +161,7 @@ export default function () {
           const transY = useMemo(() => {
             const transY = animateFrame(0)
             return new ReorderE(transY, row.index, div)
-          })
+          }, emptyArray)
           useEffect(() => {
             return syncMergeCenter(transY.value, function (value: number) {
               div.style.transform = `translate(0px,${value}px)`

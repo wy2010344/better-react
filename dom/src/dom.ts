@@ -2,10 +2,10 @@ import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
 import { ContentEditable, ListCreater, createNodeTempOps, genTemplateString, } from "./util"
 import { MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookCreateChangeAtom, hookEndTempOps } from "better-react"
 import { DomAttribute, DomElement, DomElementType } from "./html"
-import { emptyFun, emptyObject, quoteOrLazyGet } from "wy-helper"
+import { SetValue, emptyFun, emptyObject, quoteOrLazyGet } from "wy-helper"
 import { domTagNames, updateDom } from "./updateDom"
 
-export function createDomElement(e: MemoEvent<string>) {
+export function createDomElement(e: MemoEvent<Node, string>) {
   return document.createElement(e.trigger)
 }
 export function useDomNode<T extends DomElementType>(
@@ -20,17 +20,16 @@ export function useRenderHtml(node: InnerHTML, value: string) {
   }, [node, value])
 }
 
-
-function createUpdateDom<T extends DomElementType>(e: MemoEvent<DomElement<T>>) {
+function createUpdateDom<T extends DomElementType>(e: MemoEvent<SetValue<DomAttribute<T>>, DomElement<T>>): SetValue<DomAttribute<T>> {
   let oldAttrs: DomAttribute<T> = emptyObject
-  return function (attrs: DomAttribute<T>) {
+  return function (attrs) {
     updateDom(e.trigger, updateProps, attrs, oldAttrs)
     oldAttrs = attrs
   }
 }
 export function useUpdateDomNodeAttr<T extends DomElementType>(
   node: DomElement<T>
-) {
+): SetValue<DomAttribute<T>> {
   return useMemo(createUpdateDom, node)
 }
 
@@ -87,7 +86,7 @@ class DomHelper<T extends DomElementType> {
     }
     return this.tempOps
   }
-  static create<T extends DomElementType>(e: MemoEvent<T>) {
+  static create<T extends DomElementType>(e: MemoEvent<DomHelper<T>, T>) {
     return new DomHelper(e.trigger)
   }
 }

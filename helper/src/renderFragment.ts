@@ -1,12 +1,13 @@
-import { Fiber, MemoEvent, renderFiber } from "better-react"
-import { arrayNotEqualDepsWithEmpty } from "wy-helper"
+import { Fiber, FiberEvent, renderFiber } from "better-react"
+import { arrayNotEqualOrOne } from "wy-helper"
 
-
+type FiberSelf = (e: FiberEvent<FiberSelf>) => void
 export function renderFragment<T extends readonly any[] = any[]>(
-  fun: (e: MemoEvent<T>) => void, dep: T): Fiber
+  fun: (e: FiberEvent<T>) => void, dep: T): Fiber
 export function renderFragment(
-  fun: (e: MemoEvent<undefined>) => void): void
+  fun: FiberSelf): void
 export function renderFragment() {
-  const [render, deps] = arguments
-  return renderFiber(arrayNotEqualDepsWithEmpty, render, deps)
+  const render = arguments[0]
+  const dep = arguments.length == 1 ? render : arguments[1]
+  return renderFiber(arrayNotEqualOrOne, render, dep)
 }

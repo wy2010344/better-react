@@ -1,24 +1,22 @@
 import { MemoEvent, hookCreateChangeAtom, useBaseMemo } from 'better-react';
-import { storeRef, quote, emptyArray, arrayNotEqualOrOne, GetValue, alawaysTrue } from 'wy-helper'
+import { storeRef, quote, emptyArray, arrayNotEqualOrOne, GetValue } from 'wy-helper'
 import { useAttrEffect } from './useEffect';
-import { MemoCacheEvent } from 'better-react/dist/fc';
-
 type StoreRef<T> = {
   get(): T
   set(v: T): void
 }
-
-export function useMemo<T, V>(
-  effect: (e: MemoCacheEvent<V, T>) => T,
-  deps: V
-): T
+type MemoEffectSelf<T> = (e: MemoEvent<T, MemoEffectSelf<T>>) => T
+export function useMemo<V, D>(
+  effect: (e: MemoEvent<V, D>) => V,
+  deps: D
+): V
 export function useMemo<T>(
-  effect: (e: MemoCacheEvent<undefined, T>) => T
+  effect: (e: MemoEffectSelf<T>) => T
 ): T
 export function useMemo(
-  effect: any,
-  deps?: any) {
-  return useBaseMemo(arrayNotEqualOrOne, effect, deps)
+  effect: any) {
+  const dep = arguments.length == 1 ? effect : arguments[1]
+  return useBaseMemo(arrayNotEqualOrOne, effect, dep)
 }
 /**
  * 如果rollback,不允许改变是持久的
@@ -63,7 +61,7 @@ function createLaterGet<T>() {
 }
 
 export function useLaterSetGet<T>() {
-  return useMemo(createLaterGet, undefined) as StoreRef<T>
+  return useMemo(createLaterGet, emptyArray) as StoreRef<T>
 }
 /**
  * 始终获得render上的最新值
@@ -119,30 +117,10 @@ export function useRefConstWith<T>(v: T) {
   return useAtom(v).get()
 }
 
-
-type MemoReducer<T> = {
-  (old: T, isInit: false): T
-  (old: undefined, isInit: true): T
-}
-
-export function useMemoReducer<T>(fun: MemoReducer<T>, deps: any = fun) {
-  if (deps == fun) {
-    return useBaseMemo(arrayNotEqualOrOne, memoReducer as any, fun)
-  } else {
-    return useBaseMemo(arrayNotEqualOrOne, (e) => {
-      return (fun as any)(e.beforeValue, e.isInit)
-    }, deps)
-  }
-}
-function memoReducer<T>(e: MemoCacheEvent<MemoReducer<T>, T>): T {
-  return (e.trigger as any)(e.beforeValue, e.isInit)
-}
-
-
 export function useMemoVersion(...deps: any[]) {
   return useMemo(triggerAdd, deps)
 }
 
-function triggerAdd(e: MemoCacheEvent<any, number>) {
+function triggerAdd(e: MemoEvent<number, any>) {
   return (e.beforeValue || 0) + 1
 }

@@ -23,7 +23,7 @@ export default function () {
           })
         }
       })
-    })
+    }, emptyArray)
 
     const [filter, setFilter] = useChange('')
 

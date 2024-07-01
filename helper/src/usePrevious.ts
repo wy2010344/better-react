@@ -1,5 +1,5 @@
-import { MemoCacheEvent } from "better-react/dist/fc";
-import { useChgAtom, useMemo } from "./useRef";
+import { MemoEvent } from "better-react/dist/fc";
+import { useMemo } from "./useRef";
 
 /**
  * @todo 
@@ -24,6 +24,6 @@ export function usePrevious<T>(n: T) {
   return useMemo(previous, n)
 }
 
-function previous<T>(n: MemoCacheEvent<T, T>) {
+function previous<T>(n: MemoEvent<T, T>) {
   return n.beforeValue
 }

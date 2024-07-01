@@ -68,7 +68,8 @@ export default function () {
         lastAngle: number
       } | undefined>(undefined)
 
-      useEffect(() => {
+      useEffect(e => {
+        console.log(e, "dd")
         return subscribeDragMove((p, e) => {
           const le = lastPoint.get()
           if (le) {

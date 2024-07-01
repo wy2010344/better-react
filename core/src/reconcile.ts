@@ -1,35 +1,65 @@
 import { deepTravelFiber, EnvModel, LoopWork, LoopWorkLevel } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
 import { Fiber } from "./Fiber"
-import { AskNextTimeWork, EmptyFun, NextTimeWork, run } from "wy-helper"
+import { AskNextTimeWork, NextTimeWork, EmptyFun, run } from "wy-helper"
 
-
-function wrapNextWorkWork(
+// class NextTimeWork {
+//   constructor(
+//     private callback: EmptyFun,
+//     public lastJob = false
+//   ) { }
+//   rund() {
+//     this.callback()
+//   }
+// }
+function nextWork(
   envModel: EnvModel,
-  getNextWork: () => NextTimeWork | void
+  callback: EmptyFun,
+  lastJob = false
 ) {
-  function getWrapWork(lastJob: boolean) {
-    const wrapperWork: NextTimeWork = function () {
-      const work = getNextWork()
-      if (work) {
-        envModel.setOnWork(work.lastJob)
-        work()
-        envModel.finishWork()
-      }
-    }
-    wrapperWork.lastJob = lastJob
-    return wrapperWork
+  const fun: NextTimeWork = function () {
+    envModel.setOnWork(lastJob)
+    callback()
+    envModel.finishWork()
   }
-  const wrapWorkLast = getWrapWork(true)
-  const wrapWork = getWrapWork(false)
-  return function () {
-    const work = getNextWork()
-    if (work) {
-      return work.lastJob ? wrapWorkLast : wrapWork
-    }
-  }
+  fun.lastJob = lastJob
+  return fun
+  // return new NextTimeWork(callback, lastJob)
 }
+function runNextTimeWork(n: NextTimeWork) {
+  n()
+  // n.rund()
+}
+// function wrapNextWorkWork(
+//   envModel: EnvModel,
+//   getNextWork: () => NextTimeWork | void
+// ) {
+//   function getWrapWork(lastJob: boolean) {
+//     const wrapperWork: NextTimeWork = function () {
+//       const work = getNextWork()
+//       if (work) {
+//         envModel.setOnWork(work.lastJob)
+//         work()
+//         envModel.finishWork()
+//       }
+//     }
+//     wrapperWork.lastJob = lastJob
+//     return wrapperWork
+//   }
+//   const wrapWorkLast = getWrapWork(true)
+//   const wrapWork = getWrapWork(false)
+//   return function () {
+//     const work = getNextWork()
+//     if (work) {
+//       return work.lastJob ? wrapWorkLast : wrapWork
+//     }
+//   }
+// }
 
+export type CheckGet<T> = {
+  has(): boolean
+  get(): T
+}
 export function getReconcile(
   beginRender: BeginRender,
   envModel: EnvModel,
@@ -37,13 +67,13 @@ export function getReconcile(
 ) {
   /**业务的工作队列 */
   const { appendWork,
-    getNextWork: originGetNextWork,
+    getNextWork,//: originGetNextWork,
     hasFlushWork,
-    getFlushWork: originGetFlushWork,
+    getFlushWork,//: originGetFlushWork,
     hasLayoutWork,
-    getLayoutWork: originalGetLayoutWork
+    getLayoutWork//: originalGetLayoutWork
   } = buildWorkUnits(envModel, beginRender)
-  const getNextWork = wrapNextWorkWork(envModel, originGetNextWork)
+  // const getNextWork = wrapNextWorkWork(envModel, originGetNextWork)
 
   envModel.commitAll = function () {
     if (envModel.isOnWork()) {
@@ -51,7 +81,7 @@ export function getReconcile(
     }
     let work = getNextWork()
     while (work) {
-      work()
+      runNextTimeWork(work)
       work = getNextWork()
     }
   }
@@ -61,14 +91,14 @@ export function getReconcile(
     realTime: envModel.realTime,
   })
 
-  const getFlushWork = wrapNextWorkWork(envModel, originGetFlushWork)
-  const getLayoutWork = wrapNextWorkWork(envModel, originalGetLayoutWork)
+  // const getFlushWork = wrapNextWorkWork(envModel, originGetFlushWork)
+  // const getLayoutWork = wrapNextWorkWork(envModel, originalGetLayoutWork)
   envModel.layoutWork = function () {
     if (hasLayoutWork()) {
       //把实时任务执行了
       let work = getLayoutWork()
       while (work) {
-        work()
+        runNextTimeWork(work)
         work = getLayoutWork()
       }
     }
@@ -82,7 +112,7 @@ export function getReconcile(
       //把实时任务执行了
       let work = getFlushWork()
       while (work) {
-        work()
+        runNextTimeWork(work)
         work = getFlushWork()
       }
       //其余任务可能存储,再申请异步
@@ -117,12 +147,10 @@ export function batchWork(
         workLoop(renderWork, nextUnitOfWork, commitWork)
       })
     } else {
-      const realWork: NextTimeWork = function () {
+      renderWork.appendWork(function () {
         commitWork()
         envModel.commit()
-      }
-      realWork.lastJob = true
-      renderWork.appendWork(realWork)
+      }, true)
     }
   }
   function clearFiber() {
@@ -149,7 +177,7 @@ export function batchWork(
 }
 
 
-const flushWorkMap = new Map<EnvModel, () => NextTimeWork | void>()
+const flushWorkMap = new Map<EnvModel, EmptyFun>()
 /**
  * 顶层全局
  */
@@ -163,20 +191,23 @@ function buildWorkUnits(
   const currentTick = new CurrentTick(function (work) {
     workList.unshift(work)
   })
-  const renderWorks = new RenderWorks()
+  const renderWorks = new RenderWorks(envModel)
   function commitWork() {
     currentTick.commit()
   }
 
   function getTheRenderWork(
     level: LoopWorkLevel
-  ) {
+  ): CheckGet<NextTimeWork | false> {
     function shouldAdd(work: LoopWork) {
       return work.level == level
     }
+    function hasWork() {
+      return workList.some(shouldAdd)
+    }
     //寻找渲染前的任务
     function openAWork() {
-      if (workList.some(shouldAdd)) {
+      if (hasWork()) {
         workList = workList.filter(work => {
           if (shouldAdd(work)) {
             if (work.work) {
@@ -193,12 +224,13 @@ function buildWorkUnits(
         beginRender(renderWorks, commitWork)
       }
     }
-    return function () {
-      if (workList.some(shouldAdd)) {
-        return function () {
+    return {
+      has: hasWork,
+      get() {
+        return hasWork() && nextWork(envModel, function () {
           currentTick.open(level)
           openAWork()
-        }
+        })
       }
     }
   }
@@ -206,58 +238,52 @@ function buildWorkUnits(
   const getRenderWork = getTheRenderWork(WorkLevel.Normal)
   const getLayoutRenderWork = getTheRenderWork(WorkLevel.Layout)
   const getFlushRenderWork = getTheRenderWork(WorkLevel.Flush)
-  function getRollbackWork(level: number, getWork: () => void | EmptyFun) {
-    return function () {
-      renderWorks.rollback()
-      currentTick.rollback()
-      envModel.rollback()
-      console.log(`执行${level}级任务,中断低优先级`)
-      const work = getWork()
-      if (work) {
-        work()
-      }
-    }
-  }
-  const rollBackWorkLow = getRollbackWork(WorkLevel.Low, getRenderWorkLow)
-  const rollBackWork = getRollbackWork(WorkLevel.Normal, getRenderWork)
-  const rollBackLayoutWork = getRollbackWork(WorkLevel.Layout, getLayoutRenderWork)
-  const rollBackWorkFlush = getRollbackWork(WorkLevel.Flush, getFlushRenderWork)
+  const rollBackWork = nextWork(envModel, function () {
+    console.log(`中断${currentTick.level()}级任务`)
+    renderWorks.rollback()
+    currentTick.rollback()
+    envModel.rollback()
+    // const work = getWork.get()
+    // if (work) {
+    //   work()
+    // }
+  })
+  // const rollBackWorkLow = getRollbackWork(WorkLevel.Low)
+  // const rollBackWork = getRollbackWork(WorkLevel.Normal)
+  // const rollBackLayoutWork = getRollbackWork(WorkLevel.Layout)
+  // const rollBackWorkFlush = getRollbackWork(WorkLevel.Flush)
   return {
     appendWork(work: LoopWork) {
       workList.push(work)
     },
-    hasFlushWork() {
-      return getFlushRenderWork()
-    },
+    hasFlushWork: getFlushRenderWork.has,
     getFlushWork() {
       if (currentTick.level() > WorkLevel.Flush) {
-        if (getFlushRenderWork()) {
-          return rollBackWorkFlush
+        if (getFlushRenderWork.has()) {
+          return rollBackWork
         }
       }
       const renderWork = renderWorks.getFirstWork()
       if (renderWork) {
         return renderWork
       }
-      const flushWork = getFlushRenderWork()
+      const flushWork = getFlushRenderWork.get()
       if (flushWork) {
         return flushWork
       }
     },
-    hasLayoutWork() {
-      return getLayoutRenderWork()
-    },
+    hasLayoutWork: getLayoutRenderWork.has,
     getLayoutWork() {
       if (currentTick.level() > WorkLevel.Layout) {
-        if (getLayoutRenderWork()) {
-          return rollBackLayoutWork
+        if (getLayoutRenderWork.has()) {
+          return rollBackWork
         }
       }
       const renderWork = renderWorks.getFirstWork()
       if (renderWork) {
         return renderWork
       }
-      const layoutWork = getLayoutRenderWork()
+      const layoutWork = getLayoutRenderWork.get()
       if (layoutWork) {
         return layoutWork
       }
@@ -269,11 +295,11 @@ function buildWorkUnits(
          * 寻找是否有渲染任务,如果有,则中断
          * 如果有新的lazywork,则也优先
          */
-        if (getRenderWork()) {
+        if (getRenderWork.has()) {
           return rollBackWork
         }
-        if (getRenderWorkLow()) {
-          return rollBackWorkLow
+        if (getRenderWorkLow.has()) {
+          return rollBackWork
         }
       }
       //执行计划的渲染任务
@@ -283,12 +309,12 @@ function buildWorkUnits(
       }
       //@todo 渲染后的任务可以做在这里....
       //寻找渲染任务
-      const work = getRenderWork()
+      const work = getRenderWork.get()
       if (work) {
         return work
       }
       //寻找低优先级渲染任务
-      const lowWork = getRenderWorkLow()
+      const lowWork = getRenderWorkLow.get()
       if (lowWork) {
         return lowWork
       }
@@ -296,31 +322,32 @@ function buildWorkUnits(
   }
 }
 class RenderWorks {
+  constructor(
+    private envModel: EnvModel
+  ) { }
   private getRetWork(lastJob: boolean) {
     const that = this
-    const retWork: NextTimeWork = function () {
+    return nextWork(this.envModel, function () {
       const work = that.list.shift()
-      work!()
-    }
-    retWork.lastJob = lastJob
-    return retWork
+      work![0]()
+    }, lastJob)
   }
   private lastRetWork = this.getRetWork(true)
   private retWork = this.getRetWork(false)
-  private readonly list: NextTimeWork[] = []
+  private readonly list: [EmptyFun, boolean][] = []
   rollback() {
     this.list.length = 0
   }
   getFirstWork() {
     const that = this
     if (that.list.length) {
-      return this.list[0]?.lastJob
+      return this.list[0]?.[1]
         ? this.lastRetWork
         : this.retWork
     }
   }
-  appendWork(work: NextTimeWork) {
-    this.list.push(work)
+  appendWork(work: EmptyFun, lastJob = false) {
+    this.list.push([work, lastJob])
   }
 }
 class CurrentTick {

@@ -22,7 +22,7 @@ export default function () {
 
     const [index, updateIndex] = useChange(0)
     const bottomContentRef = useAtom<HTMLDivElement | undefined>(undefined)
-    const transX = useMemo(() => animateFrame(0))
+    const transX = useMemo(() => animateFrame(0), emptyArray)
     useEffect(() => {
       transX.slientChange(0)
     }, [index])
@@ -31,7 +31,7 @@ export default function () {
         velocityX: cacheVelocity(),
         velocityY: cacheVelocity()
       }
-    })
+    }, emptyArray)
     const updateDirection = useEvent((direction: number, velocity = 0) => {
       const width = bottomContentRef.get()!.clientWidth
       if (direction < 0) {
@@ -46,7 +46,7 @@ export default function () {
     })
 
     const [showDrop, setShowDrop] = useChange(false)
-    const transY = useMemo(() => animateFrame(0))
+    const transY = useMemo(() => animateFrame(0), emptyArray)
 
     const contentRef = useAtom<HTMLDivElement | undefined>(undefined)
     const changeTransYDiff = useEvent((n: number) => {

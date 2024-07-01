@@ -37,7 +37,7 @@ export default function () {
       return {
         velocity: cacheVelocity()
       }
-    })
+    }, emptyArray)
     const lastPoint = useAtom<PagePoint | undefined>(undefined)
     useEffect((e) => {
       const div = wrapperDiv

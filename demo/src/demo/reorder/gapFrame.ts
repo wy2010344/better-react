@@ -106,7 +106,7 @@ export default function () {
       }, emptyArray)
       renderArray(orderList, v => v.index, function (row, index) {
         const offsetY = useValueCenter(0)
-        const transY = useMemo(() => animateFrame(0))
+        const transY = useMemo(() => animateFrame(0), emptyArray)
         const reOrderChild = reOrder.useChild(
           row.index,
           function () {
