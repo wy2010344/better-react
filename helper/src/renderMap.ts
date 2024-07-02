@@ -1,4 +1,4 @@
-import { renderMapF } from "better-react";
+import { ReduceData, renderMapF } from "better-react";
 import { alawaysTrue } from "wy-helper";
 
 export type ReadArray<T> = {
@@ -9,17 +9,25 @@ export function arrayHasValue(m: ReadArray<any>, i: number) {
   return i < m.length
 }
 
-export function createRenderMapF<M, C>(
-  hasValue: (v: M, c: C) => any,
-  getNext: (v: M, c: C) => C,
-  getKey: (v: M, c: C) => any,
-) {
-  return function (data: M, initCache: C, render: (v: M, c: C) => void) {
-    return renderMapF(data, initCache, hasValue, alawaysTrue, function (row, c) {
-      return [getNext(row, c), getKey(row, c), alawaysTrue, function () {
-        render(row, c)
-      }, undefined]
-    }, undefined)
+
+
+class ArrayReduceData<T> implements ReduceData<T> {
+  constructor(
+    private array: ReadArray<T>,
+    private index: number
+  ) { }
+  value = this.array[this.index]
+  getNext(): ReduceData<T> | undefined {
+    const nextIndex = this.index + 1
+    if (nextIndex < this.array.length) {
+      return new ArrayReduceData(this.array, nextIndex)
+    }
+  }
+  static from<T>(array: ReadArray<T>) {
+    if (array.length) {
+      return new ArrayReduceData(array, 0)
+    }
+    return undefined
   }
 }
 
@@ -28,11 +36,9 @@ export function renderArray<T>(
   getKey: (v: T, i: number) => any,
   render: (v: T, i: number) => void,
 ) {
-  renderMapF(vs, 0 as number, arrayHasValue, alawaysTrue, function (data, i) {
-    const row = data[i]
-    return [i + 1, getKey(row, i), alawaysTrue, function () {
-      render(row, i)
-    }, undefined]
+  renderMapF(ArrayReduceData.from(vs), getKey, function (old, value, index) {
+    render(value, index)
+    return undefined
   }, undefined)
 }
 
@@ -56,14 +62,35 @@ function iterableHasValue<T>(m: IterableIterator<T>, v: IteratorResult<T, any>) 
   return !v.done
 }
 
+/**
+ * 因为iterator本身是不完美的无副作用的.
+ */
+class IterableReduceData<T> implements ReduceData<T> {
+  constructor(
+    public readonly value: T,
+    private iterator: IterableIterator<T>
+  ) { }
+  getNext(): ReduceData<T> | undefined {
+    const n = this.iterator.next()
+    if (!n.done) {
+      return new IterableReduceData<T>(n.value, this.iterator)
+    }
+  }
+  static from<T>(value: IterableIterator<T>) {
+    const n = value.next()
+    if (!n.done) {
+      return new IterableReduceData<T>(n.value, value)
+    }
+  }
+}
+
 export function renderIterableIterator<V>(
   iterable: IterableIterator<V>,
   getKey: (value: V) => any,
-  render: (value: V) => void) {
-  renderMapF(iterable, iterable.next(), iterableHasValue, alawaysTrue, function (iterable, i) {
-    return [iterable.next(), getKey(i.value), alawaysTrue, function () {
-      return render(i.value)
-    }, undefined]
+  render: (value: V, index: number) => void) {
+  renderMapF(IterableReduceData.from(iterable), getKey, function (old, value, index) {
+    render(value, index)
+    return undefined
   }, undefined)
 }
 

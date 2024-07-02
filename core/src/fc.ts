@@ -1,19 +1,19 @@
-import { Fiber, HookMemo, ReconcileFun } from "./Fiber";
+import { Fiber, FiberEvent, HookMemo, ReconcileFun, StateHolder } from "./Fiber";
 import { EffectDestroyEvent, HookEffect, RenderWithDep } from "./Fiber";
 import { quote, simpleNotEqual, alawaysTrue, ValueCenter, valueCenterOf, arrayNotEqual, EmptyFun } from "wy-helper";
-import { draftParentFiber, hookAddEffect, hookAddFiber, hookParentFiber, hookTempOps, revertParentFiber } from "./cache";
+import { draftParentFiber, hookAddEffect, hookAddFiber, hookParentFiber, hookStateHoder, hookTempOps, revertParentFiber } from "./cache";
 
 
 const hookIndex = {
-  effect: 0,
-  memo: 0,
+  // effect: 0,
+  // memo: 0,
   beforeFiber: undefined as (Fiber | undefined),
 }
 export function updateFunctionComponent(fiber: Fiber) {
   revertParentFiber()
   hookAddFiber(fiber)
-  hookIndex.effect = 0
-  hookIndex.memo = 0
+  // hookIndex.effect = 0
+  // hookIndex.memo = 0
   hookIndex.beforeFiber = undefined
   fiber.render()
   draftParentFiber();
@@ -48,27 +48,27 @@ export function useLevelEffect<V, T>(
   /**可以像memo一样放在外面..*/
   shouldChange: (a: T, b: T) => any,
   effect: (e: EffectEvent<V, T>) => EffectResult<V, T>, deps: T): void {
-  const parentFiber = hookParentFiber()
-  const isInit = parentFiber.effectTag.get() == 'PLACEMENT'
+  const holder = hookStateHoder()
+  const isInit = holder.firstTime
   if (isInit) {
     //新增
-    const hookEffects = parentFiber.hookEffects || []
-    parentFiber.hookEffects = hookEffects
+    const hookEffects = holder.hookEffects || []
+    holder.hookEffects = hookEffects
     const state: HookEffect<V, T> = {
       level,
       deps,
       isInit,
       shouldChange
     }
-    const hookEffect = parentFiber.envModel.createChangeAtom(state)
+    const hookEffect = holder.envModel.createChangeAtom(state)
     hookEffects.push(hookEffect)
-    parentFiber.envModel.updateEffect(level, () => {
-      hookAddEffect(parentFiber.envModel.layoutEffect)
+    holder.envModel.updateEffect(level, () => {
+      hookAddEffect(holder.envModel.layoutEffect)
       const out = effect({
         beforeTrigger: undefined,
         isInit,
         trigger: deps,
-        setRealTime: parentFiber.envModel.setRealTime
+        setRealTime: holder.envModel.setRealTime
       })
       hookAddEffect(undefined)
       if (out) {
@@ -76,17 +76,17 @@ export function useLevelEffect<V, T>(
       }
     })
   } else {
-    const hookEffects = parentFiber.hookEffects
+    const hookEffects = holder.hookEffects
     if (!hookEffects) {
       throw new Error("原组件上不存在hookEffects")
     }
-    const index = hookIndex.effect
+    const index = holder.effectIndex
     const hookEffect = hookEffects[index]
     if (!hookEffect) {
       throw new Error("出现了更多的effect")
     }
     const state = hookEffect.get()
-    hookIndex.effect = index + 1
+    holder.effectIndex = index + 1
     if (state.shouldChange(state.deps, deps)) {
       const newState: HookEffect<V, T> = {
         level,
@@ -95,26 +95,26 @@ export function useLevelEffect<V, T>(
         shouldChange
       }
       hookEffect.set(newState)
-      parentFiber.envModel.updateEffect(level, () => {
+      holder.envModel.updateEffect(level, () => {
         if (state.destroy) {
-          hookAddEffect(parentFiber.envModel.layoutEffect)
+          hookAddEffect(holder.envModel.layoutEffect)
           state.destroy({
             isDestroy: false,
             trigger: deps,
             value: state.value,
             beforeIsInit: state.isInit,
             beforeTrigger: state.deps,
-            setRealTime: parentFiber.envModel.setRealTime
+            setRealTime: holder.envModel.setRealTime
           })
           hookAddEffect(undefined)
         }
-        hookAddEffect(parentFiber.envModel.layoutEffect)
+        hookAddEffect(holder.envModel.layoutEffect)
         const out = effect({
           beforeTrigger: state.deps,
           isInit,
           value: state.value,
           trigger: deps,
-          setRealTime: parentFiber.envModel.setRealTime
+          setRealTime: holder.envModel.setRealTime
         })
         hookAddEffect(undefined)
         if (out) {
@@ -160,11 +160,11 @@ export function useBaseMemo<V, D>(
   effect: (e: MemoEvent<V, D>) => V,
   deps: D,
 ): V {
-  const parentFiber = hookParentFiber()
-  const isInit = parentFiber.effectTag.get() == "PLACEMENT"
+  const holder = hookStateHoder()
+  const isInit = holder.firstTime
   if (isInit) {
-    const hookMemos = parentFiber.hookMemo || []
-    parentFiber.hookMemo = hookMemos
+    const hookMemos = holder.hookMemo || []
+    holder.hookMemo = hookMemos
     draftParentFiber()
     const state: HookMemo<V, D> = {
       value: effect({
@@ -175,21 +175,21 @@ export function useBaseMemo<V, D>(
       shouldChange
     }
     revertParentFiber()
-    const hook = parentFiber.envModel.createChangeAtom(state)
+    const hook = holder.envModel.createChangeAtom(state)
     hookMemos.push(hook)
     return state.value
   } else {
-    const hookMemos = parentFiber.hookMemo
+    const hookMemos = holder.hookMemo
     if (!hookMemos) {
       throw new Error("原组件上不存在memos")
     }
-    const index = hookIndex.memo
+    const index = holder.memoIndex
     const hook = hookMemos[index]
     if (!hook) {
       throw new Error("出现了更多的memo")
     }
     const state = hook.get()
-    hookIndex.memo = index + 1
+    holder.memoIndex = index + 1
     if (state.shouldChange(state.deps, deps)) {
       //不处理
       draftParentFiber()
@@ -211,17 +211,19 @@ export function useBaseMemo<V, D>(
     return state.value
   }
 }
-export function renderBaseFiber<T>(
-  dynamicChild: boolean,
-  ...[shouldChange, render, deps]: RenderWithDep<T>
+export function renderFiber<T>(
+  shouldChange: (a: T, b: T) => any,
+  render: (e: FiberEvent<T>) => void,
+  deps: T
 ): Fiber {
-  const parentFiber = hookParentFiber()
+  const holder = hookStateHoder()
   let currentFiber: Fiber
-  const isInit = parentFiber.effectTag.get() == 'PLACEMENT'
+  const isInit = holder.firstTime
+  const parentFiber = holder.fiber
   if (isInit) {
     //新增
-    currentFiber = Fiber.createFix(
-      parentFiber.envModel,
+    currentFiber = Fiber.create(
+      holder.envModel,
       parentFiber,
       {
         shouldChange,
@@ -230,51 +232,27 @@ export function renderBaseFiber<T>(
           trigger: deps,
           isInit
         }
-      },
-      dynamicChild)
+      })
     currentFiber.subOps = hookTempOps().createSub()
-
-    currentFiber.before.set(hookIndex.beforeFiber)
-    //第一次要标记sibling
-    if (hookIndex.beforeFiber) {
-      hookIndex.beforeFiber.next.set(currentFiber)
-    } else {
-      parentFiber.firstChild.set(currentFiber)
-    }
-    //一直组装到最后
-    parentFiber.lastChild.set(currentFiber)
-    hookIndex.beforeFiber = currentFiber
-
+    holder.fibers.push(currentFiber)
   } else {
-    //修改
-    let oldFiber: Fiber | void = undefined
-    if (hookIndex.beforeFiber) {
-      oldFiber = hookIndex.beforeFiber.next.get()
-    }
-    if (!oldFiber) {
-      oldFiber = parentFiber.firstChild.get()
-    }
-    if (!oldFiber) {
-      throw new Error("非预期地多出现了fiber")
-    }
-    currentFiber = oldFiber
-    hookIndex.beforeFiber = currentFiber
+    currentFiber = holder.fibers[holder.fiberIndex]
+    holder.fiberIndex = holder.fiberIndex + 1
     currentFiber.changeRender(shouldChange, render, deps)
   }
+  currentFiber.before.set(hookIndex.beforeFiber)
+  //第一次要标记sibling
+  if (hookIndex.beforeFiber) {
+    hookIndex.beforeFiber.next.set(currentFiber)
+  } else {
+    parentFiber.firstChild.set(currentFiber)
+  }
+  //一直组装到最后
+  parentFiber.lastChild.set(currentFiber)
+  hookIndex.beforeFiber = currentFiber
+
   hookTempOps().addNode(currentFiber.subOps)
   return currentFiber
-}
-/**
- * 这里不预设加入result里,是为了可能的portal
- * @param render
- * @param props 
- * @param shouldUpdate 
- * @returns 
- */
-export function renderFiber<T>(
-  ...[shouldChange, render, deps]: RenderWithDep<T>
-) {
-  return renderBaseFiber(false, shouldChange, render, deps)
 }
 export interface Context<T> {
   hookProvider(v: T): void
@@ -300,27 +278,24 @@ class ContextFactory<T> implements Context<T> {
 
   private readonly defaultContext: ValueCenter<T>
   hookProvider(v: T) {
-    const parentFiber = hookParentFiber()
-    const map = parentFiber.contextProvider || new Map()
-    parentFiber.contextProvider = map
-    let hook = map.get(this) as ValueCenter<T>
-    if (!hook) {
-      //同作用域会覆盖
-      hook = valueCenterOf(v)
-      map.set(this, hook)
-    }
-    hook.set(v)
+    const holder = hookStateHoder()
+    holder.contextProvider.push({
+      key: this,
+      value: valueCenterOf(v)
+    })
   }
-  private findProviderFiber(_fiber: Fiber) {
-    let fiber = _fiber as Fiber | undefined
-    while (fiber) {
-      if (fiber.contextProvider) {
-        const providers = fiber.contextProvider
-        if (providers.has(this)) {
-          return fiber
+  private findProviderStateHoder(holder: StateHolder) {
+    let begin = holder.contextProvider.length
+    while (holder) {
+      const providers = holder.contextProvider
+      for (let i = begin - 1; i > -1; i--) {
+        const provider = providers[i]
+        if (provider.key == this) {
+          return [holder, provider.value] as const
         }
       }
-      fiber = fiber.parent
+      begin = holder.parentContextIndex.get()
+      holder = holder.parent
     }
   }
   useConsumer() {
@@ -335,16 +310,20 @@ class ContextFactory<T> implements Context<T> {
    * @returns 
    */
   useSelector<M>(getValue: (v: T) => M, shouldUpdate: (a: M, b: M) => any = simpleNotEqual): M {
-    const parentFiber = hookParentFiber()
-    const providerFiber = this.findProviderFiber(parentFiber)
-    const context = providerFiber?.contextProvider?.get(this) || this.defaultContext
+    const stateHolder = hookStateHoder()
+    const provider = this.findProviderStateHoder(stateHolder)
+    let context: ValueCenter<T> = this.defaultContext
+    let notSelf = true
+    if (provider) {
+      context = provider[1]
+      notSelf = provider[0].fiber != stateHolder.fiber
+    }
     const thisValue = getValue(context.get())
-    const notSelf = providerFiber != parentFiber
     useLevelEffect(0, arrayNotEqual, function () {
       return [undefined, context.subscribe(function (value) {
         const m = getValue(value)
         if (notSelf && shouldUpdate(thisValue, m)) {
-          parentFiber.effectTag.set("UPDATE")
+          stateHolder.fiber.effectTag.set("UPDATE")
         }
       })]
     }, [context, getValue, shouldUpdate, notSelf])
@@ -362,16 +341,17 @@ export function hookCommitAll() {
 }
 
 export function hookRequestReconcile(): ReconcileFun {
-  const parentFiber = hookParentFiber()
+  const holder = hookStateHoder()
+  const parentFiber = holder.fiber
   if (!parentFiber.requestReconcile) {
     parentFiber.requestReconcile = function (callback) {
-      if (parentFiber.destroyed) {
+      if (holder.destroyed) {
         console.log("更新已经销毁的fiber")
         return
       }
       parentFiber.envModel.reconcile(function () {
         if (callback(parentFiber.envModel.updateEffect)) {
-          if (parentFiber.destroyed) {
+          if (holder.destroyed) {
             console.log("更新已经销毁的fiber,1")
             return
           }

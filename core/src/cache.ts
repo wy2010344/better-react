@@ -1,5 +1,5 @@
 import { EmptyFun } from "wy-helper"
-import { Fiber, LayoutEffect } from "./Fiber"
+import { Fiber, LayoutEffect, StateHolder } from "./Fiber"
 import { AbsTempOps, TempOps } from "./tempOps"
 
 const w = globalThis as any
@@ -7,10 +7,12 @@ const cache = (w.__better_react_one__ || {
   effect: undefined,
   tempOps: undefined,
   wipFiber: undefined,
+  stateHolder: undefined,
   allowWipFiber: false
 }) as {
   effect?: LayoutEffect
   tempOps?: AbsTempOps<any>
+  stateHolder?: StateHolder
   wipFiber?: Fiber
   allowWipFiber?: boolean
 }
@@ -19,6 +21,14 @@ w.__better_react_one__ = cache
 export function hookAddFiber(fiber?: Fiber) {
   cache.wipFiber = fiber
   cache.tempOps = fiber?.subOps
+}
+
+export function hookStateHoder() {
+  return cache.stateHolder!
+}
+
+export function hookAlterStateHolder(holder?: StateHolder) {
+  cache.stateHolder = holder
 }
 
 export function hookParentFiber() {
@@ -34,7 +44,6 @@ export function draftParentFiber() {
 export function revertParentFiber() {
   cache.allowWipFiber = true
 }
-
 
 export function hookTempOps() {
   if (cache.tempOps) {

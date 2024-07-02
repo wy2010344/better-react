@@ -1,4 +1,4 @@
-import { Fiber } from "./Fiber"
+import { Fiber, StateHolder } from "./Fiber"
 import { EmptyFun, ManageValue, StoreRef, emptyFun, iterableToList, quote, removeEqual, run, storeRef } from "wy-helper"
 import { hookAddEffect } from "./cache"
 
@@ -37,8 +37,8 @@ export class EnvModel {
   commitAll: () => void = emptyFun
   reconcile: Reconcile = null as any
   /**本次等待删除的fiber*/
-  private readonly deletions: Fiber[] = []
-  addDelect(fiber: Fiber) {
+  private readonly deletions: StateHolder[] = []
+  addDelect(fiber: StateHolder) {
     this.deletions.push(fiber)
   }
   private updateEffects = new Map<number, EmptyFun[]>()
@@ -194,18 +194,13 @@ class ChangeAtom<T> implements StoreRef<T> {
  * @returns 
  */
 
-function notifyDel(fiber: Fiber) {
+function notifyDel(fiber: StateHolder) {
   destroyFiber(fiber)
-  const child = fiber.firstChild.get()
-  if (child) {
-    let next: Fiber | void = child
-    while (next) {
-      notifyDel(next)
-      next = next.next.get()
-    }
-  }
+  fiber.children.forEach(child => {
+    notifyDel(child)
+  })
 }
-function destroyFiber(fiber: Fiber) {
+function destroyFiber(fiber: StateHolder) {
   fiber.destroyed = true
   const effects = fiber.hookEffects
   if (effects) {

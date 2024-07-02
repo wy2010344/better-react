@@ -34,14 +34,14 @@ export type {
   StoreValue
 } from './Fiber'
 export { CreateChangeAtom } from './commitWork'
-export * from './renderMapF'
+export * from './renderMap'
 export function render(
   getSubOps: (createChangeAtom: CreateChangeAtom<any>) => AbsTempOps<any>,
   render: EmptyFun,
   getAsk: AskNextTimeWork
 ) {
   const envModel = new EnvModel()
-  const rootFiber = Fiber.createFix(envModel, null!, {
+  const rootFiber = Fiber.create(envModel, null!, {
     shouldChange: alawaysTrue,
     render,
     event: {

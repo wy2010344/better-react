@@ -37,7 +37,7 @@ export default function () {
         setFilter(v)
       },
     })
-
+    console.log("dvv", filterList)
     dom.div({
       style: `
       overflow:auto;
@@ -54,6 +54,7 @@ export default function () {
       gap:4px;
       `
       }).render(function () {
+        console.log("renderAt--")
         renderArray(filterList, v => v.index, function (row) {
           useEffect(() => {
             return layoutFrameAnimation({
@@ -62,11 +63,17 @@ export default function () {
               },
             })(div, ease)
           }, emptyArray)
+          useEffect(() => {
+            return () => {
+              console.log(`销毁${row.index}`)
+            }
+          }, emptyArray)
           const div = dom.div({
             style: `
           position:relative;
           `
           }).render(function () {
+            console.log("ddren")
             dom.img({
               src: row.image,
               style: `

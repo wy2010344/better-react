@@ -169,7 +169,7 @@ export function batchWork(
     destroy() {
       if (rootFiber) {
         flushWorkMap.delete(envModel)
-        envModel.addDelect(rootFiber)
+        envModel.addDelect(rootFiber.stateHoder)
         envModel.reconcile(onDestroy)
       }
     }
