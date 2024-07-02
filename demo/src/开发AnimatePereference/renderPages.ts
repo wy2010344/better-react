@@ -1,5 +1,5 @@
-import { createContext, hookFlushSync } from "better-react";
-import { createUseReducer, renderExitAnimateArray, useAtomFun, useRenderExitAnimate, useTimeoutAnimateValue } from "better-react-helper";
+import { createContext, flushSync } from "better-react";
+import { createUseReducer, renderExitAnimateArray, useAtomFun, useExitAnimate, useTimeoutAnimateValue } from "better-react-helper";
 import { dom } from "better-react-dom";
 import { faker } from "@faker-js/faker";
 import { ExitModel, SetValue, objectDeepEqual } from "wy-helper";
@@ -105,7 +105,7 @@ export function renderPages() {
 
   const method = model.method
   const animation = model.who.animation
-  pageContext.hookProvider({
+  pageContext.useProvider({
     dispatch,
     size: model.pages.length,
     method: model.method
@@ -133,7 +133,7 @@ export function renderPages() {
     `
   }).render(function () {
     renderExitAnimateArray(
-      useRenderExitAnimate(
+      useExitAnimate(
         [page], v => v.id, {
         mode: method == 'pop' ? 'pop' : 'shift',
         // wait: "out-in"
@@ -297,7 +297,6 @@ function renderPage(arg: ExitModel<RenderPage>, className: string) {
         })
       }
     }).renderText`退出`
-    const flushSync = hookFlushSync()
     dom.button({
       onClick() {
         flushSync(function () {

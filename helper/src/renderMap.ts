@@ -1,5 +1,4 @@
-import { ReduceData, renderMapF } from "better-react";
-import { alawaysTrue } from "wy-helper";
+import { renderMapF } from "better-react";
 
 export type ReadArray<T> = {
   length: number
@@ -11,89 +10,93 @@ export function arrayHasValue(m: ReadArray<any>, i: number) {
 
 
 
-class ArrayReduceData<T> implements ReduceData<T> {
-  constructor(
-    private array: ReadArray<T>,
-    private index: number
-  ) { }
-  value = this.array[this.index]
-  getNext(): ReduceData<T> | undefined {
-    const nextIndex = this.index + 1
-    if (nextIndex < this.array.length) {
-      return new ArrayReduceData(this.array, nextIndex)
-    }
-  }
-  static from<T>(array: ReadArray<T>) {
-    if (array.length) {
-      return new ArrayReduceData(array, 0)
-    }
-    return undefined
-  }
-}
-
 export function renderArray<T>(
   vs: ReadArray<T>,
   getKey: (v: T, i: number) => any,
   render: (v: T, i: number) => void,
 ) {
-  renderMapF(ArrayReduceData.from(vs), getKey, function (old, value, index) {
-    render(value, index)
-    return undefined
-  }, undefined)
+  renderMapF<T, void>(
+    function (callback) {
+      for (let i = 0; i < vs.length; i++) {
+        const v = vs[i]
+        callback(undefined, v, getKey(v, i))
+      }
+    },
+    function (init, row, i) {
+      render(row, i)
+    })
 }
 
-export function createRenderArray<T>(
+export function renderArrayToMap<T, K, V>(
+  vs: ReadArray<T>,
+  getKey: (v: T, i: number) => K,
+  render: (v: T, i: number) => V) {
+  const out = new Map<K, V>()
+  renderMapF<T, V>(function (callback) {
+    for (let i = 0; i < vs.length; i++) {
+      const v = vs[i]
+      const k = getKey(v, i)
+      const m = callback(undefined as unknown as V, v, k)
+      out.set(k, m)
+    }
+  }, function (init, row, i) {
+    return render(row, i)
+  })
+  return out
+}
+
+
+export function renderArrayToArray<T, V>(
+  vs: ReadArray<T>,
   getKey: (v: T, i: number) => any,
-  render: (v: T, i: number) => void
-): (vs: ReadArray<T>) => void
-export function createRenderArray<T>(
-  getKey: (v: T, i: number) => any,
-): (vs: ReadArray<T>, render: (v: T, i: number) => void) => void
-export function createRenderArray(
-  getKey: (v: any, i: number) => any,
-  superRender?: any
+  render: (v: T, i: number) => V
 ) {
-  return function (vs: ReadArray<any>, render = superRender) {
-    return renderArray(vs, getKey, render)
-  }
-}
-
-function iterableHasValue<T>(m: IterableIterator<T>, v: IteratorResult<T, any>) {
-  return !v.done
-}
-
-/**
- * 因为iterator本身是不完美的无副作用的.
- */
-class IterableReduceData<T> implements ReduceData<T> {
-  constructor(
-    public readonly value: T,
-    private iterator: IterableIterator<T>
-  ) { }
-  getNext(): ReduceData<T> | undefined {
-    const n = this.iterator.next()
-    if (!n.done) {
-      return new IterableReduceData<T>(n.value, this.iterator)
+  const out: V[] = []
+  renderMapF<T, V>(function (callback) {
+    for (let i = 0; i < vs.length; i++) {
+      const v = vs[i]
+      const k = getKey(v, i)
+      const m = callback(undefined as unknown as V, v, k)
+      out.push(m)
     }
-  }
-  static from<T>(value: IterableIterator<T>) {
-    const n = value.next()
-    if (!n.done) {
-      return new IterableReduceData<T>(n.value, value)
-    }
-  }
+  }, function (init, row, i) {
+    return render(row, i)
+  })
+  return out
 }
 
 export function renderIterableIterator<V>(
   iterable: IterableIterator<V>,
   getKey: (value: V) => any,
-  render: (value: V, index: number) => void) {
-  renderMapF(IterableReduceData.from(iterable), getKey, function (old, value, index) {
-    render(value, index)
-    return undefined
-  }, undefined)
+  render: (value: V, index: number) => void
+) {
+  renderMapF<V, void>(function (callback) {
+    const it = iterable.next()
+    while (!it.done) {
+      callback(undefined, it.value, getKey(it.value))
+    }
+  }, function (init, row, i) {
+    render(row, i)
+  })
 }
-
+export function renderIterableIteratorToMap<T, K, V>(
+  iterable: IterableIterator<T>,
+  getKey: (value: T) => K,
+  render: (value: T, index: number) => V
+) {
+  const out = new Map<K, V>()
+  renderMapF<T, V>(function (callback) {
+    const it = iterable.next()
+    while (!it.done) {
+      const k = getKey(it.value)
+      const n = callback(undefined as unknown as V, it.value, k)
+      out.set(k, n)
+    }
+  }, function (init, row, i) {
+    return render(row, i)
+  })
+  return out
+}
 function getMapEntityKey<K, V>(kv: [K, V]) {
   return kv[0]
 }
@@ -116,25 +119,10 @@ export function renderSet<V>(
   })
 }
 
-export type RenderKeyArray = <T>(vs: ReadArray<T>, getKey: (v: T) => any, render: (v: T, i: number) => void) => void
-export function createRenderObject<V>(
-  renderArray: RenderKeyArray
-) {
-  return function (
-    object: {
-      [key: string]: V
-    },
-    render: (value: V, key: string) => void
-  ) {
-    renderArray(Object.entries(object), getMapEntityKey, function (row) {
-      render(row[1], row[0])
-    })
-  }
+export function renderObject<V>(object: {
+  [key: string]: V
+}, render: (value: V, key: string) => void) {
+  renderArray(Object.entries(object), getMapEntityKey, function (row) {
+    render(row[1], row[0])
+  })
 }
-
-export const renderObject = createRenderObject(renderArray) as <V>(
-  object: {
-    [key: string]: V
-  },
-  render: (value: V, key: string) => void
-) => void

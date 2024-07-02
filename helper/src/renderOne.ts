@@ -1,10 +1,13 @@
-import { EmptyFun, FalseType, emptyFun, quote } from "wy-helper";
-import { renderArray } from "./renderMap";
+import { EmptyFun, FalseType, GetValue, emptyFun, quote } from "wy-helper";
+import { renderArray, renderArrayToArray } from "./renderMap";
 import { getOpposite } from "./useVersion";
 
 
 export function renderOne(key: any, render: EmptyFun) {
   renderArray([key], quote, render)
+}
+export function renderOneGet<V>(key: any, render: GetValue<V>) {
+  return renderArrayToArray([key], quote, render)[0]
 }
 
 
@@ -23,7 +26,19 @@ export function renderIf<T>(
   })
 }
 
-
+export function renderIfGet<T, V>(
+  value: T,
+  renderTrue: (v: Exclude<T, FalseType>) => V,
+  renderFalse: (v: Extract<T, FalseType>) => V
+) {
+  return renderArrayToArray([value], getOpposite, function (v) {
+    if (v) {
+      renderTrue(v as any)
+    } else {
+      renderFalse(v as any)
+    }
+  })[0]
+}
 
 export function renderGuard<T, V>(
   data: T,

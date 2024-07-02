@@ -1,6 +1,6 @@
 import { dom } from "better-react-dom";
 import { renderPage } from "../util/page";
-import { addEffectDestroy, renderArray, useAtom, useBeforeAttrHookEffect, useChange, useEffect, useEvent, useHookEffect, useMemo, useOneBeforeAttrHookEffect } from "better-react-helper";
+import { addEffectDestroy, renderArray, useAtom, useBeforeAttrHookEffect, useChange, useEffect, useEvent, useHookEffect, useMemo } from "better-react-helper";
 import { PointKey, cacheVelocity, easeFns, emptyArray, getSpringBaseAnimationConfig, quote, scrollJudgeDirection, syncMergeCenter } from "wy-helper";
 import { animateFrame, subscribeMove } from "wy-dom-helper";
 
@@ -133,7 +133,7 @@ export default function () {
       },
     }).render(() => {
 
-      useOneBeforeAttrHookEffect(() => {
+      useBeforeAttrHookEffect(() => {
         contentRef.set(wrapper)
         addEffectDestroy(() => {
           contentRef.set(undefined)

@@ -1,7 +1,7 @@
 import { Fiber, FiberEvent, HookMemo, ReconcileFun, StateHolder } from "./Fiber";
 import { EffectDestroyEvent, HookEffect, RenderWithDep } from "./Fiber";
-import { quote, simpleNotEqual, alawaysTrue, ValueCenter, valueCenterOf, arrayNotEqual, EmptyFun } from "wy-helper";
-import { draftParentFiber, hookAddEffect, hookAddFiber, hookParentFiber, hookStateHoder, hookTempOps, revertParentFiber } from "./cache";
+import { quote, simpleNotEqual, alawaysTrue, ValueCenter, valueCenterOf, arrayNotEqual, EmptyFun, emptyArray } from "wy-helper";
+import { draftParentFiber, hookAddEffect, hookAddFiber, hookAddResult, hookParentFiber, hookStateHoder, hookTempOps, revertParentFiber } from "./cache";
 
 
 const hookIndex = {
@@ -52,8 +52,8 @@ export function useLevelEffect<V, T>(
   const isInit = holder.firstTime
   if (isInit) {
     //新增
-    const hookEffects = holder.hookEffects || []
-    holder.hookEffects = hookEffects
+    const hookEffects = holder.effects || []
+    holder.effects = hookEffects
     const state: HookEffect<V, T> = {
       level,
       deps,
@@ -76,7 +76,7 @@ export function useLevelEffect<V, T>(
       }
     })
   } else {
-    const hookEffects = holder.hookEffects
+    const hookEffects = holder.effects
     if (!hookEffects) {
       throw new Error("原组件上不存在hookEffects")
     }
@@ -163,8 +163,8 @@ export function useBaseMemo<V, D>(
   const holder = hookStateHoder()
   const isInit = holder.firstTime
   if (isInit) {
-    const hookMemos = holder.hookMemo || []
-    holder.hookMemo = hookMemos
+    const hookMemos = holder.memos || []
+    holder.memos = hookMemos
     draftParentFiber()
     const state: HookMemo<V, D> = {
       value: effect({
@@ -179,7 +179,7 @@ export function useBaseMemo<V, D>(
     hookMemos.push(hook)
     return state.value
   } else {
-    const hookMemos = holder.hookMemo
+    const hookMemos = holder.memos
     if (!hookMemos) {
       throw new Error("原组件上不存在memos")
     }
@@ -221,6 +221,7 @@ export function renderFiber<T>(
   const isInit = holder.firstTime
   const parentFiber = holder.fiber
   if (isInit) {
+    holder.fibers = holder.fibers || []
     //新增
     currentFiber = Fiber.create(
       holder.envModel,
@@ -236,10 +237,16 @@ export function renderFiber<T>(
     currentFiber.subOps = hookTempOps().createSub()
     holder.fibers.push(currentFiber)
   } else {
+    if (!holder.fibers) {
+      throw new Error("holder上没有fiber")
+    }
     currentFiber = holder.fibers[holder.fiberIndex]
     holder.fiberIndex = holder.fiberIndex + 1
     currentFiber.changeRender(shouldChange, render, deps)
   }
+
+
+
   currentFiber.before.set(hookIndex.beforeFiber)
   //第一次要标记sibling
   if (hookIndex.beforeFiber) {
@@ -247,15 +254,16 @@ export function renderFiber<T>(
   } else {
     parentFiber.firstChild.set(currentFiber)
   }
+  currentFiber.next.set(undefined)
   //一直组装到最后
   parentFiber.lastChild.set(currentFiber)
   hookIndex.beforeFiber = currentFiber
 
-  hookTempOps().addNode(currentFiber.subOps)
+  hookAddResult(currentFiber.subOps)
   return currentFiber
 }
 export interface Context<T> {
-  hookProvider(v: T): void
+  useProvider(v: T): void
   /**
    * 似乎不能hookSelector,因为transition中闪建的节点,
    * @param getValue 
@@ -277,17 +285,37 @@ class ContextFactory<T> implements Context<T> {
   }
 
   private readonly defaultContext: ValueCenter<T>
-  hookProvider(v: T) {
+  useProvider(v: T) {
     const holder = hookStateHoder()
-    holder.contextProvider.push({
-      key: this,
-      value: valueCenterOf(v)
-    })
+    const isInit = holder.firstTime
+    if (isInit) {
+      holder.contexts = holder.contexts || []
+      holder.contexts.push({
+        key: this,
+        value: valueCenterOf(v)
+      })
+      holder.contextIndex = holder.contextIndex + 1
+    } else {
+      const providers = holder.contexts
+      if (!providers) {
+        throw new Error("原组件上不存在providers")
+      }
+      const index = holder.contextIndex
+      const provider = providers[index]
+      if (!provider) {
+        throw new Error("原组件上不存在provider")
+      }
+      holder.contextIndex = index + 1
+      if (provider.key != this) {
+        throw new Error("原组件上provider不对应")
+      }
+      provider.value.set(v)
+    }
   }
   private findProviderStateHoder(holder: StateHolder) {
-    let begin = holder.contextProvider.length
+    let begin = holder.contexts?.length || 0
     while (holder) {
-      const providers = holder.contextProvider
+      const providers = holder.contexts || emptyArray
       for (let i = begin - 1; i > -1; i--) {
         const provider = providers[i]
         if (provider.key == this) {
@@ -305,6 +333,8 @@ class ContextFactory<T> implements Context<T> {
   /**
    * 可能context没有改变,但本地render已经发生,
    * 每次render都要注册事件,也要销毁前一次注册的事件.必然要在fiber上记忆.
+   * 
+   * 每次执行都去重新定位,每次render指定到下一次.不能变成hook.因为先render而后通知,没有取消通知
    * @param getValue 
    * @param shouldUpdate 
    * @returns 

@@ -196,13 +196,13 @@ class ChangeAtom<T> implements StoreRef<T> {
 
 function notifyDel(fiber: StateHolder) {
   destroyFiber(fiber)
-  fiber.children.forEach(child => {
+  fiber.children?.forEach(child => {
     notifyDel(child)
   })
 }
 function destroyFiber(fiber: StateHolder) {
   fiber.destroyed = true
-  const effects = fiber.hookEffects
+  const effects = fiber.effects
   if (effects) {
     const envModel = fiber.envModel
     effects.forEach(effect => {

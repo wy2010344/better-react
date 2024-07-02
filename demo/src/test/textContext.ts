@@ -9,7 +9,7 @@ export default function demo() {
   const [version, updateVersion] = useVersion()
 
 
-  VCtx.hookProvider({
+  VCtx.useProvider({
     value: version,
     updateVersion
   })

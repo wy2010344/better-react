@@ -56,7 +56,7 @@ export function hookTempOps() {
 export function hookBeginTempOps(op: TempOps<any>) {
   const before = cache.tempOps
   cache.tempOps = op
-  op.data.reset()
+  op.reset()
   return before
 }
 export function hookEndTempOps(op: AbsTempOps<any>) {

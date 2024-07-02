@@ -54,5 +54,7 @@
   "peerDependencies": {
     "wy-helper": "^0.1.3"
   },
-  "dependencies": {}
+  "dependencies": {
+    "wy-helper": "file:.yalc/wy-helper"
+  }
 }

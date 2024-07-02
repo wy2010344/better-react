@@ -16,7 +16,7 @@ export default function () {
   const history = useMemo(() => {
     return createBrowserHistory()
   }, emptyArray)
-  GlobalContext.hookProvider({
+  GlobalContext.useProvider({
     history
   })
   renderRouter(history)

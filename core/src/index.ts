@@ -31,7 +31,6 @@ export type {
   RenderWithDep,
   FiberEvent,
   EffectDestroyEvent,
-  StoreValue
 } from './Fiber'
 export { CreateChangeAtom } from './commitWork'
 export * from './renderMap'

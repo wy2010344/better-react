@@ -1,7 +1,7 @@
 import { alawaysFalse, storeRef } from "wy-helper";
 import { hookLevelEffect, useBaseMemo } from "./fc";
 import { StateHolder } from "./Fiber";
-import { hookAlterStateHolder, hookStateHoder } from "./cache";
+import { hookStateHoder } from "./cache";
 
 
 
@@ -16,55 +16,44 @@ export function cloneMap<T>(map: Map<any, T>) {
   })
   return newMap
 }
-export interface ReduceData<T> {
-  readonly value: T
-  /**如果是动态生成,可能要自缓存 */
-  getNext(): ReduceData<T> | undefined
-}
-
-export function renderMapF<T, F>(
-  data: ReduceData<T> | undefined,
-  getKey: (v: T, i: number) => any,
-  reducer: (old: F, value: T, index: number) => F,
-  init: F
+export function renderMapF<T, V = any>(
+  forEach: (callback: (init: V, row: T, key: any) => V) => void,
+  render: (init: V, row: T, i: number) => V
 ) {
   const mapRef = useBaseMemo(alawaysFalse, createMapRef, undefined);
   const oldMap = cloneMap(mapRef.get())
   const newMap = new Map<any, StateHolder>()
   const beforeEnv = hookStateHoder()
-  let i = 0
-
   const thisTimeAdd: StateHolder[] = []
-  const initData = data
-  while (data) {
-    const value = data.value
-    const key = getKey(value, i)
+  let i = 0
+  forEach((init, value, key) => {
     let env = oldMap.get(key)
     if (env) {
-      env.parentContextIndex.set(beforeEnv.contextProvider.length)
+      env.parentContextIndex.set(beforeEnv.contextIndex)
       oldMap.delete(key)
     } else {
       env = StateHolder.from(beforeEnv)
       thisTimeAdd.push(env)
     }
     env.beginRun()
-    init = reducer(init, value, i)
+    const v = render(init, value, i)
     env.endRun()
     newMap.set(key, env)
-    data = data.getNext()
     i++
-  }
-  hookLevelEffect(-3, function () {
+    return v
+  })
+  hookLevelEffect(0, function () {
     mapRef.set(newMap)
+    beforeEnv.children = beforeEnv.children || new Set()
+    const children = beforeEnv.children
     thisTimeAdd.forEach(env => {
-      beforeEnv.children.add(env)
+      children.add(env)
     })
     oldMap.forEach(function (value) {
-      beforeEnv.children.delete(value)
+      children.delete(value)
     })
   })
   oldMap.forEach(function (value) {
     beforeEnv.envModel.addDelect(value)
   })
-  return init
 }

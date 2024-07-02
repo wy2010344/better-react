@@ -2,27 +2,27 @@
   "version": "v1",
   "packages": {
     "better-react-helper": {
-      "signature": "adafd152de82414a0f501746dee19d35",
+      "signature": "ef172d9b0ef0f886b1479ab5bace353a",
       "file": true,
       "replaced": "^1.2.7"
     },
     "better-react": {
-      "signature": "e563bc0b89653daa7c6f4959726103c2",
+      "signature": "595da109e99b76c548b9eae081bfec02",
       "file": true,
       "replaced": "^1.2.6"
     },
     "better-react-dom": {
-      "signature": "f0c5965690d417d4408e2b5b077854a0",
+      "signature": "48bcd05121db77e1a28f0fdba780214d",
       "file": true,
       "replaced": "^1.2.6"
     },
     "wy-helper": {
-      "signature": "28aa4b4758c1adcc1beb6e2a808ba201",
+      "signature": "bf1e672feda3bddfd94dc888ab28ade3",
       "file": true,
       "replaced": "^0.1.0"
     },
     "wy-dom-helper": {
-      "signature": "4c198fda27aef8dec386003f08423050",
+      "signature": "6fee997f6f0b1d8a2335c33336536ee9",
       "file": true,
       "replaced": "^0.1.0"
     },

@@ -30,29 +30,50 @@ const reduceList: Reducer<Row[], {
     list.splice(action.index, 1)
     return list
   } else if (action.type == "move") {
-    return arrayMove(list, action.index, action.toIndex, true)
+    const nList = arrayMove(list, action.index, action.toIndex, true)
+    const w = window as any
+    w.arrayMove = arrayMove
+    console.log("ssvv", list, nList, action.index, action.toIndex)
+    return nList
   }
   return list
 }
 
 
-const testContext = createContext(9)
+const testContext = createContext({
+  value: 0,
+  updateVersion() { }
+})
 
-export default function () {
+export default function renderTodo() {
   dom.div().render(function () {
 
-    testContext.hookProvider(99)
+    const [version, updateVersion] = useVersion()
+    testContext.useProvider({
+      value: version,
+      updateVersion
+    })
     const [list, dispatch] = useReducer(reduceList, emptyArray as Row[])
-
+    console.log("list--", list, list.length)
     renderArray(list, v => {
-      console.log("dvv", v)
       return v.index
     }, function (row: Row, i: number) {
+      console.log("render...")
       dom.div().renderText`${row.index}--${row.value}`
 
+      // dom.div({
+      //   style: `
+      //   padding:10px;
+      //   `
+      // }).render(() => {
+      //   // renderTodo()
+      // })
       const [version, updateVersion] = useVersion()
 
-
+      // testContext.hookProvider({
+      //   value: version,
+      //   updateVersion
+      // })
       useEffect(() => {
         console.log("初始化", row)
         return () => {
@@ -88,30 +109,30 @@ export default function () {
       }).renderText`删除`
       dom.button({
         onClick(event) {
+          const toI = i - 1
           dispatch({
             type: "move",
             index: i,
-            toIndex: i - 1
+            toIndex: toI < 0 ? list.length - 1 : toI
           })
         },
       }).renderText`上移`
       dom.button({
         onClick(event) {
+          const toI = i + 1
           dispatch({
             type: "move",
             index: i,
-            toIndex: i + 1
+            toIndex: toI > list.length - 1 ? 0 : toI
           })
         },
       }).renderText`下移`
 
-      const v1 = testContext.useConsumer()
-      dom.button().renderText`ddd${v1}`
+      // const v1 = testContext.useConsumer()
+      // dom.button().renderText`ddxxxxd${v1.value}`
 
       renderFragment(() => {
-        const [version, updateVersion] = useVersion()
-
-
+        const v1 = testContext.useConsumer()
         useEffect((e) => {
           console.log('init', e)
           return function (e) {
@@ -119,12 +140,10 @@ export default function () {
           }
         }, [version])
         dom.button({
-          onClick: updateVersion
-        }).renderText`${row.index}--${version}`
+          onClick: v1.updateVersion
+        }).renderText`${row.index}--${v1.value}`
       }, emptyArray)
     })
-
-    testContext.hookProvider(33)
     dom.button({
       onClick(event) {
         dispatch({
@@ -139,8 +158,16 @@ export default function () {
     }).renderText`添加`
 
 
+    console.log("afterRender", list)
+    const [v2, upV2] = useVersion()
+    testContext.useProvider({
+      value: v2,
+      updateVersion: upV2
+    })
     dom.br().render()
-    const v1 = testContext.useConsumer()
-    dom.button().renderText`ddd${v1}`
+    // const v1 = testContext.useConsumer()
+    dom.button().renderText`ddd${v2}`
   })
 }
+
+

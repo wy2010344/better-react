@@ -46,12 +46,6 @@ function whenCommitEffectTag(v: EffectTag) {
   return undefined
 }
 
-export interface StoreValue<M extends readonly any[] = readonly any[], T = any,> {
-  onRenderLeave(addLevelEffect: (level: number, set: EmptyFun) => void, parentResult: any): T
-  hookAddResult(...vs: M): void
-  useAfterRender?(): void
-}
-
 export type ReconcileFun = (fun: (updateEffect: (level: number, set: EmptyFun) => void) => any) => void
 
 
@@ -73,37 +67,38 @@ export class StateHolder {
       parent.envModel,
       parent.fiber,
       parent,
-      parent.contextProvider.length
+      parent.contextIndex
     )
   }
   /**是否已经销毁 */
   destroyed?: boolean
   firstTime = true
 
-  contextProvider!: {
-    key: any,
+  children?: Set<StateHolder>
+
+  contexts?: {
+    key: Context<any>,
     value: ValueCenter<any>
   }[]
-  hookEffects?: StoreRef<HookEffect<any, any>>[]
+  effects?: StoreRef<HookEffect<any, any>>[]
+  memos?: StoreRef<HookMemo<any, any>>[]
+  fibers?: Fiber[] = []
 
-  hookMemo?: StoreRef<HookMemo<any, any>>[]
-  children = new Set<StateHolder>()
-  fibers: Fiber[] = []
+
+  contextIndex = 0
   effectIndex = 0
   memoIndex = 0
   fiberIndex = 0
   beginRun() {
-    // globalState.envList.unshift(this)
     hookAlterStateHolder(this)
-    this.memoIndex = 0
+    this.contextIndex = 0
     this.effectIndex = 0
+    this.memoIndex = 0
     this.fiberIndex = 0
-    this.contextProvider = []
   }
   endRun() {
     this.firstTime = false
     hookAlterStateHolder(this.parent)
-    // globalState.envList.shift()
   }
 }
 /**
@@ -125,10 +120,10 @@ export class Fiber<D = any> {
    * 这其中要回滚
    * 当提交生效的时候,自己的值变空.回滚的时候,也变成空
   */
-  readonly effectTag: StoreRef<EffectTag>
+  readonly effectTag: StoreRef<EffectTag> = this.envModel.createChangeAtom<EffectTag>("PLACEMENT", whenCommitEffectTag)
   /**顺序*/
-  readonly firstChild: StoreRef<Fiber | void> = undefined!
-  readonly lastChild: StoreRef<Fiber | void> = undefined!
+  readonly firstChild: StoreRef<Fiber | void> = this.envModel.createChangeAtom(undefined)
+  readonly lastChild: StoreRef<Fiber | void> = this.envModel.createChangeAtom(undefined)
 
   private renderDeps: StoreRef<RenderDeps<any>>
 
@@ -141,19 +136,20 @@ export class Fiber<D = any> {
     public readonly next: StoreRef<Fiber | void>,
     rd: RenderDeps<any>
   ) {
-    this.effectTag = envModel.createChangeAtom<EffectTag>("PLACEMENT", whenCommitEffectTag)
     this.renderDeps = envModel.createChangeAtom(rd)
-    this.firstChild = envModel.createChangeAtom(undefined)
-    this.lastChild = envModel.createChangeAtom(undefined)
 
     const parentHolder = hookStateHoder()
     this.stateHoder = new StateHolder(
       this.envModel,
       this,
       parentHolder,
-      parentHolder?.contextProvider.length || 0
+      parentHolder?.contextIndex
     )
-    parentHolder?.children.add(this.stateHoder)
+
+    if (parentHolder) {
+      parentHolder.children = parentHolder.children || new Set()
+      parentHolder.children.add(this.stateHoder)
+    }
   }
   changeRender(
     shouldChange: (a: D, b: D) => any,
@@ -179,7 +175,7 @@ export class Fiber<D = any> {
   subOps!: AbsTempOps<any>
   render() {
     const { render, event } = this.renderDeps.get()
-    this.subOps.data.reset()
+    this.subOps.reset()
     this.stateHoder.beginRun()
     render(event)
     this.stateHoder.endRun()
