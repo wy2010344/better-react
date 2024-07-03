@@ -5,35 +5,41 @@ import { AskNextTimeWork, EmptyFun, alawaysTrue } from "wy-helper"
 import { AbsTempOps } from "./tempOps"
 export { startTransition, flushSync } from './reconcile'
 export {
-  hookLevelEffect,
-  useLevelEffect, useBaseMemo,
-  createContext, renderFiber,
+  renderFiber,
   hookCreateChangeAtom,
   hookCommitAll,
-  hookEffectTag,
+  hookEffectTag
+} from './fc'
+export {
   hookRequestReconcile,
   hookMakeDirtyAndRequestUpdate
-} from './fc'
+} from './requestFresh'
+export { createContext } from './context'
 export {
   hookBeginTempOps,
   hookEndTempOps,
   hookAddResult
 } from './cache'
-export type { MemoEvent } from './fc'
+export {
+  hookLevelEffect,
+  useLevelEffect,
+} from './effect'
+export { useBaseMemo } from './memo'
+export { renderStateHolder } from './stateHolder'
+export type { MemoEvent } from './memo'
 export {
   TempOps,
   TempSubOps,
   TempReal
 } from './tempOps'
-export type { EffectResult, EffectEvent, EffectDestroy } from './fc'
+export type { EffectResult, EffectEvent, EffectDestroy, EffectDestroyEvent } from './effect'
 export type {
   Fiber,
   RenderWithDep,
   FiberEvent,
-  EffectDestroyEvent,
 } from './Fiber'
 export { CreateChangeAtom } from './commitWork'
-export * from './renderMap'
+export * from './renderForEach'
 export function render(
   getSubOps: (createChangeAtom: CreateChangeAtom<any>) => AbsTempOps<any>,
   render: EmptyFun,

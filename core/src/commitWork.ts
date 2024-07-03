@@ -1,6 +1,7 @@
-import { Fiber, StateHolder } from "./Fiber"
+import { Fiber } from "./Fiber"
 import { EmptyFun, ManageValue, StoreRef, emptyFun, iterableToList, quote, removeEqual, run, storeRef } from "wy-helper"
 import { hookAddEffect } from "./cache"
+import { StateHolder } from "./stateHolder"
 
 
 export type CreateChangeAtom<T> = (v: T, didCommit?: (v: T) => T) => StoreRef<T>

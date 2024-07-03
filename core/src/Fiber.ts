@@ -1,40 +1,10 @@
 import { EnvModel } from "./commitWork"
-import { EmptyFun, storeRef, StoreRef, ValueCenter } from "wy-helper"
+import { EmptyFun, StoreRef } from "wy-helper"
 import { AbsTempOps } from "./tempOps"
-import { hookAlterStateHolder, hookStateHoder } from "./cache"
-import { Context } from "./fc"
+import { hookStateHoder } from "./cache"
+import { StateHolder } from "./stateHolder"
+import { ReconcileFun } from "./requestFresh"
 
-export type HookMemo<T, D> = {
-  shouldChange(a: D, b: D): any,
-  deps: D
-  value: T
-}
-
-export type HookEffect<V, D> = {
-  level: number,
-  shouldChange(a: D, b: D): any
-  deps: D
-  value?: V
-  isInit: boolean
-  destroy?: void | ((newDeps: EffectDestroyEvent<V, D>) => void)
-}
-
-export type LayoutEffect = (fun: EmptyFun) => void
-export type EffectDestroyEvent<V, T> = {
-  isDestroy: false
-  trigger: T
-  value: V,
-  beforeIsInit: boolean,
-  beforeTrigger: T
-  setRealTime(): void
-} | {
-  isDestroy: true
-  trigger?: never
-  value: V,
-  beforeIsInit: boolean,
-  beforeTrigger: T
-  setRealTime(): void
-}
 type RenderDeps<D> = {
   shouldChange: (a: D, b: D) => any,
   render(e: FiberEvent<D>): void
@@ -46,61 +16,6 @@ function whenCommitEffectTag(v: EffectTag) {
   return undefined
 }
 
-export type ReconcileFun = (fun: (updateEffect: (level: number, set: EmptyFun) => void) => any) => void
-
-
-export class StateHolder {
-  readonly parentContextIndex: StoreRef<number>
-  constructor(
-    public readonly envModel: EnvModel,
-    public readonly fiber: Fiber,
-    public readonly parent: StateHolder,
-    /**
-     * 在父节点的第几位
-     */
-    initParentContextIndex: number
-  ) {
-    this.parentContextIndex = envModel.createChangeAtom(initParentContextIndex)
-  }
-  static from(parent: StateHolder) {
-    return new StateHolder(
-      parent.envModel,
-      parent.fiber,
-      parent,
-      parent.contextIndex
-    )
-  }
-  /**是否已经销毁 */
-  destroyed?: boolean
-  firstTime = true
-
-  children?: Set<StateHolder>
-
-  contexts?: {
-    key: Context<any>,
-    value: ValueCenter<any>
-  }[]
-  effects?: StoreRef<HookEffect<any, any>>[]
-  memos?: StoreRef<HookMemo<any, any>>[]
-  fibers?: Fiber[] = []
-
-
-  contextIndex = 0
-  effectIndex = 0
-  memoIndex = 0
-  fiberIndex = 0
-  beginRun() {
-    hookAlterStateHolder(this)
-    this.contextIndex = 0
-    this.effectIndex = 0
-    this.memoIndex = 0
-    this.fiberIndex = 0
-  }
-  endRun() {
-    this.firstTime = false
-    hookAlterStateHolder(this.parent)
-  }
-}
 /**
  * 会调整顺序的,包括useMap的父节点与子结点.但父节点只调整child与lastChild
  * 子节点只调整prev与next

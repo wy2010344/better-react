@@ -1,7 +1,8 @@
-import { alawaysFalse, storeRef } from "wy-helper";
-import { hookLevelEffect, useBaseMemo } from "./fc";
-import { StateHolder } from "./Fiber";
+import { EmptyFun, alawaysFalse, storeRef } from "wy-helper";
+import { useBaseMemo } from "./memo";
+import { StateHolder } from "./stateHolder";
 import { hookStateHoder } from "./cache";
+import { hookLevelEffect } from './effect'
 
 
 
@@ -16,17 +17,20 @@ export function cloneMap<T>(map: Map<any, T>) {
   })
   return newMap
 }
-export function renderMapF<T, V = any>(
-  forEach: (callback: (init: V, row: T, key: any) => V) => void,
-  render: (init: V, row: T, i: number) => V
+/**
+ * 因为是同步的,且js有副作用,在运行时自己去累计,不过度设计
+ * @param forEach 
+ * @param render 
+ */
+export function renderForEach(
+  forEach: (callback: (key: any, callback: EmptyFun) => void) => void
 ) {
   const mapRef = useBaseMemo(alawaysFalse, createMapRef, undefined);
   const oldMap = cloneMap(mapRef.get())
   const newMap = new Map<any, StateHolder>()
   const beforeEnv = hookStateHoder()
   const thisTimeAdd: StateHolder[] = []
-  let i = 0
-  forEach((init, value, key) => {
+  forEach((key, callback) => {
     let env = oldMap.get(key)
     if (env) {
       env.parentContextIndex.set(beforeEnv.contextIndex)
@@ -36,11 +40,9 @@ export function renderMapF<T, V = any>(
       thisTimeAdd.push(env)
     }
     env.beginRun()
-    const v = render(init, value, i)
+    callback()
     env.endRun()
     newMap.set(key, env)
-    i++
-    return v
   })
   hookLevelEffect(0, function () {
     mapRef.set(newMap)

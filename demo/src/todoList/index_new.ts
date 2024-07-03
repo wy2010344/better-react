@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { createContext } from "better-react";
+import { createContext, renderStateHolder } from "better-react";
 import { dom } from "better-react-dom";
 import { renderArray, renderFragment, useEffect, useReducer, useVersion } from "better-react-helper";
 import { Reducer, arrayMove, emptyArray } from "wy-helper";
@@ -61,13 +61,15 @@ export default function renderTodo() {
       console.log("render...")
       dom.div().renderText`${row.index}--${row.value}`
 
-      // dom.div({
-      //   style: `
-      //   padding:10px;
-      //   `
-      // }).render(() => {
-      //   // renderTodo()
-      // })
+      dom.div({
+        style: `
+        padding:10px;
+        `
+      }).render(() => {
+        renderStateHolder(() => {
+          renderTodo()
+        })
+      })
       const [version, updateVersion] = useVersion()
 
       // testContext.hookProvider({

@@ -1,4 +1,4 @@
-import { renderMapF } from "better-react";
+import { renderForEach } from "better-react";
 
 export type ReadArray<T> = {
   length: number
@@ -15,15 +15,14 @@ export function renderArray<T>(
   getKey: (v: T, i: number) => any,
   render: (v: T, i: number) => void,
 ) {
-  renderMapF<T, void>(
+  renderForEach(
     function (callback) {
       for (let i = 0; i < vs.length; i++) {
         const v = vs[i]
-        callback(undefined, v, getKey(v, i))
+        callback(getKey(v, i), () => {
+          render(v, i)
+        })
       }
-    },
-    function (init, row, i) {
-      render(row, i)
     })
 }
 
@@ -32,15 +31,15 @@ export function renderArrayToMap<T, K, V>(
   getKey: (v: T, i: number) => K,
   render: (v: T, i: number) => V) {
   const out = new Map<K, V>()
-  renderMapF<T, V>(function (callback) {
+  renderForEach(function (callback) {
     for (let i = 0; i < vs.length; i++) {
       const v = vs[i]
       const k = getKey(v, i)
-      const m = callback(undefined as unknown as V, v, k)
-      out.set(k, m)
+      callback(k, () => {
+        const m = render(v, i)
+        out.set(k, m)
+      })
     }
-  }, function (init, row, i) {
-    return render(row, i)
   })
   return out
 }
@@ -52,15 +51,15 @@ export function renderArrayToArray<T, V>(
   render: (v: T, i: number) => V
 ) {
   const out: V[] = []
-  renderMapF<T, V>(function (callback) {
+  renderForEach(function (callback) {
     for (let i = 0; i < vs.length; i++) {
       const v = vs[i]
       const k = getKey(v, i)
-      const m = callback(undefined as unknown as V, v, k)
-      out.push(m)
+      callback(k, () => {
+        const m = render(v, i)
+        out.push(m)
+      })
     }
-  }, function (init, row, i) {
-    return render(row, i)
   })
   return out
 }
@@ -68,32 +67,32 @@ export function renderArrayToArray<T, V>(
 export function renderIterableIterator<V>(
   iterable: IterableIterator<V>,
   getKey: (value: V) => any,
-  render: (value: V, index: number) => void
+  render: (value: V) => void
 ) {
-  renderMapF<V, void>(function (callback) {
+  renderForEach(function (callback) {
     const it = iterable.next()
     while (!it.done) {
-      callback(undefined, it.value, getKey(it.value))
+      callback(getKey(it.value), () => {
+        render(it.value)
+      })
     }
-  }, function (init, row, i) {
-    render(row, i)
   })
 }
 export function renderIterableIteratorToMap<T, K, V>(
   iterable: IterableIterator<T>,
   getKey: (value: T) => K,
-  render: (value: T, index: number) => V
+  render: (value: T) => V
 ) {
   const out = new Map<K, V>()
-  renderMapF<T, V>(function (callback) {
+  renderForEach(function (callback) {
     const it = iterable.next()
     while (!it.done) {
       const k = getKey(it.value)
-      const n = callback(undefined as unknown as V, it.value, k)
-      out.set(k, n)
+      callback(k, () => {
+        const n = render(it.value)
+        out.set(k, n)
+      })
     }
-  }, function (init, row, i) {
-    return render(row, i)
   })
   return out
 }
@@ -105,8 +104,12 @@ export function renderMap<K, V>(
   map: Map<K, V>,
   render: (value: V, key: K) => void
 ) {
-  return renderIterableIterator(map.entries(), getMapEntityKey, function (row) {
-    render(row[1], row[0])
+  renderForEach(function (callback) {
+    map.forEach(function (value, key) {
+      callback(key, () => {
+        render(value, key)
+      })
+    })
   })
 }
 
@@ -114,15 +117,23 @@ export function renderSet<V>(
   set: Set<V>,
   render: (value: V) => void
 ) {
-  renderIterableIterator(set.entries(), getMapEntityKey, function (row) {
-    render(row[0])
+  renderForEach(function (callback) {
+    set.forEach(function (key) {
+      callback(key, () => {
+        render(key)
+      })
+    })
   })
 }
 
 export function renderObject<V>(object: {
   [key: string]: V
 }, render: (value: V, key: string) => void) {
-  renderArray(Object.entries(object), getMapEntityKey, function (row) {
-    render(row[1], row[0])
+  renderForEach(function (callback) {
+    for (const key in object) {
+      callback(key, () => {
+        render(object[key], key)
+      })
+    }
   })
 }

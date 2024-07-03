@@ -446,6 +446,7 @@ export namespace React {
     'aria-valuenow'?: number | undefined;
     /** Defines the human readable text alternative of aria-valuenow for a range widget. */
     'aria-valuetext'?: string | undefined;
+    [key: `data-${string}`]: string | undefined;
   }
 
   /**

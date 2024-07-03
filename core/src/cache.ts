@@ -1,6 +1,7 @@
 import { EmptyFun } from "wy-helper"
-import { Fiber, LayoutEffect, StateHolder } from "./Fiber"
+import { Fiber } from "./Fiber"
 import { AbsTempOps, TempOps } from "./tempOps"
+import { LayoutEffect, StateHolder } from "./stateHolder"
 
 const w = globalThis as any
 const cache = (w.__better_react_one__ || {

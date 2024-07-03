@@ -38,7 +38,7 @@ function mainPage() {
     renderLkPage("pulltoRefresh", history => history.push("./pulltoRefresh"))
     renderLkPage("taro", history => history.push("./taro"))
     renderLkPage("onboard", history => history.push("./onboard"))
-    renderLkPage("note", history => history.push("./note"))
+    renderLkPage("card", history => history.push("./card"))
   })
 }
 
@@ -85,4 +85,10 @@ const renderRouter = createRouter([
       return import("./taro")
     },
   },
+  {
+    match: locationMatch("/card"),
+    getPage() {
+      return import("./hoverCard")
+    },
+  }
 ])

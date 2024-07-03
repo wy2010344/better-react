@@ -25,6 +25,7 @@ import mySpring1 from "./bezier-preview/mySpring1";
 import pipline from "./pipline";
 import force3d from "./d3-learn/force/collide";
 import figmaClone from "./figmaClone";
+import xmlToBetter from "./xmlToBetter";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(
@@ -37,7 +38,8 @@ export function createBr(app: HTMLElement) {
     // renderFilter,
     // cssLayout,
     // figmaClone,
-    // demo,
+    demo,
+    // xmlToBetter,
     // force3d,
     // reorderList,
     // canvasRender,
@@ -46,7 +48,7 @@ export function createBr(app: HTMLElement) {
     // iScroll,
     // newMode,
     // centerPicker,
-    todoList,
+    // todoList,
     // bezierPreview,
     // mySpringAnimation,
     // pipline,
