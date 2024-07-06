@@ -2,7 +2,7 @@
   "version": "v1",
   "packages": {
     "better-react": {
-      "signature": "e47ee5125451dcb6c483a6886afb098d",
+      "signature": "7869021649cfbbe8d1de6aebb5f10e35",
       "file": true,
       "replaced": "^1.2.4"
     },

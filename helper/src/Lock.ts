@@ -1,6 +1,5 @@
 import { StoreRef, emptyArray, storeRef } from "wy-helper";
 import { useMemo } from "./useRef";
-import { hookEffectTag } from "better-react";
 
 
 function increase(ref: StoreRef<number>) {
@@ -30,13 +29,4 @@ export function useVersionLock(init = 0) {
       return increase(ref)
     }] as const
   }, emptyArray)
-}
-
-
-/**
- * 如果不是第一次则是true
- * @returns 
- */
-export function hookIsCreate() {
-  return hookEffectTag() == 'PLACEMENT'
 }

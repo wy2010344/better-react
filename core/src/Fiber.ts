@@ -39,6 +39,8 @@ export class Fiber<D = any> {
   /**顺序*/
   readonly firstChild: StoreRef<Fiber | void> = this.envModel.createChangeAtom(undefined)
   readonly lastChild: StoreRef<Fiber | void> = this.envModel.createChangeAtom(undefined)
+  public readonly before: StoreRef<Fiber | void> = this.envModel.createChangeAtom(undefined)
+  public readonly next: StoreRef<Fiber | void> = this.envModel.createChangeAtom(undefined)
 
   private renderDeps: StoreRef<RenderDeps<any>>
 
@@ -47,8 +49,6 @@ export class Fiber<D = any> {
   private constructor(
     public readonly envModel: EnvModel,
     public readonly parent: Fiber | undefined,
-    public readonly before: StoreRef<Fiber | void>,
-    public readonly next: StoreRef<Fiber | void>,
     rd: RenderDeps<any>
   ) {
     this.renderDeps = envModel.createChangeAtom(rd)
@@ -109,8 +109,6 @@ export class Fiber<D = any> {
     const fiber = new Fiber(
       envModel,
       parentFiber,
-      envModel.createChangeAtom(undefined),
-      envModel.createChangeAtom(undefined),
       rd)
     return fiber
   }

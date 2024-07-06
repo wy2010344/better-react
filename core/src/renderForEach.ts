@@ -8,12 +8,12 @@ import { hookLevelEffect } from './effect'
 
 
 function createMapRef() {
-  return storeRef(new Map<any, StateHolder>())
+  return storeRef(new Map<any, StateHolder[]>())
 }
-export function cloneMap<T>(map: Map<any, T>) {
-  const newMap = new Map<any, T>()
+export function cloneMap<T>(map: Map<any, T[]>) {
+  const newMap = new Map<any, T[]>()
   map.forEach(function (v, k) {
-    newMap.set(k, v)
+    newMap.set(k, v.slice())
   })
   return newMap
 }
@@ -27,14 +27,15 @@ export function renderForEach(
 ) {
   const mapRef = useBaseMemo(alawaysFalse, createMapRef, undefined);
   const oldMap = cloneMap(mapRef.get())
-  const newMap = new Map<any, StateHolder>()
+  const newMap = new Map<any, StateHolder[]>()
   const beforeEnv = hookStateHoder()
   const thisTimeAdd: StateHolder[] = []
   forEach((key, callback) => {
-    let env = oldMap.get(key)
-    if (env) {
+    let envs = oldMap.get(key)
+    let env: StateHolder
+    if (envs?.length) {
+      env = envs.shift()!
       env.parentContextIndex.set(beforeEnv.contextIndex)
-      oldMap.delete(key)
     } else {
       env = StateHolder.from(beforeEnv)
       thisTimeAdd.push(env)
@@ -42,7 +43,20 @@ export function renderForEach(
     env.beginRun()
     callback()
     env.endRun()
-    newMap.set(key, env)
+    let newEnvs = newMap.get(key)
+    if (newEnvs) {
+      newEnvs.push(env)
+      console.warn(`重复的key[${key}]出现第${newEnvs.length}次`)
+    } else {
+      newEnvs = [env]
+    }
+    newMap.set(key, newEnvs)
+  })
+
+  oldMap.forEach(function (values) {
+    values.forEach(value => {
+      beforeEnv.envModel.addDelect(value)
+    })
   })
   hookLevelEffect(0, function () {
     mapRef.set(newMap)
@@ -51,11 +65,10 @@ export function renderForEach(
     thisTimeAdd.forEach(env => {
       children.add(env)
     })
-    oldMap.forEach(function (value) {
-      children.delete(value)
+    oldMap.forEach(function (values) {
+      values.forEach(value => {
+        children.delete(value)
+      })
     })
-  })
-  oldMap.forEach(function (value) {
-    beforeEnv.envModel.addDelect(value)
   })
 }

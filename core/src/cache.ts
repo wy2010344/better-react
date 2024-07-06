@@ -1,7 +1,8 @@
 import { EmptyFun } from "wy-helper"
 import { Fiber } from "./Fiber"
-import { AbsTempOps, TempOps } from "./tempOps"
-import { LayoutEffect, StateHolder } from "./stateHolder"
+import { AbsTempOps, TempOps, TempReal } from "./tempOps"
+import { StateHolder } from "./stateHolder"
+import { LayoutEffect } from "./effect"
 
 const w = globalThis as any
 const cache = (w.__better_react_one__ || {
@@ -12,7 +13,7 @@ const cache = (w.__better_react_one__ || {
   allowWipFiber: false
 }) as {
   effect?: LayoutEffect
-  tempOps?: AbsTempOps<any>
+  tempOps?: AbsTempOps<TempReal>
   stateHolder?: StateHolder
   wipFiber?: Fiber
   allowWipFiber?: boolean
@@ -68,9 +69,7 @@ export function hookAddResult(...vs: any[]) {
   if (!cache.tempOps) {
     throw new Error("必须在render中进行")
   }
-  for (let i = 0; i < vs.length; i++) {
-    cache.tempOps.addNode(vs[i])
-  }
+  cache.tempOps.data.add.apply(cache.tempOps.data, arguments as unknown as any[])
 }
 
 

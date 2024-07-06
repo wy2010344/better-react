@@ -1,6 +1,11 @@
-import { HookMemo } from "./stateHolder";
 import { draftParentFiber, hookStateHoder, revertParentFiber } from "./cache";
 
+
+export type HookMemo<T, D> = {
+  shouldChange(a: D, b: D): any,
+  deps: D
+  value: T
+}
 
 export type MemoEvent<V, D = any> = {
   trigger: D
@@ -25,14 +30,13 @@ export function useBaseMemo<V, D>(
   deps: D,
 ): V {
   const holder = hookStateHoder()
-  const isInit = holder.firstTime
-  if (isInit) {
+  if (holder.firstTime) {
     const hookMemos = holder.memos || []
     holder.memos = hookMemos
     draftParentFiber()
     const state: HookMemo<V, D> = {
       value: effect({
-        isInit,
+        isInit: true,
         trigger: deps
       }),
       deps,

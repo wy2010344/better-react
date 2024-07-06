@@ -28,8 +28,7 @@ class ContextFactory<T> implements Context<T> {
   private readonly defaultContext: ValueCenter<T>
   useProvider(v: T) {
     const holder = hookStateHoder()
-    const isInit = holder.firstTime
-    if (isInit) {
+    if (holder.firstTime) {
       holder.contexts = holder.contexts || []
       holder.contexts.push({
         key: this,
@@ -81,20 +80,20 @@ class ContextFactory<T> implements Context<T> {
    * @returns 
    */
   useSelector<M>(getValue: (v: T) => M, shouldUpdate: (a: M, b: M) => any = simpleNotEqual): M {
-    const stateHolder = hookStateHoder()
-    const provider = this.findProviderStateHoder(stateHolder)
+    const holder = hookStateHoder()
+    const provider = this.findProviderStateHoder(holder)
     let context: ValueCenter<T> = this.defaultContext
     let notSelf = true
     if (provider) {
       context = provider[1]
-      notSelf = provider[0].fiber != stateHolder.fiber
+      notSelf = provider[0].fiber != holder.fiber
     }
     const thisValue = getValue(context.get())
     useLevelEffect(0, arrayNotEqual, function () {
       return [undefined, context.subscribe(function (value) {
         const m = getValue(value)
         if (notSelf && shouldUpdate(thisValue, m)) {
-          stateHolder.fiber.effectTag.set("UPDATE")
+          holder.fiber.effectTag.set("UPDATE")
         }
       })]
     }, [context, getValue, shouldUpdate, notSelf])

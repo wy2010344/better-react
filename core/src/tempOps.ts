@@ -11,9 +11,6 @@ export abstract class AbsTempOps<T extends TempReal> {
     this.data = creater()
   }
   public readonly data: T
-  addNode(...n: any[]) {
-    this.data.add(...n)
-  }
   reset() {
     this.data.reset()
     this.notifyChange()

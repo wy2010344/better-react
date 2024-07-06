@@ -56,6 +56,7 @@ export default function renderTodo() {
     const [list, dispatch] = useReducer(reduceList, emptyArray as Row[])
     console.log("list--", list, list.length)
     renderArray(list, v => {
+      console.log("vv", v.index)
       return v.index
     }, function (row: Row, i: number) {
       console.log("render...")
@@ -95,7 +96,7 @@ export default function renderTodo() {
             type: "insert",
             index: i + 1,
             value: {
-              index: globalIdx++,
+              index: globalIdx,
               value: faker.person.fullName()
             }
           })

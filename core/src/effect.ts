@@ -1,7 +1,17 @@
 
-import { HookEffect } from "./stateHolder";
 import { EmptyFun } from "wy-helper";
 import { hookAddEffect, hookParentFiber, hookStateHoder } from "./cache";
+
+export type HookEffect<V, D> = {
+  level: number,
+  shouldChange(a: D, b: D): any
+  deps: D
+  value?: V
+  isInit: boolean
+  destroy?: void | ((newDeps: EffectDestroyEvent<V, D>) => void)
+}
+
+export type LayoutEffect = (fun: EmptyFun) => void
 
 export type EffectDestroyEvent<V, T> = {
   isDestroy: false
@@ -46,15 +56,14 @@ export function useLevelEffect<V, T>(
   shouldChange: (a: T, b: T) => any,
   effect: (e: EffectEvent<V, T>) => EffectResult<V, T>, deps: T): void {
   const holder = hookStateHoder()
-  const isInit = holder.firstTime
-  if (isInit) {
+  if (holder.firstTime) {
     //新增
     const hookEffects = holder.effects || []
     holder.effects = hookEffects
     const state: HookEffect<V, T> = {
       level,
       deps,
-      isInit,
+      isInit: true,
       shouldChange
     }
     const hookEffect = holder.envModel.createChangeAtom(state)
@@ -63,7 +72,7 @@ export function useLevelEffect<V, T>(
       hookAddEffect(holder.envModel.layoutEffect)
       const out = effect({
         beforeTrigger: undefined,
-        isInit,
+        isInit: true,
         trigger: deps,
         setRealTime: holder.envModel.setRealTime
       })
@@ -108,7 +117,7 @@ export function useLevelEffect<V, T>(
         hookAddEffect(holder.envModel.layoutEffect)
         const out = effect({
           beforeTrigger: state.deps,
-          isInit,
+          isInit: false,
           value: state.value,
           trigger: deps,
           setRealTime: holder.envModel.setRealTime

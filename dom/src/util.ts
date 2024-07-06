@@ -97,6 +97,5 @@ export class ListCreater implements TempReal {
       this.list.push(v)
     }
   }
-
 }
 

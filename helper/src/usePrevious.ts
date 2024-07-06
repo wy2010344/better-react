@@ -1,4 +1,4 @@
-import { MemoEvent } from "better-react/dist/fc";
+import { MemoEvent } from "better-react";
 import { useMemo } from "./useRef";
 
 /**

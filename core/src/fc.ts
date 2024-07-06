@@ -26,9 +26,8 @@ export function renderFiber<T>(
 ): Fiber {
   const holder = hookStateHoder()
   let currentFiber: Fiber
-  const isInit = holder.firstTime
   const parentFiber = holder.fiber
-  if (isInit) {
+  if (holder.firstTime) {
     holder.fibers = holder.fibers || []
     //新增
     currentFiber = Fiber.create(
@@ -39,7 +38,7 @@ export function renderFiber<T>(
         render,
         event: {
           trigger: deps,
-          isInit
+          isInit: true
         }
       })
     currentFiber.subOps = hookTempOps().createSub()
@@ -71,11 +70,6 @@ export function renderFiber<T>(
   return currentFiber
 }
 
-
-export function hookEffectTag() {
-  const parentFiber = hookParentFiber()
-  return parentFiber.effectTag.get()!
-}
 
 
 export function hookCommitAll() {

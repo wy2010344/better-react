@@ -7,8 +7,7 @@ export { startTransition, flushSync } from './reconcile'
 export {
   renderFiber,
   hookCreateChangeAtom,
-  hookCommitAll,
-  hookEffectTag
+  hookCommitAll
 } from './fc'
 export {
   hookRequestReconcile,
@@ -25,7 +24,7 @@ export {
   useLevelEffect,
 } from './effect'
 export { useBaseMemo } from './memo'
-export { renderStateHolder } from './stateHolder'
+export { renderStateHolder, hookFirstTime } from './stateHolder'
 export type { MemoEvent } from './memo'
 export {
   TempOps,

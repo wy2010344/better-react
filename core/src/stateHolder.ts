@@ -3,27 +3,9 @@ import { EmptyFun, StoreRef, ValueCenter, alawaysFalse } from "wy-helper"
 import { hookAlterStateHolder, hookStateHoder } from "./cache"
 import { Context } from "./context"
 import { Fiber } from "./Fiber"
-import { EffectDestroyEvent } from "./effect"
-import { MemoEvent, useBaseMemo } from "./memo"
+import { HookEffect } from "./effect"
+import { HookMemo, MemoEvent, useBaseMemo } from "./memo"
 
-export type HookMemo<T, D> = {
-  shouldChange(a: D, b: D): any,
-  deps: D
-  value: T
-}
-
-export type HookEffect<V, D> = {
-  level: number,
-  shouldChange(a: D, b: D): any
-  deps: D
-  value?: V
-  isInit: boolean
-  destroy?: void | ((newDeps: EffectDestroyEvent<V, D>) => void)
-}
-
-
-
-export type LayoutEffect = (fun: EmptyFun) => void
 export class StateHolder {
   readonly parentContextIndex: StoreRef<number>
   constructor(
@@ -57,7 +39,7 @@ export class StateHolder {
   }[]
   effects?: StoreRef<HookEffect<any, any>>[]
   memos?: StoreRef<HookMemo<any, any>>[]
-  fibers?: Fiber[] = []
+  fibers?: Fiber[]
 
 
   contextIndex = 0
@@ -88,4 +70,11 @@ export function renderStateHolder(fun: EmptyFun) {
   env.beginRun()
   fun()
   env.endRun()
+}
+
+
+
+export function hookFirstTime() {
+  const holder = hookStateHoder()
+  return holder.firstTime
 }
