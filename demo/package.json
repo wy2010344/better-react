@@ -45,6 +45,7 @@
     "stylis": "^4.3.1",
     "three": "^0.163.0",
     "topojson": "^3.0.2",
+    "tyme4ts": "^1.0.7",
     "wy-dom-helper": "file:.yalc/wy-dom-helper",
     "wy-helper": "file:.yalc/wy-helper",
     "xml-js": "^1.6.11",
