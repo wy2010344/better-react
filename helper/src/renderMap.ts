@@ -1,4 +1,5 @@
 import { renderForEach } from "better-react";
+import { arrayOrOneMapCreater } from "./mapKV";
 
 export type ReadArray<T> = {
   length: number
@@ -23,7 +24,7 @@ export function renderArray<T>(
           render(v, i)
         })
       }
-    })
+    }, arrayOrOneMapCreater)
 }
 
 export function renderArrayToMap<T, K, V>(

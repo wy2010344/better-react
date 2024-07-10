@@ -1,12 +1,13 @@
 import { MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookCreateChangeAtom, hookEndTempOps } from "better-react"
-import { SvgAttribute, SvgElement, SvgElementType } from "./html"
+import { SvgAttribute, SvgAttributeS, SvgElement, SvgElementType } from "./html"
 import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
-import { updateDom } from "./updateDom"
+import { updateDom, updateStyle } from "./updateDom"
 import { SetValue, emptyFun, emptyObject, quoteOrLazyGet } from "wy-helper"
 import { updateProps } from "./dom"
 import { getAttributeAlias } from "./getAttributeAlias"
-import { ListCreater, createNodeTempOps, genTemplateString } from "./util"
+import { ListCreater, TOrQuote, createNodeTempOps, genTemplateString, lazyOrInit } from "./util"
 import { svgTagNames } from "./updateDom"
+import { CSSProperties } from "wy-dom-helper"
 
 
 function createUpdateSvg<T extends SvgElementType>(e: MemoEvent<SetValue<SvgAttribute<T>>, SvgElement<T>>): SetValue<SvgAttribute<T>> {
@@ -69,6 +70,11 @@ class SvgHelper<T extends SvgElementType> {
     updateDom(this.node, updateSVGProps, attrs, this.oldAttrs)
     this.oldAttrs = attrs
   }
+  private oldStyle: CSSProperties = emptyObject
+  updateStyle(style: CSSProperties) {
+    updateStyle(this.node, style, this.oldStyle)
+    this.oldStyle = style
+  }
   updateContent(contentType: "html" | "text", content: string) {
     if (contentType != this.contentType || content != this.content) {
       if (contentType == 'html') {
@@ -93,8 +99,6 @@ class SvgHelper<T extends SvgElementType> {
 }
 
 type SvgContentAs = "html" | "text"
-
-type AttrsEffect<T> = () => T
 export class SvgCreater<T extends SvgElementType> {
   /**
    * 其实这3个属性可以改变,
@@ -109,10 +113,10 @@ export class SvgCreater<T extends SvgElementType> {
     public readonly type: T
   ) { }
 
-  public attrsEffect: AttrsEffect<SvgAttribute<T>> | SvgAttribute<T> = emptyObject
+  public attrsEffect: TOrQuote<SvgAttribute<T>> = emptyObject
   public portal?: boolean
 
-  attrs(v: AttrsEffect<SvgAttribute<T>> | SvgAttribute<T>) {
+  attrs(v: TOrQuote<SvgAttribute<T>>) {
     this.attrsEffect = v
     return this
   }
@@ -133,7 +137,7 @@ export class SvgCreater<T extends SvgElementType> {
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {
-      const attrs = quoteOrLazyGet(attrsEffect)
+      const attrs = lazyOrInit(attrsEffect)
       helper.updateAttrs(attrs)
       helper.updateContent("html", innerHTML)
     })
@@ -144,7 +148,7 @@ export class SvgCreater<T extends SvgElementType> {
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {
-      const attrs = quoteOrLazyGet(attrsEffect)
+      const attrs = lazyOrInit(attrsEffect)
       helper.updateAttrs(attrs)
       helper.updateContent("text", textContent)
     })
@@ -155,7 +159,7 @@ export class SvgCreater<T extends SvgElementType> {
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {
-      const attrs = quoteOrLazyGet(attrsEffect)
+      const attrs = lazyOrInit(attrsEffect)
       helper.updateAttrs(attrs)
     })
     /**
@@ -190,7 +194,7 @@ export class SvgCreater<T extends SvgElementType> {
 let svg: {
   readonly [key in SvgElementType]: {
     (props?: SvgAttribute<key>, isPortal?: boolean): SvgCreater<key>
-    (fun: () => SvgAttribute<key>, isPortal?: boolean): SvgCreater<key>
+    (fun: (v: SvgAttributeS<key>) => SvgAttributeS<key> | void, isPortal?: boolean): SvgCreater<key>
   }
 }
 if ('Proxy' in globalThis) {

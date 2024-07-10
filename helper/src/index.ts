@@ -29,5 +29,4 @@ export * from './animationValue'
 export * from './reorder'
 export * from './renderOne'
 export * from './useOptimisticCache'
-export { compileSimpleRule, createMatch, pathExactly, pathStartWith, toAbsolutePath } from "./routes/util"
-export { RouteContext, routeMatch, routeMathWithOther } from "./routes"
+export * from './mapKV'

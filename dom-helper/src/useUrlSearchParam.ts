@@ -1,5 +1,12 @@
 import { useChange } from "better-react-helper";
 
+/**
+ * 在next.js要使用next的router
+ * @param key 
+ * @param init 
+ * @param save 
+ * @returns 
+ */
 export function useUrlSearchParam<T>(
   key: string,
   init: (v: string | null) => T,

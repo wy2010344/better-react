@@ -99,3 +99,14 @@ export class ListCreater implements TempReal {
   }
 }
 
+
+export type TOrQuote<T extends {}> = T | ((v: T) => T | void)
+export function lazyOrInit<T extends {}>(v: TOrQuote<T>) {
+  if (typeof v == 'function') {
+    const obj = {
+      style: {}
+    }
+    return (v as any)(obj) || obj
+  }
+  return v
+}

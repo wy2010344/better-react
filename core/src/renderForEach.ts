@@ -1,17 +1,35 @@
-import { EmptyFun, alawaysFalse, storeRef } from "wy-helper";
-import { useBaseMemo } from "./memo";
+import { EmptyFun, StoreRef, alawaysFalse, storeRef } from "wy-helper";
+import { MemoEvent, useBaseMemo } from "./memo";
 import { StateHolder } from "./stateHolder";
 import { hookStateHoder } from "./cache";
 import { hookLevelEffect } from './effect'
 
 
-
-
-function createMapRef() {
-  return storeRef(new Map<any, StateHolder[]>())
+export interface RMap<K, V> {
+  get(key: K): V | undefined
+  set(key: K, value: V): void
+  forEach(fun: (value: V, key: K) => void): void
 }
-export function cloneMap<T>(map: Map<any, T[]>) {
-  const newMap = new Map<any, T[]>()
+
+export interface RMapCreater<K, V> {
+  (): RMap<K, V>
+}
+function createMapRef(e: MemoEvent<
+  StoreRef<RMap<any, StateHolder[]>>,
+  RMapCreater<any, StateHolder[]>
+>) {
+  return storeRef(e.trigger())
+}
+
+export function normalMapCreater<K, V>() {
+  return new Map<K, V>()
+}
+
+export function cloneMap<T>(
+  map: RMap<any, T[]>,
+  creater: RMapCreater<any, T[]>
+) {
+  const newMap = creater()
   map.forEach(function (v, k) {
     newMap.set(k, v.slice())
   })
@@ -23,11 +41,12 @@ export function cloneMap<T>(map: Map<any, T[]>) {
  * @param render 
  */
 export function renderForEach(
-  forEach: (callback: (key: any, callback: EmptyFun) => void) => void
+  forEach: (callback: (key: any, callback: EmptyFun) => void) => void,
+  createMap: RMapCreater<any, StateHolder[]> = normalMapCreater
 ) {
-  const mapRef = useBaseMemo(alawaysFalse, createMapRef, undefined);
-  const oldMap = cloneMap(mapRef.get())
-  const newMap = new Map<any, StateHolder[]>()
+  const mapRef = useBaseMemo(alawaysFalse, createMapRef, createMap);
+  const oldMap = cloneMap(mapRef.get(), createMap)
+  const newMap = createMap()
   const beforeEnv = hookStateHoder()
   const thisTimeAdd: StateHolder[] = []
   forEach((key, callback) => {

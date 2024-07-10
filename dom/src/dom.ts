@@ -1,9 +1,10 @@
 import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
-import { ContentEditable, ListCreater, createNodeTempOps, genTemplateString, } from "./util"
+import { ContentEditable, ListCreater, TOrQuote, createNodeTempOps, genTemplateString, lazyOrInit, } from "./util"
 import { MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookCreateChangeAtom, hookEndTempOps } from "better-react"
-import { DomAttribute, DomElement, DomElementType } from "./html"
-import { SetValue, emptyFun, emptyObject, quoteOrLazyGet } from "wy-helper"
-import { domTagNames, updateDom } from "./updateDom"
+import { DomAttribute, DomAttributeS, DomElement, DomElementType, React } from "./html"
+import { SetValue, emptyFun, emptyObject, objectDiffDeleteKey, quoteOrLazyGet } from "wy-helper"
+import { domTagNames, updateDom, updateStyle } from "./updateDom"
+import { CSSProperties } from "wy-dom-helper"
 
 export function createDomElement(e: MemoEvent<Node, string>) {
   return document.createElement(e.trigger)
@@ -64,6 +65,12 @@ class DomHelper<T extends DomElementType> {
 
     this.oldAttrs = attrs
   }
+
+  private oldStyle: CSSProperties = emptyObject
+  updateStyle(style: CSSProperties) {
+    updateStyle(this.node, style, this.oldStyle)
+    this.oldStyle = style
+  }
   updateContent(contentType: "html" | "text", content: string, contentEditable?: ContentEditable) {
     if (contentType != this.contentType || content != this.content) {
       if (contentType == 'html') {
@@ -92,7 +99,6 @@ class DomHelper<T extends DomElementType> {
 }
 
 type DomContentAs = "html" | "text"
-type AttrsEffect<T> = () => T
 export class DomCreater<T extends DomElementType> {
   /**
    * 其实这3个属性可以改变,
@@ -107,10 +113,10 @@ export class DomCreater<T extends DomElementType> {
     public readonly type: T
   ) { }
 
-  public attrsEffect: AttrsEffect<DomAttribute<T>> | DomAttribute<T> = emptyObject
+  public attrsEffect: TOrQuote<DomAttribute<T>> = emptyObject
   public portal?: boolean
 
-  attrs(v: AttrsEffect<DomAttribute<T>> | DomAttribute<T>) {
+  attrs(v: TOrQuote<DomAttribute<T>>) {
     this.attrsEffect = v
     return this
   }
@@ -131,7 +137,7 @@ export class DomCreater<T extends DomElementType> {
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {
-      const attrs = quoteOrLazyGet(attrsEffect)
+      const attrs = lazyOrInit(attrsEffect)
       helper.updateAttrs(attrs)
       helper.updateContent("html", innerHTML, contentEditable)
     })
@@ -142,7 +148,7 @@ export class DomCreater<T extends DomElementType> {
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {
-      const attrs = quoteOrLazyGet(attrsEffect)
+      const attrs = lazyOrInit(attrsEffect)
       helper.updateAttrs(attrs)
       helper.updateContent("text", textContent, contentEditable)
     })
@@ -153,7 +159,7 @@ export class DomCreater<T extends DomElementType> {
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {
-      const attrs = quoteOrLazyGet(attrsEffect)
+      const attrs = lazyOrInit(attrsEffect)
       helper.updateAttrs(attrs)
     })
     /**
@@ -184,11 +190,10 @@ export class DomCreater<T extends DomElementType> {
   }
 }
 
-
 let dom: {
   readonly [key in DomElementType]: {
     (props?: DomAttribute<key>, isPortal?: boolean): DomCreater<key>
-    (fun: () => DomAttribute<key>, isPortal?: boolean): DomCreater<key>
+    (fun: (v: DomAttributeS<key>) => DomAttributeS<key> | void, isPortal?: boolean): DomCreater<key>
   }
 }
 if ('Proxy' in globalThis) {

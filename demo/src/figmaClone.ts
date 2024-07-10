@@ -15,7 +15,9 @@ export default function () {
         let i = 0
         while (i < list.length) {
           const row = list[i].trim()
-          if (row.startsWith("/*")) {
+          if (row.startsWith("font-family")) {
+
+          } else if (row.startsWith("/*")) {
             //是注释
             if (row.startsWith("/* text/")) {
               const newStr = row.slice(7, row.length - 3).replaceAll("/", ".").replaceAll("-", "_")

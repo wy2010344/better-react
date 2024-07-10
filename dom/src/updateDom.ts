@@ -1,3 +1,4 @@
+import { CSSProperties } from "wy-dom-helper"
 import { DomElementType, SvgElementType } from "./html"
 import { objectDiffDeleteKey } from "wy-helper"
 export type Props = { [key: string]: any }
@@ -19,6 +20,27 @@ function mergeEvent(node: Node, key: string, oldValue: any, newValue?: any) {
     node.removeEventListener(eventType, oldValue, capture)
   }
 }
+
+
+export function updateStyle(
+  node: Node & {
+    style: any
+  },
+  style: CSSProperties,
+  oldStyle: CSSProperties
+) {
+  objectDiffDeleteKey(oldStyle as any, style as any, function (key) {
+    node.style[key] = ''
+  })
+  for (const key in style) {
+    const value = style[key as keyof CSSProperties]
+    const oldValue = oldStyle[key as keyof CSSProperties]
+    if (value != oldValue) {
+      node.style[key] = value
+    }
+  }
+}
+
 /**
  * 更新节点
  * @param dom 
@@ -44,7 +66,25 @@ export function updateDom(
     const value = props[key]
     const oldValue = oldProps[key]
     if (value != oldValue) {
-      if (isEvent(key)) {
+      if (key == 'style') {
+        const n = node as unknown as Node & { style: any }
+        if (oldValue && typeof oldValue == 'object') {
+          if (value && typeof value == 'object') {
+            updateStyle(n, value, oldValue)
+          } else {
+            //旧是object,新是string
+            n.style = value
+          }
+        } else {
+          if (value && typeof value == 'object') {
+            //旧是string,新是object
+            n.style = undefined
+          } else {
+            //旧是string,新是string
+            n.style = value
+          }
+        }
+      } else if (isEvent(key)) {
         mergeEvent(node, key, oldValue, value)
       } else if (isProperty(key)) {
         updateProp(node, key, value)

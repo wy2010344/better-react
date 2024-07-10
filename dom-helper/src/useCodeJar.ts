@@ -382,8 +382,10 @@ export function useCodeJar<T extends DomElementType>(tag: T, {
   pretty,
   spellcheck = false,
   style,
-  ...options
-}: CodeJarOption & Omit<DomAttribute<T>, "style">) {
+  attrs
+}: CodeJarOption & {
+  attrs?: Omit<DomAttribute<T>, "style">
+}) {
   //缓存上一次向外的更新,保证下一次生效时,才能更新选择.只能有这一个content.
   // const [content, setInterContent] = useState<string>("")
   const history = useMemo(() => new HistoryManager(setRecord), emptyArray)
@@ -425,7 +427,7 @@ export function useCodeJar<T extends DomElementType>(tag: T, {
   }, [record])
 
   const editor = dom[tag as "div"]({
-    ...options as DomAttribute<"div">,
+    ...attrs as DomAttribute<"div">,
     onKeyDown(e) {
       if (e.defaultPrevented) return
       if (mb.DOM.keyCode.ENTER(e)) {

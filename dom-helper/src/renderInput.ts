@@ -1,5 +1,5 @@
 import { useEffect } from "better-react-helper"
-import { DomAttribute, DomElementType, dom } from "better-react-dom"
+import { DomAttribute, DomElementType, React, dom } from "better-react-dom"
 import { useVersion } from 'better-react-helper'
 type InputTypeProps<T extends DomElementType> = DomAttribute<T> & {
   value: string
@@ -22,13 +22,13 @@ export function renderInput(type: any, {
   //只是为了强制这个模块更新
   const [version, updateVersion] = useVersion()
   const input = dom[type as "input"]({
-    onInput(e) {
+    ...props,
+    onInput(e: any) {
       const newValue = input.value
       updateVersion()
       onValueChange(newValue)
       onInput?.(e)
     },
-    ...props
   }).render()
   //用useMemo更快触发,但会面临回滚问题
   useEffect(() => {
@@ -56,13 +56,13 @@ export function renderInputCheckbox({
      * 使用onInput实时事件,而不是使用onKeyUp与onCompositionEnd
      * @param e 
      */
-    onInput(e) {
+    ...props,
+    onInput(e: any) {
       const newValue = input.checked
       updateVersion()
       onCheckedChange(newValue)
       onInput?.(e)
     },
-    ...props,
     type: "checkbox"
   }).render()
   //用useMemo更快触发,但会面临回滚问题

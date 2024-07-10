@@ -20,6 +20,8 @@ Warning: all of these interfaces are empty. If you want type definitions for var
 // interface UIEvent extends Event { }
 // interface WheelEvent extends Event { }
 
+import { CSSProperties } from "wy-dom-helper";
+
 // interface EventTarget { }
 // interface Document { }
 // interface DataTransfer { }
@@ -1175,9 +1177,6 @@ export namespace React {
      * @see https://html.spec.whatwg.org/multipage/custom-elements.html#attr-is
      */
     is?: string | undefined;
-
-    exit?(node: T, props: HTMLAttributes<T>): Promise<any>
-    onDestroy?(node: T): void
   }
   type HTMLAttributeAnchorTarget =
     | '_self'
@@ -1787,6 +1786,9 @@ type DomElements = {
 
 export type DomElementType = keyof DomElements
 export type DomAttribute<T extends DomElementType> = DomElements[T]['attributes']
+export type DomAttributeS<T extends DomElementType> = Omit<DomElements[T]['attributes'], 'style'> & {
+  style: CSSProperties
+}
 export type DomElement<T extends DomElementType> = DomElements[T]['element']
 //58个svg
 type SvgElements = {
@@ -1857,5 +1859,8 @@ type SvgElements = {
 
 export type SvgElementType = keyof SvgElements
 export type SvgAttribute<T extends SvgElementType> = SvgElements[T]['attributes']
+export type SvgAttributeS<T extends SvgElementType> = Omit<SvgElements[T]['attributes'], 'style'> & {
+  style: CSSProperties
+}
 export type SvgElement<T extends SvgElementType> = SvgElements[T]['element']
 
