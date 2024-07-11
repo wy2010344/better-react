@@ -1,6 +1,6 @@
 import { CreateChangeAtom, TempOps, TempReal, TempSubOps, hookLevelEffect } from "better-react"
 import { useAttrEffect } from "better-react-helper"
-import { StoreRef, alawaysFalse, emptyArray, storeRef } from "wy-helper"
+import { StoreRef, alawaysFalse, emptyArray, objectFreeze, quote, storeRef } from "wy-helper"
 
 export function genTemplateString(ts: TemplateStringsArray, vs: (string | number)[]) {
   const xs: any[] = []
@@ -100,13 +100,22 @@ export class ListCreater implements TempReal {
 }
 
 
+const freeze = Object.freeze ? Object.freeze.bind(Object) : quote
 export type TOrQuote<T extends {}> = T | ((v: T) => T | void)
 export function lazyOrInit<T extends {}>(v: TOrQuote<T>) {
+  let o: any
   if (typeof v == 'function') {
     const obj = {
       style: {}
     }
-    return (v as any)(obj) || obj
+    o = (v as any)(obj) || obj
+    o.style = freeze(o.style)
+    o = freeze(o)
+  } else {
+    o = v
+    if (o) {
+      o = freeze(o)
+    }
   }
-  return v
+  return o
 }

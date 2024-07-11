@@ -1,4 +1,4 @@
-import { addEffectDestroy, renderArray, renderIf, useAtom, useChange, useChangeFun, useEffect, useEvent, useHookEffect, useMemo } from "better-react-helper";
+import { addEffectDestroy, renderArray, renderIf, useAtom, useChange, useChangeFun, useEffect, useEvent, useHookEffect, useMemo, useValueCenter } from "better-react-helper";
 import { Route, locationMatch } from "../util/createRouter";
 import { renderPage } from "../util/page";
 import { cacheVelocity, dateFromYearMonthDay, emptyArray, EmptyFun, getSpringBaseAnimationConfig, quote, run, scrollJudgeDirection, SetValue, syncMergeCenter, trueAndS, WeekVirtualView, YearMonthVirtualView } from "wy-helper";
@@ -7,7 +7,7 @@ import { initDexieUtil } from "./dexieUtil";
 import { LunarDay, SolarDay, SolarMonth, SolarWeek, Week } from "tyme4ts";
 import { dom } from "better-react-dom";
 import { animateFrame, dragInit, PagePoint, subscribeDragMove, subscribeMove } from "wy-dom-helper";
-import { dragMovePageX } from "./dragMove";
+import { DragMessage, dragMovePageX } from "./dragMove";
 import { da } from "@faker-js/faker";
 
 
@@ -35,7 +35,7 @@ const routes: Route[] = [
   {
     match: locationMatch('/note'),
     page(v) {
-
+      const dragYCenter = useValueCenter<DragMessage>()
       const [showWeek, setShowWeek] = useChange(false)
       renderPage({
         title: "笔记",
@@ -47,23 +47,22 @@ const routes: Route[] = [
           }).renderText`设置`
         },
         bodyStyle: `
-        overflow:hidden;
+        display:block;
+        overflow-y:auto;
+        overflow-x:hidden;
+        container-type:size;
         `
       }, () => {
         const [date, setDate] = useChangeFun(createYM)
-        dom.div({
-          style: `
-          width:100%;
-          `
+        dom.div(v => {
+          v.style.width = '100%'
         }).render(() => {
 
-          dom.div({
-
-            style: `
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          `
+          dom.div(v => {
+            const s = v.style
+            s.display = 'flex'
+            s.alignItems = 'center'
+            s.justifyContent = 'space-between'
           }).render(() => {
             dom.div().render(() => {
               dom.div().renderText`${date.month}/${date.year}`
@@ -72,22 +71,20 @@ const routes: Route[] = [
           const calendar = useMemo(() => {
             return new YearMonthVirtualView(date.year, date.month, 0)
           }, [date.year, date.month])
-          dom.div({
-            style: `
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          `
+          dom.div(v => {
+            const s = v.style
+            s.display = 'flex'
+            s.alignItems = 'center'
+            s.justifyContent = 'space-between'
           }).render(() => {
             for (let i = 0; i < 7; i++) {
-              dom.div({
-                style: `
-                flex:1;
-                aspect-ratio:1/1;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                `
+              dom.div(v => {
+                const s = v.style
+                s.flex = 1
+                s.aspectRatio = 1
+                s.display = 'flex'
+                s.alignItems = 'center'
+                s.justifyContent = 'center'
               }).renderTextContent(WEEKS[calendar.weekDay(i)])
             }
           })
@@ -134,23 +131,24 @@ const routes: Route[] = [
                 toggleCalendar(calendar.nextMonth())
               }
             }
-          }), showWeek ? week.getKeys() : calendar.getKeys())
+          }), v => {
+            dragYCenter.set(v)
+          }, showWeek ? week.getKeys() : calendar.getKeys())
           const container = dom.div(v => {
             v.style.position = 'relative'
           }).render(() => {
             renderIf(showWeek, () => {
               renderArray([week.beforeWeek(), week, week.nextWeek()], quote, (row, i) => {
-                dom.div({
-                  style: `
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-                ${trueAndS(i != 1, `
-                  position:absolute;
-                  inset:0;
-                  transform: translateX(${(i - 1) * 100}%);
-                  `)}
-                `
+                dom.div(v => {
+                  const s = v.style
+                  s.display = 'flex'
+                  s.alignItems = 'center'
+                  s.justifyContent = 'space-between'
+                  if (i != 1) {
+                    s.position = 'absolute'
+                    s.inset = 0
+                    s.transform = `translateX(${(i - 1) * 100}%)`
+                  }
                 }).render(() => {
                   for (let x = 0; x < 7; x++) {
                     const md = row.cells[x]
@@ -171,16 +169,14 @@ const routes: Route[] = [
                 })
               })
             }, () => {
-
               renderArray([calendar.getlastMonth(), calendar, calendar.getNextMonth()], quote, (row, i) => {
-                dom.div({
-                  style: `
-                ${trueAndS(i != 1, `
-                  position:absolute;
-                  inset:0;
-                  transform: translateX(${(i - 1) * 100}%);
-                  `)}
-                `
+                dom.div(v => {
+                  const s = v.style
+                  if (i != 1) {
+                    s.position = 'absolute'
+                    s.inset = 0
+                    s.transform = ` translateX(${(i - 1) * 100}%)`
+                  }
                 }).render(() => {
                   renderCalendarView(row, date, fd => {
                     let c: YearMonthVirtualView = calendar
@@ -213,12 +209,6 @@ export default routes
 
 
 
-function renderWeekView(week: Week) {
-  for (let x = 0; x < 7; x++) {
-
-  }
-}
-
 function renderCalendarView(calendar: YearMonthVirtualView, date: DateModel, setDate: SetValue<{
   type: "last" | "this" | "next";
   day: number;
@@ -227,12 +217,11 @@ function renderCalendarView(calendar: YearMonthVirtualView, date: DateModel, set
     return date.year == calendar.year && date.month == calendar.month
   }, [calendar, date])
   for (let y = 0; y < 6; y++) {
-    dom.div({
-      style: `
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            `
+    dom.div(v => {
+      const s = v.style
+      s.display = 'flex'
+      s.alignItems = 'center'
+      s.justifyContent = 'space-between'
     }).render(() => {
       for (let x = 0; x < 7; x++) {
         const fd = calendar.fullDayOf(x, y)
@@ -276,41 +265,33 @@ function renderCell({
   lunarDay: LunarDay,
   hide?: boolean
 }) {
-  dom.div({
-    style: `
-      flex:1;
-      aspect-ratio:1/1;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      ${trueAndS(hide, `
-      color:gray;
-      opacity:0.8;
-      `)}
-      `,
-    onClick
-  }).render(() => {
-    let style = ''
-    if (selected) {
-      style = `
-                    color:#fff;
-                    border-radius:50%;
-                    background:green;
-                    `
+  dom.div(v => {
+    const s = v.style
+    s.flex = 1
+    s.aspectRatio = 1
+    s.display = 'flex'
+    s.flexDirection = 'column'
+    s.alignItems = 'center'
+    s.justifyContent = 'center'
+    if (hide) {
+      s.color = 'gray'
+      s.opacity = '0.8'
     }
-    dom.div({
-      style: `
-                    aspect-ratio:1/1;
-                    display:grid;
-                    place-items:center;
-                    ${style}
-                    `
+    v.onClick = onClick
+  }).render(() => {
+    dom.div(v => {
+      const s = v.style
+      s.aspectRatio = 1
+      s.display = 'grid'
+      s.placeItems = 'center'
+      if (selected) {
+        s.color = '#fff'
+        s.borderRadius = '50%'
+        s.background = 'green'
+      }
     }).renderText`${day}`
-    dom.div({
-      style: `
-                    font-size:10px;
-                    `
+    dom.div(v => {
+      v.style.fontSize = '10px'
     }).renderText`${lunarDay.getName()}`
   })
 }

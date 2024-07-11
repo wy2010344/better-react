@@ -1,6 +1,6 @@
 import { CSSProperties } from "wy-dom-helper"
 import { DomElementType, SvgElementType } from "./html"
-import { objectDiffDeleteKey } from "wy-helper"
+import { emptyObject, objectDiffDeleteKey } from "wy-helper"
 export type Props = { [key: string]: any }
 
 
@@ -79,6 +79,7 @@ export function updateDom(
           if (value && typeof value == 'object') {
             //旧是string,新是object
             n.style = undefined
+            updateStyle(n, value, emptyObject)
           } else {
             //旧是string,新是string
             n.style = value
