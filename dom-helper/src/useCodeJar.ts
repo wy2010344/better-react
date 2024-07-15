@@ -502,6 +502,7 @@ export function useCodeJar<T extends DomElementType>(tag: T, {
       rememberHistory()
     },
     spellcheck,
+    contentEditable: readonly ? false : contentEditableText,
     style: stringifyStyle({
       resize: height ? "none" : "vertical",
       width: width ? width + 'px' : '',
@@ -510,8 +511,8 @@ export function useCodeJar<T extends DomElementType>(tag: T, {
       ...style,
       overflowWrap: "break-word",
       whiteSpace: "pre-wrap",
-      textAlign: "left"
+      textAlign: "left",
     })
-  }).renderTextContent('', readonly ? false : contentEditableText,)
+  }).renderTextContent('')
   return editor as DomElement<T>
 }

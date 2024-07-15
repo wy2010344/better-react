@@ -59,7 +59,6 @@ class DomHelper<T extends DomElementType> {
   private oldAttrs: DomAttribute<T> = emptyObject
   private contentType?: DomContentAs = undefined
   private content?: string = undefined
-  private contentEditable?: ContentEditable
   updateAttrs(attrs: DomAttribute<T>) {
     updateDom(this.node, updateProps, attrs, this.oldAttrs)
 
@@ -71,7 +70,7 @@ class DomHelper<T extends DomElementType> {
     updateStyle(this.node, style, this.oldStyle)
     this.oldStyle = style
   }
-  updateContent(contentType: "html" | "text", content: string, contentEditable?: ContentEditable) {
+  updateContent(contentType: "html" | "text", content: string) {
     if (contentType != this.contentType || content != this.content) {
       if (contentType == 'html') {
         this.node.innerHTML = content
@@ -79,12 +78,8 @@ class DomHelper<T extends DomElementType> {
         this.node.textContent = content
       }
     }
-    if (contentEditable != this.contentEditable) {
-      this.node.contentEditable = (contentEditable || 'inherit') + ''
-    }
     this.contentType = contentType
     this.content = content
-    this.contentEditable = contentEditable
   }
   private tempOps!: TempOps<ListCreater>
   getTempOps() {
@@ -132,25 +127,25 @@ export class DomCreater<T extends DomElementType> {
   renderText(ts: TemplateStringsArray, ...vs: (string | number)[]) {
     return this.renderTextContent(genTemplateString(ts, vs))
   }
-  renderInnerHTML(innerHTML: string, contentEditable?: boolean | "inherit" | "plaintext-only") {
+  renderInnerHTML(innerHTML = '') {
     const helper: DomHelper<T> = useMemo(DomHelper.create, this.type)
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {
       const attrs = lazyOrInit(attrsEffect)
       helper.updateAttrs(attrs)
-      helper.updateContent("html", innerHTML, contentEditable)
+      helper.updateContent("html", innerHTML)
     })
     return helper.node
   }
-  renderTextContent(textContent: string, contentEditable?: boolean | "inherit" | "plaintext-only") {
+  renderTextContent(textContent = '') {
     const helper: DomHelper<T> = useMemo(DomHelper.create, this.type)
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {
       const attrs = lazyOrInit(attrsEffect)
       helper.updateAttrs(attrs)
-      helper.updateContent("text", textContent, contentEditable)
+      helper.updateContent("text", textContent)
     })
     return helper.node
   }

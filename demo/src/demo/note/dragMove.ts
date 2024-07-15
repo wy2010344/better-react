@@ -2,7 +2,7 @@
 import { addEffectDestroy, renderArray, useAtom, useChange, useChangeFun, useEffect, useEvent, useHookEffect, useMemo } from "better-react-helper";
 import { Route, locationMatch } from "../util/createRouter";
 import { renderPage } from "../util/page";
-import { cacheVelocity, emptyArray, getSpringBaseAnimationConfig, PointKey, quote, run, scrollJudgeDirection, SetValue, syncMergeCenter, syncMergeCenterArray, trueAndS, YearMonthVirtualView } from "wy-helper";
+import { cacheVelocity, emptyArray, EmptyFun, getSpringBaseAnimationConfig, PointKey, quote, run, scrollJudgeDirection, SetValue, syncMergeCenter, syncMergeCenterArray, trueAndS, YearMonthVirtualView } from "wy-helper";
 import { idbOut } from "./idbUtil";
 import { initDexieUtil } from "./dexieUtil";
 import { LunarDay, SolarDay, SolarMonth, Week } from "tyme4ts";
@@ -10,15 +10,19 @@ import { dom } from "better-react-dom";
 import { animateFrame, dragInit, PagePoint, subscribeDragInit, subscribeDragMove, subscribeMove } from "wy-dom-helper";
 
 
-export type DragMessage = {
+export interface DragBMessage {
+  event: Event
+  point: PagePoint
+}
+
+export interface DragMessageMove extends DragBMessage {
+  type: "move"
+}
+export type DragMessage = ({
   type: "init"
   event: Event
   point: PagePoint
-} | {
-  type: "move"
-  event: Event
-  point: PagePoint
-} | {
+} & DragBMessage) | DragMessageMove | {
   type: "end"
   event: Event
 }
@@ -39,31 +43,41 @@ export function dragMovePageX(
   useEffect(() => {
     transX.slientChange(0)
   }, changeDep)
-  const { velocityX, velocityY } = useMemo(() => {
-    return {
-      velocityX: cacheVelocity(),
-      velocityY: cacheVelocity()
-    }
-  }, emptyArray)
-  const updateDirection = useEvent((direction: number, velocity = 0) => {
+  const updateDirection = useEvent((direction: number, velocity = 0, onFinish: EmptyFun) => {
     const width = getContainer().clientWidth
     if (direction < 0) {
-      transX.changeTo(width, getSpringBaseAnimationConfig({ initialVelocity: velocity }))
+      transX.changeTo(width, getSpringBaseAnimationConfig({ initialVelocity: velocity }), {
+        onProcess(v) {
+          if (v > width * 6 / 7) {
+            onFinish()
+          }
+        },
+        // onFinish
+      })
     } else if (direction > 0) {
-      transX.changeTo(-width, getSpringBaseAnimationConfig({ initialVelocity: velocity }))
+      transX.changeTo(-width, getSpringBaseAnimationConfig({ initialVelocity: velocity }), {
+        onProcess(v) {
+          if (v < -width * 6 / 7) {
+            onFinish()
+          }
+        },
+        // onFinish
+      })
     } else {
-      transX.changeTo(0, getSpringBaseAnimationConfig({ initialVelocity: velocity }))
+      transX.changeTo(0, getSpringBaseAnimationConfig({ initialVelocity: velocity }), {
+        onFinish
+      })
     }
   })
   const moveInfo = useAtom<PagePoint | undefined>(undefined)
   useHookEffect(() => {
     const container = getContainer()
 
+    const velocityX = cacheVelocity()
     let initEvent: DragMessage = undefined!
     addEffectDestroy(subscribeDragInit(container, function (p, e) {
-      velocityX.reset(e.timeStamp, p.pageX)
-      velocityY.reset(e.timeStamp, p.pageY)
       moveInfo.set(p)
+      velocityX.reset(e.timeStamp, p.pageX)
       initEvent = {
         type: "init",
         point: p,
@@ -85,10 +99,9 @@ export function dragMovePageX(
               changeY(initEvent)
             }
           }
-          velocityX.append(e.timeStamp, p.pageX)
-          velocityY.append(e.timeStamp, p.pageY)
           if (directionLock == 'x') {
             const diff = p.pageX - lastE.pageX
+            velocityX.append(e.timeStamp, p.pageX)
             transX.changeTo(transX.get() + diff)
           }
           if (directionLock == 'y') {
@@ -105,8 +118,9 @@ export function dragMovePageX(
               velocityX.get(),
               transX.get(),
               width)
-            changeDirection(direction)
-            updateDirection(direction, velocityX.get())
+            updateDirection(direction, velocityX.get(), () => {
+              changeDirection(direction)
+            })
           }
           if (directionLock == 'y') {
             changeY({
@@ -123,10 +137,11 @@ export function dragMovePageX(
         }
       }
     }))
-    addEffectDestroy(syncMergeCenterArray([transX, transY], ([x, y]) => {
-      container.style.transform = `translateX(${x}px)`;
-    }))
   }, emptyArray)
 
-  return updateDirection
+  return [transX, updateDirection] as const
 }
+
+
+
+

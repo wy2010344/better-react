@@ -132,7 +132,7 @@ export class SvgCreater<T extends SvgElementType> {
   renderText(ts: TemplateStringsArray, ...vs: (string | number)[]) {
     return this.renderTextContent(genTemplateString(ts, vs))
   }
-  renderInnerHTML(innerHTML: string) {
+  renderInnerHTML(innerHTML = '') {
     const helper: SvgHelper<T> = useMemo(SvgHelper.create, this.type)
     const attrsEffect = this.attrsEffect
     this.after(helper)
@@ -143,7 +143,7 @@ export class SvgCreater<T extends SvgElementType> {
     })
     return helper.node
   }
-  renderTextContent(textContent: string) {
+  renderTextContent(textContent = '') {
     const helper: SvgHelper<T> = useMemo(SvgHelper.create, this.type)
     const attrsEffect = this.attrsEffect
     this.after(helper)

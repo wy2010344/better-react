@@ -1120,7 +1120,7 @@ export namespace React {
     // Standard HTML Attributes
     accessKey?: string | undefined;
     className?: string | undefined;
-    // contentEditable?: Booleanish | "inherit" | "plaintext-only" | undefined;
+    contentEditable?: Booleanish | "inherit" | "plaintext-only" | undefined;
     contextMenu?: string | undefined;
     dir?: string | undefined;
     draggable?: Booleanish | undefined;

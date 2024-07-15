@@ -1,14 +1,16 @@
-import { addEffectDestroy, renderArray, renderIf, useAtom, useChange, useChangeFun, useEffect, useEvent, useHookEffect, useMemo, useValueCenter } from "better-react-helper";
+import { addEffectDestroy, renderArray, renderIf, useAtom, useAtomFun, useChange, useChangeFun, useEffect, useEvent, useHookEffect, useMemo, useValueCenter } from "better-react-helper";
 import { Route, locationMatch } from "../util/createRouter";
 import { renderPage } from "../util/page";
-import { cacheVelocity, dateFromYearMonthDay, emptyArray, EmptyFun, getSpringBaseAnimationConfig, quote, run, scrollJudgeDirection, SetValue, syncMergeCenter, trueAndS, WeekVirtualView, YearMonthVirtualView } from "wy-helper";
+import { cacheVelocity, createEmptyArray, dateFromYearMonthDay, emptyArray, EmptyFun, extrapolationClamp, getInterpolate, getSpringBaseAnimationConfig, MonthFullDay, quote, run, scrollJudgeDirection, SetValue, StoreRef, syncMergeCenter, syncMergeCenterArray, trueAndS, WeekVirtualView, YearMonthDay, YearMonthVirtualView } from "wy-helper";
 import { idbOut } from "./idbUtil";
 import { initDexieUtil } from "./dexieUtil";
 import { LunarDay, SolarDay, SolarMonth, SolarWeek, Week } from "tyme4ts";
 import { dom } from "better-react-dom";
 import { animateFrame, dragInit, PagePoint, subscribeDragMove, subscribeMove } from "wy-dom-helper";
-import { DragMessage, dragMovePageX } from "./dragMove";
+import { DragBMessage, DragMessage, DragMessageMove, dragMovePageX } from "./dragMove";
 import { da } from "@faker-js/faker";
+import { number } from "zod";
+import { SetV } from "@/d3-learn/force/lib/model";
 
 
 
@@ -35,7 +37,47 @@ const routes: Route[] = [
   {
     match: locationMatch('/note'),
     page(v) {
-      const dragYCenter = useValueCenter<DragMessage>()
+      const transY = useMemo(() => {
+        return animateFrame(0)
+      }, emptyArray)
+      const dragYEvent = useValueCenter<DragMessage>()
+      const currentRow = useValueCenter(0)
+      let centerPanel: HTMLDivElement
+      useHookEffect(() => {
+        let lastEvent: DragBMessage | undefined = undefined
+        const velocity = cacheVelocity()
+        addEffectDestroy(dragYEvent.subscribe(function (e) {
+          if (e) {
+            if (e.type == 'end') {
+              const cy = transY.get()
+              if (cy > 0) {
+                //向下拉
+                transY.changeTo(0, getSpringBaseAnimationConfig())
+              } else {
+                const moveHeight = centerPanel.clientHeight / 6 * 5
+                const dir = scrollJudgeDirection(velocity.get(), transY.get(), moveHeight)
+                if (dir) {
+                  transY.changeTo(-moveHeight, getSpringBaseAnimationConfig())
+                  setShowWeek(true)
+                } else {
+                  transY.changeTo(0, getSpringBaseAnimationConfig())
+                  setShowWeek(false)
+                }
+              }
+              lastEvent = undefined
+            } else {
+              if (lastEvent) {
+                const diff = e.point.pageY - lastEvent.point.pageY
+                transY.changeTo(transY.get() + diff)
+                velocity.append(e.event.timeStamp, e.point.pageY)
+              } else {
+                velocity.reset(e.event.timeStamp, e.point.pageY)
+              }
+              lastEvent = e
+            }
+          }
+        }))
+      }, emptyArray)
       const [showWeek, setShowWeek] = useChange(false)
       renderPage({
         title: "笔记",
@@ -89,112 +131,126 @@ const routes: Route[] = [
             }
           })
 
-          function toggleCalendar(c: YearMonthVirtualView) {
-            if (date.day > c.days) {
-              setDate({
-                year: c.year,
-                month: c.month,
-                day: c.days
-              })
-            } else {
-              setDate({
-                year: c.year,
-                month: c.month,
-                day: date.day
-              })
-            }
-          }
-          function toggleWeek(dir: number) {
-            const m = dateFromYearMonthDay(date)
-            if (dir < 0) {
-              m.setTime(m.getTime() - WEEKTIMES)
-            } else if (dir > 0) {
-              m.setTime(m.getTime() + WEEKTIMES)
-            }
-            setDate({
-              year: m.getFullYear(),
-              month: m.getMonth() + 1,
-              day: m.getDate()
-            })
-          }
-          console.log("date", date)
-          const week = useMemo(() => {
-            return WeekVirtualView.from(date.year, date.month, date.day, 0)
-          }, [date.year, date.month, date.day])
-          const updateDirection = dragMovePageX(() => container, useEvent(direction => {
-            if (showWeek) {
-              toggleWeek(direction)
-            } else {
-              if (direction < 0) {
-                toggleCalendar(calendar.lastMonth())
-              } else if (direction > 0) {
-                toggleCalendar(calendar.nextMonth())
+          const wrapper = dom.div(v => {
+            v.style.overflow = 'hidden'
+          }).render(() => {
+            function toggleCalendar(c: YearMonthVirtualView) {
+              if (date.day > c.days) {
+                setDate({
+                  year: c.year,
+                  month: c.month,
+                  day: c.days
+                })
+              } else {
+                setDate({
+                  year: c.year,
+                  month: c.month,
+                  day: date.day
+                })
               }
             }
-          }), v => {
-            dragYCenter.set(v)
-          }, showWeek ? week.getKeys() : calendar.getKeys())
-          const container = dom.div(v => {
-            v.style.position = 'relative'
-          }).render(() => {
-            renderIf(showWeek, () => {
-              renderArray([week.beforeWeek(), week, week.nextWeek()], quote, (row, i) => {
+            function toggleWeek(dir: number) {
+              const m = dateFromYearMonthDay(date)
+              if (dir < 0) {
+                m.setTime(m.getTime() - WEEKTIMES)
+              } else if (dir > 0) {
+                m.setTime(m.getTime() + WEEKTIMES)
+              }
+              setDate({
+                year: m.getFullYear(),
+                month: m.getMonth() + 1,
+                day: m.getDate()
+              })
+            }
+            const week = useMemo(() => {
+              return WeekVirtualView.from(date.year, date.month, date.day, 0)
+            }, [date.year, date.month, date.day])
+            const [transX, updateDirection] = dragMovePageX(() => container, useEvent(direction => {
+              if (showWeek) {
+                toggleWeek(direction)
+              } else {
+                if (direction < 0) {
+                  toggleCalendar(calendar.lastMonth())
+                } else if (direction > 0) {
+                  toggleCalendar(calendar.nextMonth())
+                }
+              }
+            }), v => {
+              dragYEvent.set(v)
+            }, showWeek ? week.getKeys() : calendar.getKeys())
+
+            useHookEffect(() => {
+              addEffectDestroy(syncMergeCenter(transX, x => {
+                container.style.transform = `translateX(${x}px)`;
+              }))
+              addEffectDestroy(syncMergeCenter(transY, y => {
+                const maxHeight = centerPanel.clientHeight
+                const perHeight = maxHeight / 6
+                const moveHeight = perHeight * 5
+                wrapper.style.height = getInterpolate({
+                  0: maxHeight,
+                  [-moveHeight]: perHeight
+                }, extrapolationClamp)(y) + 'px'
+              }))
+            }, emptyArray)
+            const container = dom.div(v => {
+              v.style.position = 'relative'
+            }).render(() => {
+              function setCalenderData(fd: MonthFullDay) {
+                let c: YearMonthVirtualView = calendar
+                let dir = 0
+                if (fd.type == 'last') {
+                  c = calendar.lastMonth()
+                  dir = -1
+                } else if (fd.type == 'next') {
+                  c = calendar.nextMonth()
+                  dir = 1
+                }
+                updateDirection(dir, 0, () => {
+                  setDate({
+                    year: c.year,
+                    month: c.month,
+                    day: fd.day
+                  })
+                })
+              }
+              renderIf(showWeek, () => {
+                renderWeek(week.beforeWeek(), date, 0, setDate)
+              }, () => {
                 dom.div(v => {
                   const s = v.style
-                  s.display = 'flex'
-                  s.alignItems = 'center'
-                  s.justifyContent = 'space-between'
-                  if (i != 1) {
-                    s.position = 'absolute'
-                    s.inset = 0
-                    s.transform = `translateX(${(i - 1) * 100}%)`
-                  }
+                  s.position = 'absolute'
+                  s.inset = 0
+                  s.transform = `translateX(-100%)`
                 }).render(() => {
-                  for (let x = 0; x < 7; x++) {
-                    const md = row.cells[x]
-                    const lunarDay = useMemo(() => {
-
-                      const sd = SolarDay.fromYmd(md.year, md.month, md.day)
-                      return sd.getLunarDay()
-                    }, [md.year, md.month, md.day])
-                    renderCell({
-                      day: md.day,
-                      lunarDay,
-                      selected: md.year == date.year && md.month == date.month && md.day == date.day,
-                      onClick() {
-                        setDate(date)
-                      }
-                    })
-                  }
+                  renderCalendarView(calendar.lastMonth(), date, setCalenderData, currentRow)
                 })
               })
-            }, () => {
-              renderArray([calendar.getlastMonth(), calendar, calendar.getNextMonth()], quote, (row, i) => {
+
+              useHookEffect(() => {
+                const maxHeight = centerPanel.clientHeight
+                const perHeight = maxHeight / 6
+                const moveHeight = perHeight * 5
+                addEffectDestroy(syncMergeCenterArray([transY, currentRow] as const, ([y, row]) => {
+                  centerPanel.style.transform = `translateY(${getInterpolate({
+                    0: 0,
+                    [-moveHeight]: - row * perHeight
+                  }, extrapolationClamp)(y)}px)`
+                }))
+              }, emptyArray)
+              centerPanel = dom.div().render(() => {
+                renderCalendarView(calendar, date, setCalenderData, currentRow)
+              })
+              renderIf(showWeek, () => {
+                renderWeek(week.nextWeek(), date, 2, setDate)
+              }, () => {
                 dom.div(v => {
                   const s = v.style
-                  if (i != 1) {
-                    s.position = 'absolute'
-                    s.inset = 0
-                    s.transform = ` translateX(${(i - 1) * 100}%)`
-                  }
+                  s.position = 'absolute'
+                  s.inset = 0
+                  s.transform = `translateX(100%)`
                 }).render(() => {
-                  renderCalendarView(row, date, fd => {
-                    let c: YearMonthVirtualView = calendar
-                    let dir = 0
-                    if (fd.type == 'last') {
-                      c = calendar.lastMonth()
-                      dir = -1
-                    } else if (fd.type == 'next') {
-                      c = calendar.nextMonth()
-                      dir = 1
-                    }
-                    setDate({
-                      year: c.year,
-                      month: c.month,
-                      day: fd.day
-                    })
-                    updateDirection(dir)
-                  })
+                  renderCalendarView(calendar.nextMonth(), date, setCalenderData, currentRow)
                 })
               })
             })
@@ -208,11 +264,50 @@ const routes: Route[] = [
 export default routes
 
 
+function renderWeek(
+  row: WeekVirtualView,
+  date: YearMonthDay,
+  i: number,
+  setDate: SetValue<YearMonthDay>) {
+  return dom.div(v => {
+    const s = v.style
+    s.display = 'flex'
+    s.alignItems = 'center'
+    s.justifyContent = 'space-between'
+    s.alignSelf = 'flex-start'
+    if (i != 1) {
+      s.position = 'absolute'
+      s.inset = 0
+      s.transform = `translateX(${(i - 1) * 100}%)`
+    }
+  }).render((c) => {
+    for (let x = 0; x < 7; x++) {
+      const md = row.cells[x]
+      const lunarDay = useMemo(() => {
+        const sd = SolarDay.fromYmd(md.year, md.month, md.day)
+        return sd.getLunarDay()
+      }, [md.year, md.month, md.day])
+      const isSelected = md.year == date.year && md.month == date.month && md.day == date.day
+      renderCell({
+        day: md.day,
+        lunarDay,
+        selected: isSelected,
+        onClick() {
+          setDate(md)
+        }
+      })
+    }
+  })
+}
 
-function renderCalendarView(calendar: YearMonthVirtualView, date: DateModel, setDate: SetValue<{
-  type: "last" | "this" | "next";
-  day: number;
-}>) {
+function renderCalendarView(
+  calendar: YearMonthVirtualView,
+  date: DateModel,
+  setDate: SetValue<{
+    type: "last" | "this" | "next";
+    day: number;
+  }>,
+  selectedRow: StoreRef<number>) {
   const selectCurrent = useMemo(() => {
     return date.year == calendar.year && date.month == calendar.month
   }, [calendar, date])
@@ -222,10 +317,9 @@ function renderCalendarView(calendar: YearMonthVirtualView, date: DateModel, set
       s.display = 'flex'
       s.alignItems = 'center'
       s.justifyContent = 'space-between'
-    }).render(() => {
+    }).render((c) => {
       for (let x = 0; x < 7; x++) {
         const fd = calendar.fullDayOf(x, y)
-
         const lunarDay = useMemo(() => {
           let c: YearMonthVirtualView = calendar
           if (fd.type == 'last') {
@@ -236,13 +330,17 @@ function renderCalendarView(calendar: YearMonthVirtualView, date: DateModel, set
           const sd = SolarDay.fromYmd(c.year, c.month, fd.day)
           return sd.getLunarDay()
         }, [fd.day, fd.type, calendar])
+        const selected = fd.type == 'this' && selectCurrent && date.day == fd.day
+        if (selected) {
+          selectedRow.set(y)
+        }
         renderCell({
           day: fd.day,
           onClick() {
             setDate(fd)
           },
           lunarDay,
-          selected: fd.type == 'this' && selectCurrent && date.day == fd.day,
+          selected,
           hide: fd.type != 'this'
         })
       }

@@ -1,7 +1,7 @@
 import { hookAddResult, render } from "better-react";
-import { AskNextTimeWork } from "wy-helper";
+import { AskNextTimeWork, emptyArray } from "wy-helper";
 import { useAttrEffect, useMemo } from "better-react-helper";
-import { createNodeTempOps } from "./util";
+import { createNodeTempOps, genTemplateString } from "./util";
 export { isSVG } from './updateDom'
 export { getAliasOfAttribute, getAttributeAlias } from './getAttributeAlias'
 export * from './html'
@@ -39,7 +39,7 @@ function creatTextContent() {
 
 
 export function createTextNode() {
-  return useMemo(creatTextContent)
+  return useMemo(creatTextContent, emptyArray)
 }
 
 export function useTextContent(node: Node, value: string) {
@@ -54,7 +54,7 @@ export function useTextContent(node: Node, value: string) {
  * @returns 
  */
 export function renderContent(content: string, asPortal?: boolean) {
-  const node = useMemo(creatTextContent)
+  const node = useMemo(creatTextContent, emptyArray)
   useAttrEffect((e) => {
     node.textContent = e.trigger
   }, content)
@@ -65,6 +65,9 @@ export function renderContent(content: string, asPortal?: boolean) {
   return node
 }
 
+export function renderText(ts: TemplateStringsArray, ...vs: (string | number)[]) {
+  return renderContent(genTemplateString(ts, vs))
+}
 
 
 

@@ -1,5 +1,5 @@
 import { flushSync } from "better-react"
-import { useEffect, useMemo, useReducer, renderOne } from "better-react-helper"
+import { useEffect, useMemo, useReducer, renderOne, useAttrEffect } from "better-react-helper"
 import { ContentEditableModel, EditRecord, appendRecord, contentEditableText, fixScroll } from "wy-dom-helper/contentEditable"
 import { emptyArray } from "wy-helper"
 
@@ -65,7 +65,7 @@ export function useContentEditable<T>(t: T, initFun: (t: T) => ContentEditableMo
     }, renderContent: () => HTMLElement) {
       renderOne(current.value, function () {
         const div = renderContent()
-        useEffect(() => {
+        useAttrEffect(() => {
           if (args.readonly) {
             div.contentEditable = 'false'
           } else {
