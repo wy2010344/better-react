@@ -1,5 +1,5 @@
 import { MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookCreateChangeAtom, hookEndTempOps } from "better-react"
-import { SvgAttribute, SvgAttributeS, SvgElement, SvgElementType } from "./html"
+import { SvgAttribute, SvgAttributeS, SvgAttributeSO, SvgElement, SvgElementType } from "./html"
 import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
 import { updateDom, updateStyle } from "./updateDom"
 import { SetValue, emptyFun, emptyObject, quoteOrLazyGet } from "wy-helper"
@@ -193,13 +193,13 @@ export class SvgCreater<T extends SvgElementType> {
 
 let svg: {
   readonly [key in SvgElementType]: {
-    (props?: SvgAttribute<key>, isPortal?: boolean): SvgCreater<key>
+    (props?: SvgAttribute<key> | SvgAttributeSO<key>, isPortal?: boolean): SvgCreater<key>
     (fun: (v: SvgAttributeS<key>) => SvgAttributeS<key> | void, isPortal?: boolean): SvgCreater<key>
   }
 }
 if ('Proxy' in globalThis) {
   const cacheSvgMap = new Map<string, any>()
-  svg = new Proxy({} as any, {
+  svg = new Proxy(emptyObject as any, {
     get(_target, p, _receiver) {
       const oldV = cacheSvgMap.get(p as any)
       if (oldV) {

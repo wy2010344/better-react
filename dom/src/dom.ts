@@ -1,7 +1,7 @@
 import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
 import { ContentEditable, ListCreater, TOrQuote, createNodeTempOps, genTemplateString, lazyOrInit, } from "./util"
 import { MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookCreateChangeAtom, hookEndTempOps } from "better-react"
-import { DomAttribute, DomAttributeS, DomElement, DomElementType, React } from "./html"
+import { DomAttribute, DomAttributeS, DomAttributeSO, DomElement, DomElementType, React } from "./html"
 import { SetValue, emptyFun, emptyObject, objectDiffDeleteKey, quoteOrLazyGet } from "wy-helper"
 import { domTagNames, updateDom, updateStyle } from "./updateDom"
 import { CSSProperties } from "wy-dom-helper"
@@ -187,13 +187,13 @@ export class DomCreater<T extends DomElementType> {
 
 let dom: {
   readonly [key in DomElementType]: {
-    (props?: DomAttribute<key>, isPortal?: boolean): DomCreater<key>
+    (props?: DomAttribute<key> | DomAttributeSO<key>, isPortal?: boolean): DomCreater<key>
     (fun: (v: DomAttributeS<key>) => DomAttributeS<key> | void, isPortal?: boolean): DomCreater<key>
   }
 }
 if ('Proxy' in globalThis) {
   const cacheDomMap = new Map<string, any>()
-  dom = new Proxy({} as any, {
+  dom = new Proxy(emptyObject as any, {
     get(_target, p, _receiver) {
       const oldV = cacheDomMap.get(p as any)
       if (oldV) {

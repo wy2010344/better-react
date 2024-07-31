@@ -11,6 +11,7 @@ import { scrollerRoutes } from "./scroller";
 import { pageRoutes } from "./page";
 import onboard from "./onboard";
 import note from './note'
+import masonryLayout from "./masonry-layout";
 
 export default function () {
   const history = useMemo(() => {
@@ -39,6 +40,8 @@ function mainPage() {
     renderLkPage("taro", history => history.push("./taro"))
     renderLkPage("onboard", history => history.push("./onboard"))
     renderLkPage("card", history => history.push("./card"))
+    renderLkPage("note", history => history.push("./note"))
+    renderLkPage("masonry", history => history.push("./masonry"))
   })
 }
 
@@ -55,6 +58,7 @@ const renderRouter = createRouter([
   ...pageRoutes,
   ...onboard,
   ...note,
+  ...masonryLayout,
   {
     match: locationMatch("/pulltoRefresh"),
     getPage() {
