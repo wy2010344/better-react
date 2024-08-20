@@ -1,5 +1,5 @@
 import { hookCreateChangeAtom, hookRequestReconcile } from "better-react";
-import { EmptyFun, Reducer, ReducerWithDispatch, SetValue, emptyArray, objectDeepFreeze, quote, simpleEqual } from "wy-helper";
+import { EmptyFun, Reducer, ReducerWithDispatch, SetValue, emptyArray, quote, simpleEqual } from "wy-helper";
 import { useMemo } from "./useRef";
 export type ReducerResult<F, T> = [T, SetValue<F>];
 

@@ -1,6 +1,6 @@
 import { CreateChangeAtom, TempOps, TempReal, TempSubOps, hookLevelEffect } from "better-react"
 import { useAttrEffect } from "better-react-helper"
-import { StoreRef, alawaysFalse, emptyArray, objectFreeze, quote, storeRef } from "wy-helper"
+import { StoreRef, alawaysFalse, emptyArray, quote, storeRef } from "wy-helper"
 
 export function genTemplateString(ts: TemplateStringsArray, vs: (string | number)[]) {
   const xs: any[] = []

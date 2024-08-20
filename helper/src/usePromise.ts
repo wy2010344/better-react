@@ -1,111 +1,16 @@
 
-import { useEvent } from "./useEvent"
 import { useState } from "./useState"
-import { useMemo, useAtomBind, useAtom, useRefConst, useAlways } from "./useRef"
-import { useVersionInc, useVersionLock } from "./Lock"
-import { useEffect } from "./useEffect"
-import { createEmptyArray, EmptyFun, emptyFun, StoreRef, PromiseResult, buildSerialRequestSingle, VersionPromiseResult, OutPromiseOrFalse, GetPromiseRequest, OnVersionPromiseFinally, createAbortController, buildPromiseResultSetData } from "wy-helper"
+import { useAtom, useConst } from "./useRef"
+import { useVersionLock } from "./Lock"
+import { createEmptyArray, emptyFun, PromiseResult, buildSerialRequestSingle, createAndFlushAbortController, VersionPromiseResult } from "wy-helper"
 
-export function createAndFlushAbortController(ref: StoreRef<EmptyFun | undefined>) {
-  const controller = createAbortController()
-  const last = ref.get()
-  if (last) {
-    last()
-  }
-  ref.set(controller.cancel)
-  return controller.signal
-}
-
-export function useMemoPromiseCall<T, Deps extends readonly any[]>(
-  initOnFinally: OnVersionPromiseFinally<T>,
-  effect: (deps: Deps, ...vs: any[]) => OutPromiseOrFalse<T>,
-  deps: Deps
-) {
-  const inc = useVersionInc()
-  const mout = useMemo(() => {
-    return {
-      version: inc(),
-      request: effect(deps)
-    }
-  }, deps)
-  const {
-    version,
-    request
-  } = mout
-
-  const onFinally = useAlways(function (data: VersionPromiseResult<T>) {
-    if (version == data.version) {
-      initOnFinally(data)
-    }
-  })
-  useEffect(() => {
-    if (request) {
-      const signal = createAbortController();
-      request(signal.signal).then(data => {
-        onFinally()({ type: "success", value: data, version })
-      }).catch(err => {
-        onFinally()({ type: "error", value: err, version })
-      })
-      return signal.cancel
-    }
-  }, [version, request, onFinally])
-  return mout
-}
-export function useCallbackPromiseCall<T, Deps extends readonly any[]>(
-  onFinally: OnVersionPromiseFinally<T>,
-  request: GetPromiseRequest<T>,
-  deps: Deps
-) {
-  return useMemoPromiseCall(onFinally, () => request, deps)
-}
 /**
- * 内部状态似乎不应该允许修改
- * 后面可以使用memo合并差异项
- * @param param0 
- * @param deps 
- * @returns [生效的数据,是否在loading]
+ * 单线程提交
+ * @param effect 
+ * @returns 
  */
-export function useBaseMemoPromiseState<T, Deps extends readonly any[]>(
-  onFinally: undefined | OnVersionPromiseFinally<T>,
-  effect: (deps: Deps, ...vs: any[]) => OutPromiseOrFalse<T>,
-  deps: Deps
-) {
-  const [data, updateData] = useState<VersionPromiseResult<T>>()
-  const { version, request } = useMemoPromiseCall((data) => {
-    onFinally?.(data)
-    updateData(data)
-  }, effect, deps)
-  const outData = request ? data : undefined
-  return {
-    data: outData,
-    version,
-    loading: outData?.version != version,
-    setData: buildPromiseResultSetData(updateData),
-  }
-}
-export function useMemoPromiseState<T, Deps extends readonly any[]>(
-  effect: (deps: Deps, ...vs: any[]) => OutPromiseOrFalse<T>,
-  deps: Deps
-) {
-  return useBaseMemoPromiseState(undefined, effect, deps)
-}
-export function useBaseCallbackPromiseState<T, Deps extends readonly any[]>(
-  onFinally: undefined | OnVersionPromiseFinally<T>,
-  effect: GetPromiseRequest<T>,
-  deps: Deps
-) {
-  return useBaseMemoPromiseState(onFinally, () => effect, deps)
-}
-
-export function useCallbackPromiseState<T, Deps extends readonly any[]>(
-  effect: GetPromiseRequest<T>,
-  deps: Deps
-) {
-  return useBaseCallbackPromiseState(undefined, effect, deps)
-}
-
 export function useMutation<Req extends any[], Res>(effect: (...vs: Req) => Promise<Res>) {
-  const boolLock = useAtomBind(false)
+  const boolLock = useAtom(false)
   return function (...vs: Req) {
     if (boolLock.get()) {
       return
@@ -135,7 +40,7 @@ export function useSerialRequestSingle<Req extends any[], Res>(
   callback: (...vs: Req) => Promise<Res>,
   effect: (res: PromiseResult<Res>) => void = emptyFun
 ) {
-  const cacheList = useRefConst<Req[]>(createEmptyArray)
+  const cacheList = useConst<Req[]>(createEmptyArray)
   return buildSerialRequestSingle(callback, effect, cacheList)
 }
 /**
@@ -145,15 +50,15 @@ export function useSerialRequestSingle<Req extends any[], Res>(
  * @param effect 
  * @returns 
  */
-export function useSerialRequest<Req extends any[], Res>(
+export function useLatestRequest<Req extends any[], Res>(
   callback: (vs: Req, version: number, signal?: AbortSignal) => Promise<Res>,
   effect: (res: VersionPromiseResult<Res>, version: number) => void
 ) {
-  const lastCancelRef = useAtomBind<EmptyFun | undefined>(undefined)
+  const flushAbort = useConst(createAndFlushAbortController)
   const [versionLock, updateVersion] = useVersionLock();
   return [function (...vs: Req) {
     const version = updateVersion();
-    callback(vs, version, createAndFlushAbortController(lastCancelRef))
+    callback(vs, version, flushAbort())
       .then((data) => {
         if (version == versionLock()) {
           effect({
@@ -172,7 +77,7 @@ export function useSerialRequest<Req extends any[], Res>(
           }, version);
         }
       });
-  }, updateVersion()] as const
+  }, updateVersion] as const
 }
 /**
  * 可重载的异步请求,封闭一个loading
@@ -180,13 +85,13 @@ export function useSerialRequest<Req extends any[], Res>(
  * @param effect 
  * @returns 
  */
-export function useSerialRequestLoading<Req extends any[], Res>(
+export function useLatestRequestLoading<Req extends any[], Res>(
   callback: (vs: Req, signal?: AbortSignal) => Promise<Res>,
   effect: (res: VersionPromiseResult<Res>) => void
 ) {
   const [reqVersion, setReqVersion] = useState(0);
   const [resVersion, setResVersion] = useState(0);
-  const [request, updateVersion] = useSerialRequest(
+  const [request, updateVersion] = useLatestRequest(
     function (args: Req, v, signal) {
       setReqVersion(v);
       return callback(args, signal);
@@ -206,7 +111,7 @@ export function buildRefreshPromise<T>(shouldNotify: (a: T, old: T) => boolean) 
       notify(): void;
     } | undefined>(undefined);
     return {
-      request: useEvent(function (updateVersion: () => void) {
+      request(updateVersion: () => void) {
         return new Promise((resolve) => {
           updateVersion();
           refreshFlag.set({
@@ -217,7 +122,7 @@ export function buildRefreshPromise<T>(shouldNotify: (a: T, old: T) => boolean) 
             },
           })
         });
-      }),
+      },
       notify(getPromise: T) {
         const rf = refreshFlag.get()
         if (rf) {

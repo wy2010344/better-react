@@ -1,10 +1,10 @@
 import { PromiseResult, buildPromiseResultSetData, emptyFun } from "wy-helper"
-import { useSerialRequestLoading } from "./usePromise";
 import { useChange, useState } from "./useState";
 import { useBuildSubSetObject } from "./util";
 import { useMemo } from "./useRef";
 import { useVersionLock } from "./Lock";
 import { useEffect } from "./useEffect";
+import { useLatestRequestLoading } from "./usePromise";
 
 /**
  * 分页其实没必要
@@ -47,7 +47,7 @@ function useBaseAsyncPaginate<T, K>(
   deps: readonly any[]
 ) {
   const [page, setPage] = useChange(initKey);
-  const [request, loading] = useSerialRequestLoading(
+  const [request, loading] = useLatestRequestLoading(
     async function ([page]: [K], signal?: AbortSignal): Promise<PromiseResultWithPage<T, K>> {
       try {
         const out = await getPage(page, signal)

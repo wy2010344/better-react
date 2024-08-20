@@ -18,6 +18,12 @@ export function useMemo(
   const dep = arguments.length == 1 ? effect : arguments[1]
   return useBaseMemo(arrayNotEqualOrOne, effect, dep)
 }
+
+export function useConst<F, Arg extends readonly any[] = readonly any[]>(creater: (...vs: Arg) => F, ...vs: Arg) {
+  return useMemo(e => {
+    return creater(...vs)
+  }, emptyArray) as F
+}
 /**
  * 如果rollback,不允许改变是持久的
  * 但是ref本质上就是持久的
@@ -52,6 +58,17 @@ export function useAtom() {
 }
 export function useAtomFun<T>(init: () => T) {
   return useAtom(undefined, init)
+}
+
+
+function createRef<T>(v: T) {
+  return {
+    current: v
+  }
+}
+
+export function useRef<T>(init: T) {
+  return useConst(createRef, init)
 }
 
 function createLaterGet<T>() {
@@ -106,11 +123,6 @@ export function useChgAtom() {
 }
 export function useChgAtomFun<T>(init: () => T) {
   return useChgAtom(undefined, init)
-}
-
-
-export function useRefConst<T>(fun: () => T) {
-  return useAtomFun(fun).get()
 }
 
 export function useRefConstWith<T>(v: T) {
