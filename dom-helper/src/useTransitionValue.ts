@@ -44,12 +44,6 @@ export function useTriggerStyleInit<
   return init.target
 }
 
-export function getTimeoutPromise(time: number, then: EmptyFun) {
-  return function () {
-    return delay(time).then(then)
-  }
-}
-
 export function useTriggerStyleWithShow<
   T extends ElementCSSInlineStyle & Element,
   M extends ClsWithStyle
@@ -66,13 +60,4 @@ export function useTriggerStyleWithShow<
       return init
     }
   }, [!exiting])
-}
-export function subscribeTimeout(callback: EmptyFun, time: number) {
-  /**
-   * 需要取消订阅,因为开发者模式useEffect执行多次,不取消会造成问题
-   */
-  const inv = setTimeout(callback, time)
-  return function () {
-    clearTimeout(inv)
-  }
 }

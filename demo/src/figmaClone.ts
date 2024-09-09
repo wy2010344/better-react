@@ -19,11 +19,11 @@ export default function () {
 
           } else if (row.startsWith("/*")) {
             //是注释
-            if (row.startsWith("/* text/")) {
-              const newStr = row.slice(7, row.length - 3).replaceAll("/", ".").replaceAll("-", "_")
-              newList.push(`\${preset${newStr}}`)
-              addText = true
-            }
+            // if (row.startsWith("/* text/")) {
+            //   const newStr = row.slice(7, row.length - 3).replaceAll("/", ".").replaceAll("-", "_")
+            //   newList.push(`\${preset${newStr}}`)
+            //   addText = true
+            // }
           } else {
             const lastRow = list[i - 1]
             if (lastRow && lastRow.startsWith("/* color/")) {

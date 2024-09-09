@@ -26,6 +26,8 @@ import pipline from "./pipline";
 import force3d from "./d3-learn/force/collide";
 import figmaClone from "./figmaClone";
 import xmlToBetter from "./xmlToBetter";
+import { renderTodoList } from "./开发AnimatePereference/renderTodoList";
+import reanimated from "./reanimated";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(
@@ -37,7 +39,7 @@ export function createBr(app: HTMLElement) {
     // useLayoutEffect,
     // renderFilter,
     // cssLayout,
-    figmaClone,
+    // figmaClone,
     // demo,
     // xmlToBetter,
     // force3d,
@@ -49,12 +51,13 @@ export function createBr(app: HTMLElement) {
     // newMode,
     // centerPicker,
     // todoList,
+    // renderTodoList,
     // bezierPreview,
     // mySpringAnimation,
     // pipline,
     // mySpring1,
     // ExpensiveViewSingle,
-    // reanimated,
+    reanimated,
     // demo1,
     //askTimeWork,
     //askIdleTimeWork,

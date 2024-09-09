@@ -2,9 +2,6 @@ import { hookAddResult, render } from "better-react";
 import { AskNextTimeWork, emptyArray } from "wy-helper";
 import { useAttrEffect, useMemo } from "better-react-helper";
 import { createNodeTempOps, genTemplateString } from "./util";
-export { isSVG } from './updateDom'
-export { getAliasOfAttribute, getAttributeAlias } from './getAttributeAlias'
-export * from './html'
 export * from './dom'
 export * from './svg'
 export * from './util'

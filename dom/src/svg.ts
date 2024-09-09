@@ -1,12 +1,12 @@
 import { MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookCreateChangeAtom, hookEndTempOps } from "better-react"
-import { SvgAttribute, SvgAttributeS, SvgAttributeSO, SvgElement, SvgElementType } from "./html"
-import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
-import { updateDom, updateStyle } from "./updateDom"
-import { SetValue, emptyFun, emptyObject, quoteOrLazyGet } from "wy-helper"
+import { SvgAttribute, SvgAttributeS, SvgAttributeSO, SvgElement, SvgElementType } from "wy-dom-helper"
+import { hookAttrEffect, useMemo } from "better-react-helper"
+import { updateDom, updateStyle } from "wy-dom-helper"
+import { SetValue, emptyFun, emptyObject } from "wy-helper"
 import { updateProps } from "./dom"
-import { getAttributeAlias } from "./getAttributeAlias"
+import { getAttributeAlias } from "wy-dom-helper"
 import { ListCreater, TOrQuote, createNodeTempOps, genTemplateString, lazyOrInit } from "./util"
-import { svgTagNames } from "./updateDom"
+import { svgTagNames } from "wy-dom-helper"
 import { CSSProperties } from "wy-dom-helper"
 
 

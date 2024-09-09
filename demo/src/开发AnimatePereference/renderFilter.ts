@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker"
 import { dom } from "better-react-dom"
 import { getTimeoutPromise, renderInput, useTriggerStyleWithShow } from "better-react-dom-helper"
-import { renderArray, createRenderAnimateArray, useChange, useEffect, useExitAnimate, useMemo } from "better-react-helper"
+import { useChange, useExitAnimate, useMemo, renderExitAnimateArray } from "better-react-helper"
 import { CSSProperties, ClsWithStyle, stringifyStyle } from "wy-dom-helper"
 import { emptyArray } from "wy-helper"
 
@@ -61,31 +61,35 @@ export function renderFilter() {
     })
     renderExitAnimateArray(mlist, function (row) {
       const waitFinish = getTimeoutPromise(1000, row.resolve)
-      const { style } = useTriggerStyleWithShow<HTMLDivElement, ClsWithStyle>(() => div!, row.exiting, {
-        from: {
-          style: {
-            opacity: 0,
-            transform: `translateX(-100%)`
-          } as CSSProperties
+      const { style } = useTriggerStyleWithShow<HTMLDivElement, ClsWithStyle>(
+        () => div!,
+        row.exiting,
+        {
+          from: {
+            style: {
+              opacity: 0,
+              transform: `translateX(-100%)`
+            } as CSSProperties
+          },
+          target: {
+            style: {
+              transition: `all ease 1s`,
+              opacity: 1,
+              transform: `translateX(0)`
+            }
+          },
+          waitFinish
         },
-        target: {
-          style: {
-            transition: `all ease 1s`,
-            opacity: 1,
-            transform: `translateX(0)`
-          }
-        },
-        waitFinish
-      }, {
-        target: {
-          style: {
-            transition: `all ease 1s`,
-            opacity: 0,
-            transform: `translateX(-100%)`
-          }
-        },
-        waitFinish
-      })
+        {
+          target: {
+            style: {
+              transition: `all ease 1s`,
+              opacity: 0,
+              transform: `translateX(-100%)`
+            }
+          },
+          waitFinish
+        })
 
       const div: HTMLDivElement = dom.div({
         style: stringifyStyle(style!)

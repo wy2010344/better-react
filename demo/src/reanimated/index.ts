@@ -8,18 +8,30 @@ import { useChange, useMemo, useVersion } from "better-react-helper";
 export default function () {
   const [version, updateVersion] = useVersion()
   const [version2, updateVersion2] = useVersion()
-  const direction = useMemo(() => {
+  const { direction, color } = useMemo(() => {
     const i = version % 4
 
     console.log("开始", Date.now())
     if (i == 0) {
-      return 'translate(0px,0px)'
+      return {
+        color: 'green',
+        direction: 'translate(0px,0px)'
+      }
     } else if (i == 1) {
-      return 'translate(100%,0px)'
+      return {
+        color: 'black',
+        direction: 'translate(100%,0px)'
+      }
     } else if (i == 2) {
-      return 'translate(100%,100%)'
+      return {
+        color: 'yellow',
+        direction: 'translate(100%,100%)'
+      }
     } else {
-      return 'translate(0px,100%)'
+      return {
+        color: 'red',
+        direction: 'translate(0px,100%)'
+      }
     }
   }, [version])
   const time = useMemo(() => {
@@ -38,28 +50,34 @@ export default function () {
       onClick(event) {
         updateVersion()
       },
-    }).text`${direction}`
+    }).renderText`${direction}`
     dom.button({
       onClick(event) {
         updateVersion2()
       },
-    }).text`${time}`
+    }).renderText`${time}`
   })
 
   const div = dom.div({
+    //transform ease ${time}s,background ease 0.7s;
     style: `
     width:100px;
     height:100px;
-    background:green;
+    background:${color};
     transition: all ease ${time}s;
     transform:${direction};
     `,
-    onTransitionCancel() {
+    onTransitionCancel(e) {
 
-      console.log("中断", Date.now())
+      console.log("中断", e, Date.now())
     },
-    onTransitionEnd() {
-      console.log("结束", Date.now())
+    onTransitionEnd(e) {
+      /**
+       * e:propertyName
+       * 会为每一个属性播放中止或结束,即使标注的all
+       * 或分开为每一个属性配置
+       */
+      console.log("结束", e, Date.now())
     }
   }).render()
 }
