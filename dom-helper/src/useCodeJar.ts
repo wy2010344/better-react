@@ -1,5 +1,6 @@
 import { emptyArray } from "wy-helper"
-import { React, DomElementType, DomElement, DomAttribute, dom } from "better-react-dom"
+import { dom } from "better-react-dom"
+import { React, DomElementType, DomElement, DomAttribute, } from 'wy-dom-helper'
 import { useEffect, useMemo } from "better-react-helper"
 import { CSSProperties, stringifyStyle } from "wy-dom-helper"
 import { mb, contentEditableText, MbRange, getSelection, insertHTML, browser, afterCursor, beforeCursor } from 'wy-dom-helper/contentEditable'

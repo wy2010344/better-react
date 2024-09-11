@@ -1,8 +1,9 @@
 import { emptyArray } from "wy-helper"
 import { ContentEditableModel, contentDelete, contentEnter, contentTab, getCurrentRecord, mb } from "wy-dom-helper/contentEditable"
-import { dom, React } from "better-react-dom"
+import { dom } from "better-react-dom"
 import { useAtom, useEffect } from "better-react-helper"
 import { useContentEditable } from "./useContentEditable"
+import { React } from "wy-dom-helper"
 
 export function useRenderCode<T>(
   init: T,

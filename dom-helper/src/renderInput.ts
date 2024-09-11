@@ -1,6 +1,7 @@
+import { dom } from "better-react-dom"
 import { useEffect } from "better-react-helper"
-import { DomAttribute, DomElementType, React, dom } from "better-react-dom"
 import { useVersion } from 'better-react-helper'
+import { DomAttribute, DomElementType } from "wy-dom-helper"
 type InputTypeProps<T extends DomElementType> = DomAttribute<T> & {
   value: string
   onValueChange(v: string): void

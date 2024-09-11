@@ -1,6 +1,7 @@
-import { DomAttribute, DomElementType, SvgAttribute, SvgElementType, dom, svg } from "better-react-dom";
+import { dom, svg } from "better-react-dom";
 import { EmptyFun, run } from "wy-helper";
 import { KPair, pair } from "wy-helper/kanren";
+import { DomAttribute, DomElementType, SvgAttribute, SvgElementType } from 'wy-dom-helper'
 
 
 

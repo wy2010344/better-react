@@ -1,5 +1,5 @@
 import { hookAddResult, render } from "better-react";
-import { AskNextTimeWork, emptyArray } from "wy-helper";
+import { AskNextTimeWork, emptyArray, EmptyFun } from "wy-helper";
 import { useAttrEffect, useMemo } from "better-react-helper";
 import { createNodeTempOps, genTemplateString } from "./util";
 export * from './dom'
@@ -16,7 +16,7 @@ export * from './util'
  */
 export function createRoot(
   node: Node,
-  reconcile: () => void,
+  reconcile: EmptyFun,
   getAsk: AskNextTimeWork) {
   return render(
     createChangeAtom => createNodeTempOps(node, createChangeAtom),

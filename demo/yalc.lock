@@ -12,7 +12,7 @@
       "replaced": "^1.2.6"
     },
     "better-react-dom": {
-      "signature": "d7953a39e94ffe3d0bcbf3e233b68f8d",
+      "signature": "04a261047fe2ed5a438038bbb78604da",
       "file": true,
       "replaced": "^1.2.6"
     },
@@ -22,12 +22,12 @@
       "replaced": "^0.1.0"
     },
     "wy-dom-helper": {
-      "signature": "1136554fa103b13e239c93c358331f16",
+      "signature": "def4d00dc78a74b217e0e3357be6313c",
       "file": true,
       "replaced": "^0.1.0"
     },
     "better-react-dom-helper": {
-      "signature": "eac9b6826446e24e083805d3a1cc7b2d",
+      "signature": "5717d3f3cc0c665d8e410a03bce63879",
       "file": true,
       "replaced": "^1.2.4"
     }
