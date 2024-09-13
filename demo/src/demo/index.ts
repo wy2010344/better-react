@@ -13,6 +13,7 @@ import onboard from "./onboard";
 import note from './note'
 import { cns } from "wy-dom-helper";
 import { tw } from "@/utils";
+import { shadcnRoutes } from "./shadcn";
 
 export default function () {
   const history = useMemo(() => {
@@ -27,25 +28,9 @@ export default function () {
   // }, location)
 }
 function mainPage() {
-  const className = "bg-blue-500 text-white p-4 rounded text";
-  const nv = tw`
-text-bold ${'text-gray text-ellipsis'}
-`
-  const styles = tw`
-  text-bold text-3xl underline text-slate-50
-`;
-  const ns = cns('text-gray-50')
   renderPage({
     title: "一些demo",
   }, function () {
-    dom.div({
-      className: `
-      text-bold text-slate-50
-      `
-    })
-    dom.h1(v => {
-      v.className = tw`text-3xl font-bold underline text-slate-50 text`
-    }).renderText`Hello World`
     renderLkPage("拖动", (history) => history.push('/reorder'))
     renderLkPage("循环滚动", history => history.push("/centerPicker"))
     renderLkPage("scroller", history => history.push("./scroller"))
@@ -58,6 +43,7 @@ text-bold ${'text-gray text-ellipsis'}
     renderLkPage("onboard", history => history.push("./onboard"))
     renderLkPage("card", history => history.push("./card"))
     renderLkPage("note", history => history.push("./note"))
+    renderLkPage("shadcn", history => history.push("./shadcn"))
   })
 }
 
@@ -74,6 +60,7 @@ const renderRouter = createRouter([
   ...pageRoutes,
   ...onboard,
   ...note,
+  ...shadcnRoutes,
   {
     match: locationMatch("/pulltoRefresh"),
     getPage() {

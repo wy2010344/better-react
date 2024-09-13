@@ -8,9 +8,6 @@ export default defineConfig({
   server: {
     port: 3252
   },
-
-  plugins: [
-  ],
   resolve: {
     alias: [
       { find: '@', replacement: path.resolve(dirname, 'src') },

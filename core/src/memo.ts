@@ -9,14 +9,14 @@ export type HookMemo<T, D> = {
 
 export type MemoEvent<V, D = any> = {
   trigger: D
-  isInit: boolean
-  beforeTrigger?: never
-  beforeValue?: never
+  isInit: false
+  beforeValue: V
+  beforeTrigger: D
 } | {
   trigger: D
-  isInit: boolean
-  beforeTrigger: D
-  beforeValue: V
+  isInit: true
+  beforeValue?: never
+  beforeTrigger?: never
 }
 /**
  * 通过返回函数,能始终通过函数访问fiber上的最新值
@@ -36,8 +36,8 @@ export function useBaseMemo<V, D>(
     draftParentFiber()
     const state: HookMemo<V, D> = {
       value: effect({
-        isInit: true,
-        trigger: deps
+        trigger: deps,
+        isInit: true
       }),
       deps,
       shouldChange
@@ -63,9 +63,9 @@ export function useBaseMemo<V, D>(
       draftParentFiber()
       const newState: HookMemo<V, D> = {
         value: effect({
-          beforeTrigger: state.deps,
-          isInit: false,
           trigger: deps,
+          isInit: false,
+          beforeTrigger: state.deps,
           beforeValue: state.value
         }),
         deps,

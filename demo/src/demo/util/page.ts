@@ -1,7 +1,8 @@
 import { createContext } from "better-react";
-import { DomAttribute, dom } from "better-react-dom";
+import { dom } from "better-react-dom";
 import { renderIf, renderObject } from "better-react-helper";
 import { BrowserHistory } from "history";
+import { DomAttribute } from "wy-dom-helper";
 import { EmptyFun, SetValue } from "wy-helper";
 
 
