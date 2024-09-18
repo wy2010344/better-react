@@ -24,14 +24,14 @@ function updateSVGProps(node: any, key: string, value?: any) {
   if (key == 'innerHTML' || key == 'textContent') {
     updateProps(node, key, value)
   } else {
-    if (value) {
-      if (key == 'className') {
-        key = 'class'
-      }
-      key = getAttributeAlias(key)
-      node.setAttribute(key, value)
+    if (key == 'className') {
+      node.setAttribute('class', value || '')
     } else {
-      node.removeAttribute(key)
+      if (value) {
+        node.setAttribute(key, value)
+      } else {
+        node.removeAttribute(key)
+      }
     }
   }
 }

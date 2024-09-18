@@ -1,6 +1,6 @@
 import { addEffectDestroy, createUseReducer, renderArray, useAtom, useEffect, useHookEffect, useMemo } from "better-react-helper";
 import { renderPage } from "../util/page";
-import { emptyArray, emptyObject, getSpringBaseAnimationConfig, quote, syncMergeCenterArray } from "wy-helper";
+import { cacheVelocity, emptyArray, emptyObject, getSpringBaseAnimationConfig, quote, syncMergeCenterArray } from "wy-helper";
 import { dom } from "better-react-dom";
 import { PagePoint, animateFrame, dragInit, subscribeDragMove } from "wy-dom-helper";
 import renderViewVelocity, { useLineList } from "./viewVelocity";
@@ -19,57 +19,6 @@ const cards = [
   'https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg'
 ]
 
-class CacheVelocity {
-  constructor(
-    public readonly BEFORE_LAST_KINEMATICS_DELAY = 32
-  ) { }
-  private list: {
-    time: number,
-    value: number
-  }[] = []
-  private velocity = 0
-  getIdx(time: number) {
-    for (let i = 0; i < this.list.length; i++) {
-      const row = this.list[i]
-      let diffTime = time - row.time
-      if (diffTime > this.BEFORE_LAST_KINEMATICS_DELAY) {
-        return i
-      }
-    }
-    return this.list.length - 1
-  }
-  clear() {
-    this.list.length = 0
-    this.velocity = 0
-  }
-  reset(time: number, value: number) {
-    this.clear()
-    return this.append(time, value)
-  }
-  append(time: number, value: number) {
-    if (this.list.length) {
-      let idx = this.getIdx(time)
-      const cell = this.list[idx]
-      if (time != cell.time) {
-        this.velocity = (value - cell.value) / (time - cell.time)
-        this.list.length = idx + 1
-      }
-    } else {
-      this.velocity = 0
-    }
-    this.list.unshift({
-      time,
-      value
-    })
-    return this.velocity
-  }
-  get() {
-    return this.velocity
-  }
-}
-export function cacheVelocity(BEFORE_LAST_KINEMATICS_DELAY = 32) {
-  return new CacheVelocity(BEFORE_LAST_KINEMATICS_DELAY)
-}
 const useCard = createUseReducer(function (old: string[], act: {
   type: "remove"
   value: string
@@ -86,9 +35,11 @@ const useCard = createUseReducer(function (old: string[], act: {
 })
 
 const ease = getSpringBaseAnimationConfig()//getTweenAnimationConfig(600, easeFns.out(easeFns.circ))
+
+/**
+ * 不太好,应该做成速度或偏移的监听,便像动画一样,从0到1,然后动画结束时,
+ */
 export default function () {
-
-
   const [data, setVelocity] = useLineList(emptyObject)
   renderPage({
     title: "taro",
@@ -113,8 +64,6 @@ export default function () {
       }
     }, [list])
     renderArray(list, quote, function (row, i) {
-
-      const removed = useAtom(false)
       const lastPoint = useAtom<PagePoint | undefined>(undefined)
       const { velocityX, velocityY, x, y, rot, scale } = useMemo(() => {
         return {
@@ -164,34 +113,31 @@ export default function () {
             //   }
             // })
             const dir = vx < 0 ? -1 : 1
-            if (v > 1) {
-              removed.set(true)
-            }
             const deltaX = p ? p.pageX - lastP.pageX : 0
-            const gone = removed.get()
-            if (gone) {
-              //已经移除
-              x.changeTo((200 + wrapper.clientWidth) * dir, ease, {
-                onFinish(v) {
-                  dispatch({
-                    type: "remove",
-                    value: row
-                  })
-                },
-              })
-              rot.changeTo(deltaX / 100 + dir * 10 * v, ease)
+            if (p) {
+              //跟随鼠标
+              x.changeTo(x.get() + deltaX)
+              rot.changeTo(deltaX / 100)
+              scale.changeTo(1.1)
             } else {
-              if (p) {
-                //跟随鼠标
-                console.log("xc", x.get(), deltaX)
-                x.changeTo(x.get() + deltaX, ease)
+              if (v > 0.2) {
+                //移除
+                x.changeTo((200 + wrapper.clientWidth) * dir, ease, {
+                  onFinish(v) {
+                    dispatch({
+                      type: "remove",
+                      value: row
+                    })
+                  },
+                })
+                rot.changeTo(deltaX / 100 + dir * 10 * v, ease)
               } else {
+                //恢复
                 x.changeTo(0, ease)
+                rot.changeTo(deltaX / 100, ease)
               }
-              rot.changeTo(deltaX / 100, ease)
+              scale.changeTo(1, ease)
             }
-
-            scale.changeTo(p ? 1.1 : 1, ease)
 
 
             if (p) {
@@ -202,28 +148,28 @@ export default function () {
           }
         }))
       }, emptyArray)
-      useEffect(() => {
-        const gesture = new DragGesture(wrapper, ({ velocity, timeStamp }) => {
-          if (!lastPoint.get()) {
-            return
-          }
-          const vx = velocity[0]
-          const vy = velocity[1]
-          const v = Math.sqrt(vx * vx + vy * vy)
-          setVelocity({
-            type: "append",
-            key: "red",
-            value: {
-              x: timeStamp,
-              y: v
-            }
-          })
+      // useEffect(() => {
+      //   const gesture = new DragGesture(wrapper, ({ velocity, timeStamp }) => {
+      //     if (!lastPoint.get()) {
+      //       return
+      //     }
+      //     const vx = velocity[0]
+      //     const vy = velocity[1]
+      //     const v = Math.sqrt(vx * vx + vy * vy)
+      //     setVelocity({
+      //       type: "append",
+      //       key: "red",
+      //       value: {
+      //         x: timeStamp,
+      //         y: v
+      //       }
+      //     })
 
-        })
-        return () => {
-          gesture.destroy()
-        }
-      }, emptyArray)
+      //   })
+      //   return () => {
+      //     gesture.destroy()
+      //   }
+      // }, emptyArray)
       const { wrapper, inner } = dom.div({
         style: `
         position:absolute;

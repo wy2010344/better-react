@@ -1,5 +1,6 @@
-import { dom, getAliasOfAttribute, isSVG } from "better-react-dom";
+import { dom } from "better-react-dom";
 import { useState } from "better-react-helper";
+import { getAliasOfAttribute, isSVG } from "wy-dom-helper";
 import { XmlNode, parseSync } from "xml-reader";
 
 export default function () {

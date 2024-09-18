@@ -40,6 +40,7 @@ function mainPage() {
     renderLkPage("circleChoose", history => history.push("./circleChoose"))
     renderLkPage("pulltoRefresh", history => history.push("./pulltoRefresh"))
     renderLkPage("taro", history => history.push("./taro"))
+    renderLkPage("swipe-card", history => history.push("./swipe-card"))
     renderLkPage("onboard", history => history.push("./onboard"))
     renderLkPage("card", history => history.push("./card"))
     renderLkPage("note", history => history.push("./note"))
@@ -89,6 +90,12 @@ const renderRouter = createRouter([
     match: locationMatch("/taro"),
     getPage() {
       return import("./taro")
+    },
+  },
+  {
+    match: locationMatch("/swipe-card"),
+    getPage() {
+      return import("./swipe-card")
     },
   },
   {

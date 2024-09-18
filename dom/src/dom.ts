@@ -42,7 +42,7 @@ export function updateProps(node: any, key: string, value?: any) {
     node.setAttribute(key, value)
   } else {
     if (emptyKeys.includes(key) && !value) {
-      node.removeAttribute(key)
+      node[key] = ''
     } else {
       node[key] = value
     }

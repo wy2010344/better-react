@@ -15,6 +15,7 @@ export const shadcnRoutes: Route[] = [
         title: "shadcn"
       }, () => {
         renderLkPage("tabs", history => history.push("/shadcn/tabs"))
+        renderLkPage("menubar", history => history.push("/shadcn/menubar"))
       })
     },
   },
@@ -22,6 +23,12 @@ export const shadcnRoutes: Route[] = [
     match: locationMatch("/shadcn/tabs"),
     getPage() {
       return import("./demos/tabs1")
+    },
+  },
+  {
+    match: locationMatch("/shadcn/menubar"),
+    getPage() {
+      return import("./demos/menubar1")
     },
   },
 ]
