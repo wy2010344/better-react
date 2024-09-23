@@ -27,6 +27,7 @@ function updateSVGProps(node: any, key: string, value?: any) {
     if (key == 'className') {
       node.setAttribute('class', value || '')
     } else {
+      key = getAttributeAlias(key)
       if (value) {
         node.setAttribute(key, value)
       } else {

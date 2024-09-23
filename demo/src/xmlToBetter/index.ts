@@ -15,10 +15,7 @@ export default function () {
       try {
         const text = await navigator.clipboard.readText()
         console.log(text)
-        const data = parseSync(text)
-        console.log(data)
-
-        const targetText = toBetter(data)
+        const targetText = parseXmlToText(text)
         setTarget(targetText)
         navigator.clipboard.writeText(targetText)
       } catch (err) {
@@ -649,7 +646,12 @@ export default function () {
   // })
 }
 
+export function parseXmlToText(text: string) {
+  const data = parseSync(text)
+  console.log(data)
 
+  return toBetter(data)
+}
 function toBetter(data: XmlNode): string {
   if (data.type == "element") {
     const name = data.name

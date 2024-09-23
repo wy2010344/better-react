@@ -17,12 +17,20 @@ const cache = (w.__better_react_one__ || {
   stateHolder?: StateHolder
   wipFiber?: Fiber
   allowWipFiber?: boolean
+  beforeFiber?: Fiber
 }
 w.__better_react_one__ = cache
 
 export function hookAddFiber(fiber?: Fiber) {
   cache.wipFiber = fiber
   cache.tempOps = fiber?.subOps
+}
+
+export function hookSetBeforeFiber(fiber?: Fiber) {
+  cache.beforeFiber = undefined
+}
+export function hookBeforeFiber() {
+  return cache.beforeFiber
 }
 
 export function hookStateHoder() {

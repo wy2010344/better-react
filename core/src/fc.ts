@@ -1,18 +1,11 @@
 import { Fiber, FiberEvent } from "./Fiber";
-import { draftParentFiber, hookAddFiber, hookAddResult, hookParentFiber, hookStateHoder, hookTempOps, revertParentFiber } from "./cache";
+import { draftParentFiber, hookAddFiber, hookAddResult, hookBeforeFiber, hookParentFiber, hookSetBeforeFiber, hookStateHoder, hookTempOps, revertParentFiber } from "./cache";
 
 
-const hookIndex = {
-  // effect: 0,
-  // memo: 0,
-  beforeFiber: undefined as (Fiber | undefined),
-}
 export function updateFunctionComponent(fiber: Fiber) {
   revertParentFiber()
   hookAddFiber(fiber)
-  // hookIndex.effect = 0
-  // hookIndex.memo = 0
-  hookIndex.beforeFiber = undefined
+  hookBeforeFiber()
   fiber.render()
   draftParentFiber();
   hookAddFiber(undefined)
@@ -54,17 +47,18 @@ export function renderFiber<T>(
 
 
 
-  currentFiber.before.set(hookIndex.beforeFiber)
+  const beforeFiber = hookBeforeFiber()
+  currentFiber.before.set(beforeFiber)
   //第一次要标记sibling
-  if (hookIndex.beforeFiber) {
-    hookIndex.beforeFiber.next.set(currentFiber)
+  if (beforeFiber) {
+    beforeFiber.next.set(currentFiber)
   } else {
     parentFiber.firstChild.set(currentFiber)
   }
   currentFiber.next.set(undefined)
   //一直组装到最后
   parentFiber.lastChild.set(currentFiber)
-  hookIndex.beforeFiber = currentFiber
+  hookSetBeforeFiber(currentFiber)
 
   hookAddResult(currentFiber.subOps)
   return currentFiber

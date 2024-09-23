@@ -1,9 +1,8 @@
-import { useState } from "better-react-helper";
-import { dom } from "better-react-dom";
+import { dom } from "better-react-dom"
 
-export default function () {
-  const [preText, setPreText] = useState('')
+export default function (setPreText: (v: string) => void) {
   dom.button({
+    className: "btn",
     async onClick() {
       const text = await navigator.clipboard.readText()
       console.log(text)
@@ -51,33 +50,11 @@ export default function () {
         }
       }
       const replaceText = newList.join('\n')
-      navigator.clipboard.writeText(replaceText)
       setPreText(replaceText)
     }
-  }).renderTextContent("点击")
-  dom.button({
-    async onClick(e) {
-      const text = await navigator.clipboard.readText()
-      const replaceText = getColorStrBase(text)
-      navigator.clipboard.writeText(replaceText)
-      setPreText(replaceText)
-    }
-  }).renderTextContent("替换颜色")
-  dom.button({
-    async onClick(e) {
-      const text = await navigator.clipboard.readText()
-      const first = text.split('\n')[0]
-      let replaceText = ''
-      if (first.startsWith(StyleName)) {
-        replaceText = `\${preset.text.${first.slice(StyleName.length).replaceAll("/", ".").replaceAll("-", "_")}}`
-      }
-      navigator.clipboard.writeText(replaceText)
-      setPreText(replaceText)
-    }
-  }).renderTextContent("获得字体样式")
-  dom.pre().renderTextContent(preText)
+  }).renderTextContent("点击-figma-2-css")
 }
-const StyleName = '//styleName: '
+
 
 const RGBACOLORREG = /[rR][gG][Bb][Aa]?[\(]([\s]*(2[0-4][0-9]|25[0-5]|[01]?[0-9][0-9]?),){2}[\s]*(2[0-4][0-9]|25[0-5]|[01]?[0-9][0-9]?),?[\s]*(0\.\d{1,2}|1|0)?[\)]{1}/
 
@@ -87,12 +64,12 @@ function getColorStr(lastRow: string) {
   return getColorStrBase(newStr)
 }
 
-function getColorStrBase(str: string) {
+export function getColorStrBase(str: string) {
   return `\${preset.color.${str.replaceAll("/", ".").replaceAll("-", "_")}}`
 }
 
 const reg = /((\-|\+)?\d+(\.\d+)?)+(px)/gi;
-function replacePX(row: string) {
+export function replacePX(row: string) {
   const newRow = row.replace(reg, function (x) {
     console.log(x)
     return `\${rem(${x.slice(0, -2)})}`
@@ -100,14 +77,9 @@ function replacePX(row: string) {
   return newRow
 }
 
-function isText(row: string) {
-  for (const n of textDefine) {
-    if (row.startsWith(n)) {
-      return true
-    }
-  }
-  return false;
-}
+
+
+
 
 const textDefine = [
   "font-family",
@@ -116,3 +88,11 @@ const textDefine = [
   "font-size",
   "line-height"
 ]
+function isText(row: string) {
+  for (const n of textDefine) {
+    if (row.startsWith(n)) {
+      return true
+    }
+  }
+  return false;
+}
