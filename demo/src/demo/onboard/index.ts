@@ -1,8 +1,9 @@
 import Lottie from "lottie-web";
-import { Route, locationMatch } from "../util/createRouter";
 import { renderPage } from "../util/page";
 import renderLkPage from "../util/renderLink";
 import data from "./1/data";
+import { locationMatch } from "wy-helper/router";
+import { Route } from "better-react-dom-helper";
 
 
 

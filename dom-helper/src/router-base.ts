@@ -1,14 +1,7 @@
 import { useEffect } from "better-react-helper"
 import { useMemo, useChangeFun } from "better-react-helper"
+import { getPathNodes } from "wy-helper/router"
 
-/**
- * 简单的以/分割
- * @param path 
- * @returns 
- */
-function simplePathNameToNodes(path: string) {
-  return path.split('/').filter(v => v)
-}
 export type Navigate<T extends string = string> = {
   (n: number): void
   (path: T, arg?: {
@@ -37,7 +30,7 @@ function getRouter(
     //不能是列表,因为返回的非幂等
     const [url, setUrl] = useChangeFun(init)
     const urlModel = useMemo(() => new URL(url), [url])
-    const paths = useMemo(() => simplePathNameToNodes(decodeURI(urlModel.pathname)), [urlModel.pathname])
+    const paths = useMemo(() => getPathNodes(decodeURI(urlModel.pathname)), [urlModel.pathname])
     useEffect(() => {
       function reload() {
         setUrl(init())

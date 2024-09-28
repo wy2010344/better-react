@@ -1,6 +1,8 @@
-import { Route, locationMatch } from "../util/createRouter"
+
+import { Route } from "better-react-dom-helper"
 import { renderPage } from "../util/page"
 import renderLkPage from "../util/renderLink"
+import { locationMatch } from "wy-helper/router"
 export const reorderRoutes: Route[] = [
   {
     match: locationMatch("/reorder"),

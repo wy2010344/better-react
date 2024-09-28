@@ -39,8 +39,8 @@ export function createBr(app: HTMLElement) {
     // useLayoutEffect,
     // renderFilter,
     // cssLayout,
-    figmaClone,
-    // demo,
+    // figmaClone,
+    demo,
     //这个是svg转化
     // xmlToBetter,
     // force3d,

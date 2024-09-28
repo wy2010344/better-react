@@ -1,71 +1,43 @@
 
-import { emptyArray, emptyFun, emptyObject } from "wy-helper";
-import { renderIf, renderOne, useCallbackPromiseState, useChange, useEffect } from "better-react-helper";
-import { BrowserHistory, Location } from "history";
+import { emptyArray, emptyObject } from "wy-helper";
+import { renderOne, useChange, useEffect, useMemo } from "better-react-helper";
+import { BrowserHistory, createBrowserHistory, Location } from "history";
 import { dom } from "better-react-dom";
 
+import { getPathNodes, RootRelativeHistory } from 'wy-helper/router'
+import { RouterContext } from "better-react-dom-helper";
+import { GlobalContext } from "./page";
 
-type Page = (v: Record<string, string>) => void
-type Match = (location: Location) => void | Record<string, string>
-export type Route = {
-  match: Match
-} & ({
-  getPage(): Promise<{
-    default: Page
-  }>
-  page?: never
-} | {
-  getPage?: never
-  page: Page
-})
-export function createRouter(
-  routes: Route[],
-  notFoun = emptyFun
-) {
-  function getPage(location: Location) {
-    let outKey = -1
-    let renderFun = notFoun
-    let outMap = emptyObject
-    for (let i = 0; i < routes.length; i++) {
-      const route = routes[i]
-      const out = route.match(location)
-      if (out) {
-        outMap = out
-        outKey = i
-        if (route.getPage) {
-          renderFun = () => {
-            const { data } = useCallbackPromiseState(route.getPage, emptyArray)
-            renderOne(data?.type, () => {
-              const type = data?.type
-              if (type == 'success') {
-                data!.value.default(out)
-              } else if (type == 'error') {
-                renderError(data?.value)
-              } else {
-                renderLoading()
-              }
-            })
-          }
-        } else {
-          renderFun = () => {
-            route.page(out)
-          }
-        }
-        break
-      }
-    }
-    return [renderFun, outKey] as const
-  }
-  return function (history: BrowserHistory) {
-    const [[renderPage, key], setRenderPage] = useChange(history.location, getPage)
-    useEffect(() => {
-      return history.listen(e => {
-        setRenderPage(getPage(e.location))
-      })
-    }, emptyArray)
-    renderOne(key, renderPage)
+function createHistory() {
+  const history = createBrowserHistory()
+  return {
+    history,
+    rHistory: new RootRelativeHistory(history)
   }
 }
+
+export function useHistory() {
+  const { history, rHistory } = useMemo(createHistory, emptyArray)
+  const [location, setRouter] = useChange(history.location)
+  useEffect(() => {
+    history.listen((update) => {
+      setRouter(update.location)
+    })
+  }, emptyArray)
+  const pathNodes = useMemo(() => {
+    return getPathNodes(location.pathname)
+  }, location.pathname)
+  GlobalContext.useProvider({
+    history,
+    location
+  })
+  RouterContext.useProvider({
+    pathNodes,
+    rHistory
+  })
+  return pathNodes as readonly string[]
+}
+
 
 export function renderError(value: string) {
   dom.div({
@@ -93,19 +65,4 @@ export function renderLoading() {
         `
   }).renderText`Loading...`
 
-}
-
-
-export function locationMatch(queryPath: string, startWith?: boolean): Match {
-  return function (location) {
-    if (startWith) {
-      if (location.pathname.startsWith(queryPath)) {
-        return emptyObject
-      }
-    } else {
-      if (location.pathname == queryPath) {
-        return emptyObject
-      }
-    }
-  }
 }

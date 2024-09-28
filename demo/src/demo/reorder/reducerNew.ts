@@ -1,7 +1,7 @@
 
 import { easeFns, arrayMove, syncMergeCenter, emptyArray, arrayNotEqualOrOne, ReorderLocalModel, ReorderLocalElement, AnimateFrameValue, getTweenAnimationConfig, } from "wy-helper"
 import { dom } from "better-react-dom"
-import { addEffectDestroy, createUseReducer, renderArray, useAtom, useAtomFun, useChange, useEffect, useEvent, useHookEffect, useMemo, useStoreTriggerRender, useValueCenterFun } from "better-react-helper"
+import { addEffectDestroy, createUseReducer, renderArray, renderArrayToArray, useAtom, useAtomFun, useChange, useEffect, useEvent, useHookEffect, useMemo, useStoreTriggerRender, useValueCenterFun } from "better-react-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
 import { renderPage } from "../util/page"
 import { DataRow, dataList, renderRow } from "./util/share"
@@ -89,7 +89,6 @@ export default function () {
           fun?.()
         },
         changeIndex(from, to, version, fun) {
-          console.log("change", from, to)
           dispatch({
             type: "move",
             from,
@@ -114,22 +113,9 @@ export default function () {
         dispatch_1(arg)
       })
     })
-    const getOrderModel = useDelayMemo(() => {
-      const map = rowMap.get()
-      const list: ReorderLocalElement<number>[] = []
-      model.list.map(row => {
-        const key = row.index
-        const div = map.get(key)
-        if (div) {
-          list.push(div)
-        }
-      })
-      return list
-    }, [model.version])
 
-    const rowMap = useAtomFun<Map<number, ReorderE>>(createMap)
     const reOrder = userReducerLocalChangeReorder(version, vc)
-    const container = dom.div({
+    const { container, list } = dom.div({
       /**
        * 
       user-select:${orderModel.onMove ? 'none' : 'unset'};
@@ -142,43 +128,38 @@ export default function () {
       user-select:${typeof onMoveKey == 'number' ? 'none' : 'unset'};
       `,
       onScroll(event) {
-        reOrder.onScroll(container, getOrderModel())
+        reOrder.onScroll(container, list)
       },
-    }).render(function () {
-      renderArray(
-        model.list,
-        v => v.index,
-        function (row, index) {
-          const div = renderRow(row, e => {
-            reOrder.start(e, row.index, container)
-          })
-          const height = 100 + row.index % 3 * 20
-          useStyle(div, {
-            height: height + 'px',
-            zIndex: onMoveKey == row.index ? 1 : 0
-          })
-
-          const transY = useMemo(() => {
-            const transY = animateFrame(0)
-            return new ReorderE(transY, row.index, div)
-          }, emptyArray)
-          useEffect(() => {
-            return syncMergeCenter(transY.value, function (value: number) {
-              div.style.transform = `translate(0px,${value}px)`
+    }).renderOut(container => {
+      return {
+        container,
+        list: renderArrayToArray(
+          model.list,
+          v => v.index,
+          function (row, index) {
+            const div = renderRow(row, e => {
+              reOrder.start(e, row.index, container)
             })
-          }, emptyArray)
-
-          useEffect(() => {
-            const key = row.index
-            rowMap.get().set(key, transY)
-            return () => {
-              rowMap.get().delete(key)
-            }
-          }, emptyArray)
-        }
-      )
+            const height = 100 + row.index % 3 * 20
+            useStyle(div, {
+              height: height + 'px',
+              zIndex: onMoveKey == row.index ? 1 : 0
+            })
+            const transY = useMemo(() => {
+              const transY = animateFrame(0)
+              return new ReorderE(transY, row.index, div)
+            }, emptyArray)
+            useEffect(() => {
+              return syncMergeCenter(transY.value, function (value: number) {
+                div.style.transform = `translate(0px,${value}px)`
+              })
+            }, emptyArray)
+            return transY
+          }
+        )
+      }
     })
-    reOrder.useBody(container, getOrderModel)
+    reOrder.useBody(container, useEvent(() => list))
   })
 }
 
@@ -195,14 +176,15 @@ class ReorderE implements ReorderLocalElement<number> {
     this.value.changeTo(this.value.get() + diff)
   }
   silentDiff(v: number): void {
+    /**
+     * 这里是立即变化,但dom没有变化,所以有闪烁
+     * 
+     * 因为react的异步
+     * 最好的方法,是累积到effect阶段去slientDiff
+     */
     this.value.slientDiff(v)
   }
   layoutFrom(v: number): void {
-    if (this.value.getAnimateTo()) {
-      //感觉中止了效果并不是很好
-      console.log("stopLayout")
-      // return
-    }
     this.value.changeTo(0, getTweenAnimationConfig(400, easeFns.out(easeFns.circ)), {
       from: v
     })

@@ -1,7 +1,7 @@
 import { addEffectDestroy, useAtom, useEffect, useHookEffect, useStoreTriggerRender } from "better-react-helper"
-import { ReorderLocalAction, ReorderLocalElement, ReorderLocalModel, ValueCenter, easeFns, getTweenAnimationConfig, messageChannelCallback, reorderLocalReducer } from "wy-helper"
+import { ReorderLocalAction, ReorderLocalElement, ReorderLocalModel, ValueCenter, easeFns, emptyArray, getTweenAnimationConfig, messageChannelCallback, reorderLocalReducer } from "wy-helper"
 import { ReorderAction, ReorderElement, ReorderModel, } from "wy-helper"
-import { subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
+import { PagePoint, subscribeDragMove, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
 
 
 
@@ -10,13 +10,13 @@ export function userReducerLocalChangeReorder<K>(
   version: number,
   vc: ValueCenter<ReorderLocalModel<K>>
 ) {
-  const movePoint = useAtom<PointerEvent | undefined>(undefined)
+  const movePoint = useAtom<PagePoint | undefined>(undefined)
   function dispatch(action: ReorderLocalAction<K>) {
     vc.set(reorderLocalReducer(vc.get(), action))
   }
   // vc.get().onMove?.info?.lastPoint
   return {
-    start(e: PointerEvent, key: K, container: HTMLElement) {
+    start(e: PagePoint, key: K, container: HTMLElement) {
       movePoint.set(e)
       dispatch({
         type: "moveBegin",
@@ -61,30 +61,31 @@ export function userReducerLocalChangeReorder<K>(
           }
         }))
         //不依赖,每次重新注册
-        addEffectDestroy(subscribeMove(function (e: PointerEvent, end?: boolean) {
+        addEffectDestroy(subscribeDragMove((p) => {
           if (movePoint.get()) {
-            if (end) {
-              movePoint.set(undefined)
+            if (p) {
+              movePoint.set(p)
               dispatch({
-                type: "end",
+                type: "didMove",
                 version: version,
-                point: e.pageY,
+                point: p.pageY,
                 elements: getElements(),
                 scrollTop: container.scrollTop
               })
             } else {
-              movePoint.set(e)
+              p = movePoint.get()!
+              movePoint.set(undefined)
               dispatch({
-                type: "didMove",
+                type: "end",
                 version: version,
-                point: e.pageY,
+                point: p.pageY,
                 elements: getElements(),
                 scrollTop: container.scrollTop
               })
             }
           }
         }))
-      })
+      }, emptyArray)
 
       const hasEnd = useStoreTriggerRender(vc, getEndAt)
       useEffect(() => {

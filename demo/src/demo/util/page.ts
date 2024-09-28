@@ -1,7 +1,7 @@
 import { createContext } from "better-react";
 import { dom } from "better-react-dom";
 import { renderIf, renderObject } from "better-react-helper";
-import { BrowserHistory } from "history";
+import { BrowserHistory, Location } from "history";
 import { DomAttribute } from "wy-dom-helper";
 import { EmptyFun, SetValue } from "wy-helper";
 
@@ -11,6 +11,7 @@ import { EmptyFun, SetValue } from "wy-helper";
 // export type Page = (fun: SetValue<Page>) => void
 export const GlobalContext = createContext<{
   history: BrowserHistory
+  location: Location
 }>(undefined as any)
 
 

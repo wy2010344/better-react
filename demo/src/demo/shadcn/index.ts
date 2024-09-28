@@ -1,9 +1,10 @@
 import { dom } from "better-react-dom";
-import { locationMatch, Route } from "../util/createRouter";
 import { renderPage } from "../util/page";
 import { buttonVariants } from "./components/button";
 import { cn } from "@/utils";
 import renderLkPage from "../util/renderLink";
+import { Route } from "better-react-dom-helper";
+import { locationMatch } from "wy-helper/router";
 
 
 

@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker"
 import { dom } from "better-react-dom"
+import { dragInit, PagePoint, subscribeDragMove } from "wy-dom-helper"
 
 
 
@@ -24,7 +25,7 @@ export type DataRow = {
 
 export function renderRow(
   row: DataRow,
-  onPointerDown: (e: PointerEvent) => void) {
+  onDragStart: (e: PagePoint) => void) {
 
   return dom.div({
     style: `
@@ -35,7 +36,7 @@ export function renderRow(
       background:yellow;
       position:relative;
     `,
-    onPointerDown
+    ...dragInit(onDragStart)
   }).render(function () {
     dom.img({
       src: row.avatar

@@ -85,6 +85,7 @@ export default function () {
 
       useHookEffect(() => {
         addEffectDestroy(subscribeMove(function (e, end) {
+          e.stopPropagation()
           const p = {
             x: e.pageX,
             y: e.pageY

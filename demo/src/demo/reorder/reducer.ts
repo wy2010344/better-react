@@ -2,7 +2,7 @@ import { animateFrameReducer } from "wy-dom-helper"
 
 import { easeFns, ReorderModel, createReorderReducer, emptyArray, getTweenAnimationConfig, } from "wy-helper"
 import { dom } from "better-react-dom"
-import { renderArray, useAtomFun, useEffect, useEvent, useSideReducer } from "better-react-helper"
+import { renderArray, renderArrayToArray, useAtomFun, useEffect, useEvent, useSideReducer } from "better-react-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
 import { renderPage } from "../util/page"
 import { useReducerReorder } from "./useReduceReorder"
@@ -35,11 +35,6 @@ function initValue(): ReorderModel<DataRow, number> {
     })
   }
 }
-
-function createMap<K, V>() {
-  return new Map<K, V>()
-}
-
 export default function () {
   renderPage({
     title: "reducer"
@@ -57,28 +52,8 @@ export default function () {
         dispatch_1(arg)
       })
     })
-    const getOrderModel = useEvent(() => {
-      const map = rowMap.get()
-      const list: {
-        key: number
-        div: HTMLElement
-      }[] = []
-
-      orderModel.list.map(row => {
-        const key = row.value.index
-        const div = map.get(key)
-        if (div) {
-          list.push({
-            key,
-            div
-          })
-        }
-      })
-      return list
-    })
-    const rowMap = useAtomFun<Map<number, HTMLElement>>(createMap)
     const reOrder = useReducerReorder(orderModel, dispatch)
-    const container = dom.div({
+    const { container, list } = dom.div({
       style: `
       width:300px;
       height:600px;
@@ -87,36 +62,32 @@ export default function () {
       user-select:${orderModel.onMove ? 'none' : 'unset'};
       `,
       onScroll(event) {
-        reOrder.onScroll(container, getOrderModel())
+        reOrder.onScroll(container, list)
       },
-    }).render(function () {
-      renderArray(
-        orderModel.list,
-        v => v.value.index,
-        function (row, index) {
-          const div = renderRow(row.value, e => {
-            reOrder.start(e, row.value.index, container)
-          })
-          const height = 100 + row.value.index % 3 * 20
-          useStyle(div, {
-            height: height + 'px',
-            transform: `translate(0px,${row.transY.value}px)`,
-            zIndex: orderModel.onMove?.key == row.value.index ? 1 : 0
-          })
-          useEffect(() => {
-            const key = row.value.index
-            rowMap.get().set(key, div)
-            return () => {
-              rowMap.get().delete(key)
+    }).renderOut((container) => {
+      return {
+        container,
+        list: renderArrayToArray(
+          orderModel.list,
+          v => v.value.index,
+          function (row, index) {
+            const div = renderRow(row.value, e => {
+              reOrder.start(e, row.value.index, container)
+            })
+            const height = 100 + row.value.index % 3 * 20
+            useStyle(div, {
+              height: height + 'px',
+              transform: `translate(0px,${row.transY.value}px)`,
+              zIndex: orderModel.onMove?.key == row.value.index ? 1 : 0
+            })
+            return {
+              div,
+              key: row.value.index
             }
-          }, emptyArray)
-          return {
-            div,
-            key: row.value.index
           }
-        }
-      )
+        )
+      }
     })
-    reOrder.useBody(container, getOrderModel)
+    reOrder.useBody(container, useEvent(() => list))
   })
 }

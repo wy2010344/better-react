@@ -7,29 +7,29 @@
       "replaced": "^1.2.7"
     },
     "better-react": {
-      "signature": "9b6ad9254613f2073ed6f46ca992fe2a",
+      "signature": "5c7c344810d6b44caa965cd018ae9223",
       "file": true,
       "replaced": "^1.2.6"
     },
     "better-react-dom": {
-      "signature": "04a261047fe2ed5a438038bbb78604da",
+      "signature": "e667450aaf90ddbccd37be42e164b396",
       "file": true,
       "replaced": "^1.2.6"
     },
-    "wy-helper": {
-      "signature": "b479bfdbcb4b563f6ab329f84cf38213",
-      "file": true,
-      "replaced": "^0.1.0"
-    },
     "wy-dom-helper": {
-      "signature": "def4d00dc78a74b217e0e3357be6313c",
+      "signature": "eb24ff8d213b9ca43706bd4d4bdbe845",
       "file": true,
       "replaced": "^0.1.0"
     },
     "better-react-dom-helper": {
-      "signature": "5717d3f3cc0c665d8e410a03bce63879",
+      "signature": "2c06ad1bafee8b5eaa69fe082737f382",
       "file": true,
       "replaced": "^1.2.4"
+    },
+    "wy-helper": {
+      "signature": "dcea29039441019623067179a933a544",
+      "file": true,
+      "replaced": "^0.1.0"
     }
   }
 }

@@ -1,6 +1,6 @@
 
 import { addEffectDestroy, useAtom, useEffect, useHookEffect } from "better-react-helper"
-import { subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
+import { PagePoint, subscribeDragMove, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
 import { ReorderAction, ReorderModel, ReorderElement, easeFns, messageChannelCallback, getTweenAnimationConfig } from "wy-helper"
 
 
@@ -9,9 +9,9 @@ export function useReducerReorder<T, K>(
   value: ReorderModel<T, K>,
   dispatch: (v: ReorderAction<K, HTMLElement>) => void,
 ) {
-  const movePoint = useAtom<PointerEvent | undefined>(undefined)
+  const movePoint = useAtom<PagePoint | undefined>(undefined)
   return {
-    start(e: PointerEvent, key: K, container: HTMLElement) {
+    start(e: PagePoint, key: K, container: HTMLElement) {
       movePoint.set(e)
       dispatch({
         type: "moveBegin",
@@ -56,19 +56,9 @@ export function useReducerReorder<T, K>(
           }
         }))
         //不依赖,每次重新注册
-        addEffectDestroy(subscribeMove(function (e: PointerEvent, end?: boolean) {
+        addEffectDestroy(subscribeDragMove(function (e) {
           if (movePoint.get()) {
-            if (end) {
-              movePoint.set(undefined)
-              dispatch({
-                type: "end",
-                version: value.version,
-                point: e.pageY,
-                elements: getElements(),
-                scrollTop: container.scrollTop,
-                getConfig: endConfig
-              })
-            } else {
+            if (e) {
               movePoint.set(e)
               dispatch({
                 type: "didMove",
@@ -76,6 +66,16 @@ export function useReducerReorder<T, K>(
                 point: e.pageY,
                 elements: getElements(),
                 scrollTop: container.scrollTop
+              })
+            } else {
+              movePoint.set(undefined)
+              dispatch({
+                type: "end",
+                version: value.version,
+                // point: e.pageY,
+                elements: getElements(),
+                scrollTop: container.scrollTop,
+                getConfig: endConfig
               })
             }
           }

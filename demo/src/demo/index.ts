@@ -4,7 +4,7 @@ import { renderFragment, renderGuard, renderIf, renderOne, useCallbackPromiseSta
 import renderLkPage from "./util/renderLink";
 import { createBrowserHistory, Location } from "history";
 import { dom } from "better-react-dom";
-import { createRouter, locationMatch } from "./util/createRouter";
+import { useHistory } from "./util/createRouter";
 import { reorderRoutes } from "./reorder";
 import { centerPickerRoutes } from "./centerPicker";
 import { scrollerRoutes } from "./scroller";
@@ -14,15 +14,12 @@ import note from './note'
 import { cns } from "wy-dom-helper";
 import { tw } from "@/utils";
 import { shadcnRoutes } from "./shadcn";
+import { createRouter } from "better-react-dom-helper";
+import { locationMatch } from "wy-helper/router";
 
 export default function () {
-  const history = useMemo(() => {
-    return createBrowserHistory()
-  }, emptyArray)
-  GlobalContext.useProvider({
-    history
-  })
-  renderRouter(history)
+  const pathNodes = useHistory()
+  renderRouter(pathNodes)
   // renderFragment(function () {
 
   // }, location)
@@ -50,58 +47,60 @@ function mainPage() {
 
 
 
-const renderRouter = createRouter([
-  {
-    match: locationMatch("/"),
-    page: mainPage
-  },
-  ...reorderRoutes,
-  ...centerPickerRoutes,
-  ...scrollerRoutes,
-  ...pageRoutes,
-  ...onboard,
-  ...note,
-  ...shadcnRoutes,
-  {
-    match: locationMatch("/pulltoRefresh"),
-    getPage() {
-      return import("./pulltoRefresh")
+const renderRouter = createRouter({
+  routes: [
+    {
+      match: locationMatch("/"),
+      page: mainPage
     },
-  },
-  {
-    match: locationMatch("/layoutAnimation"),
-    getPage() {
-      return import("./layoutAnimation")
+    ...reorderRoutes,
+    ...centerPickerRoutes,
+    ...scrollerRoutes,
+    ...pageRoutes,
+    ...onboard,
+    ...note,
+    ...shadcnRoutes,
+    {
+      match: locationMatch("/pulltoRefresh"),
+      getPage() {
+        return import("./pulltoRefresh")
+      },
     },
-  },
-  {
-    match: locationMatch("/bookview"),
-    getPage() {
-      return import("./bookView")
+    {
+      match: locationMatch("/layoutAnimation"),
+      getPage() {
+        return import("./layoutAnimation")
+      },
     },
-  },
-  {
-    match: locationMatch("/circleChoose"),
-    getPage() {
-      return import("./circleChoose")
+    {
+      match: locationMatch("/bookview"),
+      getPage() {
+        return import("./bookView")
+      },
     },
-  },
-  {
-    match: locationMatch("/taro"),
-    getPage() {
-      return import("./taro")
+    {
+      match: locationMatch("/circleChoose"),
+      getPage() {
+        return import("./circleChoose")
+      },
     },
-  },
-  {
-    match: locationMatch("/swipe-card"),
-    getPage() {
-      return import("./swipe-card")
+    {
+      match: locationMatch("/taro"),
+      getPage() {
+        return import("./taro")
+      },
     },
-  },
-  {
-    match: locationMatch("/card"),
-    getPage() {
-      return import("./hoverCard")
+    {
+      match: locationMatch("/swipe-card"),
+      getPage() {
+        return import("./swipe-card")
+      },
     },
-  }
-])
+    {
+      match: locationMatch("/card"),
+      getPage() {
+        return import("./hoverCard")
+      },
+    }
+  ]
+})

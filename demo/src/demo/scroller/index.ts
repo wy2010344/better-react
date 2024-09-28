@@ -1,6 +1,7 @@
-import { Route, locationMatch } from "../util/createRouter"
+import { locationMatch } from "wy-helper/router"
 import { renderPage } from "../util/page"
 import renderLkPage from "../util/renderLink"
+import { Route } from "better-react-dom-helper"
 export default function () {
 
 
