@@ -1,6 +1,6 @@
 import { createContext } from "better-react";
 import { dom } from "better-react-dom";
-import { renderIf, renderObject } from "better-react-helper";
+import { renderIf, renderObject, useChange, useEffect } from "better-react-helper";
 import { BrowserHistory, Location } from "history";
 import { DomAttribute } from "wy-dom-helper";
 import { EmptyFun, SetValue } from "wy-helper";
@@ -51,21 +51,43 @@ export function renderPage({
       padding-bottom:0;
       `
     }).render(function () {
-      dom.button({
+      const [width, setWidth] = useChange<number>()
+      useEffect(e => {
+        const leftWidth = left.clientWidth
+        const rightWidth = right.clientWidth
+        const maxWidth = Math.max(leftWidth, rightWidth)
+        if (maxWidth != width) {
+          setWidth(maxWidth)
+          e.setRealTime()
+        }
+      })
+      let sWidth = ''
+      if (width) {
+        sWidth = width + 'px'
+      }
+      const left = dom.button({
         onClick: onBack,
-        style: `
-        min-width:50px;
-        `
+        style: {
+          width: sWidth,
+          flexShrink: 0
+        }
       }).renderText`返回`
       dom.h1({
-        style: `
-        font-size:15px;
-        `
+        style: {
+          flex: 1,
+          minWidth: 0,
+          fontSize: '15px',
+          textAlign: "center"
+        }
       }).renderText`${title}`
-      dom.div({
-        style: `
-        min-width:50px;
-        `
+      const right = dom.div({
+        style: {
+          width: sWidth,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          flexShrink: 0
+        }
       }).render(renderRight)
     })
     dom.div({

@@ -15,6 +15,7 @@ export const reorderRoutes: Route[] = [
         renderLkPage("gapCss", history => history.push("/reorder/gapCss"))
         renderLkPage("gapFrame", history => history.push("/reorder/gapFrame"))
         renderLkPage("reducerNew", history => history.push("/reorder/reducerNew"))
+        renderLkPage("endToMove", history => history.push("/reorder/endToMove"))
       })
     }
   },
@@ -46,6 +47,12 @@ export const reorderRoutes: Route[] = [
     match: locationMatch("/reorder/reducerNew"),
     getPage() {
       return import("./reducerNew")
+    },
+  },
+  {
+    match: locationMatch("/reorder/endToMove"),
+    getPage() {
+      return import("./endToMove")
     },
   },
 ]

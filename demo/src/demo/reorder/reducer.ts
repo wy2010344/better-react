@@ -61,6 +61,9 @@ export default function () {
       background:white;
       user-select:${orderModel.onMove ? 'none' : 'unset'};
       `,
+      onTouchMove(event) {
+        event.preventDefault()
+      },
       onScroll(event) {
         reOrder.onScroll(container, list)
       },

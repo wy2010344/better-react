@@ -3,36 +3,16 @@ import { dom } from "better-react-dom"
 import { addEffectDestroy, createUseReducer, renderArray, useAtom, useChange, useEffect, useHookEffect, useTimeoutAnimateValue } from "better-react-helper"
 import { Point, arrayMove, emptyArray, pointEqual, pointZero, syncMergeCenter } from "wy-helper"
 
-import { requesetBatchAnimationForceFlow, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
+import { requesetBatchAnimationForceFlow, subscribeDragMove, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
 import { useReorder } from 'better-react-dom-helper'
 import { useStyle } from "better-react-dom-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
 import { renderPage } from "../util/page"
-import { DataRow, dataList, renderRow } from "./util/share"
+import { DataRow, dataList, renderRow, useReduceList } from "./util/share"
 /**
  * 拖拽的render,依赖拖拽事件,不是react的render与requestAnimateFrame
  * 动画生成异步的,因为dom生效本来是异步的.
  */
-
-
-const useReduceList = createUseReducer(function (list: DataRow[], action: {
-  type: "change"
-  value: number
-  base: number
-}) {
-  if (action.type == 'change') {
-    const idx = list.findIndex(v => v.index == action.value)
-    if (idx < 0) {
-      return list
-    }
-    const idx1 = list.findIndex(v => v.index == action.base)
-    if (idx1 < 0) {
-      return list
-    }
-    return arrayMove(list, idx, idx1, true)
-  }
-  return list
-})
 
 export default function () {
 
@@ -43,12 +23,12 @@ export default function () {
     const reOrder = useReorder(
       orderList,
       v => v.index,
-      function (itemKey, baseKey) {
+      function (itemKey, targetKey) {
         setTimeType(timetype, function () {
           dispatch({
             type: "change",
-            value: itemKey,
-            base: baseKey
+            from: itemKey,
+            to: targetKey
           })
         })
       })
@@ -84,19 +64,18 @@ export default function () {
 
 
       useHookEffect(() => {
-        addEffectDestroy(subscribeMove(function (e, end) {
-          e.stopPropagation()
-          const p = {
-            x: e.pageX,
-            y: e.pageY
-          }
-          if (end) {
-            if (reOrder.end(p)) {
-              point.set(undefined)
+        addEffectDestroy(subscribeDragMove(e => {
+          if (e) {
+            const p = {
+              x: e.pageX,
+              y: e.pageY
             }
-          } else {
             if (reOrder.move(p)) {
               point.set(p)
+            }
+          } else {
+            if (reOrder.end()) {
+              point.set(undefined)
             }
           }
         }))

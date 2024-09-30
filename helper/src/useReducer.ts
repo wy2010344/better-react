@@ -1,7 +1,8 @@
 import { hookCreateChangeAtom, hookRequestReconcile } from "better-react";
 import { EmptyFun, Reducer, ReducerWithDispatch, SetValue, emptyArray, quote, simpleEqual } from "wy-helper";
 import { useMemo } from "./useRef";
-export type ReducerResult<F, T> = [T, SetValue<F>];
+type EffectArray = readonly [number, EmptyFun][]
+export type ReducerResult<F, T> = [T, (f: F, effects?: EffectArray) => void];
 
 export function useSideReducer<F, M, T>(
   reducer: ReducerWithDispatch<T, F>,
@@ -44,7 +45,7 @@ function useBaseReducer(reducer: any, init: any, initFun: any, eq: any, sideCall
     const trans = initFun || quote
     const initData = trans(init)
     const value = createChangeAtom(initData)
-    function set(action: any) {
+    function set(action: any, effects: EffectArray = emptyArray as any) {
       reconcile(function (updateEffect) {
         const oldValue = value.get()
         let newValue = reducer(oldValue, action)
@@ -56,6 +57,9 @@ function useBaseReducer(reducer: any, init: any, initFun: any, eq: any, sideCall
             sideCall(updateEffect, fun, set)
           }
         }
+        effects.forEach(effect => {
+          updateEffect(effect[0], effect[1])
+        })
         //这里,合并多次,如果动作被执行了
         if (!realEq(oldValue, newValue)) {
           value.set(newValue)
@@ -78,6 +82,16 @@ function useBaseReducer(reducer: any, init: any, initFun: any, eq: any, sideCall
   }
   const data = hook.value.get()
   return [data, hook.set]
+}
+
+export function effectSetPromise<F>(
+  fun: (f: F, effects?: EffectArray) => void,
+  f: F,
+  level = 0
+) {
+  return new Promise(resolve => {
+    fun(f, [[level, resolve]])
+  })
 }
 
 export function useReducerFun<F, T>(
