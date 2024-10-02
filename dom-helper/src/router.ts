@@ -92,12 +92,13 @@ export function createRouter({
   }
 
   return function (
-    pathNodes: readonly string[]
+    pathNodes: readonly string[],
+    renderPageRoute = renderOne
   ) {
     const [renderPage, key] = useMemo(() => {
       return getPage(pathNodes)
     }, pathNodes)
-    renderOne(key, renderPage)
+    renderPageRoute(key, renderPage)
   }
 }
 function renderWithIgnoreMore(

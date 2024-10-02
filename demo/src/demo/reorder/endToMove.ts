@@ -3,7 +3,7 @@ import { renderPage } from "../util/page";
 import { dataList, renderRow, useReduceList } from "./util/share";
 import { addEffectDestroy, effectSetPromise, renderArray, renderArrayToArray, renderArrayToMap, useEffect, useHookEffect, useMemo, useRef, useValueCenter } from "better-react-helper";
 import { animateFrame, getChangeOnScroll, PagePoint, subscribeDragMove, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper";
-import { AnimateFrameValue, arrayEqual, arrayMove, arrayNotEqualOrOne, easeFns, emptyArray, getSpringBaseAnimationConfig, getTweenAnimationConfig, rangeBetweenLeft, rangeBetweenRight, reorderCheckTarget, simpleEqual, syncMergeCenter } from "wy-helper";
+import { AnimateFrameValue, arrayEqual, arrayMove, arrayNotEqualOrOne, buildEndToMove, easeFns, emptyArray, getSpringBaseAnimationConfig, getTweenAnimationConfig, rangeBetweenLeft, rangeBetweenRight, reorderCheckTarget, simpleEqual, syncMergeCenter } from "wy-helper";
 import { number } from "zod";
 
 const spring = getTweenAnimationConfig(400, easeFns.out(easeFns.circ))
@@ -84,7 +84,7 @@ export default function () {
           }
         }))
 
-        const { didDrag, didEnd } = buildEndMove({
+        const [didDrag, didEnd] = buildEndToMove({
           gap,
           getHeight,
           getTransValue(n) {
@@ -105,9 +105,9 @@ export default function () {
               info.lastPoint = e
             } else {
               const idx = outList.findIndex(v => v.key == info.key)
-              const { promises, change } = didEnd(outList, idx)
+              const callback = didEnd(outList, idx)
               info.finished = true
-              Promise.all(promises).then(() => {
+              callback(change => {
                 moveInfo.set(undefined)
                 if (change) {
                   effectSetPromise(dispatch, {
@@ -165,120 +165,4 @@ export default function () {
       })
     })
   })
-}
-
-
-function buildEndMove<T>({
-  getHeight,
-  gap,
-  getTransValue,
-  layoutTo,
-  endLayout = layoutTo
-}: {
-  getHeight(n: T): number,
-  gap: number,
-  getTransValue(n: T): number
-  layoutTo(n: T, target: number): Promise<any> | void
-  endLayout?(n: T, target: number): Promise<any> | void
-}) {
-  let tempOut: {
-    change?: readonly [number, number],
-    list: T[],
-    promises: Promise<any>[]
-  } | undefined = undefined
-  function didDrag(infoList: T[], idx: number) {
-    const row = infoList[idx]
-    const change = reorderCheckTarget(
-      infoList,
-      idx,
-      getHeight,
-      getTransValue(row),
-      { gap }
-    )
-    if (tempOut && !arrayNotEqualOrOne(change, tempOut?.change)) {
-      return tempOut
-    }
-    const promises: Promise<any>[] = []
-
-    function thisLayoutTo(n: T, target: number) {
-      const promise = layoutTo(n, target)
-      if (promise) {
-        promises.push(promise)
-      }
-    }
-    let list: T[] = infoList
-    if (change) {
-      const [idx, idx1] = change
-      list = arrayMove(infoList, idx, idx1, true)
-      const diffHeight = getHeight(list[idx1]) + gap
-
-      if (idx < idx1) {
-        for (let i = 0; i < idx; i++) {
-          thisLayoutTo(list[i], 0)
-          // promises.push(list[i].transY.animateTo(0, spring))
-        }
-        for (let i = idx; i < idx1; i++) {
-          thisLayoutTo(list[i], -diffHeight)
-        }
-        for (let i = idx1 + 1; i < list.length; i++) {
-          thisLayoutTo(list[i], 0)
-        }
-      } else {
-        for (let i = 0; i < idx1; i++) {
-          thisLayoutTo(list[i], 0)
-        }
-        const sendIdx = idx + 1
-        for (let i = idx1 + 1; i < sendIdx; i++) {
-          thisLayoutTo(list[i], diffHeight)
-        }
-        for (let i = sendIdx; i < list.length; i++) {
-          thisLayoutTo(list[i], 0)
-        }
-      }
-    } else {
-      for (let i = 0; i < infoList.length; i++) {
-        if (i != idx) {
-          thisLayoutTo(list[i], 0)
-        }
-      }
-    }
-    tempOut = {
-      list,
-      change,
-      promises
-    }
-    return tempOut
-  }
-
-  function didEnd(infoList: T[], idx: number) {
-    const target = didDrag(infoList, idx)
-    const { change, list: targetList, promises } = target
-    function thisLayoutTo(n: T, target: number) {
-      const promise = endLayout(n, target)
-      if (promise) {
-        promises.push(promise)
-      }
-    }
-    if (change) {
-      const [idx, idx1] = change
-      let diffHeight = 0
-      rangeBetweenLeft(idx, idx1, function (i) {
-        const row = targetList[i]
-        const height = getHeight(row)
-        diffHeight = diffHeight + height + gap
-      })
-      if (idx > idx1) {
-        diffHeight = -diffHeight
-      }
-      thisLayoutTo(infoList[idx], diffHeight)
-    } else {
-      thisLayoutTo(infoList[idx], 0)
-    }
-    return target
-  }
-
-  return {
-    didDrag,
-    didEnd
-  }
 }

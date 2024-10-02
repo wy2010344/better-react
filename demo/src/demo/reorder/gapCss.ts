@@ -11,6 +11,10 @@ import { DataRow, dataList, renderRow, useReduceList } from "./util/share"
 /**
  * 拖拽的render,依赖拖拽事件,不是react的render与requestAnimateFrame
  * 动画生成异步的,因为dom生效本来是异步的.
+ * 
+ * 会闪烁
+ * 
+ * 只支持固定高度的
  */
 
 
@@ -125,7 +129,7 @@ export default function () {
         useEffect(() => {
           //恢复
           offsetY.set(0)
-        })
+        }, index)
         useHookEffect(() => {
           addEffectDestroy(syncMergeCenterArray([transY, offsetY] as const, function ([value, oy]) {
             if (value.config) {
@@ -153,7 +157,7 @@ export default function () {
               }
             })
           })
-        })
+        }, true)
         useStyle(div, {
           zIndex: onMove?.index == row.index ? 1 : 0
         })

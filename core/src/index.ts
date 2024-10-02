@@ -13,15 +13,16 @@ export {
   hookRequestReconcile,
   hookMakeDirtyAndRequestUpdate
 } from './requestFresh'
-export { createContext } from './context'
+export { createContext, Context } from './context'
 export {
   hookBeginTempOps,
   hookEndTempOps,
-  hookAddResult
+  hookAddResult,
+  effectLayout
 } from './cache'
 export {
   hookLevelEffect,
-  useLevelEffect,
+  useLevelEffect
 } from './effect'
 export { useBaseMemo } from './memo'
 export { renderStateHolder, hookFirstTime } from './stateHolder'

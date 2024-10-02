@@ -1986,6 +1986,11 @@ bcrypt-pbkdf@^1.0.0:
   dependencies:
     tweetnacl "^0.14.3"
 
+better-react@^1.2.7:
+  version "1.2.7"
+  resolved "https://registry.yarnpkg.com/better-react/-/better-react-1.2.7.tgz#64c8d1ea69b3ded97dde7c1967592b10eb3ef8e3"
+  integrity sha512-pWeDPjgr+HDnPYCs0oZ2TaPNEcYq2K5s/d4yocKnbVBjPQsyKeaSI5E8haVX9YDgfzS2wWB1uKLEQd/hRV1a9Q==
+
 binary-extensions@^2.0.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-2.3.0.tgz#f6e14a97858d327252200242d4ccfe522c445522"
@@ -7088,6 +7093,11 @@ ws@^7.0.0:
   version "7.5.9"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.9.tgz#54fa7db29f4c7cec68b1ddd3a89de099942bb591"
   integrity sha512-F+P9Jil7UiSKSkppIiD94dN07AwvFixvLIj1Og1Rl9GGMuNipJnV9JzjD6XuqmAeiswGvUmNLjr5cFuXwNS77Q==
+
+wy-helper@^0.1.8:
+  version "0.1.8"
+  resolved "https://registry.yarnpkg.com/wy-helper/-/wy-helper-0.1.8.tgz#3142690f7b8cc4e61a8e947a8d1f7cede3b2de65"
+  integrity sha512-7705iB592OcTgDN2NMbbOQ+XBTjtOpfW94p4bJ4RlvijbUwQVQe7j8dd0j32oIkXM1MP1Nap2coLByjl9EyVTA==
 
 xml-name-validator@^3.0.0:
   version "3.0.0"

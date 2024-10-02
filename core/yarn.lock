@@ -7089,10 +7089,10 @@ ws@^7.0.0:
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.9.tgz#54fa7db29f4c7cec68b1ddd3a89de099942bb591"
   integrity sha512-F+P9Jil7UiSKSkppIiD94dN07AwvFixvLIj1Og1Rl9GGMuNipJnV9JzjD6XuqmAeiswGvUmNLjr5cFuXwNS77Q==
 
-wy-helper@^0.1.3:
-  version "0.1.3"
-  resolved "https://registry.yarnpkg.com/wy-helper/-/wy-helper-0.1.3.tgz#b35001ee79ddaeae7caa148ff9030cd8be21a6b6"
-  integrity sha512-VErnT9ST6LRzEKhIm6d52H8tom40F86rcUjAyEVZn/g/2Ed2M9hRsG9FiHMI7v0jCzkB7s9fgvU7vPdjTGSSog==
+wy-helper@^0.1.8:
+  version "0.1.8"
+  resolved "https://registry.yarnpkg.com/wy-helper/-/wy-helper-0.1.8.tgz#3142690f7b8cc4e61a8e947a8d1f7cede3b2de65"
+  integrity sha512-7705iB592OcTgDN2NMbbOQ+XBTjtOpfW94p4bJ4RlvijbUwQVQe7j8dd0j32oIkXM1MP1Nap2coLByjl9EyVTA==
 
 xml-name-validator@^3.0.0:
   version "3.0.0"

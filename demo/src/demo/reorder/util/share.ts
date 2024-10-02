@@ -27,10 +27,17 @@ export type DataRow = {
 
 export function renderRow(
   row: DataRow,
-  onDragStart: (e: PagePoint, m: Event) => void) {
+  onDragStart: (e: PagePoint, m: Event) => void,
+  fix?: boolean
+) {
 
 
-  const h = useMemo(() => Math.random() * 50 + 100, emptyArray)
+  const h = useMemo(() => {
+    if (fix) {
+      return 100
+    }
+    return Math.random() * 50 + 100
+  }, emptyArray)
   return dom.div({
     style: `
       display:flex;

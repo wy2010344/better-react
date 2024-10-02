@@ -1,5 +1,5 @@
 {
-  "version": "1.2.8",
+  "version": "1.2.9",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -54,11 +54,8 @@
     "typescript": "^5.1.6"
   },
   "peerDependencies": {
-    "better-react": "^1.2.6",
-    "wy-helper": "^0.1.0"
+    "better-react": "^1.2.7",
+    "wy-helper": "^0.1.8"
   },
-  "dependencies": {
-    "better-react": "file:.yalc/better-react",
-    "wy-helper": "file:.yalc/wy-helper"
-  }
+  "dependencies": {}
 }

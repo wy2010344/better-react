@@ -106,9 +106,9 @@ export default function () {
           (v) => offsetY.set(v)
         )
         useEffect(() => {
-          //恢复
+          //每次坐标改变,都恢复
           offsetY.set(0)
-        })
+        }, index)
         useHookEffect(() => {
           addEffectDestroy(syncMergeCenterArray([transY, offsetY] as const, function ([value, oy]) {
             div.style.transform = `translate(0px,${(value + oy)}px)`
@@ -130,7 +130,7 @@ export default function () {
               },
             })
           })
-        })
+        }, true)
         useStyle(div, {
           zIndex: onMove?.index == row.index ? 1 : 0
         })

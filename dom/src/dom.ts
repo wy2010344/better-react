@@ -2,7 +2,7 @@ import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
 import { ListCreater, TOrQuote, createNodeTempOps, genTemplateString, lazyOrInit, } from "./util"
 import { MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookCreateChangeAtom, hookEndTempOps } from "better-react"
 import { DomAttribute, DomAttributeS, DomAttributeSO, DomElement, DomElementType } from "wy-dom-helper"
-import { SetValue, emptyFun, emptyObject } from "wy-helper"
+import { EmptyFun, SetValue, emptyFun, emptyObject } from "wy-helper"
 import { domTagNames, updateDom, updateStyle } from "wy-dom-helper"
 import { CSSProperties } from "wy-dom-helper"
 
@@ -48,7 +48,7 @@ export function updateProps(node: any, key: string, value?: any) {
     }
   }
 }
-
+export type DomTextOrFunNode<T extends DomElementType> = string | number | boolean | null | ((v: DomElement<T>) => void)
 class DomHelper<T extends DomElementType> {
   public readonly node: DomElement<T>
   constructor(
@@ -149,6 +149,16 @@ export class DomCreater<T extends DomElementType> {
     })
     return helper.node
   }
+
+  renderOrText(fun?: DomTextOrFunNode<T>) {
+    const tp = typeof fun
+    if (tp == 'function') {
+      return this.render(fun as any)
+    } else if (tp == 'string' || tp == 'number' || fun) {
+      return this.renderTextContent(fun + '')
+    }
+  }
+
   renderOut<O>(fun: (node: DomElement<T>) => O): O {
     const helper: DomHelper<T> = useMemo(DomHelper.create, this.type)
     const attrsEffect = this.attrsEffect

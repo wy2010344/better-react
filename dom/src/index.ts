@@ -68,5 +68,17 @@ export function renderText(ts: TemplateStringsArray, ...vs: (string | number)[])
 
 
 
+export type TextOrFunNode = string | boolean | number | null | EmptyFun
+
+export function renderFunOrText(render?: TextOrFunNode) {
+  const tp = typeof render
+  if (tp == 'function') {
+    return (render as any)()
+  } else if (tp == 'string' || tp == 'number' || render) {
+    return renderContent(render + '')
+  }
+}
+
+
 
 
