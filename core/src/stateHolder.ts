@@ -1,5 +1,5 @@
 import { EnvModel } from "./commitWork"
-import { EmptyFun, StoreRef, ValueCenter, alawaysFalse } from "wy-helper"
+import { EmptyFun, GetValue, StoreRef, ValueCenter, alawaysFalse } from "wy-helper"
 import { hookAlterStateHolder, hookStateHoder } from "./cache"
 import { Context } from "./context"
 import { Fiber } from "./Fiber"
@@ -64,15 +64,14 @@ function createFun(e: MemoEvent<StateHolder, StateHolder>) {
   return StateHolder.from(e.trigger)
 }
 
-export function renderStateHolder(fun: EmptyFun) {
+export function renderStateHolder<T>(fun: GetValue<T>) {
   const parentEnv = hookStateHoder()
   const env = useBaseMemo(alawaysFalse, createFun, parentEnv)
   env.beginRun()
-  fun()
+  const a = fun()
   env.endRun()
+  return a
 }
-
-
 
 export function hookFirstTime() {
   const holder = hookStateHoder()

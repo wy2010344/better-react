@@ -1,5 +1,5 @@
 import { createContext, renderStateHolder } from 'better-react'
-import { renderOne, useCallbackPromiseState, useMemo } from 'better-react-helper'
+import { renderOne, useCallbackPromiseState, useMemo, useMemoPromiseState } from 'better-react-helper'
 import { emptyArray, emptyFun, EmptyFun, run } from 'wy-helper'
 import { ThisRelativeHistory, MatchRule, RelativeHistory } from 'wy-helper/router'
 
@@ -10,19 +10,10 @@ export type Route = ({
     default: Page
   }>
   page?: never
-  routes?: never
 } | {
   match: MatchRule
   getPage?: never
   page: Page
-  routes?: never
-} | {
-  match: MatchRule
-  getPage?: never
-  page?: never
-  routes: Route[]
-  renderLayout?(render: EmptyFun): void
-  renderNotFoun?(): void
 }) & {
   renderError?: RenderError,
   renderLoading?: EmptyFun
@@ -31,76 +22,137 @@ export type Route = ({
 
 export type RenderError = (v: any) => void
 
-export function createRouter({
-  routes,
-  renderNotFoun = emptyFun,
-  renderError = emptyFun,
-  renderLoading = emptyFun
-}: {
+interface RouteConfig {
   routes: Route[],
+  /**可以不要,就没有过渡期 */
   renderError?: RenderError,
+  /**过渡中 */
   renderLoading?: EmptyFun
-  renderNotFoun?(): void
-}) {
-  function getPage(pathNodes: readonly string[]) {
-    let outKey = -1
-    let renderFun = renderNotFoun
+  /**未找到 */
+  renderNotFound?(): void
+  /**首次 */
+  renderFirstLoading?(): void
+}
+/**
+ * 需要将异步页面解放出来
+ * 如果是异步页面,仍然渲染过去的页面,
+ */
+export function useRouter(
+  {
+    routes,
+    renderNotFound = emptyFun,
+    renderError = emptyFun,
+    renderLoading,
+    renderFirstLoading = renderLoading || emptyFun
+  }: RouteConfig,
+  pathNodes: readonly string[]
+) {
+  const [key, match] = useMemo(() => {
     for (let i = 0; i < routes.length; i++) {
       const route = routes[i]
       const out = route.match(pathNodes)
       if (out) {
-        const outMap = out.query
-        const restNodes = out.restNodes
-        const matchNodes = out.matchNodes
-        outKey = i
-        if (route.getPage) {
-          renderFun = () => {
-            renderWithIgnoreMore(matchNodes, restNodes, out.ignoreMore, () => {
-              renderImportDefault(
-                route.getPage,
-                route.renderError || renderError,
-                route.renderLoading || renderLoading,
-                outMap)
-            })
-          }
-        } else if (route.page) {
-          renderFun = () => {
-            renderWithIgnoreMore(matchNodes, restNodes, out.ignoreMore, () => {
-              route.page!(outMap)
-            })
-          }
-        } else {
-          const renderRoute = createRouter({
-            routes: route.routes,
-            renderError: route.renderError || renderError,
-            renderLoading: route.renderLoading || renderLoading,
-            renderNotFoun: route.renderNotFoun || renderNotFoun
-          })
-          const renderLayout = route.renderLayout || run
-          renderFun = () => {
-            renderWithMatch(matchNodes, restNodes, () => {
-              renderLayout(() => {
-                renderRoute(restNodes)
-              })
-            })
-          }
-        }
-        break
+        return [i, {
+          out,
+          route
+        }]
       }
     }
-    return [renderFun, outKey] as const
-  }
+    return [-1]
+  }, pathNodes)
 
-  return function (
-    pathNodes: readonly string[],
-    renderPageRoute = renderOne
-  ) {
-    const [renderPage, key] = useMemo(() => {
-      return getPage(pathNodes)
-    }, pathNodes)
-    renderPageRoute(key, renderPage)
-  }
+  const getPage = match?.route?.getPage
+  const { data, loading } = useMemoPromiseState(() => {
+    if (getPage) {
+      return async () => {
+        const render = await getPage()
+        return {
+          key,
+          render: render.default
+        }
+      }
+    }
+  }, [getPage])
+  return useMemo<{
+    key: string
+    loading: boolean,
+    render: EmptyFun
+  }, readonly any[]>(e => {
+    let render: EmptyFun | undefined = undefined
+    let keyPaths: any[] = [key]
+    if (match) {
+      const route = match.route
+      const out = match.out
+
+      const outMap = out.query
+      const restNodes = out.restNodes
+      const matchNodes = out.matchNodes
+      if (route.page) {
+        render = () => {
+          renderWithIgnoreMore(
+            matchNodes,
+            restNodes,
+            out.ignoreMore,
+            () => {
+              route.page!(outMap)
+            })
+        }
+      }
+      if (route.getPage) {
+        if (data?.type == 'success' && data.value.key == key) {
+          //当前异步
+          keyPaths.push("success")
+          render = () => {
+            renderWithIgnoreMore(
+              matchNodes,
+              restNodes,
+              out.ignoreMore,
+              () => {
+                data.value.render(outMap)
+              })
+          }
+        }
+        if (data?.type == 'error' && data.value.key == key) {
+          //当前的异步
+          keyPaths.push("error")
+          render = () => {
+            const render = route?.renderError || renderError
+            renderWithIgnoreMore(
+              matchNodes,
+              restNodes,
+              out.ignoreMore, () => {
+                render(outMap)
+              })
+          }
+        }
+        const rLoading = route.renderLoading || renderLoading
+        if (rLoading) {
+          keyPaths.push("loading")
+          render = rLoading
+        }
+      }
+    } else {
+      render = renderNotFound
+    }
+    if (render) {
+      return {
+        loading,
+        key: keyPaths.join('-'),
+        render
+      }
+    }
+    const beforeValue = e.beforeValue
+    if (beforeValue) {
+      return beforeValue
+    }
+    return {
+      key: "-2",
+      loading,
+      render: renderFirstLoading
+    }
+  }, [data, key, match])
 }
+
 function renderWithIgnoreMore(
   matchNodes: string[],
   restNodes: string[],

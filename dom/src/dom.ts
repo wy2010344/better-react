@@ -157,6 +157,7 @@ export class DomCreater<T extends DomElementType> {
     } else if (tp == 'string' || tp == 'number' || fun) {
       return this.renderTextContent(fun + '')
     }
+    return this.render()
   }
 
   renderOut<O>(fun: (node: DomElement<T>) => O): O {
