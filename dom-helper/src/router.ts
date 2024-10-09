@@ -65,10 +65,17 @@ export function useRouter(
   const { data, loading } = useMemoPromiseState(() => {
     if (getPage) {
       return async () => {
-        const render = await getPage()
-        return {
-          key,
-          render: render.default
+        try {
+          const render = await getPage()
+          return {
+            key,
+            render: render.default
+          }
+        } catch (err) {
+          return {
+            key,
+            error: err
+          }
         }
       }
     }
@@ -100,29 +107,32 @@ export function useRouter(
       }
       if (route.getPage) {
         if (data?.type == 'success' && data.value.key == key) {
-          //当前异步
-          keyPaths.push("success")
-          render = () => {
-            renderWithIgnoreMore(
-              matchNodes,
-              restNodes,
-              out.ignoreMore,
-              () => {
-                data.value.render(outMap)
-              })
-          }
-        }
-        if (data?.type == 'error' && data.value.key == key) {
-          //当前的异步
-          keyPaths.push("error")
-          render = () => {
-            const render = route?.renderError || renderError
-            renderWithIgnoreMore(
-              matchNodes,
-              restNodes,
-              out.ignoreMore, () => {
-                render(outMap)
-              })
+          const value = data.value
+          if (value.render) {
+
+            //当前异步
+            keyPaths.push("success")
+            render = () => {
+              renderWithIgnoreMore(
+                matchNodes,
+                restNodes,
+                out.ignoreMore,
+                () => {
+                  value.render(outMap)
+                })
+            }
+          } else {
+            //当前的异步
+            keyPaths.push("error")
+            render = () => {
+              const render = route?.renderError || renderError
+              renderWithIgnoreMore(
+                matchNodes,
+                restNodes,
+                out.ignoreMore, () => {
+                  render(outMap)
+                })
+            }
           }
         }
         const rLoading = route.renderLoading || renderLoading

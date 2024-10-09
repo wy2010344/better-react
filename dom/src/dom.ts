@@ -2,7 +2,7 @@ import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
 import { ListCreater, TOrQuote, createNodeTempOps, genTemplateString, lazyOrInit, } from "./util"
 import { MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookCreateChangeAtom, hookEndTempOps } from "better-react"
 import { DomAttribute, DomAttributeS, DomAttributeSO, DomElement, DomElementType } from "wy-dom-helper"
-import { EmptyFun, SetValue, emptyFun, emptyObject } from "wy-helper"
+import { SetValue, emptyFun, emptyObject } from "wy-helper"
 import { domTagNames, updateDom, updateStyle } from "wy-dom-helper"
 import { CSSProperties } from "wy-dom-helper"
 
@@ -15,7 +15,9 @@ export function useDomNode<T extends DomElementType>(
   return useMemo(createDomElement, type)
 }
 
-export function useRenderHtml(node: InnerHTML, value: string) {
+export function useRenderHtml(node: {
+  innerHTML: string
+}, value: string) {
   useAttrEffect(() => {
     node.innerHTML = value
   }, [node, value])

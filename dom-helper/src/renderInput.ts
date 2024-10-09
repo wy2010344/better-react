@@ -1,25 +1,97 @@
 import { dom } from "better-react-dom"
-import { useEffect } from "better-react-helper"
-import { useVersion } from 'better-react-helper'
-import { DomAttribute, DomAttributeSO, DomElement, DomElementType } from "wy-dom-helper"
-import { contentEditableText } from "wy-dom-helper/contentEditable"
+import { useAttrEffect, useVersion } from "better-react-helper"
+import { DomAttribute, DomAttributeSO, DomElementType, React } from "wy-dom-helper"
+
+export type TriggerTime = "onInput" | "onBlur"
+
+/**
+ * 主要就中额外的触发检查更新value
+ * 可以onInput,onBlur,或者某些effect事件中
+ * 设置状态值,或者重置version恢复成状态值
+ * @param value 
+ * @param input 
+ * @param key 
+ * @param dep 
+ */
+function useUpdateValue<K extends string>(
+  value: string,
+  input: {
+    [key in K]: string | null
+  },
+  key: K,
+  dep: any
+) {
+  useAttrEffect(() => {
+    if (value != input[key]) {
+      input[key] = value
+    }
+  }, [value, dep])
+}
+
+
+function useTrigger<
+  K extends string,
+  N extends {
+    [key in K]: string | null
+  }
+>(
+  triggerTime: TriggerTime = "onInput",
+  props: Record<string, any>,
+  value: string = "",
+  onValueChange: (v: string) => void,
+  render: (props: Record<string, any>) => N,
+  key: K
+) {
+  //只是为了强制这个模块更新
+  /**
+   * updateVersion起的作用只是强制撤销,即禁止输入
+   * 因为输入成功,value会变,自动触发同步比较与合并value
+   */
+  const [version, updateVersion] = useVersion()
+  if (triggerTime == "onInput") {
+    const onInput = props.onInput
+    props.onInput = (e: any) => {
+      const newValue = input[key] || ''
+      updateVersion()
+      onValueChange(newValue)
+      onInput?.(e)
+    }
+  } else {
+    const onBlur = props.onBlur
+    props.onBlur = (e: any) => {
+      const newValue = input[key] || ''
+      updateVersion()
+      onValueChange(newValue)
+      onBlur?.(e)
+    }
+  }
+  const input = render(props)
+  useUpdateValue(value, input, key, version)
+  return input
+}
+
 type InputTypeProps<T extends DomElementType> = DomAttributeSO<T> & {
-  value: string
+  triggerTime?: TriggerTime,
+  value?: string
   onValueChange(v: string): void
 }
-export function renderInput(type: "textarea", args: InputTypeProps<'textarea'>): HTMLTextAreaElement
-export function renderInput(type: "input", props: Omit<InputTypeProps<"input">, 'type'> & {
+
+export type TextareaProps = InputTypeProps<'textarea'>
+export type InputProps = Omit<InputTypeProps<"input">, 'type'> & {
   /**
    * 不支持那几项
    */
-  type?: Exclude<DomAttribute<'input'>['type'], 'checkbox'
+  type?: Exclude<DomAttribute<'input'>['type'],
+    'checkbox'
     | 'button'
     | 'hidden'
     | 'radio'
     | 'reset'
     | 'submit'
     | 'image'>
-}): HTMLInputElement
+}
+export function renderInput(type: "textarea", args: TextareaProps): HTMLTextAreaElement
+export function renderInput(type: "input", props: InputProps): HTMLInputElement
 /**
  * 唯一的存在意义,是阻止了光标闪烁?
  * 如果没有通过onValueChange改变外部状态,则内部状态会恢复回来,即实时的.
@@ -30,71 +102,45 @@ export function renderInput(type: "input", props: Omit<InputTypeProps<"input">, 
 export function renderInput(type: any, {
   value,
   onValueChange,
-  onInput,
+  triggerTime,
   ...props
 }: any) {
-  //只是为了强制这个模块更新
-  const [version, updateVersion] = useVersion()
-  const input = dom[type as "input"]({
-    ...props,
-    onInput(e: any) {
-      const newValue = input.value
-      updateVersion()
-      onValueChange(newValue)
-      onInput?.(e)
-    },
-  }).render()
-  //用useMemo更快触发,但会面临回滚问题
-  useEffect(() => {
-    if (value != input.value) {
-      //外部值和内部值不一样,说明外部阻塞了变化
-      input.value = value
-    }
-  }, [value, version])
-  return input as any
+  return useTrigger(triggerTime, props, value, onValueChange, props => {
+    return dom[type as "input"](props).render()
+  }, 'value') as any
 }
 
-
-export function renderContentEditableText<T extends DomElementType>(
+export type ContentEditableProps<T extends DomElementType> = DomAttributeSO<T> & {
+  triggerTime?: TriggerTime
+  value?: string
+  onValueChange(v: string): void
+}
+export function renderContentEditable<T extends DomElementType>(
   type: T,
-  arg: InputTypeProps<T>
+  arg: ContentEditableProps<T>
 ) {
   const {
     value,
     onValueChange,
-    onInput,
+    triggerTime,
     ...props
   } = arg as any
-  const [version, updateVersion] = useVersion()
-  const attrs = {
-    ...props,
-    contentEditable: contentEditableText,
-    onInput(e: any) {
-      const newValue = div.textContent || ""
-      updateVersion()
-      onValueChange(newValue)
-      onInput?.(e)
-    },
-  } as any
-  const div = dom[type as "div"](attrs).render()
-  useEffect(() => {
-    if (value != div.textContent) {
-      //外部值和内部值不一样,说明外部阻塞了变化
-      div.textContent = value
-    }
-  }, [value, version])
-  return div as DomElement<T>
+  return useTrigger(triggerTime, props, value, onValueChange, props => {
+    return (dom[type as 'div'] as any)(props).render()
+  }, 'textContent')
 }
 
-export function renderInputCheckbox({
+export type InputBoolProps = Omit<DomAttribute<'input'>, 'type'> & {
+  type: "checkbox" | "radio"
+  value?: string
+  checked?: any
+}
+export function renderInputBool({
   checked,
-  onCheckedChange,
   onInput,
   ...props
-}: Omit<DomAttribute<'input'>, 'type'> & {
-  checked?: any
-  onCheckedChange(v?: boolean): void
-}) {
+}: InputBoolProps) {
+  checked = !!checked
   //只是为了强制这个模块更新
   const [version, updateVersion] = useVersion()
   const input = dom.input({
@@ -104,17 +150,12 @@ export function renderInputCheckbox({
      */
     ...props,
     onInput(e: any) {
-      const newValue = input.checked
       updateVersion()
-      onCheckedChange(newValue)
       onInput?.(e)
     },
-    type: "checkbox"
   }).render()
-  //用useMemo更快触发,但会面临回滚问题
-  useEffect(() => {
-    if (!checked == input.checked) {
-      //外部值和内部值不一样,说明外部阻塞了变化
+  useAttrEffect(() => {
+    if (checked != input.checked) {
       input.checked = checked
     }
   }, [checked, version])
