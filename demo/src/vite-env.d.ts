@@ -18,3 +18,9 @@ declare module "xml-reader" {
   }
   export function parseSync(xml: string): XmlNode
 }
+
+declare namespace JSX {
+  type IntrinsicElements = import("better-react-dom-helper").Better.IntrinsicElements
+  type Element = import("better-react-dom-helper").Better.Element
+  type ElementChildrenAttribute = import("better-react-dom-helper").Better.ElementChildrenAttribute
+}

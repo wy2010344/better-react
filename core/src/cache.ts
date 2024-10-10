@@ -27,7 +27,7 @@ export function hookAddFiber(fiber?: Fiber) {
 }
 
 export function hookSetBeforeFiber(fiber?: Fiber) {
-  cache.beforeFiber = undefined
+  cache.beforeFiber = fiber
 }
 export function hookBeforeFiber() {
   return cache.beforeFiber

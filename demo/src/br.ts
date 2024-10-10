@@ -28,6 +28,7 @@ import figmaClone from "./figmaClone";
 import xmlToBetter from "./xmlToBetter";
 import { renderTodoList } from "./开发AnimatePereference/renderTodoList";
 import reanimated from "./reanimated";
+import tsxSupport from "./tsxSupport";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(
@@ -39,7 +40,8 @@ export function createBr(app: HTMLElement) {
     // useLayoutEffect,
     // renderFilter,
     // cssLayout,
-    figmaClone,
+    // figmaClone,
+    tsxSupport,
     // demo,
     //这个是svg转化
     // xmlToBetter,

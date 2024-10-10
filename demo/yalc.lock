@@ -7,22 +7,22 @@
       "replaced": "^1.2.7"
     },
     "better-react": {
-      "signature": "5c7c344810d6b44caa965cd018ae9223",
+      "signature": "fe2e086dd97b245a912f477ca8c69537",
       "file": true,
       "replaced": "^1.2.6"
     },
     "better-react-dom": {
-      "signature": "e667450aaf90ddbccd37be42e164b396",
+      "signature": "024a1808ee45890dde7f9646fdc43cb3",
       "file": true,
       "replaced": "^1.2.6"
     },
     "wy-dom-helper": {
-      "signature": "eb24ff8d213b9ca43706bd4d4bdbe845",
+      "signature": "669dada25059bb6cf793579642efc571",
       "file": true,
       "replaced": "^0.1.0"
     },
     "better-react-dom-helper": {
-      "signature": "e26b58b151f16ab08d297e82ca054341",
+      "signature": "1ef4f6d2c1d64f9ba8325e062eec7466",
       "file": true,
       "replaced": "^1.2.4"
     },

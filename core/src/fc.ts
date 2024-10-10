@@ -5,7 +5,7 @@ import { draftParentFiber, hookAddFiber, hookAddResult, hookBeforeFiber, hookPar
 export function updateFunctionComponent(fiber: Fiber) {
   revertParentFiber()
   hookAddFiber(fiber)
-  hookBeforeFiber()
+  hookSetBeforeFiber()
   fiber.render()
   draftParentFiber();
   hookAddFiber(undefined)
