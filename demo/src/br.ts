@@ -29,6 +29,10 @@ import xmlToBetter from "./xmlToBetter";
 import { renderTodoList } from "./开发AnimatePereference/renderTodoList";
 import reanimated from "./reanimated";
 import tsxSupport from "./tsxSupport";
+import pinning from "./motion-one/scroll/pinning";
+import fade from "./motion-one/scroll/fade";
+import parallax from "./motion-one/scroll/parallax";
+import video from "./motion-one/scroll/video";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(
@@ -41,7 +45,11 @@ export function createBr(app: HTMLElement) {
     // renderFilter,
     // cssLayout,
     // figmaClone,
-    tsxSupport,
+    // pinning,
+    // fade,
+    // parallax,
+    video,
+    // tsxSupport,
     // demo,
     //这个是svg转化
     // xmlToBetter,

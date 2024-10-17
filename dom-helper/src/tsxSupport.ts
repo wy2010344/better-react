@@ -56,7 +56,7 @@ export namespace Better {
     key?: any
     children?: ChildrenElement
   }
-  export type ChildrenElement = BElement[] | BElement
+  export type ChildrenElement = BElement | ChildrenElement[];
 
   export type IntrinsicElements = {
     [key in import("wy-dom-helper").DomElementType]: import("wy-dom-helper").DomAttributeSO<key> & WithChildren<import("wy-dom-helper").DomElement<key>>
@@ -72,7 +72,7 @@ export namespace Better {
   }
 }
 
-function renderChild(child: BElement) {
+function renderChild(child: Better.ChildrenElement) {
   if (Array.isArray(child)) {
     //map类型
     renderChildren(child)
@@ -93,26 +93,30 @@ function renderChild(child: BElement) {
     //空字符串、false、null、undefined不处理
   }
 }
-function dynamicGetKey(v: BElement) {
+function dynamicGetKey(v: Better.ChildrenElement) {
   if (typeof v == 'object' && v) {
-    return v?.props?.key
+    const m = v as any
+    return m?.props?.key
   }
 }
-function staticGetKey(v: BElement, i: number) {
+function staticGetKey(v: Better.ChildrenElement, i: number) {
   if (typeof v == 'object' && v) {
-    const key = v.props?.key
+    const m = v as any
+    const key = m.props?.key
     if (key) {
-      return [key, v.type]
+      return [key, m.type]
     }
-    return [i, v.type]
+    return [i, m.type]
   }
   return [i]
 }
-function renderChildren(children: readonly BElement[]) {
-  if ((children as any)._queue_) {
-    renderArray(children, staticGetKey, renderChild)
-  } else {
-    renderArray(children, dynamicGetKey, renderChild)
+function renderChildren(children: Better.ChildrenElement) {
+  if (Array.isArray(children)) {
+    if ((children as any)._queue_) {
+      renderArray(children, staticGetKey, renderChild)
+    } else {
+      renderArray(children, dynamicGetKey, renderChild)
+    }
   }
 }
 /**

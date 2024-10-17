@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import path from 'path';
 
+import vitePluginRequire from "vite-plugin-require";
+// const vitePluginRequire = (xx as any).default as typeof xx
 //@ts-ignore
 const dirname = __dirname
 // https://vitejs.dev/config/
@@ -19,5 +21,8 @@ export default defineConfig({
     alias: [
       { find: '@', replacement: path.resolve(dirname, 'src') },
     ],
-  }
+  },
+  plugins: [
+    vitePluginRequire(),
+  ]
 })
