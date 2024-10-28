@@ -16,3 +16,4 @@ export * from "./useRenderCode"
 export * from "./useUrlSearchParam"
 export * from './router'
 export * from './tsxSupport'
+export * from './motion'

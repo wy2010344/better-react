@@ -33,6 +33,7 @@ import pinning from "./motion-one/scroll/pinning";
 import fade from "./motion-one/scroll/fade";
 import parallax from "./motion-one/scroll/parallax";
 import video from "./motion-one/scroll/video";
+import elementScroll from "./motion-one/scroll/elementScroll";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(
@@ -48,8 +49,9 @@ export function createBr(app: HTMLElement) {
     // pinning,
     // fade,
     // parallax,
-    video,
-    // tsxSupport,
+    // video,
+    // elementScroll,
+    tsxSupport,
     // demo,
     //这个是svg转化
     // xmlToBetter,

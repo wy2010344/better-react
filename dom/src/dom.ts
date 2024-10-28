@@ -1,10 +1,9 @@
-import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
+import { addEffectDestroy, hookAttrEffect, useAttrEffect, useAttrHookEffect, useMemo } from "better-react-helper"
 import { ListCreater, TOrQuote, createNodeTempOps, genTemplateString, lazyOrInit, } from "./util"
-import { MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookCreateChangeAtom, hookEndTempOps } from "better-react"
+import { EffectEvent, MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookCreateChangeAtom, hookEndTempOps } from "better-react"
 import { DomAttribute, DomAttributeS, DomAttributeSO, DomElement, DomElementType } from "wy-dom-helper"
-import { SetValue, emptyFun, emptyObject } from "wy-helper"
-import { domTagNames, updateDom, updateStyle } from "wy-dom-helper"
-import { CSSProperties } from "wy-dom-helper"
+import { ReadValueCenter, emptyFun, emptyObject } from "wy-helper"
+import { domTagNames, updateDom } from "wy-dom-helper"
 
 export function createDomElement(e: MemoEvent<Node, string>) {
   return document.createElement(e.trigger)
@@ -15,6 +14,14 @@ export function useDomNode<T extends DomElementType>(
   return useMemo(createDomElement, type)
 }
 
+export type VType = string | number | ReadValueCenter<number | string>
+function toSingleValue(v: VType) {
+  if (typeof v == 'object') {
+    return v.get()
+  }
+  return v
+}
+
 export function useRenderHtml(node: {
   innerHTML: string
 }, value: string) {
@@ -23,23 +30,8 @@ export function useRenderHtml(node: {
   }, [node, value])
 }
 
-function createUpdateDom<T extends DomElementType>(e: MemoEvent<SetValue<DomAttribute<T>>, DomElement<T>>): SetValue<DomAttribute<T>> {
-  let oldAttrs: DomAttribute<T> = emptyObject
-  return function (attrs) {
-    updateDom(e.trigger, updateProps, attrs, oldAttrs)
-    oldAttrs = attrs
-  }
-}
-export function useUpdateDomNodeAttr<T extends DomElementType>(
-  node: DomElement<T>
-): SetValue<DomAttribute<T>> {
-  return useMemo(createUpdateDom, node)
-}
-
-
-
 const emptyKeys = ['href', 'className']
-export function updateProps(node: any, key: string, value?: any) {
+export function updateDomProps(node: any, key: string, value?: any) {
   if (key.includes('-')) {
     node.setAttribute(key, value)
   } else {
@@ -58,31 +50,28 @@ class DomHelper<T extends DomElementType> {
   ) {
     this.node = document.createElement(type)
   }
-  private oldAttrs: DomAttribute<T> = emptyObject
-  private contentType?: DomContentAs = undefined
-  private content?: string = undefined
+  private oldAttrs: DomAttribute<T> = emptyObject as any
+  private oldDes = emptyObject
   updateAttrs(attrs: DomAttribute<T>) {
-    updateDom(this.node, updateProps, attrs, this.oldAttrs)
-
+    this.oldDes = updateDom(this.node, updateDomProps, attrs, this.oldAttrs, this.oldDes)
     this.oldAttrs = attrs
   }
 
-  private oldStyle: CSSProperties = emptyObject
-  updateStyle(style: CSSProperties) {
-    updateStyle(this.node, style, this.oldStyle)
-    this.oldStyle = style
+  updateHTML = (content: string) => {
+    this.node.innerHTML = content
   }
-  updateContent(contentType: "html" | "text", content: string) {
-    if (contentType != this.contentType || content != this.content) {
-      if (contentType == 'html') {
-        this.node.innerHTML = content
-      } else if (contentType == 'text') {
-        this.node.textContent = content
-      }
-    }
-    this.contentType = contentType
-    this.content = content
+  updateText = (content: string) => {
+    this.node.textContent = content
   }
+
+  updateHTMLTrigger = (e: EffectEvent<undefined, string>) => {
+    this.node.innerHTML = e.trigger
+  }
+
+  updateTextTrigger = (e: EffectEvent<undefined, string>) => {
+    this.node.textContent = e.trigger
+  }
+
   private tempOps!: TempOps<ListCreater>
   getTempOps() {
     if (!this.tempOps) {
@@ -94,8 +83,22 @@ class DomHelper<T extends DomElementType> {
     return new DomHelper(e.trigger)
   }
 }
-
-type DomContentAs = "html" | "text"
+export function useMerge(
+  update: (text: string) => void,
+  ts: TemplateStringsArray,
+  vs: VType[]) {
+  useAttrHookEffect(() => {
+    function toValue() {
+      update(genTemplateString(ts, vs.map(toSingleValue)))
+    }
+    vs.forEach(v => {
+      if (typeof v == 'object') {
+        addEffectDestroy(v.subscribe(toValue))
+      }
+    })
+    toValue()
+  }, vs)
+}
 export class DomCreater<T extends DomElementType> {
   /**
    * 其实这3个属性可以改变,
@@ -110,7 +113,7 @@ export class DomCreater<T extends DomElementType> {
     public readonly type: T
   ) { }
 
-  public attrsEffect: TOrQuote<DomAttribute<T>> = emptyObject
+  public attrsEffect: TOrQuote<DomAttribute<T>> = emptyObject as any
   public portal?: boolean
 
   attrs(v: TOrQuote<DomAttribute<T>>) {
@@ -123,32 +126,35 @@ export class DomCreater<T extends DomElementType> {
     return this
   }
 
-  renderHtml(ts: TemplateStringsArray, ...vs: (string | number)[]) {
-    return this.renderInnerHTML(genTemplateString(ts, vs))
-  }
-  renderText(ts: TemplateStringsArray, ...vs: (string | number)[]) {
-    return this.renderTextContent(genTemplateString(ts, vs))
-  }
-  renderInnerHTML(innerHTML = '') {
+  private useHelper() {
     const helper: DomHelper<T> = useMemo(DomHelper.create, this.type)
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {
       const attrs = lazyOrInit(attrsEffect)
       helper.updateAttrs(attrs)
-      helper.updateContent("html", innerHTML)
     })
+    return helper
+  }
+
+  renderHtml(ts: TemplateStringsArray, ...vs: VType[]) {
+    const helper = this.useHelper()
+    useMerge(helper.updateHTML, ts, vs)
+    return helper.node
+  }
+  renderText(ts: TemplateStringsArray, ...vs: VType[]) {
+    const helper = this.useHelper()
+    useMerge(helper.updateText, ts, vs)
+    return helper.node
+  }
+  renderInnerHTML(innerHTML = '') {
+    const helper = this.useHelper()
+    useAttrEffect(helper.updateHTMLTrigger, innerHTML)
     return helper.node
   }
   renderTextContent(textContent = '') {
-    const helper: DomHelper<T> = useMemo(DomHelper.create, this.type)
-    const attrsEffect = this.attrsEffect
-    this.after(helper)
-    hookAttrEffect(() => {
-      const attrs = lazyOrInit(attrsEffect)
-      helper.updateAttrs(attrs)
-      helper.updateContent("text", textContent)
-    })
+    const helper = this.useHelper()
+    useAttrEffect(helper.updateTextTrigger, textContent)
     return helper.node
   }
 

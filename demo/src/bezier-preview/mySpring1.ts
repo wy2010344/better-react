@@ -1,5 +1,5 @@
 import { dom } from "better-react-dom";
-import { useChange, useEffect, useOneEffect } from "better-react-helper";
+import { useChange, useEffect } from "better-react-helper";
 import { SetValue, emptyArray, springBase, springIsStop } from "wy-helper";
 import { renderInput } from "better-react-dom-helper";
 import { SpringOptions } from "./spring";
@@ -43,10 +43,16 @@ export default function () {
   }).render(function () {
     const [zta, setZta] = useChange(1)
     const [omega0, setOmega0] = useChange(6)
+    const [velocity, setVelocity] = useChange(0)
     renderRange("omega0", omega0, setOmega0)
     renderRange("zta", zta, setZta, {
       max: 2,
       step: 0.1
+    })
+    renderRange("velocity", velocity, setVelocity, {
+      max: 100,
+      step: 1,
+      min: -100
     })
     const canvas = dom.canvas({
       width: 800,
@@ -86,14 +92,17 @@ export default function () {
       let stopObj: {
         t: number
       } | undefined = undefined
+
+
       drawSpringAnimation(t => {
-        const v = springBase({
-          zta,
-          omega0,
-          deltaX: 0,
-          initialVelocity: 30,
-          elapsedTime: t
-        })
+        const v = springBase(
+          t,
+          0,
+          velocity,
+          {
+            zta,
+            omega0,
+          })
         if (!stopObj) {
           if (springIsStop(v)) {
             stopObj = {
@@ -103,6 +112,20 @@ export default function () {
         }
         return 1 - v.displacement
       }, 'green', 0)
+
+      drawSpringAnimation(t => {
+        const v = springBase(
+          t,
+          0,
+          velocity,
+          {
+            zta,
+            omega0, velocityWhenZta1Plus: true
+          })
+        return v.velocity
+      }, 'red', 0)
+
+
       if (stopObj) {
         const t = (stopObj as any).t
         ctx.beginPath();
@@ -130,29 +153,6 @@ export default function () {
       // draw(springMotion, 0)
 
 
-    }, [zta, omega0])
+    }, [zta, omega0, velocity])
   })
 }
-
-const configUnderdamped: SpringOptions = {
-  mass: 1,
-  stiffness: 100,
-  damping: 5,
-  initialVelocity: 0,
-  from: 0,
-  to: 1
-};
-const configCriticallyDamped: SpringOptions = {
-  mass: 1, stiffness: 100, damping: 20,
-  initialVelocity: 0,
-  from: 0,
-  to: 1
-};
-const configOverdamped: SpringOptions = {
-  mass: 1,
-  stiffness: 100,
-  damping: 50,
-  initialVelocity: 0,
-  from: 0,
-  to: 1
-};

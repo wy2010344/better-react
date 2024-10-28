@@ -1,6 +1,6 @@
-import { MemoEvent, hookCreateChangeAtom, useBaseMemo } from 'better-react';
+import { MemoEvent, hookCreateChangeAtom, useBaseMemo, useLevelEffect } from 'better-react';
 import { storeRef, quote, emptyArray, arrayNotEqualOrOne, GetValue } from 'wy-helper'
-import { useAttrEffect } from './useEffect';
+import { useAttrEffect, useEffect } from './useEffect';
 type StoreRef<T> = {
   get(): T
   set(v: T): void
@@ -66,11 +66,18 @@ function createRef<T>(v: T) {
     current: v
   }
 }
-
-export function useRef<T>(init: T) {
-  return useConst(createRef, init)
+export function useRef<T>(): {
+  current: T | undefined
 }
-
+export function useRef<T>(init: T): {
+  current: T
+}
+export function useRef<T>(init: null): {
+  current: T | null
+}
+export function useRef() {
+  return useConst(createRef, arguments[0])
+}
 function createLaterGet<T>() {
   const ref = storeRef<T | undefined>(undefined)
   ref.get = ref.get.bind(ref)
@@ -135,4 +142,28 @@ export function useMemoVersion(...deps: any[]) {
 
 function triggerAdd(e: MemoEvent<number, any>) {
   return (e.beforeValue || 0) + 1
+}
+
+
+
+export type Ref<T> = {
+  current: T | null
+} | ((v: T | null) => void)
+
+function setRef<T>(fu: Ref<T>, v: null | T) {
+  if (typeof fu == 'function') {
+    fu(v)
+  } else {
+    fu.current = v
+  }
+}
+export function useImperativeHandle<T, D = any>(ref: Ref<T>, create: () => T, deps: D) {
+  useLevelEffect(-Infinity, arrayNotEqualOrOne, () => {
+    setRef(ref, create())
+  }, deps)
+  useLevelEffect(Infinity, arrayNotEqualOrOne, () => {
+    return [null, () => {
+      setRef(ref, null)
+    }]
+  }, deps)
 }

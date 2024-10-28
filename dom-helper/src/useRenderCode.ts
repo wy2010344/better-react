@@ -3,7 +3,7 @@ import { ContentEditableModel, contentDelete, contentEnter, contentTab, getCurre
 import { dom } from "better-react-dom"
 import { useAtom, useEffect } from "better-react-helper"
 import { useContentEditable } from "./useContentEditable"
-import { React } from "wy-dom-helper"
+import { DomAttribute, React } from "wy-dom-helper"
 
 export function useRenderCode<T>(
   init: T,
@@ -19,7 +19,7 @@ export function useRenderCode<T>(
       return editorRef.get()
     },
     renderContent(
-      props: React.HTMLAttributes<HTMLDivElement> & {
+      props: DomAttribute<"div"> & {
         readonly?: boolean
       },
       render: (div: HTMLDivElement) => void

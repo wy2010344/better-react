@@ -1,8 +1,8 @@
 import { useLevelEffect } from "better-react"
 import { dom, svg, renderContent } from "better-react-dom"
-import { renderArray, renderFragment } from "better-react-helper"
+import { renderArray, renderFragment, useAttrEffect, useImperativeHandle } from "better-react-helper"
 import { isSVG } from "wy-dom-helper"
-import { alawaysFalse, emptyArray } from "wy-helper"
+import { alawaysFalse, emptyArray, emptyFun, ReadValueCenter, syncMergeCenter } from "wy-helper"
 /**
  
  使用方式:
@@ -46,7 +46,7 @@ type NodeElement<T = Record<string, any>> = {
 } | ConvertMapToUnion<Better.IntrinsicElements>
 
 //tsx需要的类型
-type BElement = NodeElement | null | undefined | string | boolean | number
+type BElement = NodeElement | null | undefined | string | boolean | number | ReadValueCenter<number | string | boolean>
 
 export namespace Better {
   type WithChildren<K> = {
@@ -81,8 +81,24 @@ function renderChild(child: Better.ChildrenElement) {
 
   if (child) {
     if (typeof child == 'object') {
-      //jsx-element
-      renderJSX(child)
+      if ('type' in child) {
+        //jsx-element
+        renderJSX(child)
+      } else {
+        //valueCenter
+        const node = renderContent('')
+        useAttrEffect(() => {
+          return syncMergeCenter(child, c => {
+            if (c) {
+              node.textContent = c + ''
+            } else {
+              if (typeof c == 'number') {
+                node.textContent = c + ''
+              }
+            }
+          })
+        }, child)
+      }
     } else {
       renderContent(child + '')
     }
@@ -158,13 +174,7 @@ function renderJSX({
 }: any) {
   if (typeof type == 'string') {
     renderFragment(() => {
-      useLevelEffect<any, any>(Infinity, alawaysFalse, e => {
-        return [null, m => {
-          if (props.ref) {
-            props.ref.current = null
-          }
-        }]
-      }, emptyArray)
+      useImperativeHandle(props.ref || emptyFun, () => node, emptyArray)
       const children = props?.children
       const helper = isSVG(type) ? svg[type as 'svg'](props as any) : dom[type as 'div'](props as any)
       const node = helper.render(() => {

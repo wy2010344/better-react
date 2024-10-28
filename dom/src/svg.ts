@@ -1,28 +1,16 @@
-import { MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookCreateChangeAtom, hookEndTempOps } from "better-react"
+import { EffectEvent, MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookCreateChangeAtom, hookEndTempOps } from "better-react"
 import { SvgAttribute, SvgAttributeS, SvgAttributeSO, SvgElement, SvgElementType } from "wy-dom-helper"
-import { hookAttrEffect, useMemo } from "better-react-helper"
-import { updateDom, updateStyle } from "wy-dom-helper"
-import { SetValue, emptyFun, emptyObject } from "wy-helper"
-import { updateProps } from "./dom"
+import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
+import { updateDom } from "wy-dom-helper"
+import { emptyFun, emptyObject } from "wy-helper"
+import { updateDomProps, useMerge, VType } from "./dom"
 import { getAttributeAlias } from "wy-dom-helper"
-import { ListCreater, TOrQuote, createNodeTempOps, genTemplateString, lazyOrInit } from "./util"
+import { ListCreater, TOrQuote, createNodeTempOps, lazyOrInit } from "./util"
 import { svgTagNames } from "wy-dom-helper"
-import { CSSProperties } from "wy-dom-helper"
 
-
-function createUpdateSvg<T extends SvgElementType>(e: MemoEvent<SetValue<SvgAttribute<T>>, SvgElement<T>>): SetValue<SvgAttribute<T>> {
-  let oldAttrs: SvgAttribute<T> = emptyObject
-  return function (attrs) {
-    updateDom(e.trigger, updateSVGProps, attrs, oldAttrs)
-    oldAttrs = attrs
-  }
-}
-
-
-
-function updateSVGProps(node: any, key: string, value?: any) {
+export function updateSVGProps(node: any, key: string, value?: any) {
   if (key == 'innerHTML' || key == 'textContent') {
-    updateProps(node, key, value)
+    updateDomProps(node, key, value)
   } else {
     if (key == 'className') {
       node.setAttribute('class', value || '')
@@ -35,12 +23,6 @@ function updateSVGProps(node: any, key: string, value?: any) {
       }
     }
   }
-}
-
-export function useUpdateSvgNodeAttr<T extends SvgElementType>(
-  node: SvgElement<T>
-): SetValue<SvgAttribute<T>> {
-  return useMemo(createUpdateSvg, node)
 }
 
 export function createSvgElement(e: MemoEvent<Node, string>) {
@@ -64,29 +46,28 @@ class SvgHelper<T extends SvgElementType> {
   ) {
     this.node = document.createElementNS("http://www.w3.org/2000/svg", type)
   }
-  private oldAttrs: SvgAttribute<T> = emptyObject
-  private contentType?: SvgContentAs = undefined
-  private content?: string = undefined
+  private oldAttrs: SvgAttribute<T> = emptyObject as any
+  private oldDes = emptyObject
   updateAttrs(attrs: SvgAttribute<T>) {
-    updateDom(this.node, updateSVGProps, attrs, this.oldAttrs)
+    this.oldDes = updateDom(this.node, updateSVGProps, attrs, this.oldAttrs, this.oldDes)
     this.oldAttrs = attrs
   }
-  private oldStyle: CSSProperties = emptyObject
-  updateStyle(style: CSSProperties) {
-    updateStyle(this.node, style, this.oldStyle)
-    this.oldStyle = style
+
+  updateHTML = (content: string) => {
+    this.node.innerHTML = content
   }
-  updateContent(contentType: "html" | "text", content: string) {
-    if (contentType != this.contentType || content != this.content) {
-      if (contentType == 'html') {
-        this.node.innerHTML = content
-      } else if (contentType == 'text') {
-        this.node.textContent = content
-      }
-    }
-    this.contentType = contentType
-    this.content = content
+  updateText = (content: string) => {
+    this.node.textContent = content
   }
+
+  updateHTMLTrigger = (e: EffectEvent<undefined, string>) => {
+    this.node.innerHTML = e.trigger
+  }
+
+  updateTextTrigger = (e: EffectEvent<undefined, string>) => {
+    this.node.textContent = e.trigger
+  }
+
   private tempOps!: TempOps<ListCreater>
   getTempOps() {
     if (!this.tempOps) {
@@ -114,7 +95,7 @@ export class SvgCreater<T extends SvgElementType> {
     public readonly type: T
   ) { }
 
-  public attrsEffect: TOrQuote<SvgAttribute<T>> = emptyObject
+  public attrsEffect: TOrQuote<SvgAttribute<T>> = emptyObject as any
   public portal?: boolean
 
   attrs(v: TOrQuote<SvgAttribute<T>>) {
@@ -127,34 +108,40 @@ export class SvgCreater<T extends SvgElementType> {
     return this
   }
 
-  renderHtml(ts: TemplateStringsArray, ...vs: (string | number)[]) {
-    return this.renderInnerHTML(genTemplateString(ts, vs))
-  }
-  renderText(ts: TemplateStringsArray, ...vs: (string | number)[]) {
-    return this.renderTextContent(genTemplateString(ts, vs))
-  }
-  renderInnerHTML(innerHTML = '') {
+  private useHelper() {
     const helper: SvgHelper<T> = useMemo(SvgHelper.create, this.type)
     const attrsEffect = this.attrsEffect
     this.after(helper)
     hookAttrEffect(() => {
       const attrs = lazyOrInit(attrsEffect)
       helper.updateAttrs(attrs)
-      helper.updateContent("html", innerHTML)
     })
+    return helper
+
+  }
+
+  renderHtml(ts: TemplateStringsArray, ...vs: VType[]) {
+    const helper = this.useHelper()
+    useMerge(helper.updateHTML, ts, vs)
+    return helper.node
+  }
+  renderText(ts: TemplateStringsArray, ...vs: VType[]) {
+    const helper = this.useHelper()
+    useMerge(helper.updateText, ts, vs)
+    return helper.node
+  }
+  renderInnerHTML(innerHTML = '') {
+    const helper = this.useHelper()
+    useAttrEffect(helper.updateHTMLTrigger, innerHTML)
     return helper.node
   }
   renderTextContent(textContent = '') {
-    const helper: SvgHelper<T> = useMemo(SvgHelper.create, this.type)
-    const attrsEffect = this.attrsEffect
-    this.after(helper)
-    hookAttrEffect(() => {
-      const attrs = lazyOrInit(attrsEffect)
-      helper.updateAttrs(attrs)
-      helper.updateContent("text", textContent)
-    })
+    const helper = this.useHelper()
+    useAttrEffect(helper.updateTextTrigger, textContent)
     return helper.node
   }
+
+
   renderOut<O>(fun: (node: SvgElement<T>) => O): O {
     const helper: SvgHelper<T> = useMemo(SvgHelper.create, this.type)
     const attrsEffect = this.attrsEffect
