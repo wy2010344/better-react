@@ -1,8 +1,7 @@
-import { useLevelEffect } from "better-react"
 import { dom, svg, renderContent } from "better-react-dom"
 import { renderArray, renderFragment, useAttrEffect, useImperativeHandle } from "better-react-helper"
 import { isSVG } from "wy-dom-helper"
-import { alawaysFalse, emptyArray, emptyFun, ReadValueCenter, syncMergeCenter } from "wy-helper"
+import { emptyArray, emptyFun, GetValue, SyncFun, trackSignal } from "wy-helper"
 /**
  
  使用方式:
@@ -46,7 +45,7 @@ type NodeElement<T = Record<string, any>> = {
 } | ConvertMapToUnion<Better.IntrinsicElements>
 
 //tsx需要的类型
-type BElement = NodeElement | null | undefined | string | boolean | number | ReadValueCenter<number | string | boolean>
+type BElement = NodeElement | null | undefined | string | boolean | number | SyncFun<number | string | boolean>
 
 export namespace Better {
   type WithChildren<K> = {
@@ -72,6 +71,19 @@ export namespace Better {
   }
 }
 
+function setText(c: any, node: any) {
+
+  if (c) {
+    node.textContent = c + ''
+    return
+  } else {
+    if (typeof c == 'number') {
+      node.textContent = c + ''
+      return
+    }
+  }
+  node.textContent = ''
+}
 function renderChild(child: Better.ChildrenElement) {
   if (Array.isArray(child)) {
     //map类型
@@ -80,25 +92,15 @@ function renderChild(child: Better.ChildrenElement) {
   }
 
   if (child) {
-    if (typeof child == 'object') {
-      if ('type' in child) {
-        //jsx-element
-        renderJSX(child)
-      } else {
-        //valueCenter
-        const node = renderContent('')
-        useAttrEffect(() => {
-          return syncMergeCenter(child, c => {
-            if (c) {
-              node.textContent = c + ''
-            } else {
-              if (typeof c == 'number') {
-                node.textContent = c + ''
-              }
-            }
-          })
-        }, child)
-      }
+    const tpc = typeof child
+    if (tpc == 'object') {
+      //jsx-element
+      renderJSX(child)
+    } else if (tpc == 'function') {
+      const node = renderContent('')
+      useAttrEffect(() => {
+        return (child as any)(setText, node)
+      }, child)
     } else {
       renderContent(child + '')
     }

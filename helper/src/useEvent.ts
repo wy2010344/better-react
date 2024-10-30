@@ -1,12 +1,11 @@
-import { GetValue, StoreRef, emptyArray } from "wy-helper";
-import { useCallback } from "./useCallback";
-import { useAlways, useLaterSetGet, useMemo } from "./useRef";
+import { emptyArray } from "wy-helper";
+import { useAlaways, useConst, useMemo, useRef } from "./useRef";
 import { hookCommitAll } from "better-react";
 import { useAttrEffect } from "./useEffect";
 
 export function useCommitAlaways<T>(init: T) {
   const flushSync = hookCommitAll()
-  const getValue = useAlways(init)
+  const getValue = useAlaways(init)
   return function () {
     flushSync()
     return getValue()
@@ -14,10 +13,12 @@ export function useCommitAlaways<T>(init: T) {
 }
 
 
-function useBuildGet<T extends (...vs: any[]) => any>(get: GetValue<T>) {
-  return useCallback<T>(function (...vs) {
-    return get()(...vs)
-  } as T, emptyArray)
+function useBuildGet<T extends (...vs: any[]) => any>(object: {
+  current: T
+}) {
+  return useConst<T>(function (...vs) {
+    return object.current(...vs)
+  } as T)
 }
 /**
  * 
@@ -26,44 +27,48 @@ function useBuildGet<T extends (...vs: any[]) => any>(get: GetValue<T>) {
  * @returns 
  */
 export function useEvent<T extends (...vs: any[]) => any>(fun: T): T {
-  const get = useAlways(fun)
-  return useBuildGet(get)
+  const ref = useRef(fun)
+  ref.current = fun
+  return useBuildGet(ref)
 }
 
 
 export function useAttrEvent<T extends (...vs: any[]) => any>(fun: T): T {
-  const value = useLaterSetGet<T>()
+  const ref = useRef(fun)
   useAttrEffect(() => {
-    value.set(fun)
+    ref.current = fun
   })
-  return useBuildGet(value.get)
+  return useBuildGet(ref)
 }
 
 
-function useBuildProxy<T extends object>(get: GetValue<T>) {
+function useBuildProxy<T extends object>(get: {
+  current: T
+}) {
   return useMemo(() => {
-    return new Proxy<T>(get(), {
+    return new Proxy<T>(get.current, {
       get(target, p, receiver) {
-        return (get() as any)[p]
+        return (get.current as any)[p]
       },
       apply(target, thisArg, argArray) {
-        return (get() as any).apply(thisArg, argArray)
+        return (get.current as any).apply(thisArg, argArray)
       },
       construct(target, argArray, newTarget) {
-        return new (get() as any)(...argArray)
+        return new (get.current as any)(...argArray)
       },
     })
   }, emptyArray)
 }
 export function useProxy<T extends object>(init: T) {
-  const get = useAlways(init)
-  return useBuildProxy(get)
+  const ref = useRef(init)
+  ref.current = init
+  return useBuildProxy(ref)
 }
 
 export function useAttrProxy<T extends object>(init: T) {
-  const value = useLaterSetGet<T>()
+  const ref = useRef(init)
   useAttrEffect(() => {
-    value.set(init)
+    ref.current = init
   })
-  return useBuildProxy(value.get)
+  return useBuildProxy(ref)
 }

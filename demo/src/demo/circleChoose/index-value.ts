@@ -1,20 +1,16 @@
 import { dom, svg } from "better-react-dom";
 import { renderPage } from "../util/page";
-import { createUseReducer, renderMax, useAtom, useEffect } from "better-react-helper";
-import { emptyArray, quote } from "wy-helper";
+import { renderMax, useAtom, useConst, useConstDep, useEffect, useMemo, useSignalSync, useSignalSyncDep, useSignalSyncTemplate } from "better-react-helper";
+import { batchSignal, emptyArray, quote, Signal, } from "wy-helper";
 import { CSSProperties, dragInit, subscribeDragMove } from "wy-dom-helper";
-import { cn } from "@/utils";
-
-
-const useAngle = createUseReducer(function (old: number, act: {
-  type: "add"
-  value: number
-}) {
-  if (act.type == 'add') {
-    return (360 + old + act.value) % 360
-  }
-  return old
-})
+function useAngle(n: number) {
+  return useMemo(() => {
+    const s = Signal(n)
+    return [s.get, (n: number) => {
+      return s.set((360 + s.get() + n) % 360)
+    }] as const
+  }, emptyArray)
+}
 /**
  * 尽可能使用css来实现,因为svg内部不能使用dom的布局
  * 但是css3的圆环,没有圆角?
@@ -32,9 +28,8 @@ export default function () {
     }
   }, () => {
 
-
-    const [start, setStart] = useAngle(0)
-    const [end, setEnd] = useAngle(320)
+    const [startValue, addStart] = useAngle(0)
+    const [endValue, addEnd] = useAngle(320)
     dom.div({
       className: "relative w-[200px] h-[200px]",
     }).render(() => {
@@ -70,26 +65,16 @@ export default function () {
             if (p) {
               const angle = getPointerAngle(p)
               const diffAngle = angle - le.lastAngle
-              if (le.type == 'center') {
-                setStart({
-                  type: "add",
-                  value: diffAngle
-                })
-                setEnd({
-                  type: "add",
-                  value: diffAngle
-                })
-              } else if (le.type == 'start') {
-                setStart({
-                  type: "add",
-                  value: diffAngle
-                })
-              } else if (le.type == 'end') {
-                setEnd({
-                  type: "add",
-                  value: diffAngle
-                })
-              }
+              batchSignal(() => {
+                if (le.type == 'center') {
+                  addStart(diffAngle)
+                  addEnd(diffAngle)
+                } else if (le.type == 'start') {
+                  addStart(diffAngle)
+                } else if (le.type == 'end') {
+                  addEnd(diffAngle)
+                }
+              })
               lastPoint.set({
                 type: le.type,
                 lastAngle: angle
@@ -109,7 +94,12 @@ export default function () {
         const cy = 50
         const allWidth = Math.PI * r * 2
 
-        const partWidth = ((end < start ? end + 360 : end) - start) * allWidth / 360
+        const strokeDasharray = useSignalSync(() => {
+          const end = endValue()
+          const start = startValue()
+          const partWidth = ((end < start ? end + 360 : end) - start) * allWidth / 360
+          return partWidth + " " + (allWidth - partWidth)
+        })
         svg.circle({
           cx,
           cy,
@@ -117,9 +107,9 @@ export default function () {
           strokeWidth: 20,
           stroke: "red",
           fill: "none",
-          transform: `rotate(${start - 90}, ${cx}, ${cy})`,
+          transform: useSignalSyncTemplate`rotate(${useConst(() => startValue() - 90)}, ${cx}, ${cy})`,
           strokeLinecap: 'round',
-          strokeDasharray: partWidth + " " + (allWidth - partWidth),
+          strokeDasharray,
 
           ...dragInit(e => {
             lastPoint.set({
@@ -138,7 +128,7 @@ export default function () {
             width: `${height}px`,
             height: `${height}px`,
             transformOrigin: `-${r}px`,
-            transform: `translate(${r}px) rotate(${start - 90}deg)`
+            transform: useSignalSyncDep(() => `translate(${r}px) rotate(${startValue() - 90}deg)`, [r])
           },
           ...dragInit(e => {
             lastPoint.set({
@@ -153,7 +143,7 @@ export default function () {
             width: `${height}px`,
             height: `${height}px`,
             transformOrigin: `-${r}px`,
-            transform: `translate(${r}px) rotate(${end - 90}deg)`
+            transform: useSignalSyncDep(() => `translate(${r}px) rotate(${endValue() - 90}deg)`, [r])
           },
           ...dragInit(e => {
             lastPoint.set({
@@ -178,7 +168,7 @@ export default function () {
             }).render()
           } else {
             dom.div({
-              className: cn("absolute bg-gray-400 w-8 flex items-center justify-end"),
+              className: "absolute bg-gray-400 w-8 flex items-center justify-end",
               style: cs
             }).render(function () {
               dom.div({

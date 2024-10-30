@@ -2,15 +2,6 @@ import { CreateChangeAtom, TempOps, TempReal, TempSubOps, hookLevelEffect } from
 import { useAttrEffect } from "better-react-helper"
 import { StoreRef, alawaysFalse, emptyArray, quote, storeRef } from "wy-helper"
 
-export function genTemplateString(ts: TemplateStringsArray, vs: (string | number)[]) {
-  const xs: any[] = []
-  for (let i = 0; i < vs.length; i++) {
-    xs.push(ts[i])
-    xs.push(vs[i])
-  }
-  xs.push(ts[vs.length])
-  return xs.join('')
-}
 
 export type ContentEditable = boolean | "inherit" | "plaintext-only"
 

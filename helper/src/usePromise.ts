@@ -1,6 +1,6 @@
 
 import { useState } from "./useState"
-import { useAtom, useConst } from "./useRef"
+import { useAtom, useConstFrom } from "./useRef"
 import { useVersionLock } from "./Lock"
 import { createEmptyArray, emptyFun, PromiseResult, buildSerialRequestSingle, createAndFlushAbortController, VersionPromiseResult } from "wy-helper"
 
@@ -40,7 +40,7 @@ export function useSerialRequestSingle<Req extends any[], Res>(
   callback: (...vs: Req) => Promise<Res>,
   effect: (res: PromiseResult<Res>) => void = emptyFun
 ) {
-  const cacheList = useConst<Req[]>(createEmptyArray)
+  const cacheList = useConstFrom<Req[]>(createEmptyArray)
   return buildSerialRequestSingle(callback, effect, cacheList)
 }
 /**
@@ -54,7 +54,7 @@ export function useLatestRequest<Req extends any[], Res>(
   callback: (vs: Req, version: number, signal?: AbortSignal) => Promise<Res>,
   effect: (res: VersionPromiseResult<Res>, version: number) => void
 ) {
-  const flushAbort = useConst(createAndFlushAbortController)
+  const flushAbort = useConstFrom(createAndFlushAbortController)
   const [versionLock, updateVersion] = useVersionLock();
   return [function (...vs: Req) {
     const version = updateVersion();

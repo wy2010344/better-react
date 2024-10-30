@@ -51,8 +51,8 @@ export function createBr(app: HTMLElement) {
     // parallax,
     // video,
     // elementScroll,
-    tsxSupport,
-    // demo,
+    // tsxSupport,
+    demo,
     //这个是svg转化
     // xmlToBetter,
     // force3d,

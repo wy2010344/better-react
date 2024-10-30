@@ -79,7 +79,6 @@ export default function () {
             moveUpdate(diffY)
           } else {
             endMove(fc.getFromVelocity(velocity.get()).maxDistance, distance => {
-              console.log("sss", distance)
               return fc.getFromDistance(distance).animationConfig()
             })
           }
@@ -96,7 +95,7 @@ export default function () {
     dom.div({
       style: `
       display:flex;
-      align-items;center;
+      align-items:center;
       `
     }).render(function () {
       dom.button({

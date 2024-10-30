@@ -1,8 +1,8 @@
-import { addEffectDestroy, hookAttrEffect, useAttrEffect, useAttrHookEffect, useMemo } from "better-react-helper"
-import { ListCreater, TOrQuote, createNodeTempOps, genTemplateString, lazyOrInit, } from "./util"
+import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
+import { ListCreater, TOrQuote, createNodeTempOps, lazyOrInit, } from "./util"
 import { EffectEvent, MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookCreateChangeAtom, hookEndTempOps } from "better-react"
 import { DomAttribute, DomAttributeS, DomAttributeSO, DomElement, DomElementType } from "wy-dom-helper"
-import { ReadValueCenter, emptyFun, emptyObject } from "wy-helper"
+import { emptyFun, emptyObject, genTemplateStringS2, trackSignal, VType } from "wy-helper"
 import { domTagNames, updateDom } from "wy-dom-helper"
 
 export function createDomElement(e: MemoEvent<Node, string>) {
@@ -13,15 +13,16 @@ export function useDomNode<T extends DomElementType>(
 ): DomElement<T> {
   return useMemo(createDomElement, type)
 }
-
-export type VType = string | number | ReadValueCenter<number | string>
-function toSingleValue(v: VType) {
-  if (typeof v == 'object') {
-    return v.get()
-  }
-  return v
+export function useMerge(
+  update: (text: string) => void,
+  ts: TemplateStringsArray,
+  vs: VType[]) {
+  useAttrEffect(() => {
+    return trackSignal(() => {
+      return genTemplateStringS2(ts, vs)
+    }, update)
+  }, vs)
 }
-
 export function useRenderHtml(node: {
   innerHTML: string
 }, value: string) {
@@ -51,7 +52,7 @@ class DomHelper<T extends DomElementType> {
     this.node = document.createElement(type)
   }
   private oldAttrs: DomAttribute<T> = emptyObject as any
-  private oldDes = emptyObject
+  private oldDes = {}
   updateAttrs(attrs: DomAttribute<T>) {
     this.oldDes = updateDom(this.node, updateDomProps, attrs, this.oldAttrs, this.oldDes)
     this.oldAttrs = attrs
@@ -82,22 +83,6 @@ class DomHelper<T extends DomElementType> {
   static create<T extends DomElementType>(e: MemoEvent<DomHelper<T>, T>) {
     return new DomHelper(e.trigger)
   }
-}
-export function useMerge(
-  update: (text: string) => void,
-  ts: TemplateStringsArray,
-  vs: VType[]) {
-  useAttrHookEffect(() => {
-    function toValue() {
-      update(genTemplateString(ts, vs.map(toSingleValue)))
-    }
-    vs.forEach(v => {
-      if (typeof v == 'object') {
-        addEffectDestroy(v.subscribe(toValue))
-      }
-    })
-    toValue()
-  }, vs)
 }
 export class DomCreater<T extends DomElementType> {
   /**

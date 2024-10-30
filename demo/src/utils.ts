@@ -1,6 +1,6 @@
-import { genTemplateString } from "better-react-dom"
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { genTemplateStringS1 } from "wy-helper"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -9,5 +9,5 @@ export function cn(...inputs: ClassValue[]) {
 
 /**减少twMerge */
 export function tw(strings: TemplateStringsArray, ...vs: string[]) {
-  return genTemplateString(strings, vs)
+  return genTemplateStringS1(strings, vs)
 }

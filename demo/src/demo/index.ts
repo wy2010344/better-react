@@ -14,15 +14,13 @@ import note from './note'
 import { cns } from "wy-dom-helper";
 import { tw } from "@/utils";
 import { shadcnRoutes } from "./shadcn";
-import { createRouter } from "better-react-dom-helper";
 import { locationMatch } from "wy-helper/router";
+import { Route, useRouter } from "better-react-dom-helper";
 
 export default function () {
   const pathNodes = useHistory()
-  renderRouter(pathNodes)
-  // renderFragment(function () {
-
-  // }, location)
+  const { key, render } = useRouter({ routes }, pathNodes)
+  renderOne(key, render)
 }
 function mainPage() {
   renderPage({
@@ -42,65 +40,69 @@ function mainPage() {
     renderLkPage("card", history => history.push("./card"))
     renderLkPage("note", history => history.push("./note"))
     renderLkPage("shadcn", history => history.push("./shadcn"))
+    renderLkPage("circleChoose-value", history => history.push("./circleChoose-value"))
   })
 }
 
 
-
-const renderRouter = createRouter({
-  routes: [
-    {
-      match: locationMatch("/"),
-      page: mainPage
+const routes: Route[] = [
+  {
+    match: locationMatch("/"),
+    page: mainPage
+  },
+  ...reorderRoutes,
+  ...centerPickerRoutes,
+  ...scrollerRoutes,
+  ...pageRoutes,
+  ...onboard,
+  ...note,
+  ...shadcnRoutes,
+  {
+    match: locationMatch("/pulltoRefresh"),
+    getPage() {
+      return import("./pulltoRefresh")
     },
-    ...reorderRoutes,
-    ...centerPickerRoutes,
-    ...scrollerRoutes,
-    ...pageRoutes,
-    ...onboard,
-    ...note,
-    ...shadcnRoutes,
-    {
-      match: locationMatch("/pulltoRefresh"),
-      getPage() {
-        return import("./pulltoRefresh")
-      },
+  },
+  {
+    match: locationMatch("/layoutAnimation"),
+    getPage() {
+      return import("./layoutAnimation")
     },
-    {
-      match: locationMatch("/layoutAnimation"),
-      getPage() {
-        return import("./layoutAnimation")
-      },
+  },
+  {
+    match: locationMatch("/bookview"),
+    getPage() {
+      return import("./bookView")
     },
-    {
-      match: locationMatch("/bookview"),
-      getPage() {
-        return import("./bookView")
-      },
+  },
+  {
+    match: locationMatch("/circleChoose"),
+    getPage() {
+      return import("./circleChoose")
     },
-    {
-      match: locationMatch("/circleChoose"),
-      getPage() {
-        return import("./circleChoose")
-      },
+  },
+  {
+    match: locationMatch("/circleChoose-value"),
+    getPage() {
+      return import("./circleChoose/index-value")
     },
-    {
-      match: locationMatch("/taro"),
-      getPage() {
-        return import("./taro")
-      },
+  },
+  {
+    match: locationMatch("/taro"),
+    getPage() {
+      return import("./taro")
     },
-    {
-      match: locationMatch("/swipe-card"),
-      getPage() {
-        return import("./swipe-card")
-      },
+  },
+  {
+    match: locationMatch("/swipe-card"),
+    getPage() {
+      return import("./swipe-card")
     },
-    {
-      match: locationMatch("/card"),
-      getPage() {
-        return import("./hoverCard")
-      },
-    }
-  ]
-})
+  },
+  {
+    match: locationMatch("/card"),
+    getPage() {
+      return import("./hoverCard")
+    },
+  }
+]

@@ -19,6 +19,7 @@ export const centerPickerRoutes: Route[] = [
       }, () => {
         renderLkPage("flushSync", history => history.push("/centerPicker/flushSync"))
         renderLkPage("reducer", history => history.push("/centerPicker/reducer"))
+        renderLkPage("signal", history => history.push("/centerPicker/signal"))
       })
     },
   },
@@ -32,6 +33,12 @@ export const centerPickerRoutes: Route[] = [
     match: locationMatch("/centerPicker/reducer"),
     getPage() {
       return import("./reducer")
+    },
+  },
+  {
+    match: locationMatch("/centerPicker/signal"),
+    getPage() {
+      return import("./signal")
     },
   }
 ]

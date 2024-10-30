@@ -1,6 +1,6 @@
 import { MemoEvent, hookCreateChangeAtom, useBaseMemo, useLevelEffect } from 'better-react';
 import { storeRef, quote, emptyArray, arrayNotEqualOrOne, GetValue } from 'wy-helper'
-import { useAttrEffect, useEffect } from './useEffect';
+import { useAttrEffect } from './useEffect';
 type StoreRef<T> = {
   get(): T
   set(v: T): void
@@ -18,11 +18,33 @@ export function useMemo(
   const dep = arguments.length == 1 ? effect : arguments[1]
   return useBaseMemo(arrayNotEqualOrOne, effect, dep)
 }
-
-export function useConst<F, Arg extends readonly any[] = readonly any[]>(creater: (...vs: Arg) => F, ...vs: Arg) {
-  return useMemo(e => {
+/**
+ * 比如signal使用
+ * @param v 
+ * @returns 
+ */
+export function useConst<T>(v: T) {
+  return useMemo(() => v, emptyArray)
+}
+/**
+ * 构造一次性
+ * @param creater 
+ * @param vs 
+ * @returns 
+ */
+export function useConstFrom<F, Arg extends readonly any[] = readonly any[]>(creater: (...vs: Arg) => F, ...vs: Arg) {
+  return useMemo(() => {
     return creater(...vs)
-  }, emptyArray) as F
+  }, emptyArray)
+}
+/**
+ * 其实就是useCallback
+ * @param v 
+ * @param dep 
+ * @returns 
+ */
+export function useConstDep<T>(v: T, dep?: any) {
+  return useMemo(() => v, dep)
 }
 /**
  * 如果rollback,不允许改变是持久的
@@ -76,8 +98,18 @@ export function useRef<T>(init: null): {
   current: T | null
 }
 export function useRef() {
-  return useConst(createRef, arguments[0])
+  return useConstFrom(createRef, arguments[0])
 }
+export function useRefFrom<F, Arg extends readonly any[] = readonly any[]>(creater: (...vs: Arg) => F, ...vs: Arg) {
+  return useMemo(() => {
+    return {
+      current: creater(...vs)
+    }
+  }, emptyArray)
+}
+
+
+
 function createLaterGet<T>() {
   const ref = storeRef<T | undefined>(undefined)
   ref.get = ref.get.bind(ref)
@@ -93,7 +125,7 @@ export function useLaterSetGet<T>() {
  * @param init 
  * @returns 
  */
-export function useAlways<T>(init: T) {
+export function useAlaways<T>(init: T) {
   const ref = useLaterSetGet<T>()
   ref.set(init)
   return ref.get as GetValue<T>
@@ -143,7 +175,6 @@ export function useMemoVersion(...deps: any[]) {
 function triggerAdd(e: MemoEvent<number, any>) {
   return (e.beforeValue || 0) + 1
 }
-
 
 
 export type Ref<T> = {

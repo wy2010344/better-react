@@ -1,6 +1,6 @@
 import { cn, tw } from "@/utils";
 import { dom } from "better-react-dom";
-import { renderIf, useCallback, useChange, useConst, useEffect, useRef } from "better-react-helper";
+import { renderIf, useChange, useConst, useConstFrom, useEffect, useRef } from "better-react-helper";
 import { emptyArray, EmptyFun } from "wy-helper";
 import { renderPortalPop } from "./portal";
 import { renderChevronRightIcon } from "./icons";
@@ -33,9 +33,9 @@ export function renderMenubar(config:
 ) {
   const closeChoose = menuBarContext.useConsumer()
   const [open, setOpen] = useChange(false)
-  const closeOpen = useCallback(() => {
+  const closeOpen = useConst(() => {
     setOpen(false)
-  }, emptyArray)
+  })
   renderMenuCtx(sub => {
     useEffect(() => {
       function mouseLeave(e: MouseEvent) {
@@ -121,7 +121,7 @@ function createSub() {
 }
 function renderMenuCtx(render: (sub: SubPanel) => HTMLElement) {
   const parentRef = MenuSubContext.useConsumer()
-  const selfRef = useConst(createSub)
+  const selfRef = useConstFrom(createSub)
   if (parentRef) {
     parentRef.current.child = selfRef
   }

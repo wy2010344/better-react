@@ -56,7 +56,6 @@ export default function () {
         if (lp) {
           if (m) {
             velocity.append(e.timeStamp, m.pageY)
-            console.log("v", e.timeStamp, m.pageY, velocity.get())
             const diffY = m.pageY - lp.pageY
             dispatch({
               type: "changeDiff",

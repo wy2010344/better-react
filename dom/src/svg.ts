@@ -2,8 +2,8 @@ import { EffectEvent, MemoEvent, TempOps, hookAddResult, hookBeginTempOps, hookC
 import { SvgAttribute, SvgAttributeS, SvgAttributeSO, SvgElement, SvgElementType } from "wy-dom-helper"
 import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
 import { updateDom } from "wy-dom-helper"
-import { emptyFun, emptyObject } from "wy-helper"
-import { updateDomProps, useMerge, VType } from "./dom"
+import { emptyFun, emptyObject, VType } from "wy-helper"
+import { updateDomProps, useMerge } from "./dom"
 import { getAttributeAlias } from "wy-dom-helper"
 import { ListCreater, TOrQuote, createNodeTempOps, lazyOrInit } from "./util"
 import { svgTagNames } from "wy-dom-helper"
@@ -47,7 +47,7 @@ class SvgHelper<T extends SvgElementType> {
     this.node = document.createElementNS("http://www.w3.org/2000/svg", type)
   }
   private oldAttrs: SvgAttribute<T> = emptyObject as any
-  private oldDes = emptyObject
+  private oldDes = {}
   updateAttrs(attrs: SvgAttribute<T>) {
     this.oldDes = updateDom(this.node, updateSVGProps, attrs, this.oldAttrs, this.oldDes)
     this.oldAttrs = attrs
