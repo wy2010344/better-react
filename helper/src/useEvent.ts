@@ -1,6 +1,6 @@
 import { emptyArray } from "wy-helper";
 import { useAlaways, useConst, useMemo, useRef } from "./useRef";
-import { hookCommitAll } from "better-react";
+import { hookCommitAll, hookLevelEffect } from "better-react";
 import { useAttrEffect } from "./useEffect";
 
 export function useCommitAlaways<T>(init: T) {
@@ -20,22 +20,14 @@ function useBuildGet<T extends (...vs: any[]) => any>(object: {
     return object.current(...vs)
   } as T)
 }
-/**
- * 
- * 只是对应单个函数,如果对应多个函数,就是Map,需要直接useRefConst
- * @param fun 
- * @returns 
- */
+
 export function useEvent<T extends (...vs: any[]) => any>(fun: T): T {
   const ref = useRef(fun)
-  ref.current = fun
-  return useBuildGet(ref)
-}
-
-
-export function useAttrEvent<T extends (...vs: any[]) => any>(fun: T): T {
-  const ref = useRef(fun)
-  useAttrEffect(() => {
+  /**
+   * 不在memo阶段,因为有fiber,可能访问到未render的数据
+   * 而在effect阶段,所有数据都计算完毕
+   */
+  hookLevelEffect(-Infinity, () => {
     ref.current = fun
   })
   return useBuildGet(ref)
