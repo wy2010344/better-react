@@ -65,6 +65,9 @@ function createFun(e: MemoEvent<StateHolder, StateHolder>) {
 export function renderStateHolder<T>(fun: GetValue<T>) {
   const parentEnv = hookStateHoder()
   const env = useBaseMemo(alawaysFalse, createFun, parentEnv)
+  if (env.contextIndex != parentEnv.contextIndex) {
+    throw "contextIndex不匹配"
+  }
   env.beginRun()
   const a = fun()
   env.endRun()

@@ -113,7 +113,7 @@ export class EnvModel {
   createChangeAtom<T>(
     value: T,
     didCommit?: (v: T) => T
-  ): StoreRef<T> {
+  ): ChangeStoreRef<T> {
     return new ChangeAtom(this.changeAtomsManage, value, didCommit || quote)
   }
 }
@@ -124,11 +124,14 @@ export type LoopWork = {
   level: LoopWorkLevel
   work?: EmptyFun
 }
+export type ChangeStoreRef<T> = StoreRef<T> & {
+  getCommitValue(): T
+}
 /**
  * 需要区分create和update阶段
  */
-class ChangeAtom<T> implements StoreRef<T> {
-  private isCreate = true
+class ChangeAtom<T> implements ChangeStoreRef<T> {
+  private firstTime = true
   constructor(
     private manage: ManageValue<ChangeAtom<any>>,
     private value: T,
@@ -139,7 +142,7 @@ class ChangeAtom<T> implements StoreRef<T> {
   dirty = false
   draftValue!: T
   set(v: T) {
-    if (this.isCreate) {
+    if (this.firstTime) {
       this.value = v
     } else {
       /**
@@ -161,7 +164,7 @@ class ChangeAtom<T> implements StoreRef<T> {
     }
   }
   get() {
-    if (this.isCreate) {
+    if (this.firstTime) {
       return this.value
     } else {
       if (this.dirty) {
@@ -170,9 +173,16 @@ class ChangeAtom<T> implements StoreRef<T> {
       return this.value
     }
   }
+
+  getCommitValue() {
+    if (this.firstTime) {
+      throw '刚创建,未生效'
+    }
+    return this.value
+  }
   commit() {
-    if (this.isCreate) {
-      this.isCreate = false
+    if (this.firstTime) {
+      this.firstTime = false
       this.value = this.whenCommit(this.value)
     } else {
       this.dirty = false
@@ -180,7 +190,7 @@ class ChangeAtom<T> implements StoreRef<T> {
     }
   }
   rollback() {
-    if (this.isCreate) {
+    if (this.firstTime) {
       //不处理?一般挂在hooks上会丢弃
     } else {
       this.dirty = false
