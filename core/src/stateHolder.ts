@@ -7,7 +7,6 @@ import { HookEffect } from "./effect"
 import { HookMemo, MemoEvent, useBaseMemo } from "./memo"
 
 export class StateHolder {
-  readonly parentContextIndex: StoreRef<number>
   constructor(
     public readonly envModel: EnvModel,
     public readonly fiber: Fiber,
@@ -15,9 +14,8 @@ export class StateHolder {
     /**
      * 在父节点的第几位
      */
-    initParentContextIndex: number
+    public readonly parentContextIndex: number
   ) {
-    this.parentContextIndex = envModel.createChangeAtom(initParentContextIndex)
   }
   static from(parent: StateHolder) {
     return new StateHolder(

@@ -1,11 +1,11 @@
 import { dom, svg } from "better-react-dom";
 import { renderPage } from "../util/page";
 import { renderMax, useAtom, useConst, useConstDep, useEffect, useMemo, useSignalSync, useSignalSyncDep, useSignalSyncTemplate } from "better-react-helper";
-import { batchSignal, emptyArray, quote, Signal, } from "wy-helper";
+import { createSignal, emptyArray, quote, } from "wy-helper";
 import { CSSProperties, dragInit, subscribeDragMove } from "wy-dom-helper";
 function useAngle(n: number) {
   return useMemo(() => {
-    const s = Signal(n)
+    const s = createSignal(n)
     return [s.get, (n: number) => {
       return s.set((360 + s.get() + n) % 360)
     }] as const
@@ -65,16 +65,14 @@ export default function () {
             if (p) {
               const angle = getPointerAngle(p)
               const diffAngle = angle - le.lastAngle
-              batchSignal(() => {
-                if (le.type == 'center') {
-                  addStart(diffAngle)
-                  addEnd(diffAngle)
-                } else if (le.type == 'start') {
-                  addStart(diffAngle)
-                } else if (le.type == 'end') {
-                  addEnd(diffAngle)
-                }
-              })
+              if (le.type == 'center') {
+                addStart(diffAngle)
+                addEnd(diffAngle)
+              } else if (le.type == 'start') {
+                addStart(diffAngle)
+              } else if (le.type == 'end') {
+                addEnd(diffAngle)
+              }
               lastPoint.set({
                 type: le.type,
                 lastAngle: angle

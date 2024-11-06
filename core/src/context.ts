@@ -62,7 +62,7 @@ class ContextFactory<T> implements Context<T> {
           return [holder, provider.value] as const
         }
       }
-      begin = holder.parentContextIndex.get()
+      begin = holder.parentContextIndex
       holder = holder.parent
     }
   }

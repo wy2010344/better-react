@@ -135,6 +135,7 @@ function renderMenuCtx(render: (sub: SubPanel) => HTMLElement) {
   renderStateHolder(() => {
     //这里因为是树结构,必然要定义出进深?
     //主要是非动态菜单,都共享在同一个stateHolder里面
+    //因为这些兄弟是静态的,不是map动态生成的,所以弟弟能访问到兄弟的stateHoder,因为共享的同一个holder
     MenuSubContext.useProvider(selfRef)
     selfRef.current.container = render(selfRef.current)
   })

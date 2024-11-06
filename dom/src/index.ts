@@ -2,7 +2,7 @@ import { hookAddResult, render } from "better-react";
 import { AskNextTimeWork, emptyArray, EmptyFun, VType } from "wy-helper";
 import { useAttrEffect, useMemo } from "better-react-helper";
 import { createNodeTempOps } from "./util";
-import { useMerge } from "./dom";
+import { updateText, useMerge } from "./node";
 export * from './dom'
 export * from './svg'
 export * from './util'
@@ -64,18 +64,13 @@ export function renderContent(content: string, asPortal?: boolean) {
 }
 
 function creatTextContent1() {
-  const node = document.createTextNode("")
-  return {
-    node,
-    updateText(v: string) {
-      node.textContent = v
-    }
-  }
+  return document.createTextNode("")
 }
 export function renderText(ts: TemplateStringsArray, ...vs: VType[]) {
   const node = useMemo(creatTextContent1, emptyArray)
-  useMerge(node.updateText, ts, vs)
-  return node.node
+  useMerge(updateText, ts, vs, node)
+  hookAddResult(node)
+  return node
 }
 
 

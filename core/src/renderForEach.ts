@@ -54,7 +54,9 @@ export function renderForEach(
     let env: StateHolder
     if (envs?.length) {
       env = envs.shift()!
-      env.parentContextIndex.set(beforeEnv.contextIndex)
+      if (env.parentContextIndex != beforeEnv.contextIndex) {
+        throw 'parentContext位置改变!!'
+      }
     } else {
       env = StateHolder.from(beforeEnv)
       thisTimeAdd.push(env)

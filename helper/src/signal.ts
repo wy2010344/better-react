@@ -1,17 +1,17 @@
 
-import { cacheSignal, Compare, emptyArray, EmptyFun, genTemplateStringS2, GetValue, SetValue, simpleNotEqual, trackSignal, VType, Signal, SyncFun } from "wy-helper";
+import { Compare, emptyArray, genTemplateStringS2, GetValue, SetValue, simpleNotEqual, trackSignal, VType, SyncFun, createSignal, memo } from "wy-helper";
 import { useConstDep, useConstFrom, useMemo } from "./useRef";
 import { useEffect } from "./useEffect";
 import { useRefValueFun } from "./useState";
 
 
 export function useSignal<T>(n: T, shouldChange: Compare<T> = simpleNotEqual) {
-  return useConstFrom(() => Signal(n, shouldChange))
+  return useConstFrom(() => createSignal(n, shouldChange))
 }
 
 
 export function useSignalFrom<T>(n: () => T, shouldChange: Compare<T> = simpleNotEqual) {
-  return useConstFrom(() => Signal(n(), shouldChange))
+  return useConstFrom(() => createSignal(n(), shouldChange))
 }
 
 /**
@@ -20,19 +20,8 @@ export function useSignalFrom<T>(n: () => T, shouldChange: Compare<T> = simpleNo
  * @param deps 
  * @returns 
  */
-export function useComputedDep<T>(fun: GetValue<T>, deps?: any) {
-  const [get, des] = useMemo(() => cacheSignal(fun), deps)
-  useEffect(() => des, deps)
-  return get
-}
-/**
- * 优化中间计算的缓存,其实一般不存在
- * @param fun 
- * @param deps 
- * @returns 
- */
-export function useComputed<T>(fun: GetValue<T>) {
-  return useComputedDep(fun, emptyArray)
+export function useComputed<T>(fun: GetValue<T>, shouldChange?: Compare<T>) {
+  return useMemo(() => memo(fun, shouldChange), emptyArray)
 }
 /**
  * get与shouldChange只使用第一次
