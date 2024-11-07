@@ -6,8 +6,6 @@ import { AbsTempOps } from "./tempOps"
 export { startTransition, flushSync } from './reconcile'
 export {
   renderFiber,
-  hookCreateChangeAtom,
-  hookCommitAll
 } from './fc'
 export {
   hookRequestReconcile,
@@ -21,7 +19,6 @@ export {
   effectLayout
 } from './cache'
 export {
-  hookLevelEffect,
   useLevelEffect
 } from './effect'
 export { useBaseMemo } from './memo'
@@ -38,7 +35,7 @@ export type {
   RenderWithDep,
   FiberEvent,
 } from './Fiber'
-export { CreateChangeAtom } from './commitWork'
+export { CreateChangeAtom, hookEnvModel } from './commitWork'
 export * from './renderForEach'
 export function render(
   getSubOps: (createChangeAtom: CreateChangeAtom<any>) => AbsTempOps<any>,

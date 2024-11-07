@@ -1,4 +1,4 @@
-import { MemoEvent, hookCreateChangeAtom, useBaseMemo, useLevelEffect } from 'better-react';
+import { hookEnvModel, MemoEvent, useBaseMemo, useLevelEffect } from 'better-react';
 import { storeRef, quote, emptyArray, arrayNotEqualOrOne, GetValue } from 'wy-helper'
 import { useAttrEffect } from './useEffect';
 type StoreRef<T> = {
@@ -154,10 +154,10 @@ export function useChgAtom<M, T>(init: M, trans: (m: M) => T): StoreRef<T>
 export function useChgAtom<T>(init: T): StoreRef<T>
 export function useChgAtom() {
   const [init, oldTrans] = arguments
-  const createChangeAtom = hookCreateChangeAtom()
+  const envModel = hookEnvModel()
   return useMemo(() => {
     const trans = oldTrans || quote
-    return createChangeAtom(trans(init))
+    return envModel.createChangeAtom(trans(init))
   }, emptyArray)
 }
 export function useChgAtomFun<T>(init: () => T) {

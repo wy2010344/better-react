@@ -1,6 +1,6 @@
 import { StoreRef, emptyArray, storeRef } from "wy-helper";
 import { useMemo } from "./useRef";
-import { hookCreateChangeAtom } from "better-react";
+import { hookEnvModel } from "better-react";
 
 
 function increase(ref: StoreRef<number>) {
@@ -32,9 +32,9 @@ export function useVersionLock(init = 0) {
 }
 
 export function useChgVersionLock(init = 0) {
-  const createChangeAtom = hookCreateChangeAtom()
+  const envModel = hookEnvModel()
   return useMemo(() => {
-    const ref = createChangeAtom(init)
+    const ref = envModel.createChangeAtom(init)
     return [ref.get.bind(ref), function () {
       return increase(ref)
     }] as const

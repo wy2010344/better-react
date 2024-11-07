@@ -5,26 +5,14 @@ import { StateHolder } from "./stateHolder"
 import { LayoutEffect } from "./effect"
 
 const w = globalThis as any
-const cache = (w.__better_react_one__ || {
-  effect: undefined,
-  tempOps: undefined,
-  wipFiber: undefined,
-  stateHolder: undefined,
-  allowWipFiber: false
-}) as {
+const cache = (w.__better_react_one__ || {}) as {
   effect?: LayoutEffect
   tempOps?: AbsTempOps<TempReal>
   stateHolder?: StateHolder
-  wipFiber?: Fiber
-  allowWipFiber?: boolean
   beforeFiber?: Fiber
+  allowAccess?: boolean
 }
 w.__better_react_one__ = cache
-
-export function hookAddFiber(fiber?: Fiber) {
-  cache.wipFiber = fiber
-  cache.tempOps = fiber?.subOps
-}
 
 export function hookSetBeforeFiber(fiber?: Fiber) {
   cache.beforeFiber = fiber
@@ -34,25 +22,23 @@ export function hookBeforeFiber() {
 }
 
 export function hookStateHoder() {
-  return cache.stateHolder!
+  if (cache.allowAccess) {
+    return cache.stateHolder!
+  }
+  throw 'stateHolder不存在'
+}
+
+
+export function draftParentFiber() {
+  cache.allowAccess = false
+}
+
+export function revertParentFiber() {
+  cache.allowAccess = true
 }
 
 export function hookAlterStateHolder(holder?: StateHolder) {
   cache.stateHolder = holder
-}
-
-export function hookParentFiber() {
-  if (cache.allowWipFiber) {
-    return cache.wipFiber!
-  }
-  console.error('禁止在此处访问fiber')
-  throw new Error('禁止在此处访问fiber')
-}
-export function draftParentFiber() {
-  cache.allowWipFiber = false
-}
-export function revertParentFiber() {
-  cache.allowWipFiber = true
 }
 
 export function hookTempOps() {
@@ -63,11 +49,11 @@ export function hookTempOps() {
   }
 }
 
-export function hookBeginTempOps(op: TempOps<any>) {
+export function hookBeginTempOps(op: AbsTempOps<any>) {
   const before = cache.tempOps
   cache.tempOps = op
   op.reset()
-  return before
+  return before!
 }
 export function hookEndTempOps(op: AbsTempOps<any>) {
   cache.tempOps = op

@@ -1,7 +1,7 @@
 import { EnvModel } from "./commitWork"
 import { EmptyFun, StoreRef } from "wy-helper"
 import { AbsTempOps } from "./tempOps"
-import { hookStateHoder } from "./cache"
+import { hookBeginTempOps, hookEndTempOps, hookStateHoder } from "./cache"
 import { StateHolder } from "./stateHolder"
 import { ReconcileFun } from "./requestFresh"
 
@@ -90,10 +90,11 @@ export class Fiber<D = any> {
   subOps!: AbsTempOps<any>
   render() {
     const { render, event } = this.renderDeps.get()
-    this.subOps.reset()
+    const before = hookBeginTempOps(this.subOps)
     this.stateHoder.beginRun()
     render(event)
     this.stateHoder.endRun()
+    hookEndTempOps(before)
   }
   /**
    * Map的子节点,子节点是不是Map不一定

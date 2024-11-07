@@ -1,4 +1,4 @@
-import { hookCreateChangeAtom, hookRequestReconcile } from "better-react";
+import { hookEnvModel, hookRequestReconcile } from "better-react";
 import { EmptyFun, Reducer, ReducerWithDispatch, SetValue, emptyArray, quote, simpleEqual } from "wy-helper";
 import { useMemo } from "./useRef";
 type EffectArray = readonly [number, EmptyFun][]
@@ -35,7 +35,7 @@ function defaultSideCall<F>(updateEffect: (level: number, effect: EmptyFun) => v
 }
 
 function useBaseReducer(reducer: any, init: any, initFun: any, eq: any, sideCall?: any) {
-  const createChangeAtom = hookCreateChangeAtom()
+  const envModel = hookEnvModel()
   const reconcile = hookRequestReconcile()
   const hook = useMemo(() => {
     /**
@@ -44,7 +44,7 @@ function useBaseReducer(reducer: any, init: any, initFun: any, eq: any, sideCall
     const realEq = eq || simpleEqual
     const trans = initFun || quote
     const initData = trans(init)
-    const value = createChangeAtom(initData)
+    const value = envModel.createChangeAtom(initData)
     function set(action: any, effects: EffectArray = emptyArray as any) {
       reconcile(function (updateEffect) {
         const oldValue = value.get()

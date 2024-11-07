@@ -1,6 +1,5 @@
-import { EffectDestroy, EffectDestroyEvent, useLevelEffect } from "better-react";
+import { EffectDestroy, EffectDestroyEvent, hookEnvModel, useLevelEffect } from "better-react";
 import { EffectEvent } from "better-react";
-import { hookLevelEffect } from "better-react";
 import { EmptyFun, FalseType, arrayFunToOneOrEmpty, arrayNotEqualOrOne } from "wy-helper";
 function useBaseEffect<T>(
   level: number,
@@ -30,7 +29,7 @@ export const useEffect = buildUseEffect(1)
 /*** */
 export function buildHookEffect(level: number) {
   return function (effect: EmptyFun) {
-    return hookLevelEffect(level, effect)
+    return hookEnvModel().updateEffect(level, effect)
   }
 }
 

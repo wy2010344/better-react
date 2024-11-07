@@ -1,5 +1,5 @@
 import { EmptyFun, alawaysTrue } from "wy-helper"
-import { hookParentFiber, hookStateHoder } from "./cache"
+import { hookStateHoder } from "./cache"
 export type ReconcileFun = (fun: (updateEffect: (level: number, set: EmptyFun) => void) => any) => void
 export function hookRequestReconcile(): ReconcileFun {
   const holder = hookStateHoder()
@@ -25,7 +25,7 @@ export function hookRequestReconcile(): ReconcileFun {
 }
 
 export function hookMakeDirtyAndRequestUpdate() {
-  const parentFiber = hookParentFiber()
+  const parentFiber = hookStateHoder().fiber
   if (!parentFiber.makeDirtyAndRequestUpdate) {
     const requestReconcile = hookRequestReconcile()
     parentFiber.makeDirtyAndRequestUpdate = function () {

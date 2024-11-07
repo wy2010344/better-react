@@ -1,13 +1,13 @@
 import { emptyArray } from "wy-helper";
 import { useAlaways, useConst, useMemo, useRef } from "./useRef";
-import { hookCommitAll, hookLevelEffect } from "better-react";
 import { useAttrEffect } from "./useEffect";
+import { hookEnvModel } from "better-react";
 
 export function useCommitAlaways<T>(init: T) {
-  const flushSync = hookCommitAll()
+  const envModel = hookEnvModel()
   const getValue = useAlaways(init)
   return function () {
-    flushSync()
+    envModel.commitAll()
     return getValue()
   }
 }
@@ -27,7 +27,7 @@ export function useEvent<T extends (...vs: any[]) => any>(fun: T): T {
    * 不在memo阶段,因为有fiber,可能访问到未render的数据
    * 而在effect阶段,所有数据都计算完毕
    */
-  hookLevelEffect(-Infinity, () => {
+  hookEnvModel().updateEffect(-Infinity, () => {
     ref.current = fun
   })
   return useBuildGet(ref)

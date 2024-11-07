@@ -1,6 +1,6 @@
 
 import { EmptyFun } from "wy-helper";
-import { hookAddEffect, hookParentFiber, hookStateHoder } from "./cache";
+import { hookAddEffect, hookStateHoder } from "./cache";
 
 export type HookEffect<V, D> = {
   level: number,
@@ -56,6 +56,7 @@ export function useLevelEffect<V, T>(
   shouldChange: (a: T, b: T) => any,
   effect: (e: EffectEvent<V, T>) => EffectResult<V, T>, deps: T): void {
   const holder = hookStateHoder()
+  const envModel = holder.envModel
   if (holder.firstTime) {
     //新增
     const hookEffects = holder.effects || []
@@ -66,15 +67,15 @@ export function useLevelEffect<V, T>(
       isInit: true,
       shouldChange
     }
-    const hookEffect = holder.envModel.createChangeAtom(state)
+    const hookEffect = envModel.createChangeAtom(state)
     hookEffects.push(hookEffect)
-    holder.envModel.updateEffect(level, () => {
-      hookAddEffect(holder.envModel.layoutEffect)
+    envModel.updateEffect(level, () => {
+      hookAddEffect(envModel.layoutEffect)
       const out = effect({
         beforeTrigger: undefined,
         isInit: true,
         trigger: deps,
-        setRealTime: holder.envModel.setRealTime
+        setRealTime: envModel.setRealTime
       })
       hookAddEffect(undefined)
       if (out) {
@@ -101,26 +102,26 @@ export function useLevelEffect<V, T>(
         shouldChange
       }
       hookEffect.set(newState)
-      holder.envModel.updateEffect(level, () => {
+      envModel.updateEffect(level, () => {
         if (state.destroy) {
-          hookAddEffect(holder.envModel.layoutEffect)
+          hookAddEffect(envModel.layoutEffect)
           state.destroy({
             isDestroy: false,
             trigger: deps,
             value: state.value,
             beforeIsInit: state.isInit,
             beforeTrigger: state.deps,
-            setRealTime: holder.envModel.setRealTime
+            setRealTime: envModel.setRealTime
           })
           hookAddEffect(undefined)
         }
-        hookAddEffect(holder.envModel.layoutEffect)
+        hookAddEffect(envModel.layoutEffect)
         const out = effect({
           beforeTrigger: state.deps,
           isInit: false,
           value: state.value,
           trigger: deps,
-          setRealTime: holder.envModel.setRealTime
+          setRealTime: envModel.setRealTime
         })
         hookAddEffect(undefined)
         if (out) {
@@ -129,13 +130,4 @@ export function useLevelEffect<V, T>(
       })
     }
   }
-}
-
-
-export function hookLevelEffect(
-  level: number,
-  effect: EmptyFun
-) {
-  const parentFiber = hookParentFiber()
-  parentFiber.envModel.updateEffect(level, effect)
 }

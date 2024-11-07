@@ -1,4 +1,4 @@
-import { EffectEvent, hookAddResult, hookBeginTempOps, hookCreateChangeAtom, hookEndTempOps, MemoEvent, TempOps } from "better-react"
+import { EffectEvent, hookAddResult, hookBeginTempOps, hookEndTempOps, hookEnvModel, MemoEvent, TempOps } from "better-react"
 import { createNodeTempOps, lazyOrInit, ListCreater, TOrQuote } from "./util"
 import { updateDom } from "wy-dom-helper"
 import { emptyArray, emptyFun, emptyObject, genTemplateStringS2, trackSignal, VType } from "wy-helper"
@@ -91,7 +91,7 @@ export class NodeHelper<T extends Element, Attr extends {}> {
 
   getTempOps() {
     if (!this.tempOps) {
-      this.tempOps = createNodeTempOps(this.node, hookCreateChangeAtom())
+      this.tempOps = createNodeTempOps(this.node, hookEnvModel().createChangeAtom)
     }
     return this.tempOps
   }

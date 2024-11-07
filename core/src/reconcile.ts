@@ -1,7 +1,7 @@
 import { deepTravelFiber, EnvModel, LoopWork, LoopWorkLevel } from "./commitWork"
 import { updateFunctionComponent } from "./fc"
 import { Fiber } from "./Fiber"
-import { AskNextTimeWork, NextTimeWork, EmptyFun, run } from "wy-helper"
+import { AskNextTimeWork, NextTimeWork, EmptyFun, run, objectFreeze } from "wy-helper"
 
 // class NextTimeWork {
 //   constructor(
@@ -75,7 +75,7 @@ export function getReconcile(
   } = buildWorkUnits(envModel, beginRender)
   // const getNextWork = wrapNextWorkWork(envModel, originGetNextWork)
 
-  envModel.commitAll = function () {
+  envModel.out.commitAll = function () {
     if (envModel.isOnWork()) {
       throw new Error("render中不能commit all")
     }
@@ -85,6 +85,7 @@ export function getReconcile(
       work = getNextWork()
     }
   }
+  objectFreeze(envModel.out)
 
   const askNextTimeWork = askWork({
     askNextWork: getNextWork,

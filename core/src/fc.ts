@@ -1,14 +1,12 @@
 import { Fiber, FiberEvent } from "./Fiber";
-import { draftParentFiber, hookAddFiber, hookAddResult, hookBeforeFiber, hookParentFiber, hookSetBeforeFiber, hookStateHoder, hookTempOps, revertParentFiber } from "./cache";
+import { draftParentFiber, hookAddResult, hookBeforeFiber, hookSetBeforeFiber, hookStateHoder, hookTempOps, revertParentFiber } from "./cache";
 
 
 export function updateFunctionComponent(fiber: Fiber) {
   revertParentFiber()
-  hookAddFiber(fiber)
   hookSetBeforeFiber()
   fiber.render()
-  draftParentFiber();
-  hookAddFiber(undefined)
+  draftParentFiber()
 }
 
 
@@ -62,16 +60,4 @@ export function renderFiber<T>(
 
   hookAddResult(currentFiber.subOps)
   return currentFiber
-}
-
-
-
-export function hookCommitAll() {
-  const parentFiber = hookParentFiber()
-  return parentFiber.envModel.commitAll
-}
-
-export function hookCreateChangeAtom() {
-  const parentFiber = hookParentFiber()
-  return parentFiber.envModel.createChangeAtom
 }

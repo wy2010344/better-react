@@ -1,4 +1,4 @@
-import { CreateChangeAtom, TempOps, TempReal, TempSubOps, hookLevelEffect } from "better-react"
+import { CreateChangeAtom, hookEnvModel, TempOps, TempReal, TempSubOps } from "better-react"
 import { useAttrEffect } from "better-react-helper"
 import { StoreRef, alawaysFalse, emptyArray, quote, storeRef } from "wy-helper"
 
@@ -69,7 +69,7 @@ export function createNodeTempOps(pel: Node, createChangeAtom: CreateChangeAtom<
   const root = new TempOps<ListCreater>(() => new ListCreater(), () => {
     if (!addEffect.get()) {
       addEffect.set(true)
-      hookLevelEffect(-0.5, () => {
+      hookEnvModel().updateEffect(-0.5, () => {
         nodeAppendChild(pel, root.data, cache)
       })
     }

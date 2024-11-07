@@ -1,6 +1,6 @@
 import { Fiber } from "./Fiber"
 import { EmptyFun, ManageValue, StoreRef, emptyFun, iterableToList, quote, removeEqual, run, storeRef } from "wy-helper"
-import { hookAddEffect } from "./cache"
+import { hookAddEffect, hookStateHoder } from "./cache"
 import { StateHolder } from "./stateHolder"
 
 
@@ -35,7 +35,6 @@ export class EnvModel {
   finishWork() {
     this.onWork = false
   }
-  commitAll: () => void = emptyFun
   reconcile: Reconcile = null as any
   /**本次等待删除的fiber*/
   private readonly deletions: StateHolder[] = []
@@ -68,6 +67,10 @@ export class EnvModel {
         removeEqual(changeAtoms, v)
       },
     }
+    this.out = {
+      updateEffect: this.updateEffect,
+      createChangeAtom: this.createChangeAtom
+    } as any
   }
   shouldRender() {
     //changeAtoms说明有状态变化,deletions表示,比如销毁
@@ -115,6 +118,12 @@ export class EnvModel {
     didCommit?: (v: T) => T
   ): ChangeStoreRef<T> {
     return new ChangeAtom(this.changeAtomsManage, value, didCommit || quote)
+  }
+
+  out!: {
+    updateEffect(level: number, set: EmptyFun): void
+    commitAll(): void
+    createChangeAtom<T>(v: T, didCommit?: (v: T) => T): ChangeStoreRef<T>
   }
 }
 //优先级,1是及时,2是Layout,3是普通,4是延迟
@@ -256,4 +265,9 @@ export function deepTravelFiber<T extends any[]>(call: (Fiber: Fiber, ...vs: T) 
     }
     return undefined
   }
+}
+
+
+export function hookEnvModel() {
+  return hookStateHoder().envModel.out
 }

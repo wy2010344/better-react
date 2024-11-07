@@ -2,7 +2,6 @@ import { EmptyFun, StoreRef, alawaysFalse, storeRef } from "wy-helper";
 import { MemoEvent, useBaseMemo } from "./memo";
 import { StateHolder } from "./stateHolder";
 import { hookStateHoder } from "./cache";
-import { hookLevelEffect } from './effect'
 
 
 export interface RMap<K, V> {
@@ -48,6 +47,7 @@ export function renderForEach(
   const oldMap = cloneMap(mapRef.get(), createMap)
   const newMap = createMap()
   const beforeEnv = hookStateHoder()
+  const envModel = beforeEnv.envModel
   const thisTimeAdd: StateHolder[] = []
   forEach((key, callback) => {
     let envs = oldMap.get(key)
@@ -76,10 +76,10 @@ export function renderForEach(
 
   oldMap.forEach(function (values) {
     values.forEach(value => {
-      beforeEnv.envModel.addDelect(value)
+      envModel.addDelect(value)
     })
   })
-  hookLevelEffect(0, function () {
+  envModel.updateEffect(0, function () {
     mapRef.set(newMap)
     beforeEnv.children = beforeEnv.children || new Set()
     const children = beforeEnv.children

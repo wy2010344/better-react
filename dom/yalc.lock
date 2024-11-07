@@ -2,11 +2,11 @@
   "version": "v1",
   "packages": {
     "better-react": {
-      "signature": "fe2e086dd97b245a912f477ca8c69537",
+      "signature": "2100a0ace0b426abed3d03fb16f7e6a9",
       "file": true
     },
     "better-react-helper": {
-      "signature": "eaef0e039b037c04ef438c624e50a9e6",
+      "signature": "106ba5d2beaf7d5d6c6c2393244932b1",
       "file": true
     },
     "wy-helper": {
