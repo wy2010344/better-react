@@ -1,12 +1,10 @@
 import { Fiber, FiberEvent } from "./Fiber";
-import { draftParentFiber, hookAddResult, hookBeforeFiber, hookSetBeforeFiber, hookStateHoder, hookTempOps, revertParentFiber } from "./cache";
+import { hookAddResult, hookBeforeFiber, hookSetBeforeFiber, hookStateHoder, hookTempOps } from "./cache";
 
 
 export function updateFunctionComponent(fiber: Fiber) {
-  revertParentFiber()
   hookSetBeforeFiber()
   fiber.render()
-  draftParentFiber()
 }
 
 

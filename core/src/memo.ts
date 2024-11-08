@@ -1,4 +1,4 @@
-import { draftParentFiber, hookStateHoder, revertParentFiber } from "./cache";
+import { hookStateHoder } from "./cache";
 
 
 export type HookMemo<T, D> = {
@@ -33,7 +33,6 @@ export function useBaseMemo<V, D>(
   if (holder.firstTime) {
     const hookMemos = holder.memos || []
     holder.memos = hookMemos
-    draftParentFiber()
     const state: HookMemo<V, D> = {
       value: effect({
         trigger: deps,
@@ -42,7 +41,6 @@ export function useBaseMemo<V, D>(
       deps,
       shouldChange
     }
-    revertParentFiber()
     const hook = holder.envModel.createChangeAtom(state)
     hookMemos.push(hook)
     return state.value
@@ -60,7 +58,6 @@ export function useBaseMemo<V, D>(
     holder.memoIndex = index + 1
     if (state.shouldChange(state.deps, deps)) {
       //不处理
-      draftParentFiber()
       const newState: HookMemo<V, D> = {
         value: effect({
           trigger: deps,
@@ -71,8 +68,6 @@ export function useBaseMemo<V, D>(
         deps,
         shouldChange
       }
-      revertParentFiber()
-
       hook.set(newState)
       return newState.value
     }

@@ -1,9 +1,4 @@
-import {
-  arrayCountCreateWith,
-  batchSignal,
-  emptyArray,
-  quote,
-} from "wy-helper";
+import { arrayCountCreateWith, emptyArray, quote } from "wy-helper";
 import {
   useConst,
   useEffect,
@@ -83,13 +78,11 @@ function TestSignal() {
   });
   return (
     <div>
-      {useSignalSync(a.get)}---{useSignalSync(b.get)}--{c}
+      {useSignalSync(a.get)}---{useSignalSync(b.get)}--{useSignalSync(c)}
       <button
         onClick={() => {
-          batchSignal(() => {
-            a.set(a.get() + 1);
-            b.set(b.get() + 1);
-          });
+          a.set(a.get() + 1);
+          b.set(b.get() + 1);
         }}
       >
         增加

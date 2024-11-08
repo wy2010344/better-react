@@ -90,11 +90,11 @@ export class Fiber<D = any> {
   subOps!: AbsTempOps<any>
   render() {
     const { render, event } = this.renderDeps.get()
-    const before = hookBeginTempOps(this.subOps)
     this.stateHoder.beginRun()
+    const before = hookBeginTempOps(this.subOps)
     render(event)
-    this.stateHoder.endRun()
     hookEndTempOps(before)
+    this.stateHoder.endRun()
   }
   /**
    * Map的子节点,子节点是不是Map不一定

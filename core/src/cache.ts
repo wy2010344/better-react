@@ -10,7 +10,6 @@ const cache = (w.__better_react_one__ || {}) as {
   tempOps?: AbsTempOps<TempReal>
   stateHolder?: StateHolder
   beforeFiber?: Fiber
-  allowAccess?: boolean
 }
 w.__better_react_one__ = cache
 
@@ -22,19 +21,7 @@ export function hookBeforeFiber() {
 }
 
 export function hookStateHoder() {
-  if (cache.allowAccess) {
-    return cache.stateHolder!
-  }
-  throw 'stateHolder不存在'
-}
-
-
-export function draftParentFiber() {
-  cache.allowAccess = false
-}
-
-export function revertParentFiber() {
-  cache.allowAccess = true
+  return cache.stateHolder!
 }
 
 export function hookAlterStateHolder(holder?: StateHolder) {

@@ -7,7 +7,7 @@
       "replaced": "^1.2.7"
     },
     "better-react": {
-      "signature": "2100a0ace0b426abed3d03fb16f7e6a9",
+      "signature": "655cd800c73be13e9d816f81671ebf19",
       "file": true,
       "replaced": "^1.2.6"
     },
@@ -17,17 +17,17 @@
       "replaced": "^1.2.6"
     },
     "wy-dom-helper": {
-      "signature": "ace84ac226530ee67014b80f1efa570b",
+      "signature": "4b3d9b68f04d6148fdc65cbf387a1a88",
       "file": true,
       "replaced": "^0.1.0"
     },
     "better-react-dom-helper": {
-      "signature": "5ea0ee7af1ad34dea5fd28b488f82c2a",
+      "signature": "dc2f9b413cc1d6f5066d010ceb652c83",
       "file": true,
       "replaced": "^1.2.4"
     },
     "wy-helper": {
-      "signature": "c454bd25968f1dfb94ce06b26fdab2cd",
+      "signature": "20c3294637ac327d192cc151b334cc40",
       "file": true,
       "replaced": "^0.1.0"
     }

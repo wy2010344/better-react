@@ -41,6 +41,8 @@ function mainPage() {
     renderLkPage("note", history => history.push("./note"))
     renderLkPage("shadcn", history => history.push("./shadcn"))
     renderLkPage("circleChoose-value", history => history.push("./circleChoose-value"))
+    renderLkPage("magnified-dock", history => history.push("./magnified-dock"))
+    renderLkPage("magnified-dock/signal", history => history.push("./magnified-dock/signal"))
   })
 }
 
@@ -103,6 +105,18 @@ const routes: Route[] = [
     match: locationMatch("/card"),
     getPage() {
       return import("./hoverCard")
+    },
+  },
+  {
+    match: locationMatch("/magnified-dock"),
+    getPage() {
+      return import("./magnified-dock")
+    },
+  },
+  {
+    match: locationMatch("/magnified-dock/signal"),
+    getPage() {
+      return import("./magnified-dock/index-signal")
     },
   }
 ]
