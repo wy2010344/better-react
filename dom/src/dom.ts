@@ -36,8 +36,8 @@ const domCreater: Creater<any, any, any> = (e) => {
 
 let dom: {
   readonly [key in DomElementType]: {
-    (props?: DomAttribute<key> | DomAttributeSO<key>, isPortal?: boolean): DomNodeCreater<key>
-    (fun: (v: DomAttributeS<key>) => DomAttributeS<key> | void, isPortal?: boolean): DomNodeCreater<key>
+    (props?: DomAttribute<key> | DomAttributeSO<key>): DomNodeCreater<key>
+    (fun: (v: DomAttributeS<key>) => DomAttributeS<key> | void): DomNodeCreater<key>
   }
 }
 if ('Proxy' in globalThis) {
@@ -48,13 +48,12 @@ if ('Proxy' in globalThis) {
       if (oldV) {
         return oldV
       }
-      const newV = function (args: any, isPortal: any) {
+      const newV = function (args: any) {
         const creater = NodeCreater.instance
         creater.type = p
         creater.creater = domCreater
 
         creater.attrsEffect = args
-        creater.portal = isPortal
         return creater
       }
       cacheDomMap.set(p as any, newV)
@@ -65,13 +64,12 @@ if ('Proxy' in globalThis) {
   const cacheDom = {} as any
   dom = cacheDom
   domTagNames.forEach(function (tag) {
-    cacheDom[tag] = function (args: any, isPortal: any) {
+    cacheDom[tag] = function (args: any) {
       const creater = NodeCreater.instance
       creater.type = tag
       creater.creater = domCreater
 
       creater.attrsEffect = args
-      creater.portal = isPortal
       return creater
     }
   })

@@ -49,8 +49,8 @@ type SvgNodeCreater<T extends SvgElementType> = NodeCreater<T, SvgElement<T>, Sv
 
 let svg: {
   readonly [key in SvgElementType]: {
-    (props?: SvgAttribute<key> | SvgAttributeSO<key>, isPortal?: boolean): SvgNodeCreater<key>
-    (fun: (v: SvgAttributeS<key>) => SvgAttributeS<key> | void, isPortal?: boolean): SvgNodeCreater<key>
+    (props?: SvgAttribute<key> | SvgAttributeSO<key>): SvgNodeCreater<key>
+    (fun: (v: SvgAttributeS<key>) => SvgAttributeS<key> | void): SvgNodeCreater<key>
   }
 }
 if ('Proxy' in globalThis) {
@@ -61,13 +61,12 @@ if ('Proxy' in globalThis) {
       if (oldV) {
         return oldV
       }
-      const newV = function (args: any, isPortal: any) {
+      const newV = function (args: any) {
         const creater = NodeCreater.instance
         creater.type = p
         creater.creater = svgCreater
 
         creater.attrsEffect = args
-        creater.portal = isPortal
         return creater
       }
       cacheSvgMap.set(p as any, newV)
@@ -78,13 +77,12 @@ if ('Proxy' in globalThis) {
   const cacheSvg = {} as any
   svg = cacheSvg
   svgTagNames.forEach(function (tag) {
-    cacheSvg[tag] = function (args: any, isPortal: any) {
+    cacheSvg[tag] = function (args: any) {
       const creater = NodeCreater.instance
       creater.type = tag
       creater.creater = svgCreater
 
       creater.attrsEffect = args
-      creater.portal = isPortal
       return creater
     }
   })

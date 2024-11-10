@@ -3,6 +3,7 @@ import { AskNextTimeWork, emptyArray, EmptyFun, VType } from "wy-helper";
 import { useAttrEffect, useMemo } from "better-react-helper";
 import { createNodeTempOps } from "./util";
 import { updateText, useMerge } from "./node";
+export { renderPortal } from './node'
 export * from './dom'
 export * from './svg'
 export * from './util'

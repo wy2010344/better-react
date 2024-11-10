@@ -34,6 +34,7 @@ import fade from "./motion-one/scroll/fade";
 import parallax from "./motion-one/scroll/parallax";
 import video from "./motion-one/scroll/video";
 import elementScroll from "./motion-one/scroll/elementScroll";
+import renderOps from "./renderOps";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(
@@ -52,7 +53,8 @@ export function createBr(app: HTMLElement) {
     // video,
     // elementScroll,
     // tsxSupport,
-    demo,
+    // demo,
+    renderOps,
     //这个是svg转化
     // xmlToBetter,
     // force3d,

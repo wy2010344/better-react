@@ -1,7 +1,7 @@
 import { dom, svg, renderContent } from "better-react-dom"
 import { renderArray, renderFragment, useAttrEffect, useImperativeHandle } from "better-react-helper"
 import { isSVG } from "wy-dom-helper"
-import { emptyArray, emptyFun, GetValue, SyncFun, trackSignal } from "wy-helper"
+import { arrayMapCreater, emptyArray, emptyFun, GetValue, SyncFun, trackSignal } from "wy-helper"
 /**
  
  使用方式:
@@ -131,7 +131,7 @@ function staticGetKey(v: Better.ChildrenElement, i: number) {
 function renderChildren(children: Better.ChildrenElement) {
   if (Array.isArray(children)) {
     if ((children as any)._queue_) {
-      renderArray(children, staticGetKey, renderChild)
+      renderArray(children, staticGetKey, renderChild, arrayMapCreater)
     } else {
       renderArray(children, dynamicGetKey, renderChild)
     }

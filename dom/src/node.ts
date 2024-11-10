@@ -1,7 +1,7 @@
 import { EffectEvent, hookAddResult, hookBeginTempOps, hookEndTempOps, hookEnvModel, MemoEvent, TempOps } from "better-react"
 import { createNodeTempOps, lazyOrInit, ListCreater, TOrQuote } from "./util"
 import { updateDom } from "wy-dom-helper"
-import { emptyArray, emptyFun, emptyObject, genTemplateStringS2, trackSignal, VType } from "wy-helper"
+import { emptyArray, EmptyFun, emptyFun, emptyObject, genTemplateStringS2, SetValue, trackSignal, VType } from "wy-helper"
 import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
 
 
@@ -103,13 +103,6 @@ export type Creater<K extends string, T extends Element, Attr extends {}> = (e: 
 export class NodeCreater<K extends string, T extends Element, Attr extends {}> {
   static instance = new NodeCreater<any, any, any>()
 
-  public portal?: boolean
-
-  setPortal(b: any) {
-    this.portal = b
-    return this
-  }
-
   public creater!: (e: MemoEvent<NodeHelper<T, Attr>, K>) => NodeHelper<T, Attr>
   public type!: K
 
@@ -122,7 +115,7 @@ export class NodeCreater<K extends string, T extends Element, Attr extends {}> {
   private useHelper() {
     const helper: NodeHelper<T, Attr> = useMemo(this.creater, this.type)
     const attrsEffect = this.attrsEffect
-    this.after(helper)
+    hookAddResult(helper.node)
     hookAttrEffect(() => {
       const attrs = lazyOrInit(attrsEffect)
       helper.updateAttrs(attrs)
@@ -167,11 +160,6 @@ export class NodeCreater<K extends string, T extends Element, Attr extends {}> {
     return this.render()
   }
 
-  private after(helper: NodeHelper<T, Attr>) {
-    if (!this.portal) {
-      hookAddResult(helper.node)
-    }
-  }
   render(fun: (node: T) => void = emptyFun): T {
     const helper = this.useHelper()
     /**
@@ -198,4 +186,19 @@ export class NodeCreater<K extends string, T extends Element, Attr extends {}> {
     })
     return out
   }
+}
+
+function createTempOps(e: MemoEvent<TempOps<ListCreater>, Node>) {
+  return createNodeTempOps(e.trigger, hookEnvModel().createChangeAtom)
+}
+/**
+ * 指定某节点上挂载
+ * @param fun 
+ * @param node 
+ */
+export function renderPortal(fun: SetValue<Node>, node: Node) {
+  const tempOps = useMemo(createTempOps, node)
+  const before = hookBeginTempOps(tempOps)
+  fun(node)
+  hookEndTempOps(before!)
 }

@@ -1,5 +1,7 @@
+import { alawaysFalse, EmptyFun, GetValue } from "wy-helper";
 import { Fiber, FiberEvent } from "./Fiber";
-import { hookAddResult, hookBeforeFiber, hookSetBeforeFiber, hookStateHoder, hookTempOps } from "./cache";
+import { hookAddResult, hookBeforeFiber, hookBeginTempOps, hookEndTempOps, hookSetBeforeFiber, hookStateHoder, hookTempOps } from "./cache";
+import { useBaseMemo } from "./memo";
 
 
 export function updateFunctionComponent(fiber: Fiber) {
@@ -58,4 +60,21 @@ export function renderFiber<T>(
 
   hookAddResult(currentFiber.subOps)
   return currentFiber
+}
+
+function createSubs() {
+  return hookTempOps().createSub()
+}
+
+/**
+ * 内部的成员都挂到某个subOps下,直到延迟的hookAddResult
+ * @param render 
+ * @returns 
+ */
+export function renderSubOps(render: EmptyFun) {
+  const subOps = useBaseMemo(alawaysFalse, createSubs, undefined)
+  const before = hookBeginTempOps(subOps)
+  render()
+  hookEndTempOps(before)
+  return subOps
 }

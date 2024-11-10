@@ -1,5 +1,5 @@
-import { renderForEach } from "better-react";
-import { arrayOrOneMapCreater } from "./mapKV";
+import { renderForEach, RMap } from "better-react";
+import { normalMapCreater } from "wy-helper";
 
 export type ReadArray<T> = {
   length: number
@@ -11,10 +11,11 @@ export function arrayHasValue(m: ReadArray<any>, i: number) {
 
 
 
-export function renderArray<T>(
+export function renderArray<T, K>(
   vs: ReadArray<T>,
-  getKey: (v: T, i: number) => any,
+  getKey: (v: T, i: number) => K,
   render: (v: T, i: number) => void,
+  creater: <F>() => RMap<K, F> = normalMapCreater
 ) {
   renderForEach(
     function (callback) {
@@ -24,7 +25,7 @@ export function renderArray<T>(
           render(v, i)
         })
       }
-    }, arrayOrOneMapCreater)
+    }, creater)
 }
 
 export function renderArrayToMap<T, K, V>(
@@ -96,9 +97,6 @@ export function renderIterableIteratorToMap<T, K, V>(
     }
   })
   return out
-}
-function getMapEntityKey<K, V>(kv: [K, V]) {
-  return kv[0]
 }
 
 export function renderMap<K, V>(

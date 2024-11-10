@@ -6,6 +6,7 @@ import { AbsTempOps } from "./tempOps"
 export { startTransition, flushSync } from './reconcile'
 export {
   renderFiber,
+  renderSubOps
 } from './fc'
 export {
   hookRequestReconcile,

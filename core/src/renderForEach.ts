@@ -24,9 +24,9 @@ export function normalMapCreater<K, V>() {
   return new Map<K, V>()
 }
 
-export function cloneMap<T>(
-  map: RMap<any, T[]>,
-  creater: RMapCreater<any, T[]>
+export function cloneMap<K, T>(
+  map: RMap<K, T[]>,
+  creater: RMapCreater<K, T[]>
 ) {
   const newMap = creater()
   map.forEach(function (v, k) {
@@ -39,9 +39,9 @@ export function cloneMap<T>(
  * @param forEach 
  * @param render 
  */
-export function renderForEach(
-  forEach: (callback: (key: any, callback: EmptyFun) => void) => void,
-  createMap: RMapCreater<any, StateHolder[]> = normalMapCreater
+export function renderForEach<K>(
+  forEach: (callback: (key: K, callback: EmptyFun) => void) => void,
+  createMap: RMapCreater<K, StateHolder[]> = normalMapCreater
 ) {
   const mapRef = useBaseMemo(alawaysFalse, createMapRef, createMap);
   const oldMap = cloneMap(mapRef.get(), createMap)

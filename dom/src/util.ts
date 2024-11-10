@@ -38,7 +38,7 @@ export function nodeAppendChild(pNode: Node, list: ListCreater, cache: StoreRef<
     }
   }
   for (const lastChild of lastChildren) {
-    if (!newChildren.includes(lastChild)) {
+    if (!newChildren.includes(lastChild) && lastChild.parentNode == pNode) {
       lastChild.parentNode?.removeChild(lastChild)
     }
   }
