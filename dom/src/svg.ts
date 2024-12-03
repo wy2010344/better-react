@@ -1,11 +1,12 @@
 import { MemoEvent } from "better-react"
 import { SvgAttribute, SvgAttributeS, SvgAttributeSO, SvgElement, SvgElementType } from "wy-dom-helper"
 import { useMemo } from "better-react-helper"
-import { emptyObject } from "wy-helper"
+import { createOrProxy } from "wy-helper"
 import { updateDomProps } from "./dom"
 import { getAttributeAlias } from "wy-dom-helper"
 import { svgTagNames } from "wy-dom-helper"
-import { Creater, NodeCreater, NodeHelper } from "./node"
+import { Creater, NodeCreater } from "./node"
+import { NodeHelper, updateDomAttrs } from "./helper"
 
 export function updateSVGProps(node: any, key: string, value?: any) {
   if (key == 'innerHTML' || key == 'textContent') {
@@ -35,59 +36,30 @@ export function useSvgNode<T extends SvgElementType>(
 
 
 
-
 export type SvgTextOrFunNode<T extends SvgElementType> = string | number | boolean | null | ((v: SvgElement<T>) => void)
 
-
+const updateAttr = updateDomAttrs(updateSVGProps)
 const svgCreater: Creater<any, any, any> = e => {
   return new NodeHelper(
     document.createElementNS("http://www.w3.org/2000/svg", e.trigger),
-    updateSVGProps)
+    updateAttr)
 }
 type SvgNodeCreater<T extends SvgElementType> = NodeCreater<T, SvgElement<T>, SvgAttribute<T> | SvgAttributeSO<T>>
 
 
-let svg: {
+export const svg: {
   readonly [key in SvgElementType]: {
     (props?: SvgAttribute<key> | SvgAttributeSO<key>): SvgNodeCreater<key>
     (fun: (v: SvgAttributeS<key>) => SvgAttributeS<key> | void): SvgNodeCreater<key>
   }
-}
-if ('Proxy' in globalThis) {
-  const cacheSvgMap = new Map<string, any>()
-  svg = new Proxy(emptyObject as any, {
-    get(_target, p, _receiver) {
-      const oldV = cacheSvgMap.get(p as any)
-      if (oldV) {
-        return oldV
-      }
-      const newV = function (args: any) {
-        const creater = NodeCreater.instance
-        creater.type = p
-        creater.creater = svgCreater
+} = createOrProxy(svgTagNames, tag => {
+  return function (args: any) {
 
-        creater.attrsEffect = args
-        return creater
-      }
-      cacheSvgMap.set(p as any, newV)
-      return newV
-    }
-  })
-} else {
-  const cacheSvg = {} as any
-  svg = cacheSvg
-  svgTagNames.forEach(function (tag) {
-    cacheSvg[tag] = function (args: any) {
-      const creater = NodeCreater.instance
-      creater.type = tag
-      creater.creater = svgCreater
+    const creater = NodeCreater.instance
+    creater.type = tag
+    creater.creater = svgCreater
 
-      creater.attrsEffect = args
-      return creater
-    }
-  })
-}
-
-export {
-  svg
-}
+    creater.attrsEffect = args
+    return creater
+  }
+})

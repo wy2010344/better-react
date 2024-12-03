@@ -1,8 +1,9 @@
 import { EffectEvent, hookAddResult, hookBeginTempOps, hookEndTempOps, hookEnvModel, MemoEvent, TempOps } from "better-react"
 import { createNodeTempOps, lazyOrInit, ListCreater, TOrQuote } from "./util"
 import { updateDom } from "wy-dom-helper"
-import { emptyArray, EmptyFun, emptyFun, emptyObject, genTemplateStringS2, SetValue, trackSignal, VType } from "wy-helper"
+import { emptyArray, emptyFun, emptyObject, genTemplateStringS2, SetValue, trackSignal, VType } from "wy-helper"
 import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
+import { NodeHelper } from "./helper"
 
 
 
@@ -44,58 +45,6 @@ export function useRenderHtml(node: {
   }, [node, value])
 }
 
-export function destroyOldDes(attrs: Record<string, any>) {
-  for (const key in attrs) {
-    const value = attrs[key]
-    if (value) {
-      if (key == 'style') {
-        if (typeof value == 'function') {
-          value()
-        } else {
-          for (const subKey in value) {
-            value[subKey]?.()
-          }
-        }
-      } else {
-        value()
-      }
-    }
-  }
-}
-
-export class NodeHelper<T extends Element, Attr extends {}> {
-  constructor(
-    public readonly node: T,
-    private readonly updateProps: (node: Node, key: string, value?: any) => void
-  ) { }
-  private tempOps!: TempOps<ListCreater>
-
-  private oldDes = {}
-
-  private oldAttrs: any = emptyObject as any
-  updateAttrs(attrs: Attr) {
-    this.oldDes = updateDom(this.node, this.updateProps, attrs, this.oldAttrs, this.oldDes)
-    this.oldAttrs = attrs
-  }
-  destroy() {
-    destroyOldDes(this.oldDes)
-  }
-
-  updateHTMLTrigger = (e: EffectEvent<undefined, string>) => {
-    this.node.innerHTML = e.trigger
-  }
-
-  updateTextTrigger = (e: EffectEvent<undefined, string>) => {
-    this.node.textContent = e.trigger
-  }
-
-  getTempOps() {
-    if (!this.tempOps) {
-      this.tempOps = createNodeTempOps(this.node, hookEnvModel().createChangeAtom)
-    }
-    return this.tempOps
-  }
-}
 
 
 export type Creater<K extends string, T extends Element, Attr extends {}> = (e: MemoEvent<NodeHelper<T, Attr>, K>) => NodeHelper<T, Attr>

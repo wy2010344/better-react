@@ -46,7 +46,7 @@ export function createBr(app: HTMLElement) {
     // useLayoutEffect,
     // renderFilter,
     // cssLayout,
-    // figmaClone,
+    figmaClone,
     // pinning,
     // fade,
     // parallax,
@@ -54,7 +54,7 @@ export function createBr(app: HTMLElement) {
     // elementScroll,
     // tsxSupport,
     // demo,
-    renderOps,
+    // renderOps,
     //这个是svg转化
     // xmlToBetter,
     // force3d,

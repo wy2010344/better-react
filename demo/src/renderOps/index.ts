@@ -8,9 +8,13 @@ export default function () {
 
   const [version, updateVersion] = useVersion()
   const ops = renderSubOps(() => {
+    const [version2, updateVersion2] = useVersion()
     dom.button({
-      onClick: updateVersion
-    }).renderText`abc`
+      onClick() {
+        updateVersion()
+        updateVersion2()
+      }
+    }).renderText`abc ${version}--${version2}`
   })
 
   dom.div({

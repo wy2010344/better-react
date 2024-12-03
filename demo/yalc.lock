@@ -12,12 +12,12 @@
       "replaced": "^1.2.6"
     },
     "better-react-dom": {
-      "signature": "41eeb28320867e12d9decda9720e5b55",
+      "signature": "334e8bbedd3ba00432c2a8cbf6f56329",
       "file": true,
       "replaced": "^1.2.6"
     },
     "wy-dom-helper": {
-      "signature": "4b3d9b68f04d6148fdc65cbf387a1a88",
+      "signature": "8a7db6b4dfbbc0cc3dbb0de8a77fdf75",
       "file": true,
       "replaced": "^0.1.0"
     },
@@ -27,7 +27,7 @@
       "replaced": "^1.2.4"
     },
     "wy-helper": {
-      "signature": "2ce6b3bfb86b575dd177cebd4e8cfa99",
+      "signature": "25037061a8f347f47779614c3a1dd85b",
       "file": true,
       "replaced": "^0.1.0"
     }
