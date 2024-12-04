@@ -7,7 +7,8 @@ import {
   useSignalSync,
   useVersion,
 } from "better-react-helper";
-import { Better } from "better-react-dom-helper";
+import { renderDom } from "better-react-dom";
+import { Better, Dom } from "better-react-dom-helper";
 import { Counter } from "./Counter";
 export default function index() {
   const [version, updateVersion] = useVersion();
@@ -22,8 +23,31 @@ export default function index() {
       clearInterval(inv);
     };
   }, emptyArray);
+
+  renderDom("div", {
+    className: "abc",
+    a_about: "ab",
+    css_abc: 99,
+    s_flex: 1,
+    aria_hidden: true,
+    data_abc: 88,
+  });
   const jsx = (
     <div>
+      <Dom.div
+        css-abc="abb"
+        a-about="abc"
+        a-accessKey="bbb"
+        a-dir="ltr"
+        s-display="flex"
+        aria-hidden
+        data-blue="abx"
+      >
+        {arrayCountCreateWith(10, (i) => {
+          return <Dom.input key={i} a-type="number" />;
+        })}
+        <Dom.br />
+      </Dom.div>
       index{useSignalSync(v.get)}sdd
       <span>abc</span>
       sdd

@@ -1,12 +1,15 @@
 import { hookAddResult, render } from "better-react";
-import { AskNextTimeWork, emptyArray, EmptyFun, VType } from "wy-helper";
-import { useAttrEffect, useMemo } from "better-react-helper";
+import { AskNextTimeWork, emptyArray, emptyFun, EmptyFun, genTemplateStringS1, SyncFun, VType } from "wy-helper";
+import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper";
 import { createNodeTempOps } from "./util";
-import { updateText, useMerge } from "./node";
-export { renderPortal } from './node'
+import { isSyncFun } from "wy-dom-helper";
+export { renderPortal } from './node';
+export type { NodeMemoCreater } from './node';
 export * from './dom'
 export * from './svg'
 export * from './util'
+export * from './renderNode'
+export { NodeHelper } from './helper'
 /***
  * 先声明dom节点再装入use配置参数,以实现dom节点复用?
  * 目前无需求.
@@ -47,34 +50,64 @@ export function useTextContent(node: Node, value: string) {
   }, [node, value])
 }
 
+function createFun() {
+  return new FunNode()
+}
+
+
+function updateContent(value: string, node: Text) {
+  node.textContent = value
+}
+class FunNode {
+  readonly node = creatTextContent()
+
+  public destroy = emptyFun
+  private lastContent: string | SyncFun<string> = ''
+  updateContent(content: string | SyncFun<string>) {
+    if (content == this.lastContent) {
+      return
+    }
+    this.lastContent = content
+    this.destroy()
+    if (isSyncFun(content)) {
+      this.destroy = content(updateContent, this.node)
+    } else {
+      this.destroy = emptyFun
+      updateContent(content, this.node)
+    }
+  }
+}
 /**
  * [FiberText.create, content]
  * @param content 
  * @returns 
  */
-export function renderContent(content: string, asPortal?: boolean) {
+export function renderTextContent(content: string | SyncFun<string>) {
+  const node = useMemo(createFun, emptyArray)
+  hookAttrEffect(() => {
+    node.updateContent(content)
+  })
+  useAttrEffect((e) => {
+    return () => {
+      node.destroy()
+    }
+  }, emptyArray)
+  hookAddResult(node.node)
+  return node.node
+}
+
+export function renderContent(content: string) {
   const node = useMemo(creatTextContent, emptyArray)
   useAttrEffect((e) => {
-    node.textContent = e.trigger
+    node.textContent = content
   }, content)
-  if (asPortal) {
-    return node
-  }
   hookAddResult(node)
   return node
 }
 
-function creatTextContent1() {
-  return document.createTextNode("")
+export function renderText(ts: TemplateStringsArray, ...vs: (number | string)[]) {
+  return renderContent(genTemplateStringS1(ts, vs))
 }
-export function renderText(ts: TemplateStringsArray, ...vs: VType[]) {
-  const node = useMemo(creatTextContent1, emptyArray)
-  useMerge(updateText, ts, vs, node)
-  hookAddResult(node)
-  return node
-}
-
-
 
 export type TextOrFunNode = string | boolean | number | null | EmptyFun
 

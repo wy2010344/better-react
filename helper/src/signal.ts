@@ -1,5 +1,5 @@
 
-import { Compare, emptyArray, genTemplateStringS2, GetValue, SetValue, simpleNotEqual, trackSignal, VType, SyncFun, createSignal, memo } from "wy-helper";
+import { Compare, emptyArray, genTemplateStringS2, GetValue, SetValue, simpleNotEqual, trackSignalMemo, VType, SyncFun, createSignal, memo } from "wy-helper";
 import { useConstDep, useConstFrom, useMemo } from "./useRef";
 import { useEffect } from "./useEffect";
 import { useRefValueFun } from "./useState";
@@ -33,7 +33,7 @@ export function useSignalState<T>(get: GetValue<T>, shouldChange: Compare<T> = s
   const [a, ref] = useRefValueFun(get)
   useEffect(() => {
     //有可能重复设置?
-    return trackSignal(get, v => {
+    return trackSignalMemo(get, v => {
       if (shouldChange(v, ref.get())) {
         ref.set(v)
       }
@@ -44,14 +44,14 @@ export function useSignalState<T>(get: GetValue<T>, shouldChange: Compare<T> = s
 
 export function useSignalEffect<T>(get: GetValue<T>, callback: SetValue<T>) {
   useEffect(() => {
-    return trackSignal(get, callback)
+    return trackSignalMemo(get, callback)
   }, emptyArray)
 }
 
 export function useSignalSyncDep<T>(get: GetValue<T>, dep?: any) {
   return useConstDep<SyncFun<T>>(function () {
     const [set, a, b, c] = arguments
-    return trackSignal(get, set, a, b, c)
+    return trackSignalMemo(get, set, a, b, c)
   }, dep)
 }
 export function useSignalSync<T>(get: GetValue<T>) {

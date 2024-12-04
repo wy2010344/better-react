@@ -22,6 +22,7 @@ declare namespace JSX {
   type IntrinsicElements = import("better-react-dom-helper").Better.IntrinsicElements
   type Element = import("better-react-dom-helper").Better.Element
   type ElementChildrenAttribute = import("better-react-dom-helper").Better.ElementChildrenAttribute
+  type IntrinsicAttributes = import("better-react-dom-helper").Better.IntrinsicAttributes
 }
 
 最终接受的JSX.Element:
@@ -52,11 +53,13 @@ export namespace Better {
     ref?: {
       current: K | null
     }
-    key?: any
     children?: ChildrenElement
   }
   export type ChildrenElement = BElement | ChildrenElement[];
 
+  export interface IntrinsicAttributes {
+    key?: any
+  }
   export type IntrinsicElements = {
     [key in import("wy-dom-helper").DomElementType]: import("wy-dom-helper").DomAttributeSO<key> & WithChildren<import("wy-dom-helper").DomElement<key>>
   } & {

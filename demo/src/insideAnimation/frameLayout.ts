@@ -1,13 +1,13 @@
-import { useAnimationFrameNumber } from "better-react-dom-helper";
+import { useAnimateFrame } from "better-react-dom-helper";
 import { renderTemplate } from "./template";
 import { useEffect, useValueCenter } from "better-react-helper";
-import { Point, easeFns, emptyArray, pointZero, syncMergeCenter } from "wy-helper";
+import { Point, easeFns, emptyArray, getTweenAnimationConfig, pointZero, syncMergeCenter, tweenAnimationConfig } from "wy-helper";
 
 export default function FrameLayout() {
 
   renderTemplate(function (getDiv: () => HTMLElement) {
-    const transX = useAnimationFrameNumber(0)
-    const transY = useAnimationFrameNumber(0)
+    const transX = useAnimateFrame(0)
+    const transY = useAnimateFrame(0)
     const styleStore = useValueCenter<Point>(pointZero)
     useEffect(() => {
       const d1 = syncMergeCenter(transX, function (v) {
@@ -38,14 +38,8 @@ export default function FrameLayout() {
       transX.changeTo(transX.get() + ps.x - lastPS.x)
       transY.changeTo(transY.get() + ps.y - lastPS.y)
 
-      transX.changeTo(0, {
-        duration: 1000,
-        fn: easeFns.inOut(easeFns.quad)
-      })
-      transY.changeTo(0, {
-        duration: 1000,
-        fn: easeFns.inOut(easeFns.quad)
-      })
+      transX.changeTo(0, getTweenAnimationConfig(1000, easeFns.inOut(easeFns.quad)))
+      transY.changeTo(0, getTweenAnimationConfig(1000, easeFns.inOut(easeFns.quad)))
     }
   })
 }

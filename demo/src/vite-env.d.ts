@@ -20,6 +20,7 @@ declare module "xml-reader" {
 }
 
 declare namespace JSX {
+  type IntrinsicAttributes = import("better-react-dom-helper").Better.IntrinsicAttributes
   type IntrinsicElements = import("better-react-dom-helper").Better.IntrinsicElements
   type Element = import("better-react-dom-helper").Better.Element
   type ElementChildrenAttribute = import("better-react-dom-helper").Better.ElementChildrenAttribute

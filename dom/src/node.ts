@@ -1,7 +1,6 @@
-import { EffectEvent, hookAddResult, hookBeginTempOps, hookEndTempOps, hookEnvModel, MemoEvent, TempOps } from "better-react"
+import { hookAddResult, hookBeginTempOps, hookEndTempOps, hookEnvModel, MemoEvent, TempOps } from "better-react"
 import { createNodeTempOps, lazyOrInit, ListCreater, TOrQuote } from "./util"
-import { updateDom } from "wy-dom-helper"
-import { emptyArray, emptyFun, emptyObject, genTemplateStringS2, SetValue, trackSignal, VType } from "wy-helper"
+import { emptyArray, emptyFun, emptyObject, genTemplateStringS1, genTemplateStringS2, GetValue, SetValue, SyncFun, VType } from "wy-helper"
 import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
 import { NodeHelper } from "./helper"
 
@@ -14,29 +13,6 @@ export function updateHTML(html: string, node: Element) {
   node.innerHTML = html
 }
 
-export function useMerge<A>(
-  update: (text: string, a: A) => void,
-  ts: TemplateStringsArray,
-  vs: VType[],
-  a: A
-): void
-export function useMerge(
-  update: (text: string) => void,
-  ts: TemplateStringsArray,
-  vs: VType[]
-): void
-export function useMerge(
-  update: any, ts: any, vs: any
-) {
-  const a = arguments[3]
-  useAttrEffect(() => {
-    return trackSignal(() => {
-      return genTemplateStringS2(ts, vs)
-    }, update, a)
-  }, vs)
-}
-
-
 export function useRenderHtml(node: {
   innerHTML: string
 }, value: string) {
@@ -47,7 +23,7 @@ export function useRenderHtml(node: {
 
 
 
-export type Creater<K extends string, T extends Element, Attr extends {}> = (e: MemoEvent<NodeHelper<T, Attr>, K>) => NodeHelper<T, Attr>
+export type NodeMemoCreater<K extends string, T extends Element, Attr extends {}> = (e: MemoEvent<NodeHelper<T, Attr>, K>) => NodeHelper<T, Attr>
 
 export class NodeCreater<K extends string, T extends Element, Attr extends {}> {
   static instance = new NodeCreater<any, any, any>()
@@ -77,24 +53,34 @@ export class NodeCreater<K extends string, T extends Element, Attr extends {}> {
     return helper
   }
 
-  renderHtml(ts: TemplateStringsArray, ...vs: VType[]) {
+  renderHtml(ts: TemplateStringsArray, ...vs: (string | number)[]) {
     const helper = this.useHelper()
-    useMerge(updateHTML, ts, vs, helper.node)
+    hookAttrEffect(() => {
+      const str = genTemplateStringS1(ts, vs)
+      helper.updateContent("html", str)
+    })
     return helper.node
   }
-  renderText(ts: TemplateStringsArray, ...vs: VType[]) {
+  renderText(ts: TemplateStringsArray, ...vs: (string | number)[]) {
     const helper = this.useHelper()
-    useMerge(updateText, ts, vs, helper.node)
+    hookAttrEffect(() => {
+      const str = genTemplateStringS1(ts, vs)
+      helper.updateContent("text", str)
+    })
     return helper.node
   }
-  renderInnerHTML(innerHTML = '') {
+  renderInnerHTML(innerHTML: string | SyncFun<string> = '') {
     const helper = this.useHelper()
-    useAttrEffect(helper.updateHTMLTrigger, innerHTML)
+    hookAttrEffect(() => {
+      helper.updateContent("html", innerHTML)
+    })
     return helper.node
   }
-  renderTextContent(textContent = '') {
+  renderTextContent(textContent: string | SyncFun<string> = '') {
     const helper = this.useHelper()
-    useAttrEffect(helper.updateTextTrigger, textContent)
+    hookAttrEffect(() => {
+      helper.updateContent("text", textContent)
+    })
     return helper.node
   }
 

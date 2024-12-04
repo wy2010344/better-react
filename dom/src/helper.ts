@@ -1,7 +1,7 @@
 import { EffectEvent, hookEnvModel, TempOps } from "better-react"
 import { createNodeTempOps, ListCreater } from "./util"
-import { emptyObject, objectDiffDeleteKey } from "wy-helper"
-import { Props, updateDom } from "wy-dom-helper"
+import { emptyFun, EmptyFun, emptyObject, GetValue, objectDiffDeleteKey, SyncFun } from "wy-helper"
+import { DomType, isSyncFun, mergeDomAttr, mergeXNodeAttr, Props } from "wy-dom-helper"
 
 export function destroyOldDes(attrs: Record<string, any>) {
   for (const key in attrs) {
@@ -22,11 +22,19 @@ export function destroyOldDes(attrs: Record<string, any>) {
   }
 }
 
+function updateContent(value: string, node: any, type: ContentType) {
+  if (type == 'html') {
+    node.innerHTML = value
+  } else {
+    node.textContent = value
+  }
+}
+type ContentType = "html" | "text"
 export class NodeHelper<T extends Element, Attr extends {}> {
   constructor(
     public readonly node: T,
-    private readonly updateAttr: (node: T, attrs: Attr, oldAttrs: Attr, oldDes: any) => any,
-    // private readonly updateProps: (node: Node, key: string, value?: any) => void
+    public readonly type: DomType,
+    private readonly updateAttr: (node: T, attrs: Attr, oldAttrs: Attr, oldDes: any, type: DomType) => any,
   ) { }
   private tempOps!: TempOps<ListCreater>
 
@@ -34,20 +42,32 @@ export class NodeHelper<T extends Element, Attr extends {}> {
 
   private oldAttrs: any = emptyObject as any
   updateAttrs(attrs: Attr) {
-    this.oldDes = this.updateAttr(this.node, attrs, this.oldAttrs, this.oldDes)
-    // this.oldDes = updateDom(this.node, this.updateProps, attrs, this.oldAttrs, this.oldDes)
+    this.oldDes = this.updateAttr(this.node, attrs, this.oldAttrs, this.oldDes, this.type)
     this.oldAttrs = attrs
   }
+
+
   destroy() {
     destroyOldDes(this.oldDes)
+    this.desContent()
   }
 
-  updateHTMLTrigger = (e: EffectEvent<undefined, string>) => {
-    this.node.innerHTML = e.trigger
-  }
-
-  updateTextTrigger = (e: EffectEvent<undefined, string>) => {
-    this.node.textContent = e.trigger
+  private desContent: EmptyFun = emptyFun
+  private lastType: ContentType = undefined!
+  private lastContent: string | SyncFun<string> = ''
+  updateContent(type: ContentType, content: string | SyncFun<string>) {
+    if (type == this.lastType && content == this.lastContent) {
+      return
+    }
+    this.lastType = type
+    this.lastContent = content
+    this.desContent()
+    if (isSyncFun(content)) {
+      this.desContent = content(updateContent, this.node, type)
+    } else {
+      this.desContent = emptyFun
+      updateContent(content, this.node, type)
+    }
   }
 
   getTempOps() {
@@ -55,22 +75,5 @@ export class NodeHelper<T extends Element, Attr extends {}> {
       this.tempOps = createNodeTempOps(this.node, hookEnvModel().createChangeAtom)
     }
     return this.tempOps
-  }
-}
-
-export function updateDomAttrs(
-  updateProps: (node: Node, key: string, value?: any) => void
-) {
-  return (node: Node, attrs: Props, oldAttrs: Props, oldDes: any) => {
-    return updateDom(node, updateProps, attrs, oldAttrs, oldDes)
-  }
-}
-
-
-export function updateFDomAttrs() {
-  return (node: Node, attrs: Props, oldAttrs: Props, oldDes: any) => {
-    objectDiffDeleteKey(oldAttrs, attrs, function (key) {
-
-    })
   }
 }

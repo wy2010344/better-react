@@ -17,3 +17,4 @@ export * from "./useUrlSearchParam"
 export * from './router'
 export * from './tsxSupport'
 export * from './signal'
+export * from './XDom'
