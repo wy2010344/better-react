@@ -1,5 +1,5 @@
 import { Fiber } from "./Fiber"
-import { EmptyFun, ManageValue, StoreRef, emptyFun, iterableToList, quote, removeEqual, run, storeRef } from "wy-helper"
+import { EmptyFun, ManageValue, StoreRef, emptyFun, iterableToList, numberSortAsc, quote, removeEqual, run, storeRef } from "wy-helper"
 import { hookAddEffect, hookStateHoder } from "./cache"
 import { StateHolder } from "./stateHolder"
 
@@ -100,7 +100,7 @@ export class EnvModel {
     // /******更新属性********************************************************/
     //执行所有effect
     const updateEffects = this.updateEffects
-    const keys = iterableToList(updateEffects.keys()).sort()
+    const keys = iterableToList(updateEffects.keys()).sort(numberSortAsc)
     for (const key of keys) {
       updateEffects.get(key)?.forEach(run)
     }
