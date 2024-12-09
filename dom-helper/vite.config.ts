@@ -15,8 +15,8 @@ export default defineConfig({
     minify: false,
     rollupOptions: {
       external: [
-        "wy-helper",
-        "wy-dom-helper",
+        /^wy-helper\//,
+        /^wy-dom-helper\//,
         "better-react",
         "better-react-dom",
         "better-react-helper"

@@ -13,10 +13,10 @@ export type TriggerTime = "onInput" | "onBlur"
  * @param key 
  * @param dep 
  */
-function useUpdateValue<K extends string>(
-  value: string,
+function useUpdateValue<K extends string, V>(
+  value: V,
   input: {
-    [key in K]: string | null
+    [key in K]: V | null
   },
   key: K,
   dep: any
@@ -154,10 +154,6 @@ export function renderInputBool({
       onInput?.(e)
     },
   }).render()
-  useAttrEffect(() => {
-    if (checked != input.checked) {
-      input.checked = checked
-    }
-  }, [checked, version])
+  useUpdateValue(checked, input, 'checked', version)
   return input
 }
