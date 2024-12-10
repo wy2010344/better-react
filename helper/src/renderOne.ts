@@ -1,12 +1,12 @@
-import { EmptyFun, FalseType, GetValue, emptyFun, quote } from "wy-helper";
+import { EmptyFun, FalseType, GetValue, SetValue, emptyFun, quote } from "wy-helper";
 import { renderArray, renderArrayToArray } from "./renderMap";
 import { getOpposite } from "./useVersion";
 
 
-export function renderOne(key: any, render: EmptyFun) {
+export function renderOne<T>(key: T, render: SetValue<T>) {
   renderArray([key], quote, render)
 }
-export function renderOneGet<V>(key: any, render: GetValue<V>) {
+export function renderOneGet<V, T = any>(key: T, render: (v: T) => V) {
   return renderArrayToArray([key], quote, render)[0]
 }
 

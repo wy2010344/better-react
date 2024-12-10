@@ -1,4 +1,4 @@
-import { createRoot, dom } from "better-react-dom";
+import { createRoot, dom, renderDom } from "better-react-dom";
 import insideAnimation from "./insideAnimation/frameLayout";
 // import iScroll from "./iScroll/index";
 // import { requestAnimationFrameScheduler } from "better-react-dom";
@@ -35,6 +35,8 @@ import parallax from "./motion-one/scroll/parallax";
 import video from "./motion-one/scroll/video";
 import elementScroll from "./motion-one/scroll/elementScroll";
 import renderOps from "./renderOps";
+import { useRenderCode } from "better-react-dom-helper";
+import { contentEditableText, initContentEditableModel } from "wy-dom-helper/contentEditable";
 export function createBr(app: HTMLElement) {
 
   const destroy = createRoot(
@@ -46,13 +48,14 @@ export function createBr(app: HTMLElement) {
     // useLayoutEffect,
     // renderFilter,
     // cssLayout,
-    // figmaClone,
+    figmaClone,
     // pinning,
     // fade,
     // parallax,
     // video,
     // elementScroll,
-    tsxSupport,
+    // tsxSupport,
+    // renderA1,
     // demo,
     // renderOps,
     //这个是svg转化
@@ -85,8 +88,31 @@ export function createBr(app: HTMLElement) {
 }
 
 
+function renderA1() {
+  renderCode1("a1")
+  renderCode1("b1")
+}
+function renderCode1(key: string) {
+  const { value, renderContentEditable } = useRenderCode(key, init => initContentEditableModel(localStorage.getItem(init) || ''))
 
-
+  renderContentEditable({
+    render(value, a) {
+      return renderDom("div", {
+        a_contentEditable: contentEditableText,
+        ...a,
+        onFocus() {
+          console.log("focus", value)
+        },
+        children() {
+          renderDom("span", {
+            childrenType: "text",
+            children: value
+          })
+        }
+      })
+    },
+  })
+}
 // function demo() {
 
 

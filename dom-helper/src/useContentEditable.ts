@@ -60,18 +60,11 @@ export function useContentEditable<T>(t: T, initFun: (t: T) => ContentEditableMo
     value,
     dispatch,
     renderContentEditable(args: {
-      readonly?: boolean
       noFocus?: boolean
-    }, renderContent: () => HTMLElement) {
-      renderOne(current.value, function () {
-        const div = renderContent()
-        useAttrEffect(() => {
-          if (args.readonly) {
-            div.contentEditable = 'false'
-          } else {
-            div.contentEditable = contentEditableText + ''
-          }
-        }, [args.readonly])
+      render(value: string): HTMLElement
+    }) {
+      renderOne(current.value, function (value) {
+        const div = args.render(value)
         useEffect(() => {
           if (args.noFocus) {
             return
