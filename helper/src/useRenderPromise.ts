@@ -1,4 +1,4 @@
-import { buildPromiseResultSetData, createRequestPromise, FalseType, GetPromiseRequest, RequestPromiseFinally, RequestPromiseResult, RequestVersionPromiseFinally, RequestVersionPromiseReulst } from "wy-helper";
+import { buildPromiseResultSetData, FalseType, GetPromiseRequest, GetValue, hookAbortSignalPromise, RequestPromiseFinally, RequestPromiseResult, RequestVersionPromiseFinally, RequestVersionPromiseReulst } from "wy-helper";
 import { useEffect } from "./useEffect";
 import { useEvent } from "./useEvent";
 import { useMemo, useRef } from "./useRef";
@@ -17,7 +17,13 @@ export function useRenderPromise<T>(
   })
   useEffect(() => {
     if (request) {
-      return createRequestPromise(request, onFinally)
+      const abortController = new AbortController()
+      hookAbortSignalPromise(abortController.signal, request, value => {
+        const v = value as RequestPromiseResult<T>
+        v.request = request
+        onFinally(v)
+      })
+      return abortController.abort.bind(abortController)
     }
   }, request)
 }
@@ -46,18 +52,15 @@ export function useRenderVersionPromise<T>(
 }
 
 
+
+
+
+
 export function useMemoPromiseState<T>(
   outRequest: () => GetPromiseRequest<T> | FalseType,
   deps: readonly any[]
 ) {
-  const request = useMemo(() => outRequest(), deps)
-  const [data, setData] = useState<RequestPromiseResult<T>>()
-  useRenderPromise(setData, request)
-  return {
-    data: request ? data : undefined,
-    loading: data?.request != request,
-    setData: buildPromiseResultSetData(setData),
-  }
+  return useMemoPromise({ body: outRequest }, deps)
 }
 
 export function useCallbackPromiseState<T>(
@@ -65,4 +68,45 @@ export function useCallbackPromiseState<T>(
   deps: readonly any[]
 ) {
   return useMemoPromiseState(() => outRequest, deps)
+}
+
+
+export function useMemoPromise<T>({
+  onSuccess,
+  onError,
+  body
+}: {
+  onSuccess?(value: T): void
+  onError?(err: any): void
+  body: GetValue<GetPromiseRequest<T> | FalseType>
+}, deps: readonly any[]) {
+  const request = useMemo(() => body(), deps)
+  const [data, setData] = useState<RequestPromiseResult<T>>()
+  useRenderPromise(function (data) {
+    if (data.type == 'error') {
+      onError?.(data.value)
+    } else {
+      onSuccess?.(data.value)
+    }
+    setData(data)
+  }, request)
+  return {
+    data: request ? data : undefined,
+    loading: data?.request != request,
+    setData: buildPromiseResultSetData(setData),
+  }
+}
+
+
+export function useCallbackPromise<T>(arg: {
+  onSuccess?(value: T): void
+  onError?(err: any): void
+  body: GetPromiseRequest<T>
+}, deps: readonly any[]) {
+  return useMemoPromise({
+    ...arg,
+    body() {
+      return arg.body
+    }
+  }, deps)
 }
