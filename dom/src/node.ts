@@ -114,7 +114,7 @@ export class NodeCreater<K extends string, T extends Element, Attr extends {}> {
   }
 
 
-  renderOut<O>(fun: (node: Node) => O): O {
+  renderOut<O>(fun: (node: T) => O): O {
     let out!: O
     this.render(node => {
       out = fun(node)

@@ -1,6 +1,6 @@
 
 import { StateHolder } from "./stateHolder";
-import { quote, simpleNotEqual, ValueCenter, valueCenterOf, arrayNotEqual, emptyArray } from "wy-helper";
+import { quote, simpleNotEqual, ValueCenter, valueCenterOf, emptyArray, arrayEqual, simpleEqual, arraySimpleNotEqual } from "wy-helper";
 import { hookStateHoder } from "./cache";
 import { useLevelEffect } from "./effect";
 
@@ -89,7 +89,7 @@ class ContextFactory<T> implements Context<T> {
       notSelf = provider[0].fiber != holder.fiber
     }
     const thisValue = getValue(context.get())
-    useLevelEffect(0, arrayNotEqual, function () {
+    useLevelEffect(0, arraySimpleNotEqual, function () {
       return [undefined, context.subscribe(function (value) {
         const m = getValue(value)
         if (notSelf && shouldUpdate(thisValue, m)) {
