@@ -46,45 +46,35 @@ export default function () {
     /**
      * 有时会阻塞,猜测是动画不能顺利结束导导导导致的
      */
-    const { setInitScrollHeight,
-      wrapperAdd, trans: transY,
+    const {
+      setInitScrollHeight,
+      containerAdd,
+      trans: transY,
       moveUpdate,
       endMove
     } = useMemo(() => {
-      return recicleScrollViewView(flushSync, n => {
-        dispatchIndex({
-          type: "add",
-          value: n
-        })
+      return recicleScrollViewView((n, immediately) => {
+        if (immediately) {
+          flushSync(() => {
+            dispatchIndex({
+              type: "add",
+              value: n
+            })
+          })
+        } else {
+          dispatchIndex({
+            type: "add",
+            value: n
+          })
+        }
       }, 26, animateFrame(0))
     }, emptyArray)
 
-    const { velocity } = useMemo(() => {
-      return {
-        velocity: cacheVelocity()
-      }
-    }, emptyArray)
-    const lastPoint = useAtom<PagePoint | undefined>(undefined)
     useHookEffect((e) => {
       const div = wrapperRef.get()!
       const maxScrollheight = div.scrollHeight - div.clientHeight
       const ish = -(maxScrollheight / 2)
       setInitScrollHeight(ish)
-      addEffectDestroy(subscribeDragMove(function (m, e) {
-        const lp = lastPoint.get()
-        if (lp) {
-          if (m) {
-            velocity.append(e.timeStamp, m.pageY)
-            const diffY = m.pageY - lp.pageY
-            moveUpdate(diffY)
-          } else {
-            endMove(fc.getFromVelocity(velocity.get()).maxDistance, distance => {
-              return fc.getFromDistance(distance).animationConfig()
-            })
-          }
-          lastPoint.set(m)
-        }
-      }))
       const contaier = containerRef.get()!
       addEffectDestroy(syncMergeCenter(transY, function (v) {
         contaier.style.transform = `translateY(${v}px)`
@@ -100,7 +90,7 @@ export default function () {
     }).render(function () {
       dom.button({
         onClick() {
-          wrapperAdd(-5, fcGet)
+          containerAdd(-5, fcGet)
         }
       }).renderText`-`
       dom.div().renderText`index${index}value${list[index]}`
@@ -112,7 +102,7 @@ export default function () {
            * 也许不应该用spring动画,应该用比较平滑一点的动画
            * 应该使用摩擦运动的匀减速动画,和拖拽一致
            */
-          wrapperAdd(5, fcGet)
+          containerAdd(5, fcGet)
         }
 
       }).renderText`+`
@@ -134,8 +124,21 @@ export default function () {
         overflow:hidden;
       `,
         ...(dragInit((m, e) => {
-          velocity.reset(e.timeStamp, m.pageY)
-          lastPoint.set(m)
+          const velocity = cacheVelocity()
+          let lastPoint = m
+          const destroy = subscribeDragMove(function (m, e) {
+            if (m) {
+              velocity.append(e.timeStamp, m.pageY)
+              const diffY = m.pageY - lastPoint.pageY
+              moveUpdate(diffY)
+              lastPoint = m
+            } else {
+              endMove(fc.getFromVelocity(velocity.get()).maxDistance, distance => {
+                return fc.getFromDistance(distance).animationConfig()
+              })
+              destroy()
+            }
+          })
         })),
       }).render(function () {
         const container = dom.div().render(function () {

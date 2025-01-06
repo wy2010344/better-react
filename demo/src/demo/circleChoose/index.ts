@@ -1,7 +1,7 @@
 import { dom, svg } from "better-react-dom";
 import { renderPage } from "../util/page";
 import { createUseReducer, renderMax, useAtom, useEffect } from "better-react-helper";
-import { emptyArray, quote } from "wy-helper";
+import { emptyArray, PagePoint, quote } from "wy-helper";
 import { CSSProperties, dragInit, subscribeDragMove } from "wy-dom-helper";
 import { cn } from "@/utils";
 
@@ -58,48 +58,43 @@ export default function () {
         return angle
       }
 
-      const lastPoint = useAtom<{
-        type: "start" | "end" | "center"
-        lastAngle: number
-      } | undefined>(undefined)
+      // const lastPoint = useAtom<{
+      //   type: "start" | "end" | "center"
+      //   lastAngle: number
+      // } | undefined>(undefined)
 
-      useEffect(e => {
-        return subscribeDragMove((p, e) => {
-          const le = lastPoint.get()
-          if (le) {
-            if (p) {
-              const angle = getPointerAngle(p)
-              const diffAngle = angle - le.lastAngle
-              if (le.type == 'center') {
-                setStart({
-                  type: "add",
-                  value: diffAngle
-                })
-                setEnd({
-                  type: "add",
-                  value: diffAngle
-                })
-              } else if (le.type == 'start') {
-                setStart({
-                  type: "add",
-                  value: diffAngle
-                })
-              } else if (le.type == 'end') {
-                setEnd({
-                  type: "add",
-                  value: diffAngle
-                })
-              }
-              lastPoint.set({
-                type: le.type,
-                lastAngle: angle
+      function startDrag(e: PagePoint, type: "start" | "end" | "center") {
+        let lastAngle = getPointerAngle(e)
+        const destroy = subscribeDragMove((p, e) => {
+          if (p) {
+            const angle = getPointerAngle(p)
+            const diffAngle = angle - lastAngle
+            if (type == 'center') {
+              setStart({
+                type: "add",
+                value: diffAngle
               })
-            } else {
-              lastPoint.set(undefined)
+              setEnd({
+                type: "add",
+                value: diffAngle
+              })
+            } else if (type == 'start') {
+              setStart({
+                type: "add",
+                value: diffAngle
+              })
+            } else if (type == 'end') {
+              setEnd({
+                type: "add",
+                value: diffAngle
+              })
             }
+            lastAngle = angle
+          } else {
+            destroy()
           }
         })
-      }, emptyArray)
+      }
       const s = svg.svg({
         className: "absolute inset-0",
         viewBox: "0 0 100 100"
@@ -122,10 +117,7 @@ export default function () {
           strokeDasharray: partWidth + " " + (allWidth - partWidth),
 
           ...dragInit(e => {
-            lastPoint.set({
-              type: "center",
-              lastAngle: getPointerAngle(e)
-            })
+            startDrag(e, 'center')
           })
         }).render()
       })
@@ -141,10 +133,7 @@ export default function () {
             transform: `translate(${r}px) rotate(${start - 90}deg)`
           },
           ...dragInit(e => {
-            lastPoint.set({
-              type: "start",
-              lastAngle: getPointerAngle(e)
-            })
+            startDrag(e, 'start')
           })
         }).render()
         dom.div({
@@ -156,10 +145,7 @@ export default function () {
             transform: `translate(${r}px) rotate(${end - 90}deg)`
           },
           ...dragInit(e => {
-            lastPoint.set({
-              type: "end",
-              lastAngle: getPointerAngle(e)
-            })
+            startDrag(e, 'end')
           })
         }).render()
       })

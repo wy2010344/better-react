@@ -3,7 +3,7 @@ import { dom } from "better-react-dom"
 import { addEffectDestroy, createUseReducer, renderArray, useAtom, useChange, useEffect, useHookEffect, useTimeoutAnimateValue } from "better-react-helper"
 import { Point, arrayMove, emptyArray, pointEqual, pointZero, syncMergeCenter } from "wy-helper"
 
-import { requesetBatchAnimationForceFlow, subscribeDragMove, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
+import { moveEdgeScroll, requesetBatchAnimationForceFlow, subscribeDragMove, subscribeEventListener, subscribeMove, subscribeScroller, subscribeScrollerAll } from "wy-dom-helper"
 import { useReorder } from 'better-react-dom-helper'
 import { useStyle } from "better-react-dom-helper"
 import renderTimeType, { setTimeType } from "../util/timeType"
@@ -20,7 +20,7 @@ export default function () {
     const timetype = renderTimeType()
     const [orderList, dispatch] = useReduceList(dataList)
     const [onMove, setOnMove] = useChange<{ index: number }>()
-    const reOrder = useReorder(
+    const useChild = useReorder(
       orderList,
       v => v.index,
       function (itemKey, targetKey) {
@@ -39,50 +39,11 @@ export default function () {
       overflow:auto;
       background:white;
       user-select:${onMove ? 'none' : 'unset'};
-      `,
-      onScroll(event) {
-        reOrder.scroller.onScroll(container)
-      },
+      `
     }).render(function () {
-      const point = useAtom<Point | undefined>(undefined)
-      useHookEffect(() => {
-        addEffectDestroy(subscribeEdgeScroll(() => {
-          const info = point.get()
-          if (info) {
-            return {
-              point: info.y,
-              direction: "y",
-              container,
-              config: {
-                padding: 10,
-                config: true
-              }
-            }
-          }
-        }))
-      })
-
-
-      useHookEffect(() => {
-        addEffectDestroy(subscribeDragMove(e => {
-          if (e) {
-            const p = {
-              x: e.pageX,
-              y: e.pageY
-            }
-            if (reOrder.move(p)) {
-              point.set(p)
-            }
-          } else {
-            if (reOrder.end()) {
-              point.set(undefined)
-            }
-          }
-        }))
-      }, emptyArray)
       renderArray(orderList, v => v.index, function (row, index) {
         const transY = useTimeoutAnimateValue<Point, string>(pointZero, pointEqual)
-        const reOrderChild = reOrder.useChild(
+        const reOrderChild = useChild(
           row.index,
           index,
           () => div,
@@ -134,8 +95,7 @@ export default function () {
         const div = renderRow(row, e => {
           // transX.changeTo(e.pageY - cb.get()!.y.min)
           setOnMove(row)
-          reOrder.scroller.reset(container)
-          reOrderChild({
+          const mv = reOrderChild({
             x: e.pageX,
             y: e.pageY
           }, function () {
@@ -147,6 +107,30 @@ export default function () {
                 setOnMove(undefined)
               }
             })
+          })
+          const destroyScroll = subscribeScrollerAll(container, mv.setMoveDiff)
+          const mes = moveEdgeScroll(e.pageY, {
+            direction: "y",
+            container,
+            config: {
+              padding: 10,
+              config: true
+            }
+          })
+          const endMove = subscribeEventListener(document, 'pointermove', e => {
+            mv.move({
+              x: e.pageX,
+              y: e.pageY
+            })
+            mes.changePoint(e.pageY)
+          })
+
+          const endUp = subscribeEventListener(document, 'pointerup', e => {
+            mv.end()
+            endMove()
+            endUp()
+            destroyScroll()
+            mes.destroy()
           })
         })
         /**

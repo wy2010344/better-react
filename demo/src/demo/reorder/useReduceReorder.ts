@@ -1,6 +1,6 @@
 
 import { addEffectDestroy, useAtom, useEffect, useHookEffect } from "better-react-helper"
-import { PagePoint, subscribeDragMove, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper"
+import { moveEdgeScroll, PagePoint, subscribeDragMove, subscribeMove } from "wy-dom-helper"
 import { ReorderAction, ReorderModel, ReorderElement, easeFns, messageChannelCallback, getTweenAnimationConfig } from "wy-helper"
 
 
@@ -41,24 +41,18 @@ export function useReducerReorder<T, K>(
       getElements: () => ReorderElement<K, HTMLElement>[]
     ) {
       useHookEffect(() => {
-        addEffectDestroy(subscribeEdgeScroll(() => {
-          const info = movePoint.get()
-          if (info) {
-            return {
-              point: info.pageY,
-              direction: "y",
-              container,
-              config: {
-                padding: 10,
-                config: true
-              }
-            }
-          }
-        }))
         //不依赖,每次重新注册
         addEffectDestroy(subscribeDragMove(function (e) {
           if (movePoint.get()) {
             if (e) {
+              moveEdgeScroll(e.pageY, {
+                direction: "y",
+                container,
+                config: {
+                  padding: 10,
+                  config: true
+                }
+              })
               movePoint.set(e)
               dispatch({
                 type: "didMove",

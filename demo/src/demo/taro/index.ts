@@ -64,11 +64,8 @@ export default function () {
       }
     }, [list])
     renderArray(list, quote, function (row, i) {
-      const lastPoint = useAtom<PagePoint | undefined>(undefined)
-      const { velocityX, velocityY, x, y, rot, scale } = useMemo(() => {
+      const { x, y, rot, scale } = useMemo(() => {
         return {
-          velocityX: cacheVelocity(),
-          velocityY: cacheVelocity(),
           x: animateFrame(0),
           y: animateFrame(-1000),
           rot: animateFrame(0),
@@ -85,9 +82,49 @@ export default function () {
           wrapper.style.transform = `translate3d(${x}px,${y}px,0)`
           inner.style.transform = `perspective(1500px) rotateX(30deg) rotateY(${r / 10}deg) rotateZ(${r}deg) scale(${s})`
         }))
-        addEffectDestroy(subscribeDragMove(function (p, e) {
-          const lastP = lastPoint.get()
-          if (lastP) {
+      }, emptyArray)
+      // useEffect(() => {
+      //   const gesture = new DragGesture(wrapper, ({ velocity, timeStamp }) => {
+      //     if (!lastPoint.get()) {
+      //       return
+      //     }
+      //     const vx = velocity[0]
+      //     const vy = velocity[1]
+      //     const v = Math.sqrt(vx * vx + vy * vy)
+      //     setVelocity({
+      //       type: "append",
+      //       key: "red",
+      //       value: {
+      //         x: timeStamp,
+      //         y: v
+      //       }
+      //     })
+
+      //   })
+      //   return () => {
+      //     gesture.destroy()
+      //   }
+      // }, emptyArray)
+      const { wrapper, inner } = dom.div({
+        style: `
+        position:absolute;
+        inset:0;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        `,
+        ...dragInit((p, e) => {
+          setVelocity({ type: "clear" })
+          let lastPoint = p
+
+          const velocityX = cacheVelocity()
+          const velocityY = cacheVelocity()
+          velocityX.reset(e.timeStamp, p.pageX)
+          velocityY.reset(e.timeStamp, p.pageY)
+
+          const destroy = subscribeDragMove(function (p, e) {
+            const lastP = lastPoint
+
             if (p) {
               velocityX.append(e.timeStamp, p.pageX)
               velocityY.append(e.timeStamp, p.pageY)
@@ -138,51 +175,12 @@ export default function () {
               }
               scale.changeTo(1, ease)
             }
-
-
             if (p) {
-              lastPoint.set(p)
+              lastPoint = p
             } else {
-              lastPoint.set(undefined)
+              destroy()
             }
-          }
-        }))
-      }, emptyArray)
-      // useEffect(() => {
-      //   const gesture = new DragGesture(wrapper, ({ velocity, timeStamp }) => {
-      //     if (!lastPoint.get()) {
-      //       return
-      //     }
-      //     const vx = velocity[0]
-      //     const vy = velocity[1]
-      //     const v = Math.sqrt(vx * vx + vy * vy)
-      //     setVelocity({
-      //       type: "append",
-      //       key: "red",
-      //       value: {
-      //         x: timeStamp,
-      //         y: v
-      //       }
-      //     })
-
-      //   })
-      //   return () => {
-      //     gesture.destroy()
-      //   }
-      // }, emptyArray)
-      const { wrapper, inner } = dom.div({
-        style: `
-        position:absolute;
-        inset:0;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        `,
-        ...dragInit((p, e) => {
-          setVelocity({ type: "clear" })
-          lastPoint.set(p)
-          velocityX.reset(e.timeStamp, p.pageX)
-          velocityY.reset(e.timeStamp, p.pageY)
+          })
         })
       }).renderOut((wrapper) => {
         const inner = dom.div({

@@ -2,7 +2,7 @@ import { dom } from "better-react-dom";
 import { renderPage } from "../util/page";
 import { dataList, renderRow, useReduceList } from "./util/share";
 import { addEffectDestroy, effectSetPromise, renderArray, renderArrayToArray, renderArrayToMap, useEffect, useHookEffect, useMemo, useRef, useValueCenter } from "better-react-helper";
-import { animateFrame, getChangeOnScroll, PagePoint, subscribeDragMove, subscribeEdgeScroll, subscribeMove } from "wy-dom-helper";
+import { animateFrame, moveEdgeScroll, PagePoint, subscribeDragMove, subscribeMove } from "wy-dom-helper";
 import { AnimateFrameValue, arrayEqual, arrayMove, arrayNotEqualOrOne, buildEndToMove, easeFns, emptyArray, getSpringBaseAnimationConfig, getTweenAnimationConfig, rangeBetweenLeft, rangeBetweenRight, reorderCheckTarget, simpleEqual, syncMergeCenter } from "wy-helper";
 import { number } from "zod";
 
@@ -58,32 +58,12 @@ export default function () {
       onTouchMove(e) {
         e.preventDefault()
       },
-      onScroll(event) {
-        scroller.onScroll(container)
-      },
     }).render((container) => {
       useHookEffect(() => {
         function getHeight(n: InfoList) {
           return n.div.clientHeight + 2
         }
         let gap = 10
-
-        addEffectDestroy(subscribeEdgeScroll(() => {
-          const info = moveInfo.get()
-          if (info && !info.finished) {
-            const point = info.lastPoint
-            return {
-              point: point.pageY,
-              direction: "y",
-              container,
-              config: {
-                padding: 10,
-                config: true
-              }
-            }
-          }
-        }))
-
         const [didDrag, didEnd] = buildEndToMove({
           gap,
           getHeight,
@@ -98,6 +78,14 @@ export default function () {
           const info = moveInfo.get()
           if (info && !info.finished) {
             if (e) {
+              moveEdgeScroll(e.pageY, {
+                direction: "y",
+                container,
+                config: {
+                  padding: 10,
+                  config: true
+                }
+              })
               const diff = e.pageY - info.lastPoint.pageY
               info.transY.changeTo(info.transY.get() + diff)
               const idx = outList.findIndex(v => v.key == info.key)
