@@ -6,7 +6,7 @@ import * as d3 from "d3";
 import { emptyArray, emptyFun } from "wy-helper";
 import data from './graph.json'
 import { hookMakeDirtyAndRequestUpdate } from "better-react";
-import { PagePoint, dragInit, initDrag, subscribeDragMove } from "wy-dom-helper";
+import { PagePoint, dragInit, initDrag, subscribeDragMove, subscribeRequestAnimationFrame } from "wy-dom-helper";
 import forceSimulation from './lib/simulation'
 import forceX from './lib/x'
 import forceManyBody from './lib2/manyBody'
@@ -19,7 +19,7 @@ const height = 800
 
 type NType = typeof data.nodes[number]
 
-let alphaMin = 0.001
+const alphaMin = 0.001
 export default function () {
 
   const svg = s.svg({
@@ -68,7 +68,7 @@ export default function () {
         node: ForceNode<NType>
       }) {
         if (action.type == "tick") {
-          return [tickForce(model)]
+          return [tickForce(model, true)]
         } else if (action.type == "drag") {
           const nodes = model.nodes.map(v => {
             if (v.index == action.node.index) {
@@ -141,8 +141,10 @@ export default function () {
       if (alpha < alphaMin) {
         return
       }
-      dispatch({
-        type: "tick"
+      requestAnimationFrame(() => {
+        dispatch({
+          type: "tick"
+        })
       })
     }, [alpha])
 
@@ -161,16 +163,26 @@ export default function () {
       })
     })
 
+    console.log("render...", alpha)
     renderArray(nodes, v => v.value.id, function (node) {
 
-      const onDrag = useAtom(false)
       s.g({
         stroke: "#fff",
         strokeWidth: 1.5,
       }).render(() => {
-        useEffect(() => {
-          return subscribeDragMove(e => {
-            if (onDrag.get()) {
+        s.circle({
+          r: 5,
+          cx: node.x.d,
+          cy: node.y.d,
+          fill: color(node.value.group),
+          ...(dragInit(e => {
+            dispatch({
+              type: "drag",
+              start: true,
+              node,
+              e
+            })
+            const destroy = subscribeDragMove(e => {
               if (e) {
                 dispatch({
                   type: "drag",
@@ -178,27 +190,12 @@ export default function () {
                   e
                 })
               } else {
-                onDrag.set(false)
                 dispatch({
                   type: "endDrag",
                   node
                 })
+                destroy()
               }
-            }
-          })
-        }, emptyArray)
-        s.circle({
-          r: 5,
-          cx: node.x.d,
-          cy: node.y.d,
-          fill: color(node.value.group),
-          ...(dragInit(e => {
-            onDrag.set(true)
-            dispatch({
-              type: "drag",
-              start: true,
-              node,
-              e
             })
           }))
         }).render()

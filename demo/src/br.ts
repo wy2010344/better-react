@@ -23,7 +23,7 @@ import useLayoutEffect from "./useLayoutEffect";
 import mySpringAnimation from "./bezier-preview/mySpringAnimation";
 import mySpring1 from "./bezier-preview/mySpring1";
 import pipline from "./pipline";
-import force3d from "./d3-learn/force/collide";
+import force3d from "./d3-learn/force/link";
 import figmaClone from "./figmaClone";
 import xmlToBetter from "./xmlToBetter";
 import { renderTodoList } from "./开发AnimatePereference/renderTodoList";
@@ -44,7 +44,7 @@ export function createBr(app: HTMLElement) {
     // newTokenize,
     // dslKanren,
     // renderPages,
-    demo,
+    // demo,
     // useLayoutEffect,
     // renderFilter,
     // cssLayout,
@@ -56,7 +56,7 @@ export function createBr(app: HTMLElement) {
     // elementScroll,
     // tsxSupport,
     // renderA1,
-    // demo,
+    demo,
     // renderOps,
     //这个是svg转化
     // xmlToBetter,

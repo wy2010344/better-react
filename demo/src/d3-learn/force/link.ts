@@ -8,7 +8,6 @@ import link from "./lib2/link";
 import { PagePoint, subscribeDragInit, subscribeDragMove, subscribeRequestAnimationFrame } from "wy-dom-helper";
 
 export default function () {
-
   const canvas = dom.canvas({
     width: 800,
     height: 800
@@ -95,30 +94,26 @@ export default function () {
       ticked()
     }))
 
-    let dragNode: ForceNode<number> | undefined = undefined
 
     function updateDrag(dragNode: ForceNode<number>, e: PagePoint) {
-
       dragNode.x.f = e.clientX - width / 2
       dragNode.y.f = e.clientY - height / 2
     }
     addEffectDestroy(subscribeDragInit(canvas, e => {
-      dragNode = findNode(model.nodes, 40, e.clientX - width / 2, e.clientY - height / 2)
+      const dragNode = findNode(model.nodes, 40, e.clientX - width / 2, e.clientY - height / 2)
       if (dragNode) {
         model.alphaTarget = 0.3
         updateDrag(dragNode, e)
-      }
-    }))
-    addEffectDestroy(subscribeDragMove(e => {
-      if (dragNode) {
-        if (e) {
-          updateDrag(dragNode, e)
-        } else {
-          model.alphaTarget = 0
-          dragNode.x.f = undefined
-          dragNode.y.f = undefined
-          dragNode = undefined
-        }
+        const destroy = subscribeDragMove(e => {
+          if (e) {
+            updateDrag(dragNode, e)
+          } else {
+            model.alphaTarget = 0
+            dragNode.x.f = undefined
+            dragNode.y.f = undefined
+            destroy()
+          }
+        })
       }
     }))
   }, emptyArray)

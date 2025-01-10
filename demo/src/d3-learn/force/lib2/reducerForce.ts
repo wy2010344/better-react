@@ -42,7 +42,7 @@ export type ForceLink<V, T> = {
   target: ForceNode<T>
   value: V
 }
-var initialRadius = 10,
+const initialRadius = 10,
   initialAngleRoll = Math.PI * (3 - Math.sqrt(5)), // Golden ratio angle
   initialAngleYaw = Math.PI * 20 / (9 + Math.sqrt(221)); // Markov irrational number
 
@@ -51,7 +51,13 @@ const emptyDir: ForceDir = {
   d: 0,
   v: 0
 }
-
+function initForceNode(d: number, v: number = 0, f?: number): ForceDir {
+  return {
+    d,
+    v,
+    f
+  }
+}
 export function initToNode<T>(node: T, nDim: DIMType, i: number): ForceNode<T> {
   var radius = initialRadius * (nDim > 2 ? Math.cbrt(0.5 + i) : (nDim > 1 ? Math.sqrt(0.5 + i) : i)),
     rollAngle = i * initialAngleRoll,
@@ -60,10 +66,7 @@ export function initToNode<T>(node: T, nDim: DIMType, i: number): ForceNode<T> {
     return {
       index: i,
       value: node,
-      x: {
-        d: radius,
-        v: 0
-      },
+      x: initForceNode(radius),
       y: emptyDir,
       z: emptyDir
     }
@@ -71,32 +74,17 @@ export function initToNode<T>(node: T, nDim: DIMType, i: number): ForceNode<T> {
     return {
       index: i,
       value: node,
-      x: {
-        d: radius * Math.cos(rollAngle),
-        v: 0
-      },
-      y: {
-        d: radius * Math.sin(rollAngle),
-        v: 0
-      },
+      x: initForceNode(radius * Math.cos(rollAngle)),
+      y: initForceNode(radius * Math.sin(rollAngle)),
       z: emptyDir
     }
   } else if (nDim == 3) {
     return {
       index: i,
       value: node,
-      x: {
-        d: radius * Math.sin(rollAngle) * Math.cos(yawAngle),
-        v: 0
-      },
-      y: {
-        d: radius * Math.cos(rollAngle),
-        v: 0
-      },
-      z: {
-        d: radius * Math.sin(rollAngle) * Math.sin(yawAngle),
-        v: 0
-      }
+      x: initForceNode(radius * Math.sin(rollAngle) * Math.cos(yawAngle)),
+      y: initForceNode(radius * Math.cos(rollAngle)),
+      z: initForceNode(radius * Math.sin(rollAngle) * Math.sin(yawAngle)),
     }
   } else {
     throw new Error("尚不支持")
