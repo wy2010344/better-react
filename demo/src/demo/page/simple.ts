@@ -46,30 +46,7 @@ export default function () {
       useEffect(() => {
         transX.slientChange(0)
       }, [index])
-      const { velocityX } = useMemo(() => {
-        return {
-          velocityX: cacheVelocity()
-        }
-      }, emptyArray)
-      const moveInfo = useAtom<PointerEvent | undefined>(undefined)
       useHookEffect(() => {
-        addEffectDestroy(subscribeMove(function (e, end) {
-          const lastE = moveInfo.get()
-          if (lastE) {
-            const vx = velocityX.append(e.timeStamp, e.pageX)
-            const diff = e.pageX - lastE.pageX
-            transX.changeTo(transX.get() + diff)
-            if (end) {
-              const width = wrapper.clientWidth
-              const direction = scrollJudgeDirection(
-                diff,
-                transX.get(),
-                width)
-              updateDirection(direction, vx)
-            }
-            moveInfo.set(end ? undefined : e)
-          }
-        }))
         addEffectDestroy(syncMergeCenter(transX, x => {
           wrapper.style.transform = `translateX(${x}px)`;
         }))
@@ -86,8 +63,25 @@ export default function () {
         height:100%;
         `,
         onPointerDown(e) {
-          moveInfo.set(e)
+          let lastE: PointerEvent = e
+          const velocityX = cacheVelocity()
           velocityX.reset(e.timeStamp, e.pageX)
+
+          const destroy = subscribeMove(function (e, end) {
+            const vx = velocityX.append(e.timeStamp, e.pageX)
+            const diff = e.pageX - lastE.pageX
+            transX.changeTo(transX.get() + diff)
+            lastE = e
+            if (end) {
+              const width = wrapper.clientWidth
+              const direction = scrollJudgeDirection(
+                diff,
+                transX.get(),
+                width)
+              updateDirection(direction, vx)
+              destroy()
+            }
+          })
         },
       }).render(() => {
         renderArray([index - 1, index, index + 1], quote, function (row, i) {

@@ -1,13 +1,7 @@
 
-import { addEffectDestroy, renderArray, useAtom, useChange, useChangeFun, useEffect, useEvent, useHookEffect, useMemo } from "better-react-helper";
-import { Route, locationMatch } from "../util/createRouter";
-import { renderPage } from "../util/page";
-import { cacheVelocity, emptyArray, EmptyFun, getSpringBaseAnimationConfig, PointKey, quote, run, scrollJudgeDirection, SetValue, syncMergeCenter, syncMergeCenterArray, trueAndS, YearMonthVirtualView } from "wy-helper";
-import { idbOut } from "./idbUtil";
-import { initDexieUtil } from "./dexieUtil";
-import { LunarDay, SolarDay, SolarMonth, Week } from "tyme4ts";
-import { dom } from "better-react-dom";
-import { animateFrame, dragInit, PagePoint, subscribeDragInit, subscribeDragMove, subscribeMove } from "wy-dom-helper";
+import { addEffectDestroy, useAtom, useEffect, useEvent, useHookEffect, useMemo } from "better-react-helper";
+import { cacheVelocity, emptyArray, EmptyFun, getSpringBaseAnimationConfig, PointKey, scrollJudgeDirection } from "wy-helper";
+import { animateFrame, PagePoint, subscribeDragInit, subscribeDragMove } from "wy-dom-helper";
 
 
 export interface DragBMessage {
@@ -28,6 +22,15 @@ export type DragMessage = ({
 }
 
 const DIRECTION_LOCK_THRESHOLD = 5;
+/**
+ * 事实上y向的滚动,更大的因是内容区域滚动与snap吸附.
+ * 由于滚动区域不同,似乎没有方向锁定
+ * @param getContainer 
+ * @param changeDirection 
+ * @param changeY 
+ * @param changeDep 
+ * @returns 
+ */
 export function dragMovePageX(
   getContainer: () => HTMLDivElement,
   changeDirection: (direction: number) => void,
@@ -69,25 +72,21 @@ export function dragMovePageX(
       })
     }
   })
-  const moveInfo = useAtom<PagePoint | undefined>(undefined)
   useHookEffect(() => {
     const container = getContainer()
 
     const velocityX = cacheVelocity()
     let initEvent: DragMessage = undefined!
     addEffectDestroy(subscribeDragInit(container, function (p, e) {
-      moveInfo.set(p)
+      let lastE: PagePoint = p
       velocityX.reset(e.timeStamp, p.pageX)
       initEvent = {
         type: "init",
         point: p,
         event: e
       }
-    }))
-    let directionLock: PointKey | undefined = undefined
-    addEffectDestroy(subscribeDragMove(function (p, e) {
-      const lastE = moveInfo.get()
-      if (lastE) {
+      let directionLock: PointKey | undefined = undefined
+      const destroy = subscribeDragMove(function (p, e) {
         if (p) {
           if (!directionLock) {
             const absX = Math.abs(p.pageX - lastE.pageX)
@@ -111,6 +110,10 @@ export function dragMovePageX(
               point: p
             })
           }
+
+          if (directionLock) {
+            lastE = p
+          }
         } else {
           if (directionLock == 'x') {
             const width = container.clientWidth
@@ -128,14 +131,9 @@ export function dragMovePageX(
               event: e
             })
           }
+          destroy()
         }
-        if (directionLock) {
-          moveInfo.set(p)
-          if (!p) {
-            directionLock = undefined
-          }
-        }
-      }
+      })
     }))
   }, emptyArray)
 

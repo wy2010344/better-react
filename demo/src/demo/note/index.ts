@@ -1,16 +1,11 @@
-import { addEffectDestroy, renderArray, renderIf, useAtom, useAtomFun, useChange, useChangeFun, useEffect, useEvent, useHookEffect, useMemo, useValueCenter } from "better-react-helper";
+import { addEffectDestroy, renderIf, useChange, useChangeFun, useEvent, useHookEffect, useMemo, useValueCenter } from "better-react-helper";
 
 import { renderPage } from "../util/page";
-import { cacheVelocity, createEmptyArray, dateFromYearMonthDay, emptyArray, EmptyFun, extrapolationClamp, getInterpolate, getSpringBaseAnimationConfig, MonthFullDay, quote, run, scrollJudgeDirection, SetValue, StoreRef, syncMergeCenter, syncMergeCenterArray, trueAndS, WeekVirtualView, YearMonthDay, YearMonthVirtualView } from "wy-helper";
-import { idbOut } from "./idbUtil";
-import { initDexieUtil } from "./dexieUtil";
-import { LunarDay, SolarDay, SolarMonth, SolarWeek, Week } from "tyme4ts";
+import { cacheVelocity, dateFromYearMonthDay, emptyArray, EmptyFun, extrapolationClamp, getInterpolate, getSpringBaseAnimationConfig, MonthFullDay, scrollJudgeDirection, SetValue, StoreRef, syncMergeCenter, syncMergeCenterArray, WeekVirtualView, YearMonthDay, YearMonthVirtualView } from "wy-helper";
+import { LunarDay, SolarDay } from "tyme4ts";
 import { dom } from "better-react-dom";
-import { animateFrame, dragInit, PagePoint, subscribeDragMove, subscribeMove } from "wy-dom-helper";
-import { DragBMessage, DragMessage, DragMessageMove, dragMovePageX } from "./dragMove";
-import { da } from "@faker-js/faker";
-import { number } from "zod";
-import { SetV } from "@/d3-learn/force/lib/model";
+import { animateFrame } from "wy-dom-helper";
+import { DragBMessage, DragMessage, dragMovePageX } from "./dragMove";
 import { Route } from "better-react-dom-helper";
 import { locationMatch } from "wy-helper/router";
 

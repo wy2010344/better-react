@@ -2,7 +2,7 @@
   "version": "v1",
   "packages": {
     "better-react-helper": {
-      "signature": "61f5528774330547b2e92edce2b22db0",
+      "signature": "1e621832a875147bbc3c64210478d39a",
       "file": true,
       "replaced": "^1.2.7"
     },
@@ -27,7 +27,7 @@
       "replaced": "^1.2.4"
     },
     "wy-helper": {
-      "signature": "592f9a6d926a0f24d9b4e1a1ea41f090",
+      "signature": "81ab249a65c44045ab56ef001bca9bf4",
       "file": true,
       "replaced": "^0.1.0"
     }

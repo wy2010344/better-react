@@ -26,12 +26,12 @@ export default function () {
     useEffect(() => {
       transX.slientChange(0)
     }, [index])
-    const { velocityX, velocityY } = useMemo(() => {
-      return {
-        velocityX: cacheVelocity(),
-        velocityY: cacheVelocity()
-      }
-    }, emptyArray)
+    // const { velocityX, velocityY } = useMemo(() => {
+    //   return {
+    //     velocityX: cacheVelocity(),
+    //     velocityY: cacheVelocity()
+    //   }
+    // }, emptyArray)
     const updateDirection = useEvent((direction: number, velocity = 0) => {
       const width = bottomContentRef.get()!.clientWidth
       if (direction < 0) {
@@ -106,8 +106,6 @@ export default function () {
       transY.changeTo(height, getSpringBaseAnimationConfig())
     }, [showDrop])
 
-    const moveInfo = useAtom<PointerEvent | undefined>(undefined)
-
     dom.div().render(() => {
       dom.button({
         onClick() {
@@ -120,6 +118,7 @@ export default function () {
         }
       }).renderText`+`
     })
+    let bottomContent: HTMLDivElement
     dom.div({
       style: `
       position:relative;
@@ -127,12 +126,56 @@ export default function () {
       height:300px;
       overflow:hidden;
       `, onPointerDown(e) {
-        moveInfo.set(e)
+        let lastE: PointerEvent = e
+        const velocityX = cacheVelocity()
+        const velocityY = cacheVelocity()
         velocityX.reset(e.timeStamp, e.pageX)
         velocityY.reset(e.timeStamp, e.pageY)
+
+        let directionLock: PointKey | undefined = undefined
+
+        const destroy = subscribeMove(function (e, end) {
+
+          const vx = velocityX.append(e.timeStamp, e.pageX)
+          const vy = velocityY.append(e.timeStamp, e.pageY)
+          const diffX = e.pageX - lastE.pageX
+          const diffY = e.pageY - lastE.pageY
+
+          if (!directionLock) {
+            const absX = Math.abs(diffX)
+            const absY = Math.abs(diffY)
+            if (absX > absY + DIRECTION_LOCK_THRESHOLD) {
+              directionLock = 'x'
+            } else if (absY >= absX + DIRECTION_LOCK_THRESHOLD) {
+              directionLock = 'y'
+            }
+          }
+          if (directionLock == 'x') {
+            transX.changeTo(transX.get() + diffX)
+          } else if (directionLock == 'y') {
+            changeTransYDiff(diffY)
+          }
+          if (directionLock) {
+            lastE = e
+          }
+
+          if (end) {
+            if (directionLock == 'x') {
+              const width = bottomContent.clientWidth
+              const direction = scrollJudgeDirection(
+                diffX,
+                transX.get(),
+                width)
+              updateDirection(direction, vx)
+            } else if (directionLock == 'y') {
+              transYEnd(diffY, vy)
+            }
+            directionLock = undefined
+            destroy()
+          }
+        })
       },
     }).render(() => {
-
       useBeforeAttrHookEffect(() => {
         contentRef.set(wrapper)
         addEffectDestroy(() => {
@@ -161,50 +204,6 @@ export default function () {
           `
         }).renderText`top`
         useHookEffect(() => {
-          let directionLock: PointKey | undefined = undefined
-
-          addEffectDestroy(subscribeMove(function (e, end) {
-            const lastE = moveInfo.get()
-            if (lastE) {
-              const vx = velocityX.append(e.timeStamp, e.pageX)
-              const vy = velocityY.append(e.timeStamp, e.pageY)
-              const diffX = e.pageX - lastE.pageX
-              const diffY = e.pageY - lastE.pageY
-
-              if (!directionLock) {
-                const absX = Math.abs(diffX)
-                const absY = Math.abs(diffY)
-                if (absX > absY + DIRECTION_LOCK_THRESHOLD) {
-                  directionLock = 'x'
-                } else if (absY >= absX + DIRECTION_LOCK_THRESHOLD) {
-                  directionLock = 'y'
-                }
-              }
-              if (directionLock == 'x') {
-                transX.changeTo(transX.get() + diffX)
-              } else if (directionLock == 'y') {
-                changeTransYDiff(diffY)
-              }
-              if (directionLock) {
-                moveInfo.set(e)
-              }
-
-              if (end) {
-                if (directionLock == 'x') {
-                  const width = bottomContent.clientWidth
-                  const direction = scrollJudgeDirection(
-                    diffX,
-                    transX.get(),
-                    width)
-                  updateDirection(direction, vx)
-                } else if (directionLock == 'y') {
-                  transYEnd(diffY, vy)
-                }
-                directionLock = undefined
-                moveInfo.set(undefined)
-              }
-            }
-          }))
           addEffectDestroy(syncMergeCenter(transX, x => {
             bottomContent.style.transform = `translateX(${x}px)`;
           }))
@@ -219,7 +218,7 @@ export default function () {
             bottomContentRef.set(undefined)
           })
         }, emptyArray)
-        const bottomContent = dom.div({
+        bottomContent = dom.div({
           style: `
           flex:1;
         `,
