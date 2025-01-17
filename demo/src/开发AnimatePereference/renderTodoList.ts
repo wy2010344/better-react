@@ -1,10 +1,11 @@
-import { createUseReducer, renderExitAnimateArray, useExitAnimate, useMemo, useVersion } from "better-react-helper";
+import { createUseReducer, renderExitAnimateArray, useEffect, useExitAnimate, useMemo, useVersion } from "better-react-helper";
 
 import { dom } from "better-react-dom";
 import { faker } from '@faker-js/faker';
 import { cns, css } from "wy-dom-helper";
-import { getTimeoutPromise, useTriggerStyleWithShow } from "better-react-dom-helper";
+import { useTriggerStyleWithShow } from "better-react-dom-helper";
 import { animate } from "motion";
+import { emptyFun, getTimeoutPromise } from "wy-helper";
 const time = 500
 const removeList: number[] = []
 const useList = createUseReducer(function (model: {
@@ -118,52 +119,60 @@ export function renderTodoList() {
     // wait: "out-in"
     wait,
     mode,
-    enterIgnore(v: { id: number; }) {
-      return v.id % 2 == 0
-    },
-    exitIgnore(v: { id: number; }) {
-      return v.id % 3 == 0
-    },
-    onAnimateComplete() {
-      console.log("动画完成")
-    },
-    onExitComplete() {
-      console.log("退出完成")
-    },
-    onEnterComplete() {
-      console.log("进入完成")
-    }
+    // enterIgnore(v: { id: number; }) {
+    //   return v.id % 2 == 0
+    // },
+    // exitIgnore(v: { id: number; }) {
+    //   return v.id % 3 == 0
+    // },
+    // onAnimateComplete() {
+    //   console.log("动画完成")
+    // },
+    // onExitComplete() {
+    //   console.log("退出完成")
+    // },
+    // onEnterComplete() {
+    //   console.log("进入完成")
+    // }
   })
   console.log("list", mList)
   renderExitAnimateArray(
     mList,
     function (v) {
-      console.log("ddd", v.exiting)
-      const waitFinish = getTimeoutPromise(time, v.resolve)
-      const { className } = useTriggerStyleWithShow(
-        () => node,
-        v.exiting,
-        {
-          from: {
-            className: 'before-enter'
-          },
-          target: {
-            className: 'enter',
-          },
-          waitFinish
-        },
-        {
-          target: {
-            className: "leave"
-          },
-          waitFinish
-        })
+      console.log("ddd", v.step)
+      // const waitFinish = getTimeoutPromise(time, v.resolve)
+      // const { className } = useTriggerStyleWithShow(
+      //   () => node,
+      //   v.exiting,
+      //   {
+      //     from: {
+      //       className: 'before-enter'
+      //     },
+      //     target: {
+      //       className: 'enter',
+      //     },
+      //     waitFinish
+      //   },
+      //   {
+      //     target: {
+      //       className: "leave"
+      //     },
+      //     waitFinish
+      //   })
       const [version, updateVersion] = useVersion()
       const opacity = useMemo(() => {
         return 1// Math.random()
       }, [version])
+
+      // console.log("ini", v,)
+      const exiting = v.step == 'exiting'
+      useEffect(() => {
+        animate(node, {
+          x: exiting ? '100%' : ['100%', 0]
+        }).then(v.resolve)
+      }, [exiting])
       const node: HTMLDivElement = dom.div({
-        className: cns(className, rowClsName),
+        className: cns(rowClsName),
         style: `
       height:50px;
       display:flex;
@@ -219,7 +228,7 @@ export function renderTodoList() {
 }
 
 const rowClsName = css`
-transition:all ease ${time}ms;
+/* transition:all ease ${time}ms; */
 &.before-enter{
   transform:translateX(100%);
 }
