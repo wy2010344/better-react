@@ -1,5 +1,5 @@
 import { useAtomFun } from "./useRef"
-import { renderArray } from "./renderMap"
+import { renderKeyArray } from "./renderMap"
 import { emptyArray, emptyObject, ExitAnimateArg, buildUseExitAnimate, quote, ExitModel, alawaysTrue, createEmptyExitListCache, FalseType } from "wy-helper"
 import { useEffect } from "./useEffect"
 import { hookMakeDirtyAndRequestUpdate } from "better-react"
@@ -20,18 +20,6 @@ export function useExitAnimate<V>(
   const { list, effect } = buildUseExitAnimate(makeDirtyAndRequestUpdate, cacheList, quote, outList, getKey, arg)
   useEffect(effect)
   return list
-}
-
-export function renderExitAnimateArray<V>(
-  vs: readonly ExitModel<V>[],
-  render: (v: ExitModel<V>) => void) {
-  renderArray(vs, getKen, function (value) {
-    render(value)
-  })
-}
-
-function getKen<V>(v: ExitModel<V>) {
-  return v.key
 }
 /**
  * 只有一个元素的
@@ -71,7 +59,7 @@ export function renderIfExitAnimate<T>(
     show ? [show] : other?.renderFalse ? [show] : emptyArray,
     renderIfGetKey,
     other)
-  renderArray(list, getKen, function (v) {
+  renderKeyArray(list, function (v) {
     if (v.value) {
       renderTrue(v as any)
     } else if (other?.renderFalse) {

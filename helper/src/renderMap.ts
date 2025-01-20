@@ -28,6 +28,23 @@ export function renderArray<T, K>(
     }, creater)
 }
 
+
+
+export function renderKeyArray<V extends {
+  key: any
+}>(
+  vs: readonly V[],
+  render: (v: V, i: number) => void
+) {
+  renderArray(vs, getKen, render)
+}
+
+function getKen<V extends {
+  key: any
+}>(v: V) {
+  return v.key
+}
+
 export function renderArrayToMap<T, K, V>(
   vs: ReadArray<T>,
   getKey: (v: T, i: number) => K,

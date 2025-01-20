@@ -1,11 +1,12 @@
-import { createUseReducer, renderExitAnimateArray, useEffect, useExitAnimate, useMemo, useVersion } from "better-react-helper";
+import { createUseReducer, renderKeyArray, useEffect, useEvent, useExitAnimate, useMemo, useVersion } from "better-react-helper";
 
 import { dom } from "better-react-dom";
 import { faker } from '@faker-js/faker';
 import { cns, css } from "wy-dom-helper";
-import { useTriggerStyleWithShow } from "better-react-dom-helper";
+import { renderExitArrayClone, useTriggerStyleWithShow } from "better-react-dom-helper";
 import { animate } from "motion";
-import { emptyFun, getTimeoutPromise } from "wy-helper";
+import { emptyArray, emptyFun, ExitModel, getTimeoutPromise } from "wy-helper";
+import { list } from "wy-helper/kanren";
 const time = 500
 const removeList: number[] = []
 const useList = createUseReducer(function (model: {
@@ -136,95 +137,109 @@ export function renderTodoList() {
     // }
   })
   console.log("list", mList)
-  renderExitAnimateArray(
-    mList,
-    function (v) {
-      console.log("ddd", v.step)
-      // const waitFinish = getTimeoutPromise(time, v.resolve)
-      // const { className } = useTriggerStyleWithShow(
-      //   () => node,
-      //   v.exiting,
-      //   {
-      //     from: {
-      //       className: 'before-enter'
-      //     },
-      //     target: {
-      //       className: 'enter',
-      //     },
-      //     waitFinish
-      //   },
-      //   {
-      //     target: {
-      //       className: "leave"
-      //     },
-      //     waitFinish
-      //   })
-      const [version, updateVersion] = useVersion()
-      const opacity = useMemo(() => {
-        return 1// Math.random()
-      }, [version])
+  // renderKeyArray(
+  //   mList,
+  //   function (v) {
+  //     console.log("ddd", v.step)
+  //     // const waitFinish = getTimeoutPromise(time, v.resolve)
+  //     // const { className } = useTriggerStyleWithShow(
+  //     //   () => node,
+  //     //   v.exiting,
+  //     //   {
+  //     //     from: {
+  //     //       className: 'before-enter'
+  //     //     },
+  //     //     target: {
+  //     //       className: 'enter',
+  //     //     },
+  //     //     waitFinish
+  //     //   },
+  //     //   {
+  //     //     target: {
+  //     //       className: "leave"
+  //     //     },
+  //     //     waitFinish
+  //     //   })
+  //     const node = renderRow(v, dispatch)
+  //     // console.log("ini", v,)
+  //     const exiting = v.step == 'exiting'
+  //     useEffect(() => {
+  //       animate(node, {
+  //         x: exiting ? '100%' : ['100%', 0]
+  //       }).then(v.resolve)
+  //     }, [exiting])
+  //   })
 
-      // console.log("ini", v,)
-      const exiting = v.step == 'exiting'
-      useEffect(() => {
-        animate(node, {
-          x: exiting ? '100%' : ['100%', 0]
+  renderExitArrayClone(mList, function (v, i) {
+    const node = renderRow(v, dispatch)
+    useEffect(() => {
+      animate(node as HTMLElement, {
+        x: ['100%', 0]
+      }).then(v.resolve)
+    }, emptyArray)
+    return {
+      node,
+      value: v,
+      applyAnimate(node, v) {
+        animate(node as HTMLElement, {
+          x: '100%'
         }).then(v.resolve)
-      }, [exiting])
-      const node: HTMLDivElement = dom.div({
-        className: cns(rowClsName),
-        style: `
+      },
+    }
+  })
+}
+
+function renderRow(v: ExitModel<{
+  id: number;
+  value: string;
+}>, dispatch: any) {
+
+  const [version, updateVersion] = useVersion()
+  const opacity = useMemo(() => {
+    return 1// Math.random()
+  }, [version])
+  const node: HTMLDivElement = dom.div({
+    className: cns(rowClsName),
+    style: `
       height:50px;
       display:flex;
       align-items:center;
       opacity:${opacity};
       `,
-        // onTransitionEnd: resolve,
-      }).render(function () {
-        dom.span().renderText`${v.value.id}---${v.value.value}`
-        dom.button({
-          onClick() {
-            dispatch({
-              method: "remove",
-              id: v.value.id
-            })
+    // onTransitionEnd: resolve,
+  }).render(function () {
+    dom.span().renderText`${v.value.id}---${v.value.value}`
+    dom.button({
+      onClick() {
+        dispatch({
+          method: "remove",
+          id: v.value.id
+        })
 
-            // setTimeout(() => {
-            //   dispatch({
-            //     method: "reuse",
-            //     value: faker.animal.rabbit()
-            //   })
-            // }, 1000)
-          }
-        }).renderText`删除`
-        dom.button({
-          onClick() {
-            dispatch({
-              method: "replace",
-              id: v.value.id,
-              value: faker.animal.rabbit()
-            })
-          }
-        }).renderText`替换`
-        dom.button({
-          onClick() {
-            updateVersion()
-          }
-        }).renderText`抖动`
-      })
-      // node.animate({}).finished.then(v=>{
-      // v.pending
-      //       })
-      //       const vx = animate(node, {
-      //         background: 'red'
-      //       }, {
-
-      //       })
-      //       vx.finished.then(v => {
-      // vx.playState
-      //       })
-
-    })
+        // setTimeout(() => {
+        //   dispatch({
+        //     method: "reuse",
+        //     value: faker.animal.rabbit()
+        //   })
+        // }, 1000)
+      }
+    }).renderText`删除`
+    dom.button({
+      onClick() {
+        dispatch({
+          method: "replace",
+          id: v.value.id,
+          value: faker.animal.rabbit()
+        })
+      }
+    }).renderText`替换`
+    dom.button({
+      onClick() {
+        updateVersion()
+      }
+    }).renderText`抖动`
+  })
+  return node
 }
 
 const rowClsName = css`
