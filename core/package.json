@@ -2,56 +2,25 @@
   "version": "1.2.7",
   "license": "MIT",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "typings": "dist/index.d.ts",
+  "name": "better-react",
+  "author": "wy2010344",
   "files": [
     "dist",
     "src"
   ],
-  "engines": {
-    "node": ">=10"
-  },
   "scripts": {
-    "start": "tsdx watch",
-    "build": "tsdx build",
-    "test": "tsdx test",
-    "lint": "tsdx lint",
-    "prepare": "tsdx build",
-    "size": "size-limit",
-    "analyze": "size-limit --why",
-    "ts": "tsc --noEmit --incremental",
-    "ts:watch": "yarn ts --watch"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "prepare": "yarn build"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint"
-    }
-  },
-  "prettier": {
-    "printWidth": 80,
-    "semi": true,
-    "singleQuote": true,
-    "trailingComma": "es5"
-  },
-  "name": "better-react",
-  "author": "wangyang2010344",
-  "module": "dist/better-react.esm.js",
-  "size-limit": [
-    {
-      "path": "dist/better-react.cjs.production.min.js",
-      "limit": "10 KB"
-    },
-    {
-      "path": "dist/better-react.esm.js",
-      "limit": "10 KB"
-    }
-  ],
   "devDependencies": {
-    "@size-limit/preset-small-lib": "^7.0.8",
-    "husky": "^7.0.4",
-    "size-limit": "^7.0.8",
-    "tsdx": "^0.14.1",
-    "tslib": "^2.3.1",
-    "typescript": "^5.1.3"
+    "@types/node": "^20.14.10",
+    "csstype": "^3.1.3",
+    "typescript": "^5.7.3",
+    "vite": "^5.3.1",
+    "vite-plugin-dts": "^3.9.1"
   },
   "peerDependencies": {
     "wy-helper": "^0.1.8"

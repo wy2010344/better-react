@@ -8,13 +8,10 @@ const dirname = __dirname
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
-    port: 3252,
-    proxy: {
-      '/figma': {
-        target: 'https://api.figma.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/figma/, ''),
-      }
+    watch: {
+      usePolling: true,
+      interval: 1000,
+      ignored: ['**/node_modules/**'], // 忽略 node_modules 目录
     }
   },
   resolve: {

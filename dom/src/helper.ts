@@ -1,7 +1,7 @@
-import { EffectEvent, hookEnvModel, TempOps } from "better-react"
+import { hookEnvModel, TempOps } from "better-react"
 import { createNodeTempOps, ListCreater } from "./util"
-import { emptyFun, EmptyFun, emptyObject, GetValue, objectDiffDeleteKey, SyncFun } from "wy-helper"
-import { DomType, isSyncFun, mergeDomAttr, mergeXNodeAttr, Props } from "wy-dom-helper"
+import { emptyFun, EmptyFun, emptyObject, SyncFun } from "wy-helper"
+import { DomType, isSyncFun, Props } from "wy-dom-helper"
 
 export function destroyOldDes(attrs: Record<string, any>) {
   for (const key in attrs) {
@@ -22,7 +22,7 @@ export function destroyOldDes(attrs: Record<string, any>) {
   }
 }
 
-function updateContent(value: string, node: any, type: ContentType) {
+function updateContent(value: string | number, node: any, type: ContentType) {
   if (type == 'html') {
     node.innerHTML = value
   } else {
@@ -54,8 +54,8 @@ export class NodeHelper<T extends Element, Attr extends {}> {
 
   private desContent: EmptyFun = emptyFun
   private lastType: ContentType = undefined!
-  private lastContent: string | SyncFun<string> = ''
-  updateContent(type: ContentType, content: string | SyncFun<string>) {
+  private lastContent: string | number | SyncFun<string | number> = ''
+  updateContent(type: ContentType, content: string | number | SyncFun<string | number>) {
     if (type == this.lastType && content == this.lastContent) {
       return
     }

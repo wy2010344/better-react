@@ -30,25 +30,9 @@ function whenCommitEffectTag(v: EffectTag) {
  * 如果是oneFiber,父节点的child与lastChild会变化,但子结点的before与next都是空
  */
 export class Fiber<D = any> {
-  /**初始化或更新 
-   * UPDATE可能是setState造成的,可能是更新造成的
-   * 这其中要回滚
-   * 当提交生效的时候,自己的值变空.回滚的时候,也变成空
-  */
-  readonly effectTag: StoreRef<EffectTag> = this.envModel.createChangeAtom<EffectTag>("PLACEMENT", whenCommitEffectTag)
-  /**顺序*/
-  readonly firstChild: StoreRef<Fiber | void> = this.envModel.createChangeAtom(undefined)
-  readonly lastChild: StoreRef<Fiber | void> = this.envModel.createChangeAtom(undefined)
-  public readonly before: StoreRef<Fiber | void> = this.envModel.createChangeAtom(undefined)
-  public readonly next: StoreRef<Fiber | void> = this.envModel.createChangeAtom(undefined)
-
-  private renderDeps: StoreRef<RenderDeps<any>>
-
-  requestReconcile: (ReconcileFun) | void = undefined
-  makeDirtyAndRequestUpdate: EmptyFun | void = undefined
   private constructor(
-    public readonly envModel: EnvModel,
-    public readonly parent: Fiber | undefined,
+    readonly envModel: EnvModel,
+    readonly parent: Fiber | undefined,
     rd: RenderDeps<any>
   ) {
     this.renderDeps = envModel.createChangeAtom(rd)
@@ -65,7 +49,31 @@ export class Fiber<D = any> {
       parentHolder.children = parentHolder.children || new Set()
       parentHolder.children.add(this.stateHoder)
     }
+
+
+    this.effectTag = this.envModel.createChangeAtom<EffectTag>("PLACEMENT", whenCommitEffectTag)
+    this.firstChild = this.envModel.createChangeAtom(undefined)
+    this.lastChild = this.envModel.createChangeAtom(undefined)
+    this.before = this.envModel.createChangeAtom(undefined)
+    this.next = this.envModel.createChangeAtom(undefined)
   }
+  /**
+   * 初始化或更新 
+   * UPDATE可能是setState造成的,可能是更新造成的
+   * 这其中要回滚
+   * 当提交生效的时候,自己的值变空.回滚的时候,也变成空
+  */
+  readonly effectTag: StoreRef<EffectTag>
+  /**顺序*/
+  readonly firstChild: StoreRef<Fiber | void>
+  readonly lastChild: StoreRef<Fiber | void>
+  readonly before: StoreRef<Fiber | void>
+  readonly next: StoreRef<Fiber | void>
+
+  private renderDeps: StoreRef<RenderDeps<any>>
+
+  requestReconcile: (ReconcileFun) | void = undefined
+  makeDirtyAndRequestUpdate: EmptyFun | void = undefined
   changeRender(
     shouldChange: (a: D, b: D) => any,
     render: (e: FiberEvent<D>) => void,

@@ -12,12 +12,14 @@ export {
   hookRequestReconcile,
   hookMakeDirtyAndRequestUpdate
 } from './requestFresh'
-export { createContext, Context } from './context'
+export { createContext } from './context'
+export type { Context } from './context'
 export {
   hookBeginTempOps,
   hookEndTempOps,
   hookAddResult,
-  effectLayout
+  effectLayout,
+  hookStateHoder
 } from './cache'
 export {
   useLevelEffect
@@ -28,15 +30,16 @@ export type { MemoEvent } from './memo'
 export {
   TempOps,
   TempSubOps,
-  TempReal
 } from './tempOps'
+export type { TempReal } from './tempOps'
 export type { EffectResult, EffectEvent, EffectDestroy, EffectDestroyEvent } from './effect'
 export type {
   Fiber,
   RenderWithDep,
   FiberEvent,
 } from './Fiber'
-export { CreateChangeAtom, hookEnvModel } from './commitWork'
+export type { CreateChangeAtom } from './commitWork'
+export { hookEnvModel } from './commitWork'
 export * from './renderForEach'
 export function render(
   getSubOps: (createChangeAtom: CreateChangeAtom<any>) => AbsTempOps<any>,

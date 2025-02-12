@@ -5,7 +5,7 @@
   "module": "dist/index.mjs",
   "typings": "dist/index.d.ts",
   "name": "better-react-dom-helper",
-  "author": "wangyang2010344",
+  "author": "wy2010344",
   "files": [
     "dist",
     "src"

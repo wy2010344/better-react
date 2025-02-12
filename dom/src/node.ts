@@ -1,6 +1,6 @@
 import { hookAddResult, hookBeginTempOps, hookEndTempOps, hookEnvModel, MemoEvent, TempOps } from "better-react"
 import { createNodeTempOps, lazyOrInit, ListCreater, TOrQuote } from "./util"
-import { emptyArray, emptyFun, emptyObject, genTemplateStringS1, genTemplateStringS2, GetValue, SetValue, SyncFun, VType } from "wy-helper"
+import { emptyArray, emptyFun, emptyObject, genTemplateStringS1, SetValue, SyncFun } from "wy-helper"
 import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
 import { NodeHelper } from "./helper"
 

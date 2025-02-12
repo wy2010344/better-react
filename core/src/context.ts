@@ -1,6 +1,6 @@
 
 import { StateHolder } from "./stateHolder";
-import { quote, simpleNotEqual, ValueCenter, valueCenterOf, emptyArray, arrayEqual, simpleEqual, arraySimpleNotEqual } from "wy-helper";
+import { quote, simpleNotEqual, ValueCenter, valueCenterOf, emptyArray, arrayEqual, simpleEqual, arraySimpleNotEqual, ReadValueCenter, ValueCenterDefaultImpl } from "wy-helper";
 import { hookStateHoder } from "./cache";
 import { useLevelEffect } from "./effect";
 
@@ -25,7 +25,7 @@ class ContextFactory<T> implements Context<T> {
     this.defaultContext = valueCenterOf(out)
   }
 
-  private readonly defaultContext: ValueCenter<T>
+  private readonly defaultContext: ValueCenterDefaultImpl<T>
   useProvider(v: T) {
     const holder = hookStateHoder()
     if (holder.firstTime) {
@@ -98,5 +98,18 @@ class ContextFactory<T> implements Context<T> {
       })]
     }, [context, getValue, shouldUpdate, notSelf])
     return thisValue
+  }
+
+  /**
+   * 延迟,动态在函数中去获取
+   * @param holder 
+   * @returns 
+   */
+  getFromHolder(holder: StateHolder): T {
+    const provider = this.findProviderStateHoder(holder)
+    if (provider) {
+      return provider[1].get()
+    }
+    return this.defaultContext.get()
   }
 }

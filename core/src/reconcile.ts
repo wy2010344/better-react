@@ -325,7 +325,11 @@ function buildWorkUnits(
 class RenderWorks {
   constructor(
     private envModel: EnvModel
-  ) { }
+  ) {
+
+    this.lastRetWork = this.getRetWork(true)
+    this.retWork = this.getRetWork(false)
+  }
   private getRetWork(lastJob: boolean) {
     const that = this
     return nextWork(this.envModel, function () {
@@ -333,8 +337,8 @@ class RenderWorks {
       work![0]()
     }, lastJob)
   }
-  private lastRetWork = this.getRetWork(true)
-  private retWork = this.getRetWork(false)
+  private lastRetWork: NextTimeWork
+  private retWork: NextTimeWork
   private readonly list: [EmptyFun, boolean][] = []
   rollback() {
     this.list.length = 0
