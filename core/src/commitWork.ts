@@ -6,14 +6,6 @@ import { StateHolder } from "./stateHolder"
 
 export type CreateChangeAtom<T> = (v: T, didCommit?: (v: T) => T) => StoreRef<T>
 export type Reconcile = (work?: EmptyFun) => void
-
-/**
- * 涉及修改ref
- * useEffect里面可以直接执行
- * 主要是promise等外部事件,恰好在render中
- *   非render时可以立即执行.
- *   否则得在render完成后执行.
- */
 export class EnvModel {
   realTime = storeRef(false)
 
@@ -73,7 +65,6 @@ export class EnvModel {
     } as any
   }
   shouldRender() {
-    //changeAtoms说明有状态变化,deletions表示,比如销毁
     return this.changeAtoms.length > 0 || this.deletions.length > 0 || this.updateEffects.size
   }
 
@@ -83,22 +74,19 @@ export class EnvModel {
     this.deletions.length = 0
     this.updateEffects.clear()
   }
-  //最后执行是否有layoutWork
+
   layoutWork: EmptyFun = emptyFun
-  //在useEffect里执行的LayoutEffect
+
   layoutEffect: EmptyFun = emptyFun
   commit() {
     this.realTime.set(false)
-    /**最新更新所有注册的*/
+
     this.changeAtoms.forEach(atom => atom.commit())
     this.changeAtoms.length = 0
-    /******清理删除********************************************************/
-    /******清理所有的draft********************************************************/
-    //这里会将efffect更新进去...
+
     this.deletions.forEach(notifyDel)
     this.deletions.length = 0
-    // /******更新属性********************************************************/
-    //执行所有effect
+
     const updateEffects = this.updateEffects
     const keys = iterableToList(updateEffects.keys()).sort(numberSortAsc)
     for (const key of keys) {

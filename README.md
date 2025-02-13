@@ -6,7 +6,7 @@
 wy-helper wy-dom-helper better-react better-react-helper better-react-dom better-react-dom-helper
 ```
 
-> 其中 wy-helper、wy-dom-helper 是自用的 js 库,涉及知识较杂.因为可能会面临按需加载不相关的知识的库,具体参照 wy-helper、wy-dom-helper 的 peerDependencies
+> 其中 wy-helper、wy-dom-helper 是自用的 js 库,涉及知识较杂.因为可能会面临按需加载不相关的知识的库,具体参照 wy-helper、wy-dom-helper
 
 > better-react 区分核心库与辅助库,故共分成了 4 个包.
 
@@ -82,6 +82,8 @@ fdom.button({
 });
 ```
 
+> fdom 是什么? https://github.com/wy2010344/better-react/wiki/fdom-fsvg-vs-dom-svg
+
 ## 一个完整的 todo
 
 参考: https://todomvc.com/
@@ -128,3 +130,10 @@ https://github.com/wy2010344/better-react/blob/master/demo/src/complex-todo-demo
 
 - flushSync (better-react)
 - startTransition (better-react)
+
+**_其它_**
+
+- renderFiber (better-react)
+  - renderFragment (better-react-helper) 一般用于生成局部的片段
+- renderStateHolder (better-react) 最小的状态挂载,可能会用在 context 隔离
+- renderPortal (better-react-dom)
