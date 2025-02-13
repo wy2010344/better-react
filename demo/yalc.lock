@@ -17,12 +17,12 @@
       "replaced": "^1.2.6"
     },
     "wy-dom-helper": {
-      "signature": "531f74349a3df8b7352ae55d4559a2eb",
+      "signature": "14f8838af2b3cd039aa54826ed62ed87",
       "file": true,
       "replaced": "^0.1.0"
     },
     "better-react-dom-helper": {
-      "signature": "b1ec99e5ff4936cec5cb5ac6def027f6",
+      "signature": "5c83698881be0561ef9cd5d1cbc6f8b2",
       "file": true,
       "replaced": "^1.2.4"
     },
@@ -30,6 +30,10 @@
       "signature": "749638e0056fdc2c4ea9d034373fccc9",
       "file": true,
       "replaced": "^0.1.0"
+    },
+    "mve-dom-helper": {
+      "signature": "1906bf7d7e7c2d8276f037c9bb36ae44",
+      "file": true
     }
   }
 }
