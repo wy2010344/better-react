@@ -2,7 +2,7 @@
   "version": "v1",
   "packages": {
     "better-react": {
-      "signature": "572974bff5af26405e9dc8dbdaf8e698",
+      "signature": "a0923750c1b898c0a79f4c34d7bfacbb",
       "file": true
     },
     "better-react-helper": {
@@ -14,7 +14,7 @@
       "file": true
     },
     "wy-dom-helper": {
-      "signature": "b793e835c514d5f0f6f33cfab43980ad",
+      "signature": "6bc34bafdc44998468b160ae64233925",
       "file": true
     }
   }

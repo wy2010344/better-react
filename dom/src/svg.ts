@@ -1,5 +1,5 @@
 import { MemoEvent } from "better-react"
-import { mergeDomAttr, SvgAttribute, SvgAttributeS, SvgAttributeSO, SvgElement, SvgElementType } from "wy-dom-helper"
+import { mergeDomAttr, mergeSvgAttr, SvgAttribute, SvgAttributeS, SvgAttributeSO, SvgElement, SvgElementType } from "wy-dom-helper"
 import { useMemo } from "better-react-helper"
 import { createOrProxy } from "wy-helper"
 import { svgTagNames } from "wy-dom-helper"
@@ -22,8 +22,7 @@ export type SvgTextOrFunNode<T extends SvgElementType> = string | number | boole
 const svgCreater: NodeMemoCreater<any, any, any> = e => {
   return new NodeHelper(
     createSvgElement(e),
-    "svg",
-    mergeDomAttr)
+    mergeSvgAttr)
 }
 type SvgNodeCreater<T extends SvgElementType> = NodeCreater<T, SvgElement<T>, SvgAttribute<T> | SvgAttributeSO<T>>
 

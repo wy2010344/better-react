@@ -1,4 +1,4 @@
-import { BDomEvent, BSvgEvent, DomElement, DomElementType, domTagNames, FDomAttribute, FGetChildAttr, FSvgAttribute, mergeFNodeAttr, SvgElement, SvgElementType, svgTagNames, WithCenterMap } from "wy-dom-helper";
+import { BDomEvent, BSvgEvent, DomElement, DomElementType, domTagNames, FDomAttribute, FMergeChildAttr, FSvgAttribute, mergeFDomAttr, mergeFSvgAttr, SvgElement, SvgElementType, svgTagNames, WithCenterMap } from "wy-dom-helper";
 import { emptyArray, emptyObject, SetValue, SyncFun, createOrProxy } from "wy-helper";
 import { hookAddResult, hookBeginTempOps, hookEndTempOps } from "better-react";
 import { NodeMemoCreater } from "./node";
@@ -7,25 +7,13 @@ import { NodeHelper } from "./helper";
 
 
 const domCreater: NodeMemoCreater<any, any, any> = (e) => {
-  return new NodeHelper(document.createElement(e.trigger), "dom", mergeFNodeAttr)
+  return new NodeHelper(document.createElement(e.trigger), mergeFDomAttr)
 }
 const svgCreater: NodeMemoCreater<any, any, any> = (e) => {
-  return new NodeHelper(document.createElementNS("http://www.w3.org/2000/svg", e.trigger), "svg", mergeFNodeAttr)
+  return new NodeHelper(document.createElementNS("http://www.w3.org/2000/svg", e.trigger), mergeFSvgAttr)
 }
-type SyncOrFun<T> = T | SyncFun<T>
 
-type FChildAttr<T> = {
-  childrenType: "text";
-  children: SyncOrFun<number | string>;
-} | {
-  childrenType: "html";
-  children: SyncOrFun<number | string>;
-} | {
-  childrenType?: never;
-  children?: SetValue<T>;
-};
-
-function renderHelper(helper: NodeHelper<any, any>, args: FChildAttr<any>) {
+function renderHelper(helper: NodeHelper<any, any>, args: FMergeChildAttr<any>) {
   hookAddResult(helper.node)
   hookAttrEffect(() => {
     helper.updateAttrs(args)
@@ -54,7 +42,7 @@ function renderHelper(helper: NodeHelper<any, any>, args: FChildAttr<any>) {
 
 export type FDomAttributes<T extends DomElementType> = WithCenterMap<FDomAttribute<T>>
   & BDomEvent<T>
-  & FChildAttr<DomElement<T>>
+  & FMergeChildAttr<DomElement<T>>
 export function renderDom<T extends DomElementType>(
   type: T,
   args: FDomAttributes<T> = emptyObject as any) {
@@ -64,7 +52,7 @@ export function renderDom<T extends DomElementType>(
 
 export type FSvgAttributes<T extends SvgElementType> = WithCenterMap<FSvgAttribute<T>>
   & BSvgEvent<T>
-  & FChildAttr<SvgElement<T>>
+  & FMergeChildAttr<SvgElement<T>>
 export function renderSvg<T extends SvgElementType>(
   type: T,
   args: FSvgAttributes<T> = emptyObject as any) {

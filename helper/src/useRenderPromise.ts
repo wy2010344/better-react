@@ -1,4 +1,4 @@
-import { buildPromiseResultSetData, FalseType, GetPromiseRequest, GetValue, hookAbortSignalPromise, RequestPromiseFinally, RequestPromiseResult, RequestVersionPromiseFinally, RequestVersionPromiseReulst } from "wy-helper";
+import { buildPromiseResultSetData, emptyFun, emptyObject, FalseType, GetPromiseRequest, GetValue, hookAbortSignalPromise, RequestPromiseFinally, RequestPromiseResult, RequestVersionPromiseFinally, RequestVersionPromiseReulst } from "wy-helper";
 import { useEffect } from "./useEffect";
 import { useEvent } from "./useEvent";
 import { useMemo, useRef } from "./useRef";
@@ -56,12 +56,6 @@ export function useRenderVersionPromise<T>(
 
 
 
-export function useMemoPromiseState<T>(
-  outRequest: () => GetPromiseRequest<T> | FalseType,
-  deps: readonly any[]
-) {
-  return useMemoPromise({ body: outRequest }, deps)
-}
 
 export function useCallbackPromiseState<T>(
   outRequest: GetPromiseRequest<T>,
@@ -71,22 +65,22 @@ export function useCallbackPromiseState<T>(
 }
 
 
-export function useMemoPromise<T>({
-  onSuccess,
-  onError,
-  body
-}: {
-  onSuccess?(value: T): void
-  onError?(err: any): void
-  body: GetValue<GetPromiseRequest<T> | FalseType>
-}, deps: readonly any[]) {
-  const request = useMemo(() => body(), deps)
+export function useMemoPromise<T>(
+  request: GetPromiseRequest<T> | FalseType,
+  {
+    onSuccess = emptyFun,
+    onError = emptyFun
+  }: {
+    onSuccess?(value: T): void
+    onError?(err: any): void
+  } = emptyObject
+) {
   const [data, setData] = useState<RequestPromiseResult<T>>()
   useRenderPromise(function (data) {
     if (data.type == 'error') {
-      onError?.(data.value)
+      onError(data.value)
     } else {
-      onSuccess?.(data.value)
+      onSuccess(data.value)
     }
     setData(data)
   }, request)
@@ -98,15 +92,16 @@ export function useMemoPromise<T>({
 }
 
 
+export function useMemoPromiseState<T>(
+  outRequest: () => GetPromiseRequest<T> | FalseType,
+  deps: readonly any[]
+) {
+  return useMemoPromise(useMemo(outRequest, deps))
+}
 export function useCallbackPromise<T>(arg: {
   onSuccess?(value: T): void
   onError?(err: any): void
   body: GetPromiseRequest<T>
 }, deps: readonly any[]) {
-  return useMemoPromise({
-    ...arg,
-    body() {
-      return arg.body
-    }
-  }, deps)
+  return useMemoPromise(useMemo(() => arg.body, deps), arg)
 }

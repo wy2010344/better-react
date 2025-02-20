@@ -18,7 +18,7 @@ export function useDomNode<T extends DomElementType>(
 type DomNodeCreater<T extends DomElementType> = NodeCreater<T, DomElement<T>, DomAttribute<T> | DomAttributeSO<T>>
 
 const domCreater: NodeMemoCreater<any, any, any> = (e) => {
-  return new NodeHelper(document.createElement(e.trigger), "dom", mergeDomAttr)
+  return new NodeHelper(document.createElement(e.trigger), mergeDomAttr)
 }
 export const dom: {
   readonly [key in DomElementType]: {
