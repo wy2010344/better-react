@@ -7,10 +7,10 @@ import { NodeHelper } from "./helper";
 
 
 const domCreater: NodeMemoCreater<any, any, any> = (e) => {
-  return new NodeHelper(document.createElement(e.trigger), mergeFDomAttr)
+  return new NodeHelper(document.createElement(e.trigger), mergeFDomAttr, emptyArray)
 }
 const svgCreater: NodeMemoCreater<any, any, any> = (e) => {
-  return new NodeHelper(document.createElementNS("http://www.w3.org/2000/svg", e.trigger), mergeFSvgAttr)
+  return new NodeHelper(document.createElementNS("http://www.w3.org/2000/svg", e.trigger), mergeFSvgAttr, emptyArray)
 }
 
 function renderHelper(helper: NodeHelper<any, any>, args: FMergeChildAttr<any>) {

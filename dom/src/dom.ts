@@ -1,7 +1,7 @@
 import { useMemo } from "better-react-helper"
 import { MemoEvent } from "better-react"
 import { DomAttribute, DomAttributeS, DomAttributeSO, DomElement, DomElementType, mergeDomAttr } from "wy-dom-helper"
-import { createOrProxy } from "wy-helper"
+import { createOrProxy, emptyArray } from "wy-helper"
 import { domTagNames } from "wy-dom-helper"
 import { NodeMemoCreater, NodeCreater } from "./node"
 import { NodeHelper } from "./helper"
@@ -18,7 +18,7 @@ export function useDomNode<T extends DomElementType>(
 type DomNodeCreater<T extends DomElementType> = NodeCreater<T, DomElement<T>, DomAttribute<T> | DomAttributeSO<T>>
 
 const domCreater: NodeMemoCreater<any, any, any> = (e) => {
-  return new NodeHelper(document.createElement(e.trigger), mergeDomAttr)
+  return new NodeHelper(document.createElement(e.trigger), mergeDomAttr, emptyArray)
 }
 export const dom: {
   readonly [key in DomElementType]: {

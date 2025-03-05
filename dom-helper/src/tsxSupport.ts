@@ -52,7 +52,7 @@ export namespace Better {
   type WithChildren<K> = {
     ref?: {
       current: K | null
-    }
+    } | ((v: K) => void)
     children?: ChildrenElement
   }
   export type ChildrenElement = BElement | ChildrenElement[];
@@ -185,9 +185,6 @@ function renderJSX({
       const node = helper.render(() => {
         renderChildren(children)
       })
-      if (props.ref) {
-        props.ref.current = node
-      }
     })
   } else {
     renderFragment(() => {

@@ -30,6 +30,7 @@ function create(tagNames: string[], creater: NodeMemoCreater<any, any, any>) {
   }) as any
 }
 
+const ignoreKeys = ['ref']
 export const Dom: {
   readonly [key in DomElementType]: {
     (
@@ -40,7 +41,7 @@ export const Dom: {
         }): Better.Element
   }
 } = create(domTagNames, (e) => {
-  return new NodeHelper(document.createElement(e.trigger), mergeXDomAttr)
+  return new NodeHelper(document.createElement(e.trigger), mergeXDomAttr, ignoreKeys)
 })
 
 export const Svg: {
@@ -53,5 +54,5 @@ export const Svg: {
         }): Better.Element
   }
 } = create(svgTagNames, e => {
-  return new NodeHelper(document.createElement(e.trigger), mergeXSvgAttr)
+  return new NodeHelper(document.createElement(e.trigger), mergeXSvgAttr, ignoreKeys)
 })

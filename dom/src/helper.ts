@@ -33,7 +33,8 @@ type ContentType = "html" | "text"
 export class NodeHelper<T extends Element, Attr extends {}> {
   constructor(
     public readonly node: T,
-    private readonly updateAttr: (node: T, attrs: Attr, oldAttrs: Attr, oldDes: any) => any,
+    private readonly updateAttr: (node: T, attrs: Attr, oldAttrs: Attr, oldDes: any, ignoreKeys: readonly string[]) => any,
+    readonly ignoreKeys: readonly string[]
   ) { }
   private tempOps!: TempOps<ListCreater>
 
@@ -41,7 +42,7 @@ export class NodeHelper<T extends Element, Attr extends {}> {
 
   private oldAttrs: any = emptyObject as any
   updateAttrs(attrs: Attr) {
-    this.oldDes = this.updateAttr(this.node, attrs, this.oldAttrs, this.oldDes)
+    this.oldDes = this.updateAttr(this.node, attrs, this.oldAttrs, this.oldDes, this.ignoreKeys)
     this.oldAttrs = attrs
   }
 
