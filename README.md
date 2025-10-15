@@ -1,43 +1,88 @@
 # better-react
 
-要开启一个 better-react 项目,推荐使用 [vite](https://vite.dev/),选择 vanilla 模式,推荐使用 typescript,一切准备好后,至少需要依赖这些包:
+A better React framework with enhanced features and performance.
 
+## Packages
+
+- **better-react** - Core framework
+- **better-react-helper** - Helper utilities and hooks
+- **better-react-dom** - DOM renderer
+- **better-react-dom-helper** - DOM-specific utilities
+
+## Getting Started
+
+To start a better-react project, we recommend using [Vite](https://vite.dev/) with vanilla mode and TypeScript. You'll need these packages:
+
+```bash
+npm install wy-helper wy-dom-helper better-react better-react-helper better-react-dom better-react-dom-helper
 ```
-wy-helper wy-dom-helper better-react better-react-helper better-react-dom better-react-dom-helper
-```
 
-> 其中 wy-helper、wy-dom-helper 是自用的 js 库,涉及知识较杂.因为可能会面临按需加载不相关的知识的库,具体参照 wy-helper、wy-dom-helper
+> Note: `wy-helper` and `wy-dom-helper` are utility libraries with various features. See their documentation for details.
 
-> better-react 区分核心库与辅助库,故共分成了 4 个包.
+> better-react separates core and helper libraries into 4 packages for better modularity.
+
+## Development
+
+This project is part of a pseudo monorepo setup. To contribute:
+
+1. Clone the pseudo monorepo:
+
+   ```bash
+   git clone https://github.com/wy2010344/es-pseudo-monorepo.git
+   cd es-pseudo-monorepo
+   ```
+
+2. Clone this project into the packages directory:
+
+   ```bash
+   cd packages
+   git clone https://github.com/wy2010344/better-react.git
+   cd better-react
+   ```
+
+3. Install dependencies from the monorepo root:
+
+   ```bash
+   cd ../..
+   pnpm install
+   ```
+
+4. Build and test:
+   ```bash
+   cd packages/better-react
+   pnpm run build
+   pnpm run lint:check
+   pnpm run type-check
+   ```
 
 调整内容:
 
 main.ts
 
 ```ts
-import { createRoot, dom } from "better-react-dom";
-import { getScheduleAskTime } from "wy-helper";
-import { useChange } from "better-react-helper";
-const app = document.getElementById("app")!;
+import { createRoot, dom } from 'better-react-dom'
+import { getScheduleAskTime } from 'wy-helper'
+import { useChange } from 'better-react-helper'
+const app = document.getElementById('app')!
 const destroy = createRoot(
   app,
   () => {
     //你的业务代码应该放在这里
   },
   getScheduleAskTime()
-);
-window.addEventListener("unload", destroy);
+)
+window.addEventListener('unload', destroy)
 ```
 
 ## 一个简单的 count demo
 
 ```ts
-const [count, setCount] = useChange(0);
+const [count, setCount] = useChange(0)
 dom.button({
   onClick() {
-    setCount(count + 1);
+    setCount(count + 1)
   },
-}).renderText`click time ${count}`;
+}).renderText`click time ${count}`
 ```
 
 放在上面 main.ts 里备注的放业务代码的地方.
@@ -47,39 +92,39 @@ dom.button({
 导入内容为:
 
 ```ts
-import { fdom } from "better-react-dom";
-import { renderArray, useState } from "better-react-helper";
-import { emptyArray, quote } from "wy-helper";
+import { fdom } from 'better-react-dom'
+import { renderArray, useState } from 'better-react-helper'
+import { emptyArray, quote } from 'wy-helper'
 ```
 
 将下面的内容添加到上述业务代码位置.
 
 ```ts
-const [list, setList] = useState(emptyArray as number[]);
+const [list, setList] = useState(emptyArray as number[])
 renderArray(list, quote, (row, i) => {
   fdom.div({
     children() {
       fdom.span({
-        childrenType: "text",
+        childrenType: 'text',
         children: `第${i + 1}行,内容是${row}`,
-      });
+      })
       fdom.button({
-        childrenType: "text",
-        children: "删除",
+        childrenType: 'text',
+        children: '删除',
         onClick() {
-          setList((list) => list.filter((item) => item != row));
+          setList((list) => list.filter((item) => item != row))
         },
-      });
+      })
     },
-  });
-});
+  })
+})
 fdom.button({
-  childrenType: "text",
-  children: "添加",
+  childrenType: 'text',
+  children: '添加',
   onClick() {
-    setList((list) => list.concat(Date.now()));
+    setList((list) => list.concat(Date.now()))
   },
-});
+})
 ```
 
 > fdom 是什么? https://github.com/wy2010344/better-react/wiki/fdom-fsvg-vs-dom-svg

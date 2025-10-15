@@ -1,0 +1,47 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🚀 Running pre-commit checks for better-react workspace..."
+
+# 检查子包变更并运行对应的 lint-staged
+if git diff --cached --name-only | grep "core/" > /dev/null; then
+  echo "📦 Running lint-staged for better-react core package..."
+  cd core
+  npx lint-staged
+  pnpm run type-check
+  cd ..
+fi
+
+if git diff --cached --name-only | grep "helper/" > /dev/null; then
+  echo "📦 Running lint-staged for better-react-helper package..."
+  cd helper
+  npx lint-staged
+  pnpm run type-check
+  cd ..
+fi
+
+if git diff --cached --name-only | grep "dom/" > /dev/null; then
+  echo "📦 Running lint-staged for better-react-dom package..."
+  cd dom
+  npx lint-staged
+  pnpm run type-check
+  cd ..
+fi
+
+if git diff --cached --name-only | grep "dom-helper/" > /dev/null; then
+  echo "📦 Running lint-staged for better-react-dom-helper package..."
+  cd dom-helper
+  npx lint-staged
+  pnpm run type-check
+  cd ..
+fi
+
+if git diff --cached --name-only | grep "demo/" > /dev/null; then
+  echo "📦 Running lint-staged for better-react-demo package..."
+  cd demo
+  npx lint-staged
+  pnpm run type-check
+  cd ..
+fi
+
+echo "✅ Pre-commit checks completed!"

@@ -1,7 +1,19 @@
-import { dom, svg, renderContent } from "better-react-dom"
-import { renderArray, renderFragment, useAttrEffect, useImperativeHandle } from "better-react-helper"
-import { isSVG } from "wy-dom-helper"
-import { arrayMapCreater, emptyArray, emptyFun, GetValue, SyncFun, trackSignal } from "wy-helper"
+import { dom, svg, renderContent } from "better-react-dom";
+import {
+  renderArray,
+  renderFragment,
+  useAttrEffect,
+  useImperativeHandle,
+} from "better-react-helper";
+import { isSVG } from "wy-dom-helper";
+import {
+  arrayMapCreater,
+  emptyArray,
+  emptyFun,
+  GetValue,
+  SyncFun,
+  trackSignal,
+} from "wy-helper";
 /**
  
  使用方式:
@@ -29,170 +41,175 @@ declare namespace JSX {
 使用Better.renderChild(...)来hook到fiber上去
  */
 
-
 type ConvertMapToUnion<T> = {
   [K in keyof T]: { type: K; props?: T[K] };
 }[keyof T];
 
+type FC<T> = (arg: T & {}) => BElement;
 
-
-
-
-type FC<T> = (arg: T & {}) => BElement
-
-type NodeElement<T = Record<string, any>> = {
-  type: FC<T>
-  props: T
-} | ConvertMapToUnion<Better.IntrinsicElements>
+type NodeElement<T = Record<string, any>> =
+  | {
+      type: FC<T>;
+      props: T;
+    }
+  | ConvertMapToUnion<Better.IntrinsicElements>;
 
 //tsx需要的类型
-type BElement = NodeElement | null | undefined | string | boolean | number | SyncFun<number | string | boolean>
+type BElement =
+  | NodeElement
+  | null
+  | undefined
+  | string
+  | boolean
+  | number
+  | SyncFun<number | string | boolean>;
 
 export namespace Better {
   type WithChildren<K> = {
-    ref?: {
-      current: K | null
-    }
-    children?: ChildrenElement
-  }
+    ref?:
+      | {
+          current: K | null;
+        }
+      | ((v: K) => void);
+    children?: ChildrenElement;
+  };
   export type ChildrenElement = BElement | ChildrenElement[];
 
   export interface IntrinsicAttributes {
-    key?: any
+    key?: any;
   }
   export type IntrinsicElements = {
-    [key in import("wy-dom-helper").DomElementType]: import("wy-dom-helper").DomAttributeSO<key> & WithChildren<import("wy-dom-helper").DomElement<key>>
+    [key in import("wy-dom-helper").DomElementType]: import("wy-dom-helper").DomAttributeSO<key> &
+      WithChildren<import("wy-dom-helper").DomElement<key>>;
   } & {
-    [key in import("wy-dom-helper").SvgElementType]: import("wy-dom-helper").SvgAttributeSO<key> & WithChildren<import("wy-dom-helper").SvgElement<key>>
-  }
-  export type Element = BElement
+    [key in import("wy-dom-helper").SvgElementType]: import("wy-dom-helper").SvgAttributeSO<key> &
+      WithChildren<import("wy-dom-helper").SvgElement<key>>;
+  };
+  export type Element = BElement;
   /**
    * 约束默认的children类型
    */
   export interface ElementChildrenAttribute {
-    children?: ChildrenElement // specify children name to use
+    children?: ChildrenElement; // specify children name to use
   }
 }
 
 function setText(c: any, node: any) {
-
   if (c) {
-    node.textContent = c + ''
-    return
+    node.textContent = c + "";
+    return;
   } else {
-    if (typeof c == 'number') {
-      node.textContent = c + ''
-      return
+    if (typeof c == "number") {
+      node.textContent = c + "";
+      return;
     }
   }
-  node.textContent = ''
+  node.textContent = "";
 }
 function renderChild(child: Better.ChildrenElement) {
   if (Array.isArray(child)) {
     //map类型
-    renderChildren(child)
-    return
+    renderChildren(child);
+    return;
   }
 
   if (child) {
-    const tpc = typeof child
-    if (tpc == 'object') {
+    const tpc = typeof child;
+    if (tpc == "object") {
       //jsx-element
-      renderJSX(child)
-    } else if (tpc == 'function') {
-      const node = renderContent('')
+      renderJSX(child);
+    } else if (tpc == "function") {
+      const node = renderContent("");
       useAttrEffect(() => {
-        return (child as any)(setText, node)
-      }, child)
+        return (child as any)(setText, node);
+      }, child);
     } else {
-      renderContent(child + '')
+      renderContent(child + "");
     }
   } else {
-    if (typeof child == 'number') {
-      renderContent(child + '')
+    if (typeof child == "number") {
+      renderContent(child + "");
     }
     //空字符串、false、null、undefined不处理
   }
 }
 function dynamicGetKey(v: Better.ChildrenElement) {
-  if (typeof v == 'object' && v) {
-    const m = v as any
-    return m?.props?.key
+  if (typeof v == "object" && v) {
+    const m = v as any;
+    return m?.props?.key;
   }
 }
 function staticGetKey(v: Better.ChildrenElement, i: number) {
-  if (typeof v == 'object' && v) {
-    const m = v as any
-    const key = m.props?.key
+  if (typeof v == "object" && v) {
+    const m = v as any;
+    const key = m.props?.key;
     if (key) {
-      return [key, m.type]
+      return [key, m.type];
     }
-    return [i, m.type]
+    return [i, m.type];
   }
-  return [i]
+  return [i];
 }
 function renderChildren(children: Better.ChildrenElement) {
   if (Array.isArray(children)) {
     if ((children as any)._queue_) {
-      renderArray(children, staticGetKey, renderChild, arrayMapCreater)
+      renderArray(children, staticGetKey, renderChild, arrayMapCreater);
     } else {
-      renderArray(children, dynamicGetKey, renderChild)
+      renderArray(children, dynamicGetKey, renderChild);
     }
   }
 }
 /**
  * 这个一般不显式调用
- * @param type 
- * @param props 
- * @param children 
- * @returns 
+ * @param type
+ * @param props
+ * @param children
+ * @returns
  */
-function createElement(type: any, props: Record<string, any>, ...children: BElement[]) {
+function createElement(
+  type: any,
+  props: Record<string, any>,
+  ...children: BElement[]
+) {
   if (!props) {
-    props = {}
+    props = {};
   }
-  (children as any)._queue_ = true
-  props.children = children
+  (children as any)._queue_ = true;
+  props.children = children;
   return {
     type,
-    props
-  }
+    props,
+  };
 }
+/* eslint-disable */
 export const Better = {
   renderChild,
   createElement,
   /**这可能显式调用,当使用key的时候 */
-  Fragment(props: {
-    key?: any,
-    children?: Better.ChildrenElement
-  }) {
-    let children = props.children
+  Fragment(props: { key?: any; children?: Better.ChildrenElement }) {
+    let children = props.children;
     if (!Array.isArray(children)) {
-      children = [children]
+      children = [children];
     }
-    renderChildren(children)
-  }
-}
-function renderJSX({
-  type,
-  props
-}: any) {
-  if (typeof type == 'string') {
+    renderChildren(children);
+  },
+};
+function renderJSX({ type, props }: any) {
+  if (typeof type == "string") {
     renderFragment(() => {
-      useImperativeHandle(props.ref || emptyFun, () => node, emptyArray)
-      const children = props?.children
-      const helper = isSVG(type) ? svg[type as 'svg'](props as any) : dom[type as 'div'](props as any)
+      useImperativeHandle(props.ref || emptyFun, () => node, emptyArray);
+      const children = props?.children;
+      const helper = isSVG(type)
+        ? svg[type as "svg"](props as any)
+        : dom[type as "div"](props as any);
       const node = helper.render(() => {
-        renderChildren(children)
-      })
-      if (props.ref) {
-        props.ref.current = node
-      }
-    })
+        renderChildren(children);
+      });
+    });
   } else {
     renderFragment(() => {
-      const out = type(props)
-      renderChild(out)
-    })
+      const out = type(props);
+      renderChild(out);
+    });
   }
 }

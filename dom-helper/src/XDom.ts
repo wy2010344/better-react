@@ -1,4 +1,4 @@
-import { BDomEvent, BSvgEvent, DomElementType, domTagNames, mergeXNodeAttr, SvgElementType, svgTagNames, WithCenterMap, XDomAttribute, XSvgAttribute } from "wy-dom-helper";
+import { BDomEvent, BSvgEvent, DomElementType, domTagNames, mergeXDomAttr, mergeXSvgAttr, SvgElementType, svgTagNames, WithCenterMap, XDomAttribute, XSvgAttribute } from "wy-dom-helper";
 import { createOrProxy, emptyArray, emptyObject } from "wy-helper";
 import { Better } from "./tsxSupport";
 import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper";
@@ -30,6 +30,7 @@ function create(tagNames: string[], creater: NodeMemoCreater<any, any, any>) {
   }) as any
 }
 
+const ignoreKeys = ['ref']
 export const Dom: {
   readonly [key in DomElementType]: {
     (
@@ -40,7 +41,7 @@ export const Dom: {
         }): Better.Element
   }
 } = create(domTagNames, (e) => {
-  return new NodeHelper(document.createElement(e.trigger), "dom", mergeXNodeAttr)
+  return new NodeHelper(document.createElement(e.trigger), mergeXDomAttr, ignoreKeys)
 })
 
 export const Svg: {
@@ -53,5 +54,5 @@ export const Svg: {
         }): Better.Element
   }
 } = create(svgTagNames, e => {
-  return new NodeHelper(document.createElement(e.trigger), "svg", mergeXNodeAttr)
+  return new NodeHelper(document.createElement(e.trigger), mergeXSvgAttr, ignoreKeys)
 })

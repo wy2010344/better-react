@@ -1,93 +1,130 @@
-
-import { useState } from "./useState"
-import { useAtom, useConstFrom } from "./useRef"
-import { useVersionLock } from "./Lock"
-import { createEmptyArray, emptyFun, PromiseResult, buildSerialRequestSingle, createAndFlushAbortController, VersionPromiseResult } from "wy-helper"
+import { useState } from "./useState";
+import { useAtom, useConstFrom } from "./useRef";
+import { useVersionLock } from "./Lock";
+import {
+  createEmptyArray,
+  emptyFun,
+  PromiseResult,
+  buildSerialRequestSingle,
+  VersionPromiseResult,
+  SetValue,
+  emptyArray,
+  getOutResolvePromise,
+  hookAbortSignalPromise,
+} from "wy-helper";
+import { useEffect } from "./useEffect";
 
 /**
  * 单线程提交
- * @param effect 
- * @returns 
+ * @param effect
+ * @returns
  */
-export function useMutation<Req extends any[], Res>(effect: (...vs: Req) => Promise<Res>) {
-  const boolLock = useAtom(false)
+export function useMutation<Req extends any[], Res>(
+  effect: (...vs: Req) => Promise<Res>,
+) {
+  const boolLock = useAtom(false);
   return function (...vs: Req) {
     if (boolLock.get()) {
-      return
+      return;
     }
-    boolLock.set(true)
+    boolLock.set(true);
     return effect(...vs).finally(() => {
-      boolLock.set(false)
-    })
-  }
+      boolLock.set(false);
+    });
+  };
 }
 
-export function useMutationWithLoading<Req extends any[], Res>(effect: (...vs: Req) => Promise<Res>) {
-  const [loading, setLoading] = useState(false)
-  const request = useMutation(effect)
-  return [function (...vs: Req) {
-    const out = request(...vs)
-    if (out) {
-      setLoading(true)
-      return out.finally(() => {
-        setLoading(false)
-      })
-    }
-  }, loading] as const
+export function useMutationWithLoading<Req extends any[], Res>(
+  effect: (...vs: Req) => Promise<Res>,
+) {
+  const [loading, setLoading] = useState(false);
+  const request = useMutation(effect);
+  return [
+    function (...vs: Req) {
+      const out = request(...vs);
+      if (out) {
+        setLoading(true);
+        return out.finally(() => {
+          setLoading(false);
+        });
+      }
+    },
+    loading,
+  ] as const;
 }
 
 export function useSerialRequestSingle<Req extends any[], Res>(
   callback: (...vs: Req) => Promise<Res>,
-  effect: (res: PromiseResult<Res>) => void = emptyFun
+  effect: (res: PromiseResult<Res>) => void = emptyFun,
 ) {
-  const cacheList = useConstFrom<Req[]>(createEmptyArray)
-  return buildSerialRequestSingle(callback, effect, cacheList)
+  const cacheList = useConstFrom<Req[]>(createEmptyArray);
+  return buildSerialRequestSingle(callback, effect, cacheList);
 }
 /**
  * 串行的请求,跟usePromise有相似之处,在于使用version
  * 也可以cancel
- * @param callback 
- * @param effect 
- * @returns 
+ * @param callback
+ * @param effect
+ * @returns
  */
 export function useLatestRequest<Req extends any[], Res>(
   callback: (vs: Req, version: number, signal?: AbortSignal) => Promise<Res>,
-  effect: (res: VersionPromiseResult<Res>, version: number) => void
+  effect: (res: VersionPromiseResult<Res>, version: number) => void,
 ) {
-  const flushAbort = useConstFrom(createAndFlushAbortController)
+  const flushAbort = useConstFrom(() => {
+    let abortControler: AbortController | undefined = undefined;
+    let lastSetValue = emptyFun;
+    return {
+      createSignal(setValue: SetValue<boolean>) {
+        lastSetValue(false);
+        abortControler?.abort();
+        abortControler = new AbortController();
+        lastSetValue = setValue;
+        return abortControler.signal;
+      },
+      effect() {
+        return function () {
+          lastSetValue(false);
+          abortControler?.abort();
+        };
+      },
+    };
+  });
+  useEffect(flushAbort.effect, emptyArray);
   const [versionLock, updateVersion] = useVersionLock();
-  return [function (...vs: Req) {
-    const version = updateVersion();
-    callback(vs, version, flushAbort())
-      .then((data) => {
-        if (version == versionLock()) {
-          effect({
-            type: "success",
-            value: data,
-            version
-          }, version);
-        }
-      })
-      .catch((err) => {
-        if (version == versionLock()) {
-          effect({
-            type: "error",
-            value: err,
-            version
-          }, version);
-        }
-      });
-  }, updateVersion] as const
+  return [
+    function (...vs: Req) {
+      const version = updateVersion();
+      const [promise, resolve] = getOutResolvePromise<boolean>();
+
+      hookAbortSignalPromise(
+        flushAbort.createSignal(resolve),
+        () => callback(vs, version),
+        (value) => {
+          if (version == versionLock()) {
+            const v = value as VersionPromiseResult<Res>;
+            v.version = version;
+            effect(v, version);
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        },
+      );
+      return promise;
+    },
+    updateVersion,
+  ] as const;
 }
 /**
  * 可重载的异步请求,封闭一个loading
- * @param callback 
- * @param effect 
- * @returns 
+ * @param callback
+ * @param effect
+ * @returns
  */
 export function useLatestRequestLoading<Req extends any[], Res>(
   callback: (vs: Req, signal?: AbortSignal) => Promise<Res>,
-  effect: (res: VersionPromiseResult<Res>) => void
+  effect: (res: VersionPromiseResult<Res>) => void,
 ) {
   const [reqVersion, setReqVersion] = useState(0);
   const [resVersion, setResVersion] = useState(0);
@@ -99,17 +136,22 @@ export function useLatestRequestLoading<Req extends any[], Res>(
     function (res, v) {
       setResVersion(v);
       return effect(res);
-    }
+    },
   );
   return [request, reqVersion != resVersion, updateVersion] as const;
 }
 
-export function buildRefreshPromise<T>(shouldNotify: (a: T, old: T) => boolean) {
+export function buildRefreshPromise<T>(
+  shouldNotify: (a: T, old: T) => boolean,
+) {
   return function useRefreshPromise(getPromise: T) {
-    const refreshFlag = useAtom<{
-      getPromise: T;
-      notify(): void;
-    } | undefined>(undefined);
+    const refreshFlag = useAtom<
+      | {
+          getPromise: T;
+          notify(): void;
+        }
+      | undefined
+    >(undefined);
     return {
       request(updateVersion: () => void) {
         return new Promise((resolve) => {
@@ -117,14 +159,14 @@ export function buildRefreshPromise<T>(shouldNotify: (a: T, old: T) => boolean) 
           refreshFlag.set({
             getPromise,
             notify() {
-              refreshFlag.set(undefined)
+              refreshFlag.set(undefined);
               resolve(null);
             },
-          })
+          });
         });
       },
       notify(getPromise: T) {
-        const rf = refreshFlag.get()
+        const rf = refreshFlag.get();
         if (rf) {
           if (shouldNotify(getPromise, rf.getPromise)) {
             rf.notify();
@@ -132,11 +174,13 @@ export function buildRefreshPromise<T>(shouldNotify: (a: T, old: T) => boolean) 
         }
       },
     };
-  }
+  };
 }
 /**
  * 如果是仅用数字的VersionPromiseResult
  */
-export const useVersionRefreshPromise = buildRefreshPromise<number>(function (a, b) {
-  return a > b
-})
+export const useVersionRefreshPromise = buildRefreshPromise<number>(
+  function (a, b) {
+    return a > b;
+  },
+);
