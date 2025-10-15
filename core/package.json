@@ -1,31 +1,56 @@
 {
-  "version": "1.2.7",
-  "license": "MIT",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "typings": "dist/index.d.ts",
   "name": "better-react",
-  "author": "wy2010344",
-  "files": [
-    "dist",
-    "src"
+  "version": "1.3.1",
+  "description": "A better React framework with enhanced features and performance",
+  "keywords": [
+    "react",
+    "framework",
+    "better-react",
+    "ui"
   ],
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "prepare": "yarn build"
+  "author": "wy2010344",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wy2010344/better-react.git"
   },
-  "devDependencies": {
-    "@types/node": "^20.14.10",
-    "csstype": "^3.1.3",
-    "typescript": "^5.7.3",
-    "vite": "^5.3.1",
-    "vite-plugin-dts": "^3.9.1"
+  "homepage": "https://github.com/wy2010344/better-react#readme",
+  "bugs": {
+    "url": "https://github.com/wy2010344/better-react/issues"
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "lint": "eslint src/ --fix",
+    "lint:check": "eslint src/",
+    "format": "prettier --write src/",
+    "format:check": "prettier --check src/",
+    "type-check": "tsc --noEmit"
   },
   "peerDependencies": {
-    "wy-helper": "^0.1.8"
+    "wy-helper": "workspace:*"
   },
-  "dependencies": {
-    "wy-helper": "file:.yalc/wy-helper"
-  }
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "tsdown": "latest"
+  },
+  "packageManager": "pnpm@10.18.2+sha512.9fb969fa749b3ade6035e0f109f0b8a60b5d08a1a87fdf72e337da90dcc93336e2280ca4e44f2358a649b83c17959e9993e777c2080879f3801e6f0d999ad3dd"
 }

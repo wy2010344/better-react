@@ -1,9 +1,12 @@
 import { useConstFrom, useDestroy } from "better-react-helper";
-import { animateFrame } from "wy-dom-helper";
-import { AnimateFrameSignalConfig, createAnimateSignal, GetValue } from "wy-helper";
+import { observerAnimateSignal } from "wy-dom-helper";
+import { AnimateFrameSignalConfig, GetValue } from "wy-helper";
 
-export function useAnimateSignal(get: GetValue<number>, config?: AnimateFrameSignalConfig) {
-  const [ret, destroy] = useConstFrom(() => createAnimateSignal(animateFrame, get, config))
-  useDestroy(destroy)
-  return ret
+export function useObserverAnimateSignal(
+  get: GetValue<number>,
+  config?: AnimateFrameSignalConfig,
+) {
+  const [ret, destroy] = useConstFrom(() => observerAnimateSignal(get, config));
+  useDestroy(destroy);
+  return ret;
 }

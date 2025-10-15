@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite'
-import path from 'path';
+import path from 'path'
+import tailwindcss from '@tailwindcss/vite'
 
-import vitePluginRequire from "vite-plugin-require";
-// const vitePluginRequire = (xx as any).default as typeof xx
+import vitePluginRequire from 'vite-plugin-require'
 //@ts-ignore
 const dirname = __dirname
 // https://vitejs.dev/config/
@@ -12,14 +12,15 @@ export default defineConfig({
       usePolling: true,
       interval: 1000,
       ignored: ['**/node_modules/**'], // 忽略 node_modules 目录
-    }
+    },
   },
   resolve: {
-    alias: [
-      { find: '@', replacement: path.resolve(dirname, 'src') },
-    ],
+    alias: [{ find: '@', replacement: path.resolve(dirname, 'src') }],
   },
   plugins: [
-    vitePluginRequire(),
-  ]
+    (vitePluginRequire as any).default
+      ? (vitePluginRequire as any).default()
+      : vitePluginRequire(),
+    tailwindcss(),
+  ],
 })

@@ -1,15 +1,23 @@
-import { emptyArray } from "wy-helper"
-import { ContentEditableModel, contentDelete, contentEnter, contentTab, getCurrentRecord, mb } from "wy-dom-helper/contentEditable"
-import { useImperativeHandle, useRef } from "better-react-helper"
-import { useContentEditable } from "./useContentEditable"
-import { React } from "wy-dom-helper"
+import { emptyArray } from "wy-helper";
+import {
+  ContentEditableModel,
+  contentDelete,
+  contentEnter,
+  contentTab,
+  getCurrentRecord,
+  mb,
+} from "wy-dom-helper/contentEditable";
+import { useImperativeHandle, useRef } from "better-react-helper";
+import { useContentEditable } from "./useContentEditable";
+import { React } from "wy-dom-helper";
 
 export function useRenderCode<F extends HTMLElement, T>(
   init: T,
   initFun: (v: T) => ContentEditableModel,
 ) {
-  const { value, current, renderContentEditable, dispatch } = useContentEditable(init, initFun)
-  const editorRef = useRef<F | undefined>(undefined)
+  const { value, current, renderContentEditable, dispatch } =
+    useContentEditable(init, initFun);
+  const editorRef = useRef<F | undefined>(undefined);
   return {
     value,
     current,
@@ -17,14 +25,17 @@ export function useRenderCode<F extends HTMLElement, T>(
     editorRef,
     renderContentEditable({
       noFocus,
-      render
+      render,
     }: {
-      noFocus?: boolean
-      render(value: string, a: {
-        onInput(e: React.FormEvent): void
-        onCompositionEnd(): void
-        onKeyDown(e: React.KeyboardEvent<F>): void
-      }): F
+      noFocus?: boolean;
+      render(
+        value: string,
+        a: {
+          onInput(e: React.FormEvent): void;
+          onCompositionEnd(): void;
+          onKeyDown(e: KeyboardEvent): void;
+        },
+      ): F;
     }) {
       renderContentEditable({
         noFocus,
@@ -32,72 +43,72 @@ export function useRenderCode<F extends HTMLElement, T>(
           const div = render(value, {
             onInput(event: React.FormEvent) {
               if (event.isComposing) {
-                return
+                return;
               }
               dispatch({
                 type: "input",
-                record: getCurrentRecord(div)
-              })
+                record: getCurrentRecord(div),
+              });
             },
             onCompositionEnd() {
               dispatch({
                 type: "input",
-                record: getCurrentRecord(div)
-              })
+                record: getCurrentRecord(div),
+              });
             },
             onKeyDown(e) {
               if (mb.DOM.keyCode.TAB(e)) {
-                e.preventDefault()
-                const record = contentTab(div, e.shiftKey)
+                e.preventDefault();
+                const record = contentTab(div, e.shiftKey);
                 if (record) {
                   dispatch({
                     type: "input",
-                    record
-                  })
+                    record,
+                  });
                 }
               } else if (mb.DOM.keyCode.ENTER(e)) {
-                e.preventDefault()
-                const record = contentEnter(div)
+                e.preventDefault();
+                const record = contentEnter(div);
                 dispatch({
                   type: "input",
-                  record
-                })
+                  record,
+                });
               } else if (mb.DOM.keyCode.Z(e)) {
                 if (isCtrl(e)) {
                   if (e.shiftKey) {
                     //redo
-                    e.preventDefault()
+                    e.preventDefault();
                     dispatch({
-                      type: "redo"
-                    })
+                      type: "redo",
+                    });
                   } else {
                     //undo
-                    e.preventDefault()
+                    e.preventDefault();
                     dispatch({
-                      type: "undo"
-                    })
+                      type: "undo",
+                    });
                   }
                 }
               } else if (mb.DOM.keyCode.BACKSPACE(e)) {
-                e.preventDefault()
-                const record = contentDelete(div)
+                e.preventDefault();
+                const record = contentDelete(div);
                 if (record) {
                   dispatch({
                     type: "input",
-                    record
-                  })
+                    record,
+                  });
                 }
               }
-            }
-          })
-          useImperativeHandle(editorRef, () => div, emptyArray)
-          return div
+            },
+          });
+          useImperativeHandle(editorRef, () => div, emptyArray);
+          return div;
         },
-      })
-      return editorRef
-    }
-  }
+      });
+      return editorRef;
+    },
+  };
 }
-function isCtrl(e: React.KeyboardEvent) {
-  return e.metaKey || e.ctrlKey
+function isCtrl(e: KeyboardEvent) {
+  return e.metaKey || e.ctrlKey;
 }

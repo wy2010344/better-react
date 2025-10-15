@@ -1,4 +1,4 @@
-import { PromiseResult, buildPromiseResultSetData, emptyFun } from "wy-helper"
+import { PromiseResult, buildPromiseResultSetData, emptyFun } from "wy-helper";
 import { useChange, useState } from "./useState";
 import { useBuildSubSetObject } from "./util";
 import { useMemo } from "./useRef";
@@ -16,13 +16,13 @@ import { useLatestRequestLoading } from "./usePromise";
  *  查询依赖
  *    page
  *      version
- * 
+ *
  * 这里为了减少这种依赖,直接可以刷新
  *  查询依赖+version
  *  手动调用page
- * 
+ *
  * 这种,基于串行请求:useSerialRequest、useSerialRequestWithLoading
- * 
+ *
  */
 /**
  * 所有页数
@@ -35,8 +35,8 @@ export function getTotalPage(size: number, count: number) {
 }
 
 type PromiseResultWithPage<T, K> = PromiseResult<T> & {
-  page: K
-}
+  page: K;
+};
 /**返回里应该带有page */
 type GetPage<T, K> = (page: K, signal?: AbortSignal) => Promise<T>;
 function useBaseAsyncPaginate<T, K>(
@@ -44,50 +44,54 @@ function useBaseAsyncPaginate<T, K>(
   initKey: K,
   getPage: GetPage<T, K>,
   /**deps里可以加version来实现刷新*/
-  deps: readonly any[]
+  deps: readonly any[],
 ) {
   const [page, setPage] = useChange(initKey);
   const [request, loading] = useLatestRequestLoading(
-    async function ([page]: [K], signal?: AbortSignal): Promise<PromiseResultWithPage<T, K>> {
+    async function ([page]: [K]): Promise<PromiseResultWithPage<T, K>> {
+      const promise = getPage(page);
       try {
-        const out = await getPage(page, signal)
+        const out = await promise;
         return {
+          promise,
           type: "success",
           page,
-          value: out
-        }
+          value: out,
+        };
       } catch (err) {
         return {
+          promise,
           type: "error",
           page,
-          value: err
-        }
+          value: err,
+        };
       }
     },
     function (res) {
-      if (res.type == 'success') {
-        effect(res.value)
+      if (res.type == "success") {
+        effect(res.value);
       }
-    })
+    },
+  );
   useEffect(() => {
-    setPage(initKey)
-    request(initKey)
-  }, deps)
+    setPage(initKey);
+    request(initKey);
+  }, deps);
   return {
     loading,
     page,
     /**重复调用都是刷新 */
     setPage(page: K) {
-      setPage(page)
-      request(page)
-    }
-  }
+      setPage(page);
+      request(page);
+    },
+  };
 }
 
 type NormalResult<T> = {
   list: T[];
   count: number;
-}
+};
 /**
  * 任何一个deps改变都会触发强刷新
  * 或者强制reload,也会造成刷新
@@ -100,28 +104,31 @@ export function useAsyncPaginate<T>(
     body,
     onError = emptyFun,
   }: {
-    body: GetPage<
-      NormalResult<T>,
-      number
-    >;
+    body: GetPage<NormalResult<T>, number>;
     onError?(err: any): void;
   },
-  deps: readonly any[]
+  deps: readonly any[],
 ) {
-  const [data, set_Data] = useState<PromiseResultWithPage<NormalResult<T>, number>>()
-  const { page, loading, setPage } = useBaseAsyncPaginate(function (res) {
-    set_Data(res)
-    if (res.type == "error") {
-      onError(res.value)
-    }
-  }, 1 as number, body, deps);
-  const setData = buildPromiseResultSetData(set_Data)
+  const [data, set_Data] =
+    useState<PromiseResultWithPage<NormalResult<T>, number>>();
+  const { page, loading, setPage } = useBaseAsyncPaginate(
+    function (res) {
+      set_Data(res);
+      if (res.type == "error") {
+        onError(res.value);
+      }
+    },
+    1 as number,
+    body,
+    deps,
+  );
+  const setData = buildPromiseResultSetData(set_Data);
   let count = 0;
   let list: T[] = [];
   const setList = useBuildSubSetObject(setData, "list");
   if (data?.type == "success") {
-    count = data.value.count
-    list = data.value.list
+    count = data.value.count;
+    list = data.value.list;
   }
   return {
     loading,
@@ -129,15 +136,14 @@ export function useAsyncPaginate<T>(
     count,
     page,
     setList,
-    setPage
+    setPage,
   };
 }
-
 
 export function useSyncPaginate<A, T>(
   initPage: A,
   get: (page: A) => T,
-  deps: readonly any[]
+  deps: readonly any[],
 ) {
   const [page, setPage] = useChange(initPage);
   useEffect(() => {
@@ -156,7 +162,7 @@ export function useSyncPaginate<A, T>(
 export function useListSyncPaginate<T>(
   size: number,
   get: () => T[],
-  deps: readonly any[]
+  deps: readonly any[],
 ) {
   const allList = useMemo(() => {
     return get();
@@ -167,7 +173,7 @@ export function useListSyncPaginate<T>(
       const next = page * size;
       return allList.slice(next - size, next);
     },
-    deps
+    deps,
   );
   return {
     allList,
@@ -183,6 +189,6 @@ export function usePageChangeCall<T>(page: T, call: (i: number) => void) {
   const [get, set] = useVersionLock(0);
   useEffect(() => {
     call(get());
-    set()
+    set();
   }, [page]);
 }
