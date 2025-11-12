@@ -1,5 +1,13 @@
 # better-react-helper
 
+## 2.0.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - wy-helper@1.0.1
+  - better-react@1.3.2
+
 ## 2.0.1
 
 ### Patch Changes
