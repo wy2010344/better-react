@@ -1,7 +1,17 @@
-# website
+# better-react 文档网站
 
-This is a Next.js application generated with
-[Create Fumadocs](https://github.com/fuma-nama/fumadocs).
+这是better-react的官方文档网站，使用Next.js和Fumadocs构建。
+
+## 关于better-react
+
+better-react是一个增强React开发体验的工具库，专注于函数式API设计，避免使用JSX语法。
+
+## 核心特点
+
+- **函数式DOM操作**：使用fdom和dom函数族替代JSX语法
+- **响应式状态管理**：简化的状态钩子
+- **组件化设计**：支持函数式组件的组合和复用
+- **性能优化**：高效的DOM更新机制
 
 Run development server:
 

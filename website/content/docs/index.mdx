@@ -5,38 +5,59 @@ description: better-react - 一个增强React开发体验的工具库
 
 # better-react
 
-欢迎使用better-react文档！这是一个增强React开发体验的工具库，提供了一系列实用的组件和工具函数。
+欢迎使用better-react文档！这是一个增强React开发体验的工具库，专注于函数式API设计，避免使用JSX语法。
 
 ## 快速开始
 
 了解如何安装和使用better-react：
 
-<Cards>
-  <Card title="安装指南" href="#installation" />
-  <Card title="核心组件" href="#components" />
-  <Card title="API参考" href="#api" />
-</Cards>
-
 ## 为什么选择better-react?
 
-- **增强开发体验**：提供更简洁的API和更好的类型支持
-- **高性能**：优化的组件实现，确保良好的性能表现
-- **易于使用**：与React生态系统完美集成
+- **函数式API设计**：完全使用JavaScript函数式语法，避免JSX/XML写法
+- **高性能**：优化的DOM渲染机制，提升应用性能
+- **声明式编程**：保持声明式编程风格的同时，简化开发流程
+- **强大的工具库**：提供丰富的工具函数辅助开发
 
 ## 安装
 
 ```bash
-npm install better-react
+npm install better-react-dom better-react-helper better-react-dom-helper
 # 或
-yarn add better-react
+yarn add better-react-dom better-react-helper better-react-dom-helper
 ```
 
 ## 使用示例
 
-```jsx
-import { EnhancedComponent } from 'better-react';
+```tsx
+import { fdom } from "better-react-dom"
+import { useState } from "better-react-helper"
 
-function App() {
-  return <EnhancedComponent />;
+export default function App() {
+  const [count, setCount] = useState(0)
+  
+  // 使用函数式API创建DOM元素
+  fdom.div({
+    childrenType: 'text',
+    children: `Count: ${count}`
+  })
+  
+  fdom.button({
+    childrenType: "text",
+    children: 'Increment',
+    onClick() {
+      setCount(count + 1)
+    }
+  })
 }
+
+// 注意：better-react使用函数式API，不使用JSX语法
+// 不再需要：<div>Hello World</div>
+// 而是使用：fdom.div({ childrenType: 'text', children: 'Hello World' })
 ```
+
+## 核心特性
+
+- **无JSX渲染**：通过fdom函数族创建DOM元素
+- **响应式状态管理**：使用useState等钩子管理状态
+- **组件化设计**：支持函数式组件的组合和复用
+- **丰富的辅助函数**：提供renderArray、renderIf等工具简化渲染逻辑

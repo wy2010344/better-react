@@ -88,3 +88,192 @@ const formattedDate = formatDate(new Date());
 // 验证邮箱
 const isValid = validateEmail('user@example.com');
 ```
+
+## Todo List 示例
+
+以下是一个简单的 Todo List 示例，展示了如何使用 better-react 创建交互式列表：
+
+```tsx
+import { fdom } from "better-react-dom"
+import { renderArray, useState } from "better-react-helper"
+import { emptyArray, quote } from "wy-helper"
+
+export default function () {
+  const [list, setList] = useState(emptyArray as number[])
+  renderArray(list, quote, (row, i) => {
+    fdom.div({
+      children() {
+        fdom.span({
+          childrenType: 'text',
+          children: `第${i + 1}行,内容是${row}`
+        })
+        fdom.button({
+          childrenType: "text",
+          children: "删除",
+          onClick() {
+            setList(list => list.filter(item => item != row))
+          }
+        })
+      }
+    })
+  })
+  fdom.button({
+    childrenType: "text",
+    children: '添加',
+    onClick() {
+      setList(list => list.concat(Date.now()))
+    }
+  })
+}
+```
+
+## 复杂 Todo MVC 示例
+
+以下是一个更复杂的 Todo MVC 示例，展示了 better-react 的高级用法：
+
+```tsx
+import { fdom } from "better-react-dom";
+import {
+  createUseReducer,
+  renderArray,
+  renderIf,
+  useChange,
+  useEffect,
+  useMemo,
+  useOnlyId,
+} from "better-react-helper";
+import { emptyArray } from "wy-helper";
+import "todomvc-app-css/index.css";
+import "todomvc-common/base.css";
+import { renderInputBool } from "better-react-dom-helper";
+
+type State = {
+  uid: number;
+  items: TodoItem[];
+};
+
+type TodoItem = {
+  id: number;
+  title: string;
+  completed: boolean;
+};
+
+type Action =
+  | { type: "add"; title: string }
+  | { type: "update"; id: number; title: string }
+  | { type: "remove"; id: number }
+  | { type: "toggle"; id: number }
+  | { type: "removeAll" }
+  | { type: "toggleAll"; completed: boolean }
+  | { type: "removeCompleted" };
+
+// 使用 createUseReducer 创建 reducer 函数
+const useTodoReducer = createUseReducer((state: State, action: Action) => {
+  switch (action.type) {
+    case "add": {
+      const id = state.uid + 1;
+      return {
+        uid: id,
+        items: state.items.concat({
+          id,
+          title: action.title,
+          completed: false,
+        }),
+      };
+    }
+    // 其他 action 处理...
+  }
+});
+```
+
+## 动画示例
+
+以下是一个使用 better-react 实现动画效果的示例：
+
+```tsx
+import { dom, fdom } from "better-react-dom";
+import { useAnimateSignal } from "better-react-dom-helper";
+import { renderIf, useConstDep, useVersion } from "better-react-helper";
+import { emptyArray, GetValue, SyncFun, trackSignal } from "wy-helper";
+
+export default function () {
+  const [version, updateVersion] = useVersion();
+
+  renderIf(version % 2, () => {
+    const transX = useAnimateSignal(0);
+    
+    // 创建响应式样式
+    const left = useSignalSync(() => {
+      return transX.get() + "px";
+    });
+    
+    dom.div({
+      style: {
+        width: "100px",
+        height: "100px",
+        background: "green",
+        position: "relative",
+        left,
+      }
+    }).render();
+
+    fdom.button({
+      childrenType: "text",
+      children: "动画",
+      onClick() {
+        // 执行动画
+        transX.animateTo(transX.get() == 0 ? 100 : 0);
+      },
+    });
+
+    fdom.button({
+      childrenType: "text",
+      children: "切换",
+      onClick: updateVersion,
+    });
+  });
+  
+  fdom.button({
+    childrenType: "text",
+    children: "增加",
+    onClick: updateVersion,
+  });
+}
+
+// 创建响应式信号同步函数
+function useSignalSync<T>(get: GetValue<T>) {
+  return useConstDep<SyncFun<T>>(function () {
+    const [set, a, b, c] = arguments;
+    const destroy = trackSignal(get, function (x) {
+      set(x, a, b, c);
+    });
+    return () => {
+      destroy();
+      console.log("销毁...");
+    };
+  }, emptyArray);
+}
+```
+
+## 运行示例
+
+您可以在 `packages/better-react/demo` 目录中找到更多完整的示例代码。这些示例演示了 better-react 的各种功能和用法。
+
+要运行示例：
+
+```bash
+cd packages/better-react/demo
+npm install
+npm run dev
+```
+
+## 主要功能模块
+
+better-react 包含以下主要功能模块：
+
+1. **better-react-dom** - DOM 渲染和操作
+2. **better-react-helper** - 核心 React 钩子和工具函数
+3. **better-react-dom-helper** - DOM 相关的辅助函数和钩子
+4. **better-react-core** - 核心功能实现
+
+每个模块都有详细的 API 文档和使用示例，您可以在对应的文档页面中找到更多信息。

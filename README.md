@@ -1,6 +1,13 @@
 # better-react
 
-A better React framework with enhanced features and performance.
+一个增强React开发体验的工具库，专注于函数式API设计，避免使用JSX语法。
+
+## 核心特性
+
+- **函数式API设计**：完全使用JavaScript函数式语法，避免JSX/XML写法
+- **高性能DOM操作**：通过fdom和dom函数族提供高效的DOM渲染
+- **响应式状态管理**：使用简化的状态钩子管理应用状态
+- **丰富的工具函数**：提供renderArray、renderIf等辅助函数简化开发
 
 ## Packages
 
@@ -138,6 +145,22 @@ fdom.button({
 参考: https://todomvc.com/
 
 https://github.com/wy2010344/better-react/blob/master/demo/src/complex-todo-demo.ts
+
+## 示例代码
+
+项目包含丰富的示例代码，位于 `demo` 目录：
+
+- `todo-demo.ts` - 简单的Todo列表示例
+- `complex-todo-demo.ts` - 复杂的Todo MVC应用示例
+- `animation-demo.ts` - 动画效果实现示例
+
+运行示例：
+
+```bash
+cd demo
+npm install
+npm run dev
+```
 
 ## 源流
 
