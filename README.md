@@ -9,6 +9,10 @@ A better React framework with enhanced features and performance.
 - **better-react-dom** - DOM renderer
 - **better-react-dom-helper** - DOM-specific utilities
 
+## Documentation
+
+📖 Documentation: https://wy2010344.github.io/better-react (Work in progress)
+
 ## Getting Started
 
 To start a better-react project, we recommend using [Vite](https://vite.dev/) with vanilla mode and TypeScript. You'll need these packages:

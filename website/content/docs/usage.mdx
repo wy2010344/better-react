@@ -1,0 +1,90 @@
+---
+title: 使用指南
+description: better-react的详细使用方法
+---
+
+# 使用指南
+
+本页面详细介绍better-react的各种组件和API的使用方法。
+
+## 核心组件
+
+better-react提供了多个增强型React组件，帮助你构建更好的用户界面。
+
+### EnhancedComponent
+
+这是一个增强的基础组件，提供了额外的功能和性能优化。
+
+```jsx
+import { EnhancedComponent } from 'better-react';
+
+function Example() {
+  return (
+    <EnhancedComponent
+      prop1="value"
+      prop2={true}
+      onAction={(data) => console.log('Action:', data)}
+    />
+  );
+}
+```
+
+### UtilityComponents
+
+一系列实用的UI组件集合，简化常见的界面开发任务。
+
+```jsx
+import { Button, Card, Tabs } from 'better-react/utility';
+
+function Dashboard() {
+  return (
+    <div>
+      <Card title="仪表盘">
+        <Tabs defaultValue="overview">
+          <Tabs.Tab value="overview">概览</Tabs.Tab>
+          <Tabs.Tab value="details">详情</Tabs.Tab>
+        </Tabs>
+        <Button onClick={() => console.log('Clicked')}>操作按钮</Button>
+      </Card>
+    </div>
+  );
+}
+```
+
+## Hooks
+
+better-react提供了多个增强型React Hooks，简化状态管理和副作用处理。
+
+### useEnhancedState
+
+增强的状态管理Hook，提供更多功能。
+
+```jsx
+import { useEnhancedState } from 'better-react/hooks';
+
+function Counter() {
+  const [count, setCount, resetCount] = useEnhancedState(0);
+  
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <Button onClick={() => setCount(prev => prev + 1)}>增加</Button>
+      <Button onClick={() => resetCount()}>重置</Button>
+    </div>
+  );
+}
+```
+
+## 工具函数
+
+better-react还提供了一系列实用的工具函数，帮助你处理常见的开发任务。
+
+```jsx
+import { formatDate, validateEmail } from 'better-react/utils';
+
+// 格式化日期
+const formattedDate = formatDate(new Date());
+
+// 验证邮箱
+const isValid = validateEmail('user@example.com');
+```
