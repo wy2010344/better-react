@@ -1,17 +1,25 @@
-import { EmptyFun } from "wy-helper"
-import { Fiber } from "./Fiber"
-import { AbsTempOps, TempOps, TempReal } from "./tempOps"
-import { StateHolder } from "./stateHolder"
-import { LayoutEffect } from "./effect"
+import { Fiber } from './Fiber'
+import { AbsTempOps, TempReal } from './tempOps'
+import { StateHolder } from './stateHolder'
+import { EnvModel } from './commitWork'
 
 const w = globalThis as any
 const cache = (w.__better_react_one__ || {}) as {
-  effect?: LayoutEffect
+  // effect?: LayoutEffect
   tempOps?: AbsTempOps<TempReal>
   stateHolder?: StateHolder
   beforeFiber?: Fiber
+  envModel?: EnvModel
 }
 w.__better_react_one__ = cache
+
+export function hookEnvModel() {
+  return cache.envModel!
+}
+
+export function hookAlterEnvModel(envModel?: EnvModel) {
+  cache.envModel = envModel
+}
 
 export function hookSetBeforeFiber(fiber?: Fiber) {
   cache.beforeFiber = fiber
@@ -32,7 +40,7 @@ export function hookTempOps() {
   if (cache.tempOps) {
     return cache.tempOps
   } else {
-    throw new Error("未找到对应的tempOps")
+    throw new Error('未找到对应的tempOps')
   }
 }
 
@@ -48,20 +56,22 @@ export function hookEndTempOps(op: AbsTempOps<any>) {
 
 export function hookAddResult(...vs: any[]) {
   if (!cache.tempOps) {
-    throw new Error("必须在render中进行")
+    throw new Error('必须在render中进行')
   }
-  cache.tempOps.data.add.apply(cache.tempOps.data, arguments as unknown as any[])
+  cache.tempOps.data.add.apply(
+    cache.tempOps.data,
+    arguments as unknown as any[],
+  )
 }
 
+// export function hookAddEffect(effect?: LayoutEffect) {
+//   cache.effect = effect
+// }
 
-export function hookAddEffect(effect?: LayoutEffect) {
-  cache.effect = effect
-}
-
-export function effectLayout(fun: EmptyFun) {
-  if (cache.effect) {
-    cache.effect(fun)
-  } else {
-    throw new Error("请在effect中执行")
-  }
-}
+// export function effectLayout(fun: EmptyFun) {
+//   if (cache.effect) {
+//     cache.effect(fun)
+//   } else {
+//     throw new Error('请在effect中执行')
+//   }
+// }

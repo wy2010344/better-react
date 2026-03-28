@@ -1,38 +1,49 @@
-import { MemoEvent } from "better-react"
-import { mergeDomAttr, mergeSvgAttr, SvgAttribute, SvgAttributeS, SvgAttributeSO, SvgElement, SvgElementType } from "wy-dom-helper"
-import { useMemo } from "better-react-helper"
-import { createOrProxy, emptyArray } from "wy-helper"
-import { svgTagNames } from "wy-dom-helper"
-import { NodeMemoCreater, NodeCreater } from "./node"
-import { NodeHelper } from "./helper"
+import { MemoEvent } from 'better-react'
+import {
+  mergeSvgAttr,
+  SvgAttribute,
+  SvgAttributeS,
+  SvgAttributeSO,
+  SvgElement,
+  SvgElementType,
+} from 'wy-dom-helper'
+import { useMemo } from 'better-react-helper'
+import { createOrProxy, emptyArray } from 'wy-helper'
+import { svgTagNames } from 'wy-dom-helper'
+import { NodeMemoCreater, NodeCreater } from './node'
+import { NodeHelper } from './helper'
 
 export function createSvgElement(e: MemoEvent<any, string>) {
-  return document.createElementNS("http://www.w3.org/2000/svg", e.trigger)
+  return document.createElementNS('http://www.w3.org/2000/svg', e.trigger)
 }
-export function useSvgNode<T extends SvgElementType>(
-  type: T
-): SvgElement<T> {
+export function useSvgNode<T extends SvgElementType>(type: T): SvgElement<T> {
   return useMemo(createSvgElement, type)
 }
 
+export type SvgTextOrFunNode<T extends SvgElementType> =
+  | string
+  | number
+  | boolean
+  | null
+  | ((v: SvgElement<T>) => void)
 
-
-export type SvgTextOrFunNode<T extends SvgElementType> = string | number | boolean | null | ((v: SvgElement<T>) => void)
-
-const svgCreater: NodeMemoCreater<any, any, any> = e => {
-  return new NodeHelper(
-    createSvgElement(e),
-    mergeSvgAttr, emptyArray)
+const svgCreater: NodeMemoCreater<any, any, any> = (e) => {
+  return new NodeHelper(createSvgElement(e), mergeSvgAttr, emptyArray)
 }
-type SvgNodeCreater<T extends SvgElementType> = NodeCreater<T, SvgElement<T>, SvgAttribute<T> | SvgAttributeSO<T>>
-
+type SvgNodeCreater<T extends SvgElementType> = NodeCreater<
+  T,
+  SvgElement<T>,
+  SvgAttribute<T> | SvgAttributeSO<T>
+>
 
 export const svg: {
   readonly [key in SvgElementType]: {
     (props?: SvgAttribute<key> | SvgAttributeSO<key>): SvgNodeCreater<key>
-    (fun: (v: SvgAttributeS<key>) => SvgAttributeS<key> | void): SvgNodeCreater<key>
+    (
+      fun: (v: SvgAttributeS<key>) => SvgAttributeS<key> | void,
+    ): SvgNodeCreater<key>
   }
-} = createOrProxy(svgTagNames, tag => {
+} = createOrProxy(svgTagNames, (tag) => {
   return function (args: any) {
     const creater = NodeCreater.instance
     creater.type = tag

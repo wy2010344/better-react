@@ -1,21 +1,9 @@
-import { emptyArray } from "wy-helper";
-import { useAlaways, useConst, useMemo, useRef } from "./useRef";
-import { useAttrEffect } from "./useEffect";
-import { hookEnvModel } from "better-react";
+import { emptyArray } from 'wy-helper'
+import { useAlaways, useConst, useMemo, useRef } from './useRef'
+import { useAttrEffect } from './useEffect'
+import { hookEnvModel } from 'better-react'
 
-export function useCommitAlaways<T>(init: T) {
-  const envModel = hookEnvModel()
-  const getValue = useAlaways(init)
-  return function () {
-    envModel.commitAll()
-    return getValue()
-  }
-}
-
-
-function useBuildGet<T extends (...vs: any[]) => any>(object: {
-  current: T
-}) {
+function useBuildGet<T extends (...vs: any[]) => any>(object: { current: T }) {
   return useConst<T>(function (...vs) {
     return object.current(...vs)
   } as T)
@@ -33,10 +21,7 @@ export function useEvent<T extends (...vs: any[]) => any>(fun: T): T {
   return useBuildGet(ref)
 }
 
-
-function useBuildProxy<T extends object>(get: {
-  current: T
-}) {
+function useBuildProxy<T extends object>(get: { current: T }) {
   return useMemo(() => {
     return new Proxy<T>(get.current, {
       get(target, p, receiver) {

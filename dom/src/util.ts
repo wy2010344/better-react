@@ -1,10 +1,4 @@
-import {
-  CreateChangeAtom,
-  hookEnvModel,
-  TempOps,
-  TempReal,
-  TempSubOps,
-} from 'better-react'
+import { hookEnvModel, TempOps, TempReal, TempSubOps } from 'better-react'
 import { useAttrEffect } from 'better-react-helper'
 import {
   StoreRef,
@@ -15,11 +9,12 @@ import {
   diffMove,
 } from 'wy-helper'
 import { renderChildrenOperate } from 'wy-dom-helper'
+import { RenderStore } from 'wy-helper/state-function'
 export type ContentEditable = boolean | 'inherit' | 'plaintext-only'
 
 export function useContentEditable(
   node: ElementContentEditable,
-  contentEditable?: boolean | 'inherit' | 'plaintext-only'
+  contentEditable?: boolean | 'inherit' | 'plaintext-only',
 ) {
   useAttrEffect(() => {
     node.contentEditable = contentEditable + '' || 'true'
@@ -30,7 +25,7 @@ const op = diffMove(renderChildrenOperate)
 export function nodeAppendChild(
   pNode: Node,
   list: ListCreater,
-  cache: StoreRef<readonly Node[]>
+  cache: StoreRef<readonly Node[]>,
 ) {
   const lastChildren = cache.get()
   const newChildren: Node[] = []
@@ -55,22 +50,20 @@ function addChildren(list: ListCreater, newChildren: Node[]) {
   }
 }
 
-export function createNodeTempOps(
-  pel: Node,
-  createChangeAtom: CreateChangeAtom<any>
-) {
+export function createNodeTempOps(pel: Node) {
   const cache = storeRef(emptyArray)
-  const addEffect = createChangeAtom(false, alawaysFalse)
+  const addEffect = new RenderStore<boolean>(false, alawaysFalse)
   const root = new TempOps<ListCreater>(
     () => new ListCreater(),
     () => {
-      if (!addEffect.get()) {
-        addEffect.set(true)
+      const env = hookEnvModel()
+      if (!addEffect.get(env)) {
+        addEffect.set(env, true)
         hookEnvModel().updateEffect(-0.5, () => {
           nodeAppendChild(pel, root.data, cache)
         })
       }
-    }
+    },
   )
   return root
 }

@@ -1,10 +1,22 @@
-import { hookAddResult, hookBeginTempOps, hookEndTempOps, hookEnvModel, MemoEvent, TempOps } from "better-react"
-import { createNodeTempOps, lazyOrInit, ListCreater, TOrQuote } from "./util"
-import { emptyArray, emptyFun, emptyObject, genTemplateStringS1, SetValue, SyncFun } from "wy-helper"
-import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper"
-import { NodeHelper } from "./helper"
-
-
+import {
+  hookAddResult,
+  hookBeginTempOps,
+  hookEndTempOps,
+  hookEnvModel,
+  MemoEvent,
+  TempOps,
+} from 'better-react'
+import { createNodeTempOps, lazyOrInit, ListCreater, TOrQuote } from './util'
+import {
+  emptyArray,
+  emptyFun,
+  emptyObject,
+  genTemplateStringS1,
+  SetValue,
+  SyncFun,
+} from 'wy-helper'
+import { hookAttrEffect, useAttrEffect, useMemo } from 'better-react-helper'
+import { NodeHelper } from './helper'
 
 export function updateText(text: string, node: Node) {
   node.textContent = text
@@ -13,17 +25,22 @@ export function updateHTML(html: string, node: Element) {
   node.innerHTML = html
 }
 
-export function useRenderHtml(node: {
-  innerHTML: string
-}, value: string) {
+export function useRenderHtml(
+  node: {
+    innerHTML: string
+  },
+  value: string,
+) {
   useAttrEffect(() => {
     node.innerHTML = value
   }, [node, value])
 }
 
-
-
-export type NodeMemoCreater<K extends string, T extends Element, Attr extends {}> = (e: MemoEvent<NodeHelper<T, Attr>, K>) => NodeHelper<T, Attr>
+export type NodeMemoCreater<
+  K extends string,
+  T extends Element,
+  Attr extends {},
+> = (e: MemoEvent<NodeHelper<T, Attr>, K>) => NodeHelper<T, Attr>
 
 export class NodeCreater<K extends string, T extends Element, Attr extends {}> {
   static instance = new NodeCreater<any, any, any>()
@@ -57,7 +74,7 @@ export class NodeCreater<K extends string, T extends Element, Attr extends {}> {
     const helper = this.useHelper()
     hookAttrEffect(() => {
       const str = genTemplateStringS1(ts, vs)
-      helper.updateContent("html", str)
+      helper.updateContent('html', str)
     })
     return helper.node
   }
@@ -65,25 +82,24 @@ export class NodeCreater<K extends string, T extends Element, Attr extends {}> {
     const helper = this.useHelper()
     hookAttrEffect(() => {
       const str = genTemplateStringS1(ts, vs)
-      helper.updateContent("text", str)
+      helper.updateContent('text', str)
     })
     return helper.node
   }
   renderInnerHTML(innerHTML: string | SyncFun<string> = '') {
     const helper = this.useHelper()
     hookAttrEffect(() => {
-      helper.updateContent("html", innerHTML)
+      helper.updateContent('html', innerHTML)
     })
     return helper.node
   }
   renderTextContent(textContent: string | SyncFun<string> = '') {
     const helper = this.useHelper()
     hookAttrEffect(() => {
-      helper.updateContent("text", textContent)
+      helper.updateContent('text', textContent)
     })
     return helper.node
   }
-
 
   renderOrText(fun?: string | number | boolean | null | ((v: T) => void)) {
     const tp = typeof fun
@@ -102,7 +118,7 @@ export class NodeCreater<K extends string, T extends Element, Attr extends {}> {
      * 将storeValueCreater放到context上去,不,是像hook一样放在当前遍历的全局
      * 因为与fiber无关,故不使用deps.
      * 可以手动开启使用fragment.
-     * 
+     *
      * 设想,fragment存array.
      * 任何render更新,都会通知它对应的dom子节点去更新,但在一次render中只通知一次.
      */
@@ -113,10 +129,9 @@ export class NodeCreater<K extends string, T extends Element, Attr extends {}> {
     return helper.node
   }
 
-
   renderOut<O>(fun: (node: T) => O): O {
     let out!: O
-    this.render(node => {
+    this.render((node) => {
       out = fun(node)
     })
     return out
@@ -124,12 +139,12 @@ export class NodeCreater<K extends string, T extends Element, Attr extends {}> {
 }
 
 function createTempOps(e: MemoEvent<TempOps<ListCreater>, Node>) {
-  return createNodeTempOps(e.trigger, hookEnvModel().createChangeAtom)
+  return createNodeTempOps(e.trigger)
 }
 /**
  * 指定某节点上挂载
- * @param fun 
- * @param node 
+ * @param fun
+ * @param node
  */
 export function renderPortal(fun: SetValue<Node>, node: Node) {
   const tempOps = useMemo(createTempOps, node)

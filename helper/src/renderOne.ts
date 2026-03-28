@@ -1,31 +1,24 @@
-import {
-  EmptyFun,
-  FalseType,
-  GetValue,
-  SetValue,
-  emptyFun,
-  quote,
-} from "wy-helper";
-import { renderArray, renderArrayToArray } from "./renderMap";
-import { getOpposite } from "./useVersion";
+import { EmptyFun, FalseType, emptyFun } from 'wy-helper'
+import { renderArray, renderArrayToArray } from './renderMap'
+import { getOpposite } from './useVersion'
+import { renderForEach } from 'better-react'
 
-export function renderOne<T>(key: T, render: SetValue<T>) {
-  renderArray([key], quote, render);
-}
-export function renderOneGet<V, T = any>(key: T, render: (v: T) => V) {
-  return renderArrayToArray([key], quote, render)[0];
+export function renderOne<T, V = void>(key: T, render: (v: T) => V) {
+  return renderForEach<T, V, V>(function (callback) {
+    return callback(key, render)
+  })
 }
 
 type ToTupleByKey<T, K extends keyof T> =
-  T extends Record<K, infer Key> ? [Key, T] : never;
+  T extends Record<K, infer Key> ? [Key, T] : never
 export function renderOrKey<T, K extends keyof T>(
   get: T | void | null | undefined,
   key: K,
   render: (...vs: ToTupleByKey<T, K> | [undefined, never]) => void,
 ) {
   renderOne(get?.[key], function (key) {
-    (render as any)(key, get);
-  });
+    ;(render as any)(key, get)
+  })
 }
 
 export function renderIf<T>(
@@ -35,11 +28,11 @@ export function renderIf<T>(
 ) {
   renderArray([value], getOpposite, function (v) {
     if (v) {
-      renderTrue(v as any);
+      renderTrue(v as any)
     } else {
-      renderFalse(v as any);
+      renderFalse(v as any)
     }
-  });
+  })
 }
 
 export function renderIfGet<T, V>(
@@ -49,11 +42,11 @@ export function renderIfGet<T, V>(
 ) {
   return renderArrayToArray([value], getOpposite, function (v) {
     if (v) {
-      renderTrue(v as any);
+      renderTrue(v as any)
     } else {
-      renderFalse(v as any);
+      renderFalse(v as any)
     }
-  })[0];
+  })[0]
 }
 
 export function renderGuard<T, V>(
@@ -62,18 +55,18 @@ export function renderGuard<T, V>(
   list: V[],
   notFun = emptyFun,
 ) {
-  let outKey = -1;
-  let renderFun = notFun;
+  let outKey = -1
+  let renderFun = notFun
   for (let i = 0; i < list.length; i++) {
-    const out = list[i];
-    const fun = callback(data, out);
+    const out = list[i]
+    const fun = callback(data, out)
     if (fun) {
-      outKey = i;
-      renderFun = fun;
-      break;
+      outKey = i
+      renderFun = fun
+      break
     }
   }
-  renderOne(outKey, renderFun);
+  renderOne(outKey, renderFun)
 }
 
 export function renderGuardString<T extends string>(
@@ -81,6 +74,6 @@ export function renderGuardString<T extends string>(
   record: Partial<Record<T, EmptyFun>>,
   other = emptyFun,
 ) {
-  const v = record[type];
-  renderOne(type, (v || other)!);
+  const v = record[type]
+  renderOne(type, (v || other)!)
 }

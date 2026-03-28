@@ -1,5 +1,5 @@
-import { renderForEach, RMap } from "better-react";
-import { normalMapCreater } from "wy-helper";
+import { renderForEach } from 'better-react'
+import { BaseRMap, normalMapCreater } from 'wy-helper'
 
 export type ReadArray<T> = {
   length: number
@@ -9,46 +9,43 @@ export function arrayHasValue(m: ReadArray<any>, i: number) {
   return i < m.length
 }
 
-
-
 export function renderArray<T, K>(
   vs: ReadArray<T>,
   getKey: (v: T, i: number) => K,
   render: (v: T, i: number) => void,
-  creater: <F>() => RMap<K, F> = normalMapCreater
+  creater: <F>() => BaseRMap<K, F> = normalMapCreater,
 ) {
-  renderForEach(
-    function (callback) {
-      for (let i = 0; i < vs.length; i++) {
-        const v = vs[i]
-        callback(getKey(v, i), () => {
-          render(v, i)
-        })
-      }
-    }, creater)
+  renderForEach(function (callback) {
+    for (let i = 0; i < vs.length; i++) {
+      const v = vs[i]
+      callback(getKey(v, i), () => {
+        render(v, i)
+      })
+    }
+  }, creater)
 }
 
-
-
-export function renderKeyArray<V extends {
-  key: any
-}>(
-  vs: readonly V[],
-  render: (v: V, i: number) => void
-) {
+export function renderKeyArray<
+  V extends {
+    key: any
+  },
+>(vs: readonly V[], render: (v: V, i: number) => void) {
   renderArray(vs, getKen, render)
 }
 
-function getKen<V extends {
-  key: any
-}>(v: V) {
+function getKen<
+  V extends {
+    key: any
+  },
+>(v: V) {
   return v.key
 }
 
 export function renderArrayToMap<T, K, V>(
   vs: ReadArray<T>,
   getKey: (v: T, i: number) => K,
-  render: (v: T, i: number) => V) {
+  render: (v: T, i: number) => V,
+) {
   const out = new Map<K, V>()
   renderForEach(function (callback) {
     for (let i = 0; i < vs.length; i++) {
@@ -63,11 +60,10 @@ export function renderArrayToMap<T, K, V>(
   return out
 }
 
-
 export function renderArrayToArray<T, V>(
   vs: ReadArray<T>,
   getKey: (v: T, i: number) => any,
-  render: (v: T, i: number) => V
+  render: (v: T, i: number) => V,
 ) {
   const out: V[] = []
   renderForEach(function (callback) {
@@ -86,7 +82,7 @@ export function renderArrayToArray<T, V>(
 export function renderIterableIterator<V>(
   iterable: IterableIterator<V>,
   getKey: (value: V) => any,
-  render: (value: V) => void
+  render: (value: V) => void,
 ) {
   renderForEach(function (callback) {
     const it = iterable.next()
@@ -100,7 +96,7 @@ export function renderIterableIterator<V>(
 export function renderIterableIteratorToMap<T, K, V>(
   iterable: IterableIterator<T>,
   getKey: (value: T) => K,
-  render: (value: T) => V
+  render: (value: T) => V,
 ) {
   const out = new Map<K, V>()
   renderForEach(function (callback) {
@@ -118,7 +114,7 @@ export function renderIterableIteratorToMap<T, K, V>(
 
 export function renderMap<K, V>(
   map: Map<K, V>,
-  render: (value: V, key: K) => void
+  render: (value: V, key: K) => void,
 ) {
   renderForEach(function (callback) {
     map.forEach(function (value, key) {
@@ -129,10 +125,7 @@ export function renderMap<K, V>(
   })
 }
 
-export function renderSet<V>(
-  set: Set<V>,
-  render: (value: V) => void
-) {
+export function renderSet<V>(set: Set<V>, render: (value: V) => void) {
   renderForEach(function (callback) {
     set.forEach(function (key) {
       callback(key, () => {
@@ -142,9 +135,12 @@ export function renderSet<V>(
   })
 }
 
-export function renderObject<V>(object: {
-  [key: string]: V
-}, render: (value: V, key: string) => void) {
+export function renderObject<V>(
+  object: {
+    [key: string]: V
+  },
+  render: (value: V, key: string) => void,
+) {
   renderForEach(function (callback) {
     for (const key in object) {
       callback(key, () => {

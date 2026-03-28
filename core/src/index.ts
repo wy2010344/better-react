@@ -1,16 +1,13 @@
-import { Fiber } from "./Fiber"
-import { batchWork, getReconcile } from "./reconcile"
-import { CreateChangeAtom, EnvModel } from "./commitWork"
-import { AskNextTimeWork, EmptyFun, alawaysTrue } from "wy-helper"
-import { AbsTempOps } from "./tempOps"
+import { Fiber } from './Fiber'
+import { WorkUnits } from './reconcile'
+import { AskNextTimeWork, EmptyFun, alawaysTrue, emptyFun } from 'wy-helper'
+import { AbsTempOps } from './tempOps'
+import { IEnvModel } from './commitWork'
 export { startTransition, flushSync } from './reconcile'
-export {
-  renderFiber,
-  renderSubOps
-} from './fc'
+export { renderFiber, renderSubOps } from './fc'
 export {
   hookRequestReconcile,
-  hookMakeDirtyAndRequestUpdate
+  hookMakeDirtyAndRequestUpdate,
 } from './requestFresh'
 export { createContext } from './context'
 export type { Context } from './context'
@@ -18,51 +15,49 @@ export {
   hookBeginTempOps,
   hookEndTempOps,
   hookAddResult,
-  effectLayout,
-  hookStateHoder
+  // effectLayout,
+  hookStateHoder,
 } from './cache'
-export {
-  useLevelEffect
-} from './effect'
+export type { IEnvModel }
+export { useLevelEffect } from './effect'
 export { useBaseMemo } from './memo'
 export { renderStateHolder, hookFirstTime } from './stateHolder'
-export type { MemoEvent } from './memo'
-export {
-  TempOps,
-  TempSubOps,
-} from './tempOps'
+/**
+ * @deprecated
+ */
+export type { MemoEvent } from 'wy-helper/state-function'
+export { TempOps, TempSubOps } from './tempOps'
 export type { TempReal } from './tempOps'
-export type { EffectResult, EffectEvent, EffectDestroy, EffectDestroyEvent } from './effect'
 export type {
-  Fiber,
-  RenderWithDep,
-  FiberEvent,
-} from './Fiber'
-export type { CreateChangeAtom } from './commitWork'
-export { hookEnvModel } from './commitWork'
+  EffectResult,
+  EffectEvent,
+  EffectDestroy,
+  EffectDestroyEvent,
+} from './effect'
+export type { Fiber, RenderWithDep, FiberEvent } from './Fiber'
+export { hookEnvModel } from './cache'
 export * from './renderForEach'
+export { layoutEffect } from './reconcile'
 export function render(
-  getSubOps: (createChangeAtom: CreateChangeAtom<any>) => AbsTempOps<any>,
+  getSubOps: () => AbsTempOps<any>,
   render: EmptyFun,
-  getAsk: AskNextTimeWork
+  getAsk: AskNextTimeWork<IEnvModel>,
 ) {
-  const envModel = new EnvModel()
-  const rootFiber = Fiber.create(envModel, null!, {
+  const rootFiber = Fiber.create(null!, {
     shouldChange: alawaysTrue,
     render,
     event: {
       trigger: undefined,
-      isInit: true
-    }
+      isInit: true,
+    },
   })
-  rootFiber.subOps = getSubOps(envModel.createChangeAtom)
-  const { destroy, beginRender } = batchWork(
-    rootFiber,
-    envModel
-  )
-  const reconcile = getReconcile(beginRender, envModel, getAsk)
-  envModel.reconcile = reconcile
-  //开始执行
-  reconcile()
-  return destroy
+  rootFiber.subOps = getSubOps()
+
+  const workUnit = new WorkUnits(rootFiber, getAsk)
+  workUnit.reconcile(emptyFun)
+  return function () {
+    workUnit.reconcile(function (env) {
+      env.addDelete(rootFiber.stateHoder)
+    })
+  }
 }

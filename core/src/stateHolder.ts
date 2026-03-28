@@ -1,29 +1,22 @@
-import { EnvModel } from "./commitWork"
-import { GetValue, StoreRef, ValueCenter, alawaysFalse } from "wy-helper"
-import { hookAlterStateHolder, hookStateHoder } from "./cache"
-import { Context } from "./context"
-import { Fiber } from "./Fiber"
-import { HookEffect } from "./effect"
-import { HookMemo, MemoEvent, useBaseMemo } from "./memo"
+import { GetValue, ValueCenter, alawaysFalse } from 'wy-helper'
+import { hookAlterStateHolder, hookStateHoder } from './cache'
+import { Context } from './context'
+import { Fiber } from './Fiber'
+import { HookEffect } from './effect'
+import { useBaseMemo } from './memo'
+import { IStateHolder, MemoEvent, RenderStore } from 'wy-helper/state-function'
 
-export class StateHolder {
+export class StateHolder implements IStateHolder {
   constructor(
-    public readonly envModel: EnvModel,
-    public readonly fiber: Fiber,
-    public readonly parent: StateHolder,
+    readonly fiber: Fiber,
+    readonly parent: StateHolder | undefined,
     /**
      * 在父节点的第几位
      */
-    public readonly parentContextIndex: number
-  ) {
-  }
+    readonly parentContextIndex: number,
+  ) {}
   static from(parent: StateHolder) {
-    return new StateHolder(
-      parent.envModel,
-      parent.fiber,
-      parent,
-      parent.contextIndex
-    )
+    return new StateHolder(parent.fiber, parent, parent.contextIndex)
   }
   /**是否已经销毁 */
   destroyed?: boolean
@@ -32,13 +25,11 @@ export class StateHolder {
   children?: Set<StateHolder>
 
   contexts?: {
-    key: Context<any>,
+    key: Context<any>
     value: ValueCenter<any>
   }[]
-  effects?: StoreRef<HookEffect<any, any>>[]
-  memos?: StoreRef<HookMemo<any, any>>[]
+  effects?: RenderStore<HookEffect<any, any>>[]
   fibers?: Fiber[]
-
 
   contextIndex = 0
   effectIndex = 0
@@ -65,7 +56,7 @@ export function renderStateHolder<T>(fun: GetValue<T>) {
   const parentEnv = hookStateHoder()
   const env = useBaseMemo(alawaysFalse, createFun, parentEnv)
   if (env.contextIndex != parentEnv.contextIndex) {
-    throw "contextIndex不匹配"
+    throw 'contextIndex不匹配'
   }
   env.beginRun()
   const a = fun()

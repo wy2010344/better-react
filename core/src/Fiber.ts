@@ -1,17 +1,23 @@
-import { EnvModel } from "./commitWork"
-import { EmptyFun, StoreRef } from "wy-helper"
-import { AbsTempOps } from "./tempOps"
-import { hookBeginTempOps, hookEndTempOps, hookStateHoder } from "./cache"
-import { StateHolder } from "./stateHolder"
-import { ReconcileFun } from "./requestFresh"
+import { EmptyFun } from 'wy-helper'
+import { AbsTempOps } from './tempOps'
+import {
+  hookAlterEnvModel,
+  hookBeginTempOps,
+  hookEndTempOps,
+  hookStateHoder,
+} from './cache'
+import { StateHolder } from './stateHolder'
+import { ReconcileFun } from './requestFresh'
+import { RenderStore } from 'wy-helper/state-function'
+import { EnvModel } from './commitWork'
 
 type RenderDeps<D> = {
-  shouldChange: (a: D, b: D) => any,
+  shouldChange: (a: D, b: D) => any
   render(e: FiberEvent<D>): void
   event: FiberEvent<D>
 }
 
-type EffectTag = "PLACEMENT" | "UPDATE" | void
+type EffectTag = 'PLACEMENT' | 'UPDATE' | void
 function whenCommitEffectTag(v: EffectTag) {
   return undefined
 }
@@ -31,18 +37,16 @@ function whenCommitEffectTag(v: EffectTag) {
  */
 export class Fiber<D = any> {
   private constructor(
-    readonly envModel: EnvModel,
     readonly parent: Fiber | undefined,
-    rd: RenderDeps<any>
+    rd: RenderDeps<any>,
   ) {
-    this.renderDeps = envModel.createChangeAtom(rd)
+    this.renderDeps = new RenderStore(rd)
 
     const parentHolder = hookStateHoder()
     this.stateHoder = new StateHolder(
-      this.envModel,
       this,
       parentHolder,
-      parentHolder?.contextIndex
+      parentHolder?.contextIndex,
     )
 
     if (parentHolder) {
@@ -50,75 +54,73 @@ export class Fiber<D = any> {
       parentHolder.children.add(this.stateHoder)
     }
 
-
-    this.effectTag = this.envModel.createChangeAtom<EffectTag>("PLACEMENT", whenCommitEffectTag)
-    this.firstChild = this.envModel.createChangeAtom(undefined)
-    this.lastChild = this.envModel.createChangeAtom(undefined)
-    this.before = this.envModel.createChangeAtom(undefined)
-    this.next = this.envModel.createChangeAtom(undefined)
+    this.effectTag = new RenderStore<EffectTag>(
+      'PLACEMENT',
+      whenCommitEffectTag,
+    )
+    this.firstChild = new RenderStore(undefined)
+    this.lastChild = new RenderStore(undefined)
+    this.before = new RenderStore(undefined)
+    this.next = new RenderStore(undefined)
   }
   /**
-   * 初始化或更新 
+   * 初始化或更新
    * UPDATE可能是setState造成的,可能是更新造成的
    * 这其中要回滚
    * 当提交生效的时候,自己的值变空.回滚的时候,也变成空
-  */
-  readonly effectTag: StoreRef<EffectTag>
+   */
+  readonly effectTag: RenderStore<EffectTag>
   /**顺序*/
-  readonly firstChild: StoreRef<Fiber | void>
-  readonly lastChild: StoreRef<Fiber | void>
-  readonly before: StoreRef<Fiber | void>
-  readonly next: StoreRef<Fiber | void>
+  readonly firstChild: RenderStore<Fiber | void>
+  readonly lastChild: RenderStore<Fiber | void>
+  readonly before: RenderStore<Fiber | void>
+  readonly next: RenderStore<Fiber | void>
 
-  private renderDeps: StoreRef<RenderDeps<any>>
+  private renderDeps: RenderStore<RenderDeps<any>>
 
-  requestReconcile: (ReconcileFun) | void = undefined
+  requestReconcile: ReconcileFun | void = undefined
   makeDirtyAndRequestUpdate: EmptyFun | void = undefined
   changeRender(
+    env: EnvModel,
     shouldChange: (a: D, b: D) => any,
     render: (e: FiberEvent<D>) => void,
-    deps: D
+    deps: D,
   ) {
-    const { event, shouldChange: beforeShouldChange } = this.renderDeps.get()
+    const { event, shouldChange: beforeShouldChange } = this.renderDeps.get(env)
     if (beforeShouldChange(event.trigger, deps)) {
       //能改变render,需要UPDATE
-      this.renderDeps.set({
+      this.renderDeps.set(env, {
         shouldChange,
         render,
         event: {
           trigger: deps,
           beforeTrigger: event.trigger,
-          isInit: false
-        }
+          isInit: false,
+        },
       })
-      this.effectTag.set("UPDATE")
+      this.effectTag.set(env, 'UPDATE')
     }
   }
   stateHoder: StateHolder
   subOps!: AbsTempOps<any>
-  render() {
-    const { render, event } = this.renderDeps.get()
+  render(env: EnvModel) {
+    const { render, event } = this.renderDeps.get(env)
+    hookAlterEnvModel(env)
     this.stateHoder.beginRun()
     const before = hookBeginTempOps(this.subOps)
     render(event)
     hookEndTempOps(before)
     this.stateHoder.endRun()
+    hookAlterEnvModel()
   }
   /**
    * Map的子节点,子节点是不是Map不一定
-   * @param parentFiber 
-   * @param rd 
-   * @param dynamicChild 
+   * @param parentFiber
+   * @param rd
+   * @param dynamicChild
    */
-  static create<D>(
-    envModel: EnvModel,
-    parentFiber: Fiber,
-    rd: RenderDeps<D>
-  ) {
-    const fiber = new Fiber(
-      envModel,
-      parentFiber,
-      rd)
+  static create<D>(parentFiber: Fiber, rd: RenderDeps<D>) {
+    const fiber = new Fiber(parentFiber, rd)
     return fiber
   }
 }
@@ -130,5 +132,5 @@ export type FiberEvent<T> = {
 export type RenderWithDep<T> = [
   (a: T, b: T) => any,
   (e: FiberEvent<T>) => void,
-  T
+  T,
 ]

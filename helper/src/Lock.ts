@@ -1,7 +1,6 @@
-import { StoreRef, emptyArray, storeRef } from "wy-helper";
-import { useMemo } from "./useRef";
-import { hookEnvModel } from "better-react";
-
+import { StoreRef, emptyArray, storeRef } from 'wy-helper'
+import { useMemo } from './useRef'
+import { hookEnvModel } from 'better-react'
 
 function increase(ref: StoreRef<number>) {
   const v = ref.get() + 1
@@ -19,24 +18,17 @@ export function useVersionInc(init = 0) {
 }
 /**
  * 版本锁,同步的
- * @param init 
- * @returns 
+ * @param init
+ * @returns
  */
 export function useVersionLock(init = 0) {
   return useMemo(() => {
     const ref = storeRef(init)
-    return [ref.get.bind(ref), function () {
-      return increase(ref)
-    }] as const
-  }, emptyArray)
-}
-
-export function useChgVersionLock(init = 0) {
-  const envModel = hookEnvModel()
-  return useMemo(() => {
-    const ref = envModel.createChangeAtom(init)
-    return [ref.get.bind(ref), function () {
-      return increase(ref)
-    }] as const
+    return [
+      ref.get.bind(ref),
+      function () {
+        return increase(ref)
+      },
+    ] as const
   }, emptyArray)
 }

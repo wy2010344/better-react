@@ -1,213 +1,140 @@
-import { Fiber } from "./Fiber";
+import { Fiber } from './Fiber'
 import {
   EmptyFun,
-  ManageValue,
-  StoreRef,
+  NextTimeWork,
+  SetValue,
+  effectsAddLevel,
+  effectsRunInOrder,
   emptyFun,
-  iterableToList,
-  numberSortAsc,
-  quote,
-  removeEqual,
-  run,
   storeRef,
-} from "wy-helper";
-import { hookAddEffect, hookStateHoder } from "./cache";
-import { StateHolder } from "./stateHolder";
+} from 'wy-helper'
+import { StateHolder } from './stateHolder'
+import { IEnvModel as IEnvModelB } from 'wy-helper/state-function'
+import { hookSetBeforeFiber } from './cache'
+import { LoopWorkLevel } from './reconcile'
 
-export type CreateChangeAtom<T> = (
-  v: T,
-  didCommit?: (v: T) => T,
-) => StoreRef<T>;
-export type Reconcile = (work?: EmptyFun) => void;
-export class EnvModel {
-  realTime = storeRef(false);
+export type Reconcile = (work?: EmptyFun) => void
 
-  setRealTime() {
-    if (this.onWork != "commit") {
-      throw new Error("只能在commit work中提交");
+type EnvState = 'used' | 'discarded'
+export interface IEnvModel extends IEnvModelB<StateHolder> {
+  updateEffect(level: number, set: EmptyFun): void
+}
+/**
+ * @todo 区分持有全局的状态，与每次render收集的变化。
+ * 这样就不用回滚
+ */
+let uid = 0
+export class EnvModel implements IEnvModel {
+  id = uid++
+  private workList: NextTimeWork<IEnvModel>[] = []
+  private workListIndex = 0
+  private lastCommit: NextTimeWork<IEnvModel>
+  private workLoop(unitOfWork: Fiber) {
+    const nextUnitOfWork = performUnitOfWork(unitOfWork, this)
+    if (nextUnitOfWork) {
+      this.workList.push(() => {
+        this.checkState()
+        this.workListIndex++
+        this.workLoop(nextUnitOfWork)
+      })
+    } else {
+      this.workList.push(this.lastCommit)
     }
-    this.realTime.set(true);
   }
 
-  private onWork: boolean | "commit" = false;
-  setOnWork(isCommit?: boolean) {
-    this.onWork = isCommit ? "commit" : true;
+  hasRender() {
+    return this.beginRender
   }
-  isOnWork() {
-    return this.onWork;
+  private beginRender = false
+  render() {
+    this.checkState()
+    if (this.beginRender) {
+      return this.workList[this.workListIndex]
+    }
+    return this.startRender
   }
-  finishWork() {
-    this.onWork = false;
+
+  private startRender = () => {
+    this.checkState()
+    this.beginRender = true
+    this.workLoop(this.rootFiber)
   }
-  reconcile: Reconcile = null as any;
+
+  private state?: EnvState
+
+  discared() {
+    this.state = 'discarded'
+  }
+  private checkState() {
+    if (this.state) {
+      throw new Error(`this envmodel is in state of ${this.state}`)
+    }
+  }
   /**本次等待删除的fiber*/
-  private readonly deletions: StateHolder[] = [];
-  addDelect(fiber: StateHolder) {
-    this.deletions.push(fiber);
+  private readonly deletions: StateHolder[] = []
+  addDelete(fiber: StateHolder) {
+    this.checkState()
+    this.deletions.push(fiber)
   }
-  private updateEffects = new Map<number, EmptyFun[]>();
-  updateEffect(level: number, set: EmptyFun) {
-    const old = this.updateEffects.get(level);
-    const array = old || [];
-    if (!old) {
-      this.updateEffects.set(level, array);
-    }
-    array.push(set);
+  private updateEffects = new Map<number, EmptyFun[]>()
+  readonly updateEffect = (level: number, set: EmptyFun) => {
+    this.checkState()
+    effectsAddLevel(this.updateEffects, level, set)
   }
   /**批量提交需要最终确认的atoms */
-  private readonly changeAtoms: ChangeAtom<any>[];
-  private changeAtomsManage: ManageValue<ChangeAtom<any>>;
-  constructor() {
-    this.setRealTime = this.setRealTime.bind(this);
-    this.createChangeAtom = this.createChangeAtom.bind(this);
-    this.updateEffect = this.updateEffect.bind(this);
-    const changeAtoms: ChangeAtom<any>[] = [];
-    this.changeAtoms = changeAtoms;
-    this.changeAtomsManage = {
-      add(v) {
-        changeAtoms.push(v);
-      },
-      remove(v) {
-        removeEqual(changeAtoms, v);
-      },
-    };
-    this.out = {
-      updateEffect: this.updateEffect,
-      createChangeAtom: this.createChangeAtom,
-    } as any;
-  }
-  shouldRender() {
-    return (
-      this.changeAtoms.length > 0 ||
-      this.deletions.length > 0 ||
-      this.updateEffects.size
-    );
+  commitChange(fun: EmptyFun): void {
+    this.checkState()
+    this.updateEffect(-Infinity, fun)
   }
 
-  rollback() {
-    this.changeAtoms.forEach((atom) => atom.rollback());
-    this.changeAtoms.length = 0;
-    this.deletions.length = 0;
-    this.updateEffects.clear();
-  }
-
-  layoutWork: EmptyFun = emptyFun;
-
-  layoutEffect: EmptyFun = emptyFun;
-  commit() {
-    this.realTime.set(false);
-
-    this.changeAtoms.forEach((atom) => atom.commit());
-    this.changeAtoms.length = 0;
-
-    this.deletions.forEach(notifyDel);
-    this.deletions.length = 0;
-
-    const updateEffects = this.updateEffects;
-    const keys = iterableToList(updateEffects.keys()).sort(numberSortAsc);
-    for (const key of keys) {
-      updateEffects.get(key)?.forEach(run);
-    }
-    updateEffects.clear();
-    this.layoutWork();
-  }
-  /**
-   * 在commit期间修改后,都是最新值,直到commit前,都可以回滚
-   * @param value
-   * @param didCommit
-   * @returns
-   */
-  createChangeAtom<T>(value: T, didCommit?: (v: T) => T): ChangeStoreRef<T> {
-    return new ChangeAtom(this.changeAtomsManage, value, didCommit || quote);
-  }
-
-  out!: {
-    updateEffect(level: number, set: EmptyFun): void;
-    commitAll(): void;
-    createChangeAtom<T>(v: T, didCommit?: (v: T) => T): ChangeStoreRef<T>;
-  };
-}
-//优先级,1是及时,2是Layout,3是普通,4是延迟
-export type LoopWorkLevel = 1 | 2 | 3 | 4;
-export type LoopWork = {
-  type: "loop";
-  level: LoopWorkLevel;
-  work?: EmptyFun;
-};
-export type ChangeStoreRef<T> = StoreRef<T> & {
-  getCommitValue(): T;
-};
-/**
- * 需要区分create和update阶段
- */
-class ChangeAtom<T> implements ChangeStoreRef<T> {
-  private firstTime = true;
+  index = 1
   constructor(
-    private manage: ManageValue<ChangeAtom<any>>,
-    private value: T,
-    private whenCommit: (v: T) => T,
+    readonly level: LoopWorkLevel,
+    private rootFiber: Fiber,
+    private commitWork: EmptyFun,
+    readonly reconcile: SetValue<SetValue<IEnvModel>>,
   ) {
-    this.manage.add(this);
-  }
-  dirty = false;
-  draftValue!: T;
-  set(v: T) {
-    if (this.firstTime) {
-      this.value = v;
-    } else {
-      /**
-       * 主要是构造阶段设定的就是正式值,要么本次构造一起回滚
-       */
-      if (v != this.value) {
-        if (!this.dirty) {
-          this.dirty = true;
-          this.manage.add(this);
-        }
-        this.draftValue = v;
-      } else {
-        if (this.dirty) {
-          this.dirty = false;
-          this.manage.remove(this);
-        }
-        this.draftValue = this.value;
-      }
+    this.lastCommit = () => {
+      this.checkState()
+      this.workListIndex++
+      this.commitWork()
+      this.commit()
+      this.state = 'used'
     }
-    return v;
+    this.lastCommit.lastJob = true
   }
-  get() {
-    if (this.firstTime) {
-      return this.value;
-    } else {
-      if (this.dirty) {
-        return this.draftValue;
-      }
-      return this.value;
-    }
+  private commit() {
+    // this.realTime.set(false)
+
+    this.deletions.forEach(this.deleteIt)
+    // this.deletions.length = 0
+
+    effectsRunInOrder(this.updateEffects)
+    // updateEffects.clear()
   }
 
-  getCommitValue() {
-    if (this.firstTime) {
-      throw "刚创建,未生效";
-    }
-    return this.value;
-  }
-  commit() {
-    if (this.firstTime) {
-      this.firstTime = false;
-      this.value = this.whenCommit(this.value);
-    } else {
-      this.dirty = false;
-      this.value = this.whenCommit(this.draftValue);
-    }
-  }
-  rollback() {
-    if (this.firstTime) {
-      //不处理?一般挂在hooks上会丢弃
-    } else {
-      this.dirty = false;
-    }
+  private deleteIt = (fiber: StateHolder) => {
+    notifyDel(fiber, this)
   }
 }
+
+/**
+ * 当前工作结点，返回下一个工作结点
+ * 先子，再弟，再父(父的弟)
+ * 因为是IMGUI的进化版,只能深度遍历,不能广度遍历.
+ * 如果子Fiber有返回值,则是有回流,则对于回流,父组件再怎么处理?像布局,是父组件收到回流,子组件会再render.也许从头绘制会需要这种hooks,只是哪些需要显露给用户
+ * 深度遍历,render是前置的,执行完父的render,再去执行子的render,没有穿插的过程,或者后置的处理.亦即虽然子Fiber声明有先后,原则上是可以访问所有父的变量.
+ * @param fiber
+ * @returns
+ */
+const performUnitOfWork = deepTravelFiber(function (fiber, env) {
+  //当前fiber脏了，需要重新render
+  if (fiber.effectTag.get(env)) {
+    hookSetBeforeFiber()
+    fiber.render(env)
+  }
+})
+
 /**
  * portal内的节点不会找到portal外，portal外的节点不会找到portal内。
  * 即向前遍历，如果该节点是portal，跳过再向前
@@ -216,59 +143,50 @@ class ChangeAtom<T> implements ChangeStoreRef<T> {
  * @returns
  */
 
-function notifyDel(fiber: StateHolder) {
-  destroyFiber(fiber);
+function notifyDel(fiber: StateHolder, envModel: EnvModel) {
+  destroyFiber(fiber, envModel)
   fiber.children?.forEach((child) => {
-    notifyDel(child);
-  });
+    notifyDel(child, envModel)
+  })
 }
-function destroyFiber(fiber: StateHolder) {
-  fiber.destroyed = true;
-  const effects = fiber.effects;
+function destroyFiber(fiber: StateHolder, envModel: EnvModel) {
+  fiber.destroyed = true
+  const effects = fiber.effects
   if (effects) {
-    const envModel = fiber.envModel;
     effects.forEach((effect) => {
-      const state = effect.get();
+      const state = effect.get(envModel)
       envModel.updateEffect(state.level, function () {
-        const destroy = state.destroy;
+        const destroy = state.destroy
         if (destroy) {
-          hookAddEffect(envModel.layoutEffect);
           destroy({
             isDestroy: true,
             value: state.value,
             beforeIsInit: state.isInit,
             beforeTrigger: state.deps,
-            setRealTime: fiber.envModel.setRealTime,
-          });
-          hookAddEffect(undefined);
+            // setRealTime: envModel.setRealTime,
+          })
         }
-      });
-    });
+      })
+    })
   }
 }
 
-export function deepTravelFiber<T extends any[]>(
-  call: (Fiber: Fiber, ...vs: T) => void,
-) {
-  return function (fiber: Fiber, ...vs: T) {
-    call(fiber, ...vs);
-    const child = fiber.firstChild.get();
+export function deepTravelFiber(call: (Fiber: Fiber, env: EnvModel) => void) {
+  return function (fiber: Fiber, env: EnvModel) {
+    call(fiber, env)
+    const child = fiber.firstChild.get(env)
     if (child) {
-      return child;
+      return child
     }
     /**寻找叔叔节点 */
-    let nextFiber: Fiber | undefined = fiber;
+    let nextFiber: Fiber | undefined = fiber
     while (nextFiber) {
-      const next = nextFiber.next.get();
+      const next = nextFiber.next.get(env)
       if (next) {
-        return next;
+        return next
       }
-      nextFiber = nextFiber.parent;
+      nextFiber = nextFiber.parent
     }
-    return undefined;
-  };
-}
-
-export function hookEnvModel() {
-  return hookStateHoder().envModel.out;
+    return undefined
+  }
 }

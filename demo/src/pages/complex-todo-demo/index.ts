@@ -1,4 +1,4 @@
-import { fdom } from "better-react-dom";
+import { fdom } from 'better-react-dom'
 import {
   createUseReducer,
   renderArray,
@@ -7,54 +7,54 @@ import {
   useEffect,
   useMemo,
   useOnlyId,
-} from "better-react-helper";
-import { emptyArray } from "wy-helper";
-import "todomvc-app-css/index.css";
-import "todomvc-common/base.css";
-import { renderInputBool } from "better-react-dom-helper";
+} from 'better-react-helper'
+import { emptyArray } from 'wy-helper'
+import 'todomvc-app-css/index.css'
+import 'todomvc-common/base.css'
+import { renderInputBool } from 'better-react-dom-helper'
 type State = {
-  uid: number;
-  items: TodoItem[];
-};
+  uid: number
+  items: TodoItem[]
+}
 
 type TodoItem = {
-  id: number;
-  title: string;
-  completed: boolean;
-};
+  id: number
+  title: string
+  completed: boolean
+}
 
 type Action =
   | {
-      type: "add";
-      title: string;
+      type: 'add'
+      title: string
     }
   | {
-      type: "update";
-      id: number;
-      title: string;
+      type: 'update'
+      id: number
+      title: string
     }
   | {
-      type: "remove";
-      id: number;
+      type: 'remove'
+      id: number
     }
   | {
-      type: "toggle";
-      id: number;
+      type: 'toggle'
+      id: number
     }
   | {
-      type: "removeAll";
+      type: 'removeAll'
     }
   | {
-      type: "toggleAll";
-      completed: boolean;
+      type: 'toggleAll'
+      completed: boolean
     }
   | {
-      type: "removeCompleted";
-    };
+      type: 'removeCompleted'
+    }
 const useTodoReducer = createUseReducer((state: State, action: Action) => {
   switch (action.type) {
-    case "add": {
-      const id = state.uid + 1;
+    case 'add': {
+      const id = state.uid + 1
       return {
         uid: id,
         items: state.items.concat({
@@ -62,9 +62,9 @@ const useTodoReducer = createUseReducer((state: State, action: Action) => {
           title: action.title,
           completed: false,
         }),
-      };
+      }
     }
-    case "update":
+    case 'update':
       return {
         ...state,
         items: state.items.map((item) => {
@@ -72,35 +72,37 @@ const useTodoReducer = createUseReducer((state: State, action: Action) => {
             return {
               ...item,
               title: action.title,
-            };
+            }
           }
-          return item;
+          return item
         }),
-      };
-    case "remove":
+      }
+    case 'remove':
       return {
         ...state,
         items: state.items.filter((item) => item.id != action.id),
-      };
-    case "toggle":
+      }
+    case 'toggle':
       return {
         ...state,
         items: state.items.map((item) => {
+          console.log('action', action.id, item.id)
           if (item.id == action.id) {
+            console.log('toggle', item.completed)
             return {
               ...item,
               completed: !item.completed,
-            };
+            }
           }
-          return item;
+          return item
         }),
-      };
-    case "removeAll":
+      }
+    case 'removeAll':
       return {
         uid: 0,
         items: emptyArray as TodoItem[],
-      };
-    case "toggleAll":
+      }
+    case 'toggleAll':
       return {
         ...state,
         items: state.items.map((item) => {
@@ -108,42 +110,43 @@ const useTodoReducer = createUseReducer((state: State, action: Action) => {
             return {
               ...item,
               completed: action.completed,
-            };
+            }
           }
-          return item;
+          return item
         }),
-      };
-    case "removeCompleted":
+      }
+    case 'removeCompleted':
       return {
         ...state,
         items: state.items.filter((item) => !item.completed),
-      };
+      }
   }
-  return state;
-});
+  return state
+})
 const map = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#x27;",
-  "/": "&#x2F;",
-};
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#x27;',
+  '/': '&#x2F;',
+}
 const sanitize = (string: string) => {
-  const reg = /[&<>"'/]/gi;
-  return string.replace(reg, (match) => map[match as "<"]);
-};
+  const reg = /[&<>"'/]/gi
+  return string.replace(reg, (match) => map[match as '<'])
+}
 const initState: State = {
   uid: 0,
   items: emptyArray as any[],
-};
+}
 
-type Route = "active" | "completed";
+type Route = 'active' | 'completed'
 export default function () {
-  const [data, dispatch] = useTodoReducer(initState);
-  const [route, setRoute] = useChange<Route>();
+  const [data, dispatch] = useTodoReducer(initState)
+  console.log('data', data)
+  const [route, setRoute] = useChange<Route>()
   fdom.style({
-    childrenType: "html",
+    childrenType: 'html',
     children: `
     .visually-hidden {
     border: 0;
@@ -168,87 +171,85 @@ export default function () {
     pointer-events: none;
 }
     `,
-  });
+  })
   fdom.div({
     children() {
       fdom.section({
-        className: "todoapp",
+        className: 'todoapp',
         children() {
           fdom.header({
-            className: "header",
+            className: 'header',
             children() {
               fdom.h1({
-                s_lineHeight: "1.4em",
-                childrenType: "text",
-                children: "todos",
-              });
+                s_lineHeight: '1.4em',
+                childrenType: 'text',
+                children: 'todos',
+              })
               renderInput({
-                label: "New todo Input",
-                defaultValue: "",
+                label: 'New todo Input',
+                defaultValue: '',
                 onSubmit(title) {
                   dispatch({
-                    type: "add",
+                    type: 'add',
                     title,
-                  });
+                  })
                 },
-              });
+              })
             },
-          });
+          })
           const visibleTodos = useMemo(
             () =>
               data.items.filter((todo) => {
-                if (route === "active") return !todo.completed;
+                if (route === 'active') return !todo.completed
 
-                if (route === "completed") return todo.completed;
+                if (route === 'completed') return todo.completed
 
-                return todo;
+                return todo
               }),
             [data.items, route],
-          );
+          )
           fdom.main({
-            className: "main",
+            className: 'main',
             children() {
               renderIf(visibleTodos.length, () => {
                 fdom.div({
-                  className: "toggle-all-container",
+                  className: 'toggle-all-container',
                   children() {
-                    const checked = visibleTodos.every(
-                      (todo) => todo.completed,
-                    );
+                    const checked = visibleTodos.every((todo) => todo.completed)
                     renderInputBool({
-                      type: "checkbox",
-                      className: "toggle-all",
-                      id: "toggle-all",
+                      type: 'checkbox',
+                      className: 'toggle-all',
+                      id: 'toggle-all',
                       checked: checked,
                       onInput(e) {
                         dispatch({
-                          type: "toggleAll",
+                          type: 'toggleAll',
                           completed: !checked,
-                        });
+                        })
                       },
-                    });
+                    })
                     fdom.label({
-                      className: "toggle-all-label",
-                      htmlFor: "toggle-all",
-                      childrenType: "text",
-                      children: "Toggle All Input",
-                    });
+                      className: 'toggle-all-label',
+                      htmlFor: 'toggle-all',
+                      childrenType: 'text',
+                      children: 'Toggle All Input',
+                    })
                   },
-                });
-              });
+                })
+              })
               fdom.ul({
-                className: "todo-list",
+                className: 'todo-list',
                 children() {
                   renderArray(
                     visibleTodos,
                     (v) => v.id,
                     (todo, i) => {
-                      const [isWritable, setIsWritable] = useChange(false);
+                      const [isWritable, setIsWritable] = useChange(false)
                       fdom.li({
-                        className: todo.completed ? "completed" : "",
+                        className: todo.completed ? 'completed' : '',
                         children() {
                           fdom.div({
-                            className: "view",
+                            className: 'view',
                             children() {
                               renderIf(
                                 isWritable,
@@ -258,138 +259,139 @@ export default function () {
                                     onSubmit(title) {
                                       if (title.length) {
                                         dispatch({
-                                          type: "update",
+                                          type: 'update',
                                           id: todo.id,
                                           title,
-                                        });
+                                        })
                                       } else {
                                         dispatch({
-                                          type: "remove",
+                                          type: 'remove',
                                           id: todo.id,
-                                        });
+                                        })
                                       }
-                                      setIsWritable(false);
+                                      setIsWritable(false)
                                     },
-                                    label: "Edit Todo Input",
+                                    label: 'Edit Todo Input',
                                     onBlur() {
-                                      setIsWritable(false);
+                                      setIsWritable(false)
                                     },
-                                  });
+                                  })
                                 },
                                 () => {
                                   renderInputBool({
-                                    type: "checkbox",
-                                    className: "toggle",
+                                    type: 'checkbox',
+                                    className: 'toggle',
                                     checked: todo.completed,
                                     onInput(e) {
+                                      console.log('cloick')
                                       dispatch({
-                                        type: "toggle",
+                                        type: 'toggle',
                                         id: todo.id,
-                                      });
+                                      })
                                     },
-                                  });
+                                  })
 
                                   fdom.label({
-                                    childrenType: "text",
+                                    childrenType: 'text',
                                     children: todo.title,
                                     onDoubleClick() {
-                                      setIsWritable(true);
+                                      setIsWritable(true)
                                     },
-                                  });
+                                  })
 
                                   fdom.button({
-                                    className: "destroy",
+                                    className: 'destroy',
                                     onClick() {
                                       dispatch({
-                                        type: "remove",
+                                        type: 'remove',
                                         id: todo.id,
-                                      });
+                                      })
                                     },
-                                  });
+                                  })
                                 },
-                              );
+                              )
                             },
-                          });
+                          })
                         },
-                      });
+                      })
                     },
-                  );
+                  )
                 },
-              });
+              })
             },
-          });
+          })
           const activeTodos = useMemo(
             () => data.items.filter((todo) => !todo.completed),
             [data.items],
-          );
+          )
 
           fdom.footer({
-            className: "footer box-content",
+            className: 'footer box-content',
             children() {
               fdom.span({
-                className: "todo-count",
-                childrenType: "text",
-                children: `${activeTodos.length} ${activeTodos.length === 1 ? "item" : "items"} left!`,
-              });
+                className: 'todo-count',
+                childrenType: 'text',
+                children: `${activeTodos.length} ${activeTodos.length === 1 ? 'item' : 'items'} left!`,
+              })
               fdom.ul({
-                className: "filters",
+                className: 'filters',
                 children() {
                   fdom.li({
                     children() {
                       fdom.a({
-                        className: route ? "" : "selected",
+                        className: route ? '' : 'selected',
                         onClick() {
-                          setRoute(undefined);
+                          setRoute(undefined)
                         },
-                        childrenType: "text",
-                        children: "All",
-                      });
+                        childrenType: 'text',
+                        children: 'All',
+                      })
                     },
-                  });
+                  })
 
                   fdom.li({
                     children() {
                       fdom.a({
-                        className: route == "active" ? "selected" : "",
+                        className: route == 'active' ? 'selected' : '',
                         onClick() {
-                          setRoute("active");
+                          setRoute('active')
                         },
-                        childrenType: "text",
-                        children: "Active",
-                      });
+                        childrenType: 'text',
+                        children: 'Active',
+                      })
                     },
-                  });
+                  })
 
                   fdom.li({
                     children() {
                       fdom.a({
-                        className: route == "completed" ? "selected" : "",
+                        className: route == 'completed' ? 'selected' : '',
                         onClick() {
-                          setRoute("completed");
+                          setRoute('completed')
                         },
-                        childrenType: "text",
-                        children: "Completed",
-                      });
+                        childrenType: 'text',
+                        children: 'Completed',
+                      })
                     },
-                  });
+                  })
                 },
-              });
+              })
 
               fdom.button({
-                className: "clear-completed",
-                childrenType: "text",
-                children: "Clear completed",
+                className: 'clear-completed',
+                childrenType: 'text',
+                children: 'Clear completed',
                 aria_disabled: activeTodos.length == data.items.length,
                 onClick() {
-                  dispatch({ type: "removeCompleted" });
+                  dispatch({ type: 'removeCompleted' })
                 },
-              });
+              })
             },
-          });
+          })
         },
-      });
+      })
     },
-  });
+  })
 }
 
 function renderInput({
@@ -398,42 +400,42 @@ function renderInput({
   onSubmit,
   onBlur,
 }: {
-  defaultValue: string;
-  label: string;
-  onBlur?(): void;
-  onSubmit(title: string): void;
+  defaultValue: string
+  label: string
+  onBlur?(): void
+  onSubmit(title: string): void
 }) {
   fdom.div({
-    className: "input-container",
+    className: 'input-container',
     children() {
       const input = fdom.input({
-        id: "todo-input",
-        className: "new-todo",
+        id: 'todo-input',
+        className: 'new-todo',
         autoFocus: true,
-        placeholder: "What needs to be done?",
+        placeholder: 'What needs to be done?',
         onBlur,
         onKeyDown(e) {
-          if (e.key == "Enter") {
-            const value = input.value.trim();
+          if (e.key == 'Enter') {
+            const value = input.value.trim()
             if (value.length < 2) {
-              return;
+              return
             }
-            const title = sanitize(value);
-            onSubmit(title);
-            input.value = "";
+            const title = sanitize(value)
+            onSubmit(title)
+            input.value = ''
           }
         },
-      });
+      })
       useEffect(() => {
-        input.value = defaultValue;
-        input.focus();
-      }, emptyArray);
+        input.value = defaultValue
+        input.focus()
+      }, emptyArray)
       fdom.label({
-        className: "visually-hidden",
-        childrenType: "text",
+        className: 'visually-hidden',
+        childrenType: 'text',
         children: label,
-        htmlFor: "todo-input",
-      });
+        htmlFor: 'todo-input',
+      })
     },
-  });
+  })
 }

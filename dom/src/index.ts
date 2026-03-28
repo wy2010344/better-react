@@ -1,10 +1,18 @@
-import { hookAddResult, render } from "better-react";
-import { AskNextTimeWork, emptyArray, emptyFun, EmptyFun, genTemplateStringS1, SyncFun, VType } from "wy-helper";
-import { hookAttrEffect, useAttrEffect, useMemo } from "better-react-helper";
-import { createNodeTempOps } from "./util";
-import { isSyncFun } from "wy-dom-helper";
-export { renderPortal } from './node';
-export type { NodeMemoCreater } from './node';
+import { hookAddResult, IEnvModel, render } from 'better-react'
+import {
+  AskNextTimeWork,
+  emptyArray,
+  emptyFun,
+  EmptyFun,
+  genTemplateStringS1,
+  SyncFun,
+  VType,
+} from 'wy-helper'
+import { hookAttrEffect, useAttrEffect, useMemo } from 'better-react-helper'
+import { createNodeTempOps } from './util'
+import { isSyncFun } from 'wy-dom-helper'
+export { renderPortal } from './node'
+export type { NodeMemoCreater } from './node'
 export * from './dom'
 export * from './svg'
 export * from './util'
@@ -22,23 +30,14 @@ export { NodeHelper } from './helper'
 export function createRoot(
   node: Node,
   reconcile: EmptyFun,
-  getAsk: AskNextTimeWork) {
-  return render(
-    createChangeAtom => createNodeTempOps(node, createChangeAtom),
-    reconcile,
-    getAsk
-  )
+  getAsk: AskNextTimeWork<IEnvModel>,
+) {
+  return render(() => createNodeTempOps(node), reconcile, getAsk)
 }
-
-
-
-
-
 
 function creatTextContent() {
-  return document.createTextNode("")
+  return document.createTextNode('')
 }
-
 
 export function createTextNode() {
   return useMemo(creatTextContent, emptyArray)
@@ -53,7 +52,6 @@ export function useTextContent(node: Node, value: string) {
 function createFun() {
   return new FunNode()
 }
-
 
 function updateContent(value: string, node: Text) {
   node.textContent = value
@@ -79,8 +77,8 @@ class FunNode {
 }
 /**
  * [FiberText.create, content]
- * @param content 
- * @returns 
+ * @param content
+ * @returns
  */
 export function renderTextContent(content: string | SyncFun<string>) {
   const node = useMemo(createFun, emptyArray)
@@ -105,7 +103,10 @@ export function renderContent(content: string) {
   return node
 }
 
-export function renderText(ts: TemplateStringsArray, ...vs: (number | string)[]) {
+export function renderText(
+  ts: TemplateStringsArray,
+  ...vs: (number | string)[]
+) {
   return renderContent(genTemplateStringS1(ts, vs))
 }
 
@@ -119,7 +120,3 @@ export function renderFunOrText(render?: TextOrFunNode) {
     return renderContent(render + '')
   }
 }
-
-
-
-
