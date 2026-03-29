@@ -2,8 +2,8 @@ import { EnvModel, IEnvModel } from './commitWork'
 import { Fiber } from './Fiber'
 import { AskNextTimeWork, NextTimeWork, EmptyFun, SetValue } from 'wy-helper'
 
-//优先级,1是及时,2是Layout,3是普通,4是延迟
-export type LoopWorkLevel = 1 | 2 | 3 | 4
+//优先级,1是及时,2是普通,3是延迟
+export type LoopWorkLevel = 1 | 2 | 3
 type LoopWork = {
   type: 'loop'
   level: LoopWorkLevel
@@ -11,15 +11,19 @@ type LoopWork = {
 }
 const WorkLevel = {
   Flush: 1,
-  Layout: 2,
-  Normal: 3,
-  Low: 4,
+  Normal: 2,
+  Low: 3,
 } as const
-export class WorkUnits {
+
+export interface AppState {
+  reconcile(callback: SetValue<IEnvModel>): void
+  flushSync(): void
+}
+export class WorkUnits implements AppState {
   workList: LoopWork[] = []
   workListMinLevel: LoopWorkLevel = WorkLevel.Low
   constructor(
-    readonly rootFiber: Fiber,
+    private readonly rootFiber: Fiber,
     getAsk: AskNextTimeWork<IEnvModel>,
   ) {
     this.askNextTimeWork = getAsk({
@@ -43,25 +47,45 @@ export class WorkUnits {
     this.askNextTimeWork()
   }
 
-  currentEnvModel?: EnvModel
+  /**
+   * 全部提交，类似flushSync
+   */
+  flushSync(): void {
+    let work = this.getNextWork()
+    while (work) {
+      work(this.currentEnvModel!)
+      work = this.getNextWork()
+    }
+  }
+
+  private currentEnvModel?: EnvModel
   private commitWork = () => {
-    for (let i = 0; i < this.currentEnvModel!.index; i++) {
-      //提交生效了
-      this.workList.shift()
-    }
     this.workListMinLevel = WorkLevel.Normal
-    for (let i = this.currentEnvModel!.index; i < this.workList.length; i++) {
-      this.workListMinLevel = Math.min(
-        this.workList[i].level,
-        this.workListMinLevel,
-      ) as LoopWorkLevel
-    }
-    if (this.workList.length) {
-      console.log('不正常，理论上应该是空的', this.workList.length)
+    if (this.workList.length != this.currentEnvModel!.getIndex()) {
+      console.log(
+        '不正常，理论上应该是空的',
+        this.workList.length - this.currentEnvModel!.getIndex(),
+      )
+      for (let i = 0; i < this.currentEnvModel!.getIndex(); i++) {
+        //提交生效了
+        this.workList.shift()
+      }
+      for (
+        let i = this.currentEnvModel!.getIndex();
+        i < this.workList.length;
+        i++
+      ) {
+        this.workListMinLevel = Math.min(
+          this.workList[i].level,
+          this.workListMinLevel,
+        ) as LoopWorkLevel
+      }
+    } else {
+      this.workList.length = 0
     }
     this.currentEnvModel = undefined
   }
-  appendWork(work: LoopWork) {
+  private appendWork(work: LoopWork) {
     this.workList.push(work)
     this.workListMinLevel = Math.min(
       work.level,
@@ -69,7 +93,7 @@ export class WorkUnits {
     ) as LoopWorkLevel
   }
 
-  getNextWork = (): NextTimeWork<IEnvModel> | void => {
+  private getNextWork = (): NextTimeWork<IEnvModel> | void => {
     if (this.currentEnvModel?.level != this.workListMinLevel) {
       const item = this.workList[0]
       if (!item) {
@@ -80,14 +104,15 @@ export class WorkUnits {
         this.workListMinLevel as LoopWorkLevel,
         this.rootFiber,
         this.commitWork,
-        this.reconcile,
+        this,
       )
       return item.work
     }
     //仍然保持
-    const item = this.workList[this.currentEnvModel.index]
+    const item = this.workList[this.currentEnvModel.getIndex()]
     if (item) {
       if (this.currentEnvModel.hasRender()) {
+        console.log('确实回滚了。。。')
         //重新跑一遍
         this.currentEnvModel.discared()
         this.currentEnvModel = undefined
@@ -100,12 +125,12 @@ export class WorkUnits {
     }
   }
 
-  nextWork = () => {
+  private nextWork = () => {
     const env = this.currentEnvModel!
     //需要保证执行后才生成副作用。
     //如果在render片段时，中间出现了新的setState，则会重新render
-    const work = this.workList[env.index]
-    env.index++
+    const work = this.workList[env.getIndex()]
+    env.addIndex()
     work.work(env)
   }
 }
@@ -123,17 +148,13 @@ export function startTransition(fun: () => void) {
   currentTaskLevel = old
 }
 
+/**
+ * 在effect阶段中，使后续实时执行
+ * @param fun
+ */
 export function layoutEffect(fun: EmptyFun) {
-  const old = currentTaskLevel
-  currentTaskLevel = WorkLevel.Layout
-  fun()
-  currentTaskLevel = old
-}
-
-export function flushSync(fun: () => void) {
   const old = currentTaskLevel
   currentTaskLevel = WorkLevel.Flush
   fun()
   currentTaskLevel = old
-  //这里必须加个实时处理
 }

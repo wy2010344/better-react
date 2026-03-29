@@ -11,11 +11,10 @@ import {
 import { StateHolder } from './stateHolder'
 import { IEnvModel as IEnvModelB } from 'wy-helper/state-function'
 import { hookSetBeforeFiber } from './cache'
-import { LoopWorkLevel } from './reconcile'
+import { AppState, LoopWorkLevel } from './reconcile'
 
 export type Reconcile = (work?: EmptyFun) => void
 
-type EnvState = 'used' | 'discarded'
 export interface IEnvModel extends IEnvModelB<StateHolder> {
   updateEffect(level: number, set: EmptyFun): void
 }
@@ -25,7 +24,7 @@ export interface IEnvModel extends IEnvModelB<StateHolder> {
  */
 let uid = 0
 export class EnvModel implements IEnvModel {
-  id = uid++
+  readonly id = uid++
   private workList: NextTimeWork<IEnvModel>[] = []
   private workListIndex = 0
   private lastCommit: NextTimeWork<IEnvModel>
@@ -60,9 +59,10 @@ export class EnvModel implements IEnvModel {
     this.workLoop(this.rootFiber)
   }
 
-  private state?: EnvState
+  private state?: 'used' | 'discarded'
 
   discared() {
+    this.checkState()
     this.state = 'discarded'
   }
   private checkState() {
@@ -87,12 +87,21 @@ export class EnvModel implements IEnvModel {
     this.updateEffect(-Infinity, fun)
   }
 
-  index = 1
+  private index = 1
+  getIndex() {
+    return this.index
+  }
+  addIndex() {
+    if (this.beginRender) {
+      throw new Error('已经render了不允许自增')
+    }
+    return this.index++
+  }
   constructor(
     readonly level: LoopWorkLevel,
     private rootFiber: Fiber,
     private commitWork: EmptyFun,
-    readonly reconcile: SetValue<SetValue<IEnvModel>>,
+    readonly appState: AppState,
   ) {
     this.lastCommit = () => {
       this.checkState()

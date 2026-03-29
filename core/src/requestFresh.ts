@@ -4,7 +4,7 @@ import { IEnvModel } from './commitWork'
 export type ReconcileFun = (fun: (env: IEnvModel) => any) => void
 export function hookRequestReconcile(): ReconcileFun {
   const holder = hookStateHoder()
-  const reconcile = hookEnvModel().reconcile
+  const appState = hookEnvModel().appState
   const parentFiber = holder.fiber
   if (!parentFiber.requestReconcile) {
     parentFiber.requestReconcile = function (callback) {
@@ -12,7 +12,7 @@ export function hookRequestReconcile(): ReconcileFun {
         console.log('更新已经销毁的fiber')
         return
       }
-      reconcile(function (env) {
+      appState.reconcile(function (env) {
         if (callback(env)) {
           if (holder.destroyed) {
             console.log('更新已经销毁的fiber,1')

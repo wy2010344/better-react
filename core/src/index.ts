@@ -3,7 +3,7 @@ import { WorkUnits } from './reconcile'
 import { AskNextTimeWork, EmptyFun, alawaysTrue, emptyFun } from 'wy-helper'
 import { AbsTempOps } from './tempOps'
 import { IEnvModel } from './commitWork'
-export { startTransition, flushSync } from './reconcile'
+export { startTransition } from './reconcile'
 export { renderFiber, renderSubOps } from './fc'
 export {
   hookRequestReconcile,
