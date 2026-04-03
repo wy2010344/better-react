@@ -4,6 +4,7 @@ import {
   hookAlterEnvModel,
   hookBeginTempOps,
   hookEndTempOps,
+  hookEnvModel,
   hookStateHoder,
 } from './cache'
 import { StateHolder } from './stateHolder'
@@ -36,6 +37,9 @@ function whenCommitEffectTag(v: EffectTag) {
  * 如果是oneFiber,父节点的child与lastChild会变化,但子结点的before与next都是空
  */
 export class Fiber<D = any> {
+  init(env: EnvModel) {
+    this.effectTag.set(env, 'PLACEMENT')
+  }
   private constructor(
     readonly parent: Fiber | undefined,
     rd: RenderDeps<any>,
@@ -54,10 +58,8 @@ export class Fiber<D = any> {
       parentHolder.children.add(this.stateHoder)
     }
 
-    this.effectTag = new RenderStore<EffectTag>(
-      'PLACEMENT',
-      whenCommitEffectTag,
-    )
+    this.effectTag = new RenderStore<EffectTag>(undefined, whenCommitEffectTag)
+
     this.firstChild = new RenderStore(undefined)
     this.lastChild = new RenderStore(undefined)
     this.before = new RenderStore(undefined)

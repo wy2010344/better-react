@@ -1,7 +1,7 @@
 import { EmptyFun, FalseType, emptyFun } from 'wy-helper'
 import { renderArray, renderArrayToArray } from './renderMap'
 import { getOpposite } from './useVersion'
-import { renderForEach } from 'better-react'
+import { renderForEachOld as renderForEach } from './renderForEachOld'
 
 export function renderOne<T, V = void>(key: T, render: (v: T) => V) {
   return renderForEach<T, V, V>(function (callback) {

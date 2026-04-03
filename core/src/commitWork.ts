@@ -2,11 +2,9 @@ import { Fiber } from './Fiber'
 import {
   EmptyFun,
   NextTimeWork,
-  SetValue,
   effectsAddLevel,
   effectsRunInOrder,
-  emptyFun,
-  storeRef,
+  run,
 } from 'wy-helper'
 import { StateHolder } from './stateHolder'
 import { IEnvModel as IEnvModelB } from 'wy-helper/state-function'
@@ -81,10 +79,14 @@ export class EnvModel implements IEnvModel {
     this.checkState()
     effectsAddLevel(this.updateEffects, level, set)
   }
-  /**批量提交需要最终确认的atoms */
+  private changes: EmptyFun[] = []
+  /**
+   * 批量提交需要最终确认的atoms
+   * reanderForEach里使用
+   */
   commitChange(fun: EmptyFun): void {
     this.checkState()
-    this.updateEffect(-Infinity, fun)
+    this.changes.push(fun)
   }
 
   private index = 1
@@ -113,13 +115,9 @@ export class EnvModel implements IEnvModel {
     this.lastCommit.lastJob = true
   }
   private commit() {
-    // this.realTime.set(false)
-
+    this.changes.forEach(run)
     this.deletions.forEach(this.deleteIt)
-    // this.deletions.length = 0
-
     effectsRunInOrder(this.updateEffects)
-    // updateEffects.clear()
   }
 
   private deleteIt = (fiber: StateHolder) => {

@@ -3,14 +3,8 @@ import { Fiber } from './Fiber'
 import { AskNextTimeWork, NextTimeWork, EmptyFun, SetValue } from 'wy-helper'
 
 //优先级,1是及时,2是普通,3是延迟
-export type LoopWorkLevel = 1 | 2 | 3
-type LoopWork = {
-  type: 'loop'
-  level: LoopWorkLevel
-  work: SetValue<IEnvModel>
-}
+export type LoopWorkLevel = 2 | 3
 const WorkLevel = {
-  Flush: 1,
   Normal: 2,
   Low: 3,
 } as const
@@ -18,10 +12,15 @@ const WorkLevel = {
 export interface AppState {
   reconcile(callback: SetValue<IEnvModel>): void
   flushSync(): void
+  setRealTime(): void
 }
 export class WorkUnits implements AppState {
-  workList: LoopWork[] = []
-  workListMinLevel: LoopWorkLevel = WorkLevel.Low
+  private workList: EmptyFun[] = []
+  private lowWorkList: EmptyFun[] = []
+  private realTime = false
+  setRealTime(): void {
+    this.realTime = true
+  }
   constructor(
     private readonly rootFiber: Fiber,
     getAsk: AskNextTimeWork<IEnvModel>,
@@ -33,20 +32,26 @@ export class WorkUnits implements AppState {
         return this.currentEnvModel!
       },
       realTime: () => {
-        return this.workListMinLevel < WorkLevel.Normal
+        return this.realTime
       },
     })
   }
   private readonly askNextTimeWork: EmptyFun
   reconcile = (work: SetValue<IEnvModel>): void => {
-    this.appendWork({
-      type: 'loop',
-      level: currentTaskLevel,
-      work,
-    })
+    if (currentTaskLevel == WorkLevel.Low) {
+      this.lowWorkList.push(work)
+    } else {
+      this.workList.push(work)
+    }
     this.askNextTimeWork()
   }
 
+  private getWorkList() {
+    if (this.currentEnvModel?.level == WorkLevel.Low) {
+      return this.lowWorkList
+    }
+    return this.workList
+  }
   /**
    * 全部提交，类似flushSync
    */
@@ -60,78 +65,77 @@ export class WorkUnits implements AppState {
 
   private currentEnvModel?: EnvModel
   private commitWork = () => {
-    this.workListMinLevel = WorkLevel.Normal
-    if (this.workList.length != this.currentEnvModel!.getIndex()) {
+    this.realTime = false
+    const workList = this.getWorkList()
+    if (workList.length != this.currentEnvModel!.getIndex()) {
       console.log(
         '不正常，理论上应该是空的',
-        this.workList.length - this.currentEnvModel!.getIndex(),
+        workList.length - this.currentEnvModel!.getIndex(),
       )
       for (let i = 0; i < this.currentEnvModel!.getIndex(); i++) {
         //提交生效了
-        this.workList.shift()
-      }
-      for (
-        let i = this.currentEnvModel!.getIndex();
-        i < this.workList.length;
-        i++
-      ) {
-        this.workListMinLevel = Math.min(
-          this.workList[i].level,
-          this.workListMinLevel,
-        ) as LoopWorkLevel
+        workList.shift()
       }
     } else {
-      this.workList.length = 0
+      workList.length = 0
     }
+    // console.log('结束任务', this.currentEnvModel?.level)
     this.currentEnvModel = undefined
   }
-  private appendWork(work: LoopWork) {
-    this.workList.push(work)
-    this.workListMinLevel = Math.min(
-      work.level,
-      this.workListMinLevel,
-    ) as LoopWorkLevel
-  }
-
   private getNextWork = (): NextTimeWork<IEnvModel> | void => {
-    if (this.currentEnvModel?.level != this.workListMinLevel) {
-      const item = this.workList[0]
-      if (!item) {
-        return
+    if (!this.currentEnvModel) {
+      const work = this.workList.at(0)
+      if (work) {
+        // console.log('开始任务', WorkLevel.Normal)
+        this.currentEnvModel = new EnvModel(
+          WorkLevel.Normal,
+          this.rootFiber,
+          this.commitWork,
+          this,
+        )
+        return work
       }
-      this.currentEnvModel?.discared()
-      this.currentEnvModel = new EnvModel(
-        this.workListMinLevel as LoopWorkLevel,
-        this.rootFiber,
-        this.commitWork,
-        this,
-      )
-      return item.work
+      const lowWork = this.lowWorkList.at(0)
+      if (lowWork) {
+        // console.log('开始任务', WorkLevel.Low)
+        this.currentEnvModel = new EnvModel(
+          WorkLevel.Low,
+          this.rootFiber,
+          this.commitWork,
+          this,
+        )
+        return lowWork
+      }
+      return
     }
-    //仍然保持
-    const item = this.workList[this.currentEnvModel.getIndex()]
-    if (item) {
+    if (this.currentEnvModel.level == WorkLevel.Low && this.workList.length) {
+      // console.log('中止任务', WorkLevel.Low)
+      //中断回滚
+      this.currentEnvModel.discared()
+      this.currentEnvModel = undefined
+      return this.getNextWork()
+    }
+    const work = this.getWorkList().at(this.currentEnvModel.getIndex())
+    if (work) {
       if (this.currentEnvModel.hasRender()) {
-        console.log('确实回滚了。。。')
-        //重新跑一遍
+        // console.log('中止任务', this.currentEnvModel.level)
+        //中断回滚
         this.currentEnvModel.discared()
         this.currentEnvModel = undefined
         return this.getNextWork()
       }
       return this.nextWork
-    } else {
-      //进行内部的迭代
-      return this.currentEnvModel.render()
     }
+    return this.currentEnvModel.render()
   }
 
   private nextWork = () => {
     const env = this.currentEnvModel!
     //需要保证执行后才生成副作用。
     //如果在render片段时，中间出现了新的setState，则会重新render
-    const work = this.workList[env.getIndex()]
+    const work = this.getWorkList()[env.getIndex()]
     env.addIndex()
-    work.work(env)
+    work(env)
   }
 }
 
@@ -144,17 +148,6 @@ let currentTaskLevel: LoopWorkLevel = WorkLevel.Normal
 export function startTransition(fun: () => void) {
   const old = currentTaskLevel
   currentTaskLevel = WorkLevel.Low
-  fun()
-  currentTaskLevel = old
-}
-
-/**
- * 在effect阶段中，使后续实时执行
- * @param fun
- */
-export function layoutEffect(fun: EmptyFun) {
-  const old = currentTaskLevel
-  currentTaskLevel = WorkLevel.Flush
   fun()
   currentTaskLevel = old
 }

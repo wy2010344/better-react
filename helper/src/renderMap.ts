@@ -1,6 +1,5 @@
-import { renderForEach } from 'better-react'
 import { BaseRMap, normalMapCreater } from 'wy-helper'
-
+import { renderForEachOld as renderForEach } from './renderForEachOld'
 export type ReadArray<T> = {
   length: number
   [index: number]: T

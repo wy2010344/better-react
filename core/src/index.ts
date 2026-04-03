@@ -2,7 +2,7 @@ import { Fiber } from './Fiber'
 import { WorkUnits } from './reconcile'
 import { AskNextTimeWork, EmptyFun, alawaysTrue, emptyFun } from 'wy-helper'
 import { AbsTempOps } from './tempOps'
-import { IEnvModel } from './commitWork'
+import { EnvModel, IEnvModel } from './commitWork'
 export { startTransition } from './reconcile'
 export { renderFiber, renderSubOps } from './fc'
 export {
@@ -37,7 +37,6 @@ export type {
 export type { Fiber, RenderWithDep, FiberEvent } from './Fiber'
 export { hookEnvModel } from './cache'
 export * from './renderForEach'
-export { layoutEffect } from './reconcile'
 export function render(
   getSubOps: () => AbsTempOps<any>,
   render: EmptyFun,
@@ -54,7 +53,9 @@ export function render(
   rootFiber.subOps = getSubOps()
 
   const workUnit = new WorkUnits(rootFiber, getAsk)
-  workUnit.reconcile(emptyFun)
+  workUnit.reconcile((env) => {
+    rootFiber.init(env as EnvModel)
+  })
   return function () {
     workUnit.reconcile(function (env) {
       env.addDelete(rootFiber.stateHoder)

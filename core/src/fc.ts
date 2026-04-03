@@ -32,6 +32,7 @@ export function renderFiber<T>(
         isInit: true,
       },
     })
+    currentFiber.init(envModel)
     currentFiber.subOps = hookTempOps().createSub()
     holder.fibers.push(currentFiber)
   } else {
