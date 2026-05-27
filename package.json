@@ -15,17 +15,17 @@
     "build": "cd core && pnpm run build && cd ../helper && pnpm run build && cd ../dom && pnpm run build && cd ../dom-helper && pnpm run build"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.5.0",
-    "@commitlint/config-conventional": "^19.5.0",
-    "commitizen": "^4.3.1",
-    "cz-conventional-changelog": "^3.3.0",
-    "husky": "^9.1.6",
-    "lint-staged": "^15.2.10"
+    "@commitlint/cli": "catalog:",
+    "@commitlint/config-conventional": "catalog:",
+    "commitizen": "catalog:",
+    "cz-conventional-changelog": "catalog:",
+    "husky": "catalog:",
+    "lint-staged": "catalog:"
   },
   "config": {
     "commitizen": {
       "path": "cz-conventional-changelog"
     }
   },
-  "packageManager": "pnpm@10.18.2+sha512.9fb969fa749b3ade6035e0f109f0b8a60b5d08a1a87fdf72e337da90dcc93336e2280ca4e44f2358a649b83c17959e9993e777c2080879f3801e6f0d999ad3dd"
+  "packageManager": "pnpm@11.3.0"
 }

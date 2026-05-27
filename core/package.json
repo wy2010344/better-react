@@ -1,6 +1,6 @@
 {
   "name": "better-react",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "A better React framework with enhanced features and performance",
   "keywords": [
     "react",
@@ -10,6 +10,9 @@
   ],
   "author": "wy2010344",
   "license": "MIT",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/wy2010344/better-react.git"
@@ -50,7 +53,6 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/prettier-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "tsdown": "latest"
-  },
-  "packageManager": "pnpm@10.33.0"
+    "tsdown": "catalog:"
+  }
 }

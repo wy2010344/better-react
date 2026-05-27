@@ -1,5 +1,18 @@
 # better-react-dom-helper
 
+## 3.0.2
+
+### Patch Changes
+
+- version update
+
+- Updated dependencies []:
+  - better-react-dom@3.0.2
+  - better-react-helper@3.0.2
+  - wy-dom-helper@2.0.2
+  - wy-helper@1.1.2
+  - better-react@2.0.2
+
 ## 3.0.1
 
 ### Patch Changes

@@ -5,15 +5,13 @@ import {
   emptyObject,
   FalseType,
   GetPromiseRequest,
-  GetValue,
   hookAbortSignalPromise,
-  RequestVersionPromiseFinally,
   SetValue,
-} from "wy-helper";
-import { useEffect } from "./useEffect";
-import { useEvent } from "./useEvent";
-import { useMemo, useRef } from "./useRef";
-import { useState } from "./useState";
+} from 'wy-helper'
+import { useEffect } from './useEffect'
+import { useEvent } from './useEvent'
+import { useMemo } from './useRef'
+import { useState } from './useState'
 
 export function useRenderPromise<T>(
   /**触发事件 */
@@ -23,22 +21,22 @@ export function useRenderPromise<T>(
 ) {
   const onFinally: SetValue<AbortPromiseResult<T>> = useEvent(function (data) {
     if (request == data.request) {
-      initFinally(data);
+      initFinally(data)
     }
-  });
+  })
   useEffect(() => {
     if (request) {
-      const abortController = new AbortController();
-      hookAbortSignalPromise(abortController.signal, request, onFinally);
-      return abortController.abort.bind(abortController);
+      const abortController = new AbortController()
+      hookAbortSignalPromise(abortController.signal, request, onFinally)
+      return abortController.abort.bind(abortController)
     }
-  }, request);
+  }, request)
 }
 export function useCallbackPromiseState<T>(
   outRequest: GetPromiseRequest<T>,
   deps: readonly any[],
 ) {
-  return useMemoPromiseState(() => outRequest, deps);
+  return useMemoPromiseState(() => outRequest, deps)
 }
 
 export function useMemoPromise<T>(
@@ -47,42 +45,42 @@ export function useMemoPromise<T>(
     onSuccess = emptyFun,
     onError = emptyFun,
   }: {
-    onSuccess?(value: T): void;
-    onError?(err: any): void;
+    onSuccess?(value: T): void
+    onError?(err: any): void
   } = emptyObject,
 ) {
-  const [data, setData] = useState<AbortPromiseResult<T>>();
+  const [data, setData] = useState<AbortPromiseResult<T>>()
   useRenderPromise(function (data) {
-    if (data.type == "error") {
-      onError(data.value);
+    if (data.type == 'error') {
+      onError(data.value)
     } else {
-      onSuccess(data.value);
+      onSuccess(data.value)
     }
-    setData(data);
-  }, request);
+    setData(data)
+  }, request)
   return {
     data: request ? data : undefined,
     loading: data?.request != request,
     setData: buildPromiseResultSetData(setData),
-  };
+  }
 }
 
 export function useMemoPromiseState<T>(
   outRequest: () => GetPromiseRequest<T> | FalseType,
   deps: readonly any[],
 ) {
-  return useMemoPromise(useMemo(outRequest, deps));
+  return useMemoPromise(useMemo(outRequest, deps))
 }
 export function useCallbackPromise<T>(
   arg: {
-    onSuccess?(value: T): void;
-    onError?(err: any): void;
-    body: GetPromiseRequest<T>;
+    onSuccess?(value: T): void
+    onError?(err: any): void
+    body: GetPromiseRequest<T>
   },
   deps: readonly any[],
 ) {
   return useMemoPromise(
     useMemo(() => arg.body, deps),
     arg,
-  );
+  )
 }
