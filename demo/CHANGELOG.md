@@ -1,5 +1,17 @@
 # better-react-demo
 
+## 0.0.8
+
+### Patch Changes
+
+- Updated dependencies []:
+  - wy-dom-helper@2.0.3
+  - wy-helper@1.1.3
+  - better-react-dom@3.0.3
+  - better-react-dom-helper@3.0.3
+  - better-react@2.0.3
+  - better-react-helper@3.0.3
+
 ## 0.0.7
 
 ### Patch Changes
