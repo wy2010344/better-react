@@ -2,8 +2,9 @@ import { Fiber } from './Fiber'
 import { AbsTempOps, TempReal } from './tempOps'
 import { StateHolder } from './stateHolder'
 import { EnvModel } from './commitWork'
+import { getGlobalThis } from 'wy-helper'
 
-const w = globalThis as any
+const w = getGlobalThis() as any
 const cache = (w.__better_react_one__ || {}) as {
   // effect?: LayoutEffect
   tempOps?: AbsTempOps<TempReal>
