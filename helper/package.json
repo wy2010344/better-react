@@ -47,8 +47,8 @@
     "type-check": "tsc --noEmit"
   },
   "peerDependencies": {
-    "better-react": "workspace:*",
-    "wy-helper": "workspace:*"
+    "better-react": "workspace:^",
+    "wy-helper": "workspace:^"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

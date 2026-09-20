@@ -1,6 +1,6 @@
 import { dom } from "better-react-dom"
 import { useAttrEffect, useVersion } from "better-react-helper"
-import { DomAttribute, DomAttributeSO, DomElementType, React } from "wy-dom-helper"
+import { DomAttribute, DomAttributeSO, DomElementType } from "wy-dom-helper"
 
 export type TriggerTime = "onInput" | "onBlur"
 

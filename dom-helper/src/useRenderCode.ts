@@ -9,7 +9,6 @@ import {
 } from "wy-dom-helper/contentEditable";
 import { useImperativeHandle, useRef } from "better-react-helper";
 import { useContentEditable } from "./useContentEditable";
-import { React } from "wy-dom-helper";
 
 export function useRenderCode<F extends HTMLElement, T>(
   init: T,
@@ -31,7 +30,7 @@ export function useRenderCode<F extends HTMLElement, T>(
       render(
         value: string,
         a: {
-          onInput(e: React.FormEvent): void;
+          onInput(e: InputEvent): void;
           onCompositionEnd(): void;
           onKeyDown(e: KeyboardEvent): void;
         },
@@ -41,7 +40,7 @@ export function useRenderCode<F extends HTMLElement, T>(
         noFocus,
         render(value) {
           const div = render(value, {
-            onInput(event: React.FormEvent) {
+            onInput(event: InputEvent) {
               if (event.isComposing) {
                 return;
               }
