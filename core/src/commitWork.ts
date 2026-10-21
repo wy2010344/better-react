@@ -157,7 +157,13 @@ function notifyDel(fiber: StateHolder, envModel: EnvModel) {
   })
 }
 function destroyFiber(fiber: StateHolder, envModel: EnvModel) {
+  if (fiber.destroyed) {
+    return
+  }
   fiber.destroyed = true
+  // 提前销毁的节点(如renderForEach切换key)仍会留在父级children里,
+  // 父级卸载时会再次销毁,这里主动摘除
+  fiber.parent?.children?.delete(fiber)
   const effects = fiber.effects
   if (effects) {
     effects.forEach((effect) => {

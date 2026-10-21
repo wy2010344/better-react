@@ -1,5 +1,5 @@
 import { GetValue, ValueCenter, alawaysFalse } from 'wy-helper'
-import { hookAlterStateHolder, hookStateHoder } from './cache'
+import { hookAlterStateHolder, hookEnvModel, hookStateHoder } from './cache'
 import { Context } from './context'
 import { Fiber } from './Fiber'
 import { HookEffect } from './effect'
@@ -57,6 +57,13 @@ export function renderStateHolder<T>(fun: GetValue<T>) {
   const env = useBaseMemo(alawaysFalse, createFun, parentEnv)
   if (env.contextIndex != parentEnv.contextIndex) {
     throw 'contextIndex不匹配'
+  }
+  if (env.firstTime) {
+    // 只有提交后才挂到父级,避免render回滚时在父级children留下孤儿节点
+    hookEnvModel().commitChange(function () {
+      parentEnv.children = parentEnv.children || new Set()
+      parentEnv.children.add(env)
+    })
   }
   env.beginRun()
   const a = fun()

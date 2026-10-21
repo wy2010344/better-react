@@ -7,9 +7,11 @@ import {
   emptyArray,
   arraySimpleNotEqual,
   ValueCenterDefaultImpl,
+  alawaysFalse,
 } from 'wy-helper'
 import { hookEnvModel, hookStateHoder } from './cache'
 import { useLevelEffect } from './effect'
+import { useBaseMemo } from './memo'
 
 export interface Context<T> {
   useProvider(v: T): void
@@ -56,7 +58,10 @@ class ContextFactory<T> implements Context<T> {
       if (provider.key != this) {
         throw new Error('原组件上provider不对应')
       }
-      provider.value.set(v)
+      // 每次render都会走到这里,值没变时不要通知,否则会与"渲染中断重放"互相触发
+      if (simpleNotEqual(provider.value.get(), v)) {
+        provider.value.set(v)
+      }
     }
   }
   private findProviderStateHoder(_holder: StateHolder) {
@@ -101,6 +106,15 @@ class ContextFactory<T> implements Context<T> {
       notSelf = provider[0].fiber != holder.fiber
     }
     const thisValue = getValue(context.get())
+    // 订阅闭包只会创建一次,比较基准必须每帧更新,
+    // 否则闭包里的旧值会让 A→B→A 的第二次变化被判定为"没变"
+    const lastValue = useBaseMemo(
+      alawaysFalse,
+      () => ({ current: thisValue }),
+      undefined,
+    )
+    lastValue.current = thisValue
+    const appState = env.appState
     useLevelEffect(
       0,
       arraySimpleNotEqual,
@@ -109,8 +123,31 @@ class ContextFactory<T> implements Context<T> {
           undefined,
           context.subscribe(function (value) {
             const m = getValue(value)
-            if (notSelf && shouldUpdate(thisValue, m)) {
-              holder.fiber.effectTag.set(env, 'UPDATE')
+            if (!notSelf || !shouldUpdate(lastValue.current, m)) {
+              return
+            }
+            const schedule = function () {
+              if (holder.destroyed) {
+                return
+              }
+              appState.reconcile(function (freshEnv) {
+                if (holder.destroyed) {
+                  return
+                }
+                if (shouldUpdate(lastValue.current, getValue(context.get()))) {
+                  holder.fiber.effectTag.set(freshEnv, 'UPDATE')
+                }
+              })
+            }
+            // provider 在 render 期间 set 会同步通知到这里,
+            // 此时直接调度会被判定为"渲染中断",调度器丢弃当前env并重放,
+            // 而重放时 provider 若传入新对象会再次通知,形成无限循环。
+            // 所以把调度推迟到当前env提交之后,保证每次通知只产生一轮更新。
+            const renderEnv = hookEnvModel()
+            if (renderEnv) {
+              renderEnv.commitChange(schedule)
+            } else {
+              schedule()
             }
           }),
         ]

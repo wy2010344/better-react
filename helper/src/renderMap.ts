@@ -84,8 +84,7 @@ export function renderIterableIterator<V>(
   render: (value: V) => void,
 ) {
   renderForEach(function (callback) {
-    const it = iterable.next()
-    while (!it.done) {
+    for (let it = iterable.next(); !it.done; it = iterable.next()) {
       callback(getKey(it.value), () => {
         render(it.value)
       })
@@ -99,8 +98,7 @@ export function renderIterableIteratorToMap<T, K, V>(
 ) {
   const out = new Map<K, V>()
   renderForEach(function (callback) {
-    const it = iterable.next()
-    while (!it.done) {
+    for (let it = iterable.next(); !it.done; it = iterable.next()) {
       const k = getKey(it.value)
       callback(k, () => {
         const n = render(it.value)
