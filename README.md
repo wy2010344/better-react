@@ -2,6 +2,9 @@
 
 一个增强React开发体验的工具库，专注于函数式API设计，避免使用JSX语法。
 
+![demo](docs/demo.gif)
+
+
 ## 核心特性
 
 - **函数式API设计**：完全使用JavaScript函数式语法，避免JSX/XML写法
